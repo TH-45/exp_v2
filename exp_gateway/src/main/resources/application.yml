@@ -51,7 +51,7 @@ spring:
 # 简单的 JWT 配置（密钥和忽略路径可以根据实际情况调整）
 security:
   jwt:
-    secret: "change-me-to-a-long-secure-secret-key-please"
+    secret: "exp-gateway-secrect"
     header: Authorization
     prefix: "Bearer "
     ignore-paths:
