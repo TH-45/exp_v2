@@ -12,8 +12,11 @@
 
     <modules>
         <module>exp_common</module>
-        <!-- 以后新增微服务，就在这里继续加 -->
-        <!-- <module>order-service</module> -->
-        <!-- <module>user-service</module> -->
+        <module>exp_gateway</module>
+        <module>exp_auth_system</module>
+        <module>exp_bid_contract</module>
+        <module>exp_project</module>
+        <module>exp_corp</module>
+
     </modules>
 </project>

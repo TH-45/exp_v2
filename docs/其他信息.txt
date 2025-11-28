@@ -1,0 +1,34 @@
+192.168.101.1：Windows 主机在 VMnet8 上的地址
+192.168.101.2：VMware 虚拟网关/路由器的地址（专门给虚拟机当网关）
+192.168.101.128：Ubuntu 虚拟机的地址
+
+数据库
+主机：192.168.101.128
+端口：3306
+用户名：root
+密码：root123456
+数据库：exp_ubantudb
+
+nacos 相关信息
+控制台（Console）：http://192.168.101.128:8080/
+API：http://192.168.101.128:8848/nacos/
+Nacos 登录账号
+用户名：nacos
+密码：nacos
+数据库存储位置：exp_ubantudb.users / exp_ubantudb.roles
+MySQL 信息
+容器名：mysql-server
+版本：mysql:8.0
+库名：exp_ubantudb
+连接信息（在 Nacos 配置里）：
+URL：jdbc:mysql://mysql:3306/exp_ubantudb?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=UTC
+用户名：root
+密码：root123456
+端口映射
+8080:8080 → Nacos 控制台
+8848:8848 → Nacos API
+9848:9848 → Nacos gRPC
+主要配置文件
+Docker：docker-compose.yml
+Nacos 应用配置：nacos/conf/application.properties
+Nacos 数据库建表脚本：mysql/init/init-nacos-db.sql

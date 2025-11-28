@@ -4,22 +4,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>jh.exp.common</groupId>
-        <artifactId>exp_common</artifactId>
-        <version>1.0.0</version>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
     </parent>
 
-
-    <artifactId>exp_common_client</artifactId>
-    <name>${project.artifactId}</name>
-
-    <packaging>jar</packaging>
+    <groupId>jh.exp.project</groupId>
+    <artifactId>exp_project</artifactId>
+    <version>1.0.0</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-cloud.version>2023.0.2</spring-cloud.version>
     </properties>
 
     <dependencies>

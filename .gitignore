@@ -31,9 +31,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-
-### 忽略其他文件 ###
-mvnw
-mvnw.cmd
-.gitattributes
