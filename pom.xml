@@ -17,6 +17,6 @@
         <module>exp-bid-contract</module>
         <module>exp-project</module>
         <module>exp-corp</module>
-
+        <module>exp-dependency</module>
     </modules>
 </project>

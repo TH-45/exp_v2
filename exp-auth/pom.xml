@@ -3,11 +3,12 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <!-- 继承统一依赖管理模块 exp-dependency -->
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
-        <relativePath/>
+        <groupId>jh.exp.dependency</groupId>
+        <artifactId>exp-dependency</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../exp-dependency/pom.xml</relativePath>
     </parent>
 
     <groupId>jh.exp.auth_system</groupId>
@@ -20,11 +21,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-    </dependencies>
+    <!-- 公共依赖已由 exp-dependency 统一声明，这里暂时无需重复 -->
 
 </project>

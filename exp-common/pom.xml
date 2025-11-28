@@ -24,9 +24,9 @@
 
 	<modules>
 		<!-- 这里的 module 值对应物理目录名，目录尚未改名，因此仍然保留下划线 -->
-		<module>exp_common_client</module>
-		<module>exp_common_core</module>
-		<module>exp_common__service</module>
+		<module>exp-common-client</module>
+		<module>exp-common-core</module>
+		<module>exp-common-service</module>
 	</modules>
 
 
