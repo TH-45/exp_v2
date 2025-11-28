@@ -2,7 +2,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 
 import { createPinia } from 'pinia';
-import router from './routes';
+import router from './router';
 
 // Element Plus 及样式
 import ElementPlus from 'element-plus';
