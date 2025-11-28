@@ -1,0 +1,61 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: exp-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.101.128:8848
+        username: nacos
+        password: nacos
+    gateway:
+      # 路由规则：统一前缀 /rest/xxx/** → 各业务服务
+      routes:
+        - id: auth-system-route
+          uri: lb://exp-auth-system
+          predicates:
+            - Path=/rest/system/**
+
+        - id: bid-contract-route
+          uri: lb://exp-bid-contract
+          predicates:
+            - Path=/rest/bid/**
+
+        - id: project-route
+          uri: lb://exp-project
+          predicates:
+            - Path=/rest/project/**
+
+        - id: corp-route
+          uri: lb://exp-corp
+          predicates:
+            - Path=/rest/corp/**
+
+      # 全局 CORS 配置
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+
+# 简单的 JWT 配置（密钥和忽略路径可以根据实际情况调整）
+security:
+  jwt:
+    secret: "change-me-to-a-long-secure-secret-key-please"
+    header: Authorization
+    prefix: "Bearer "
+    ignore-paths:
+      - /rest/system/auth/login
+      - /rest/system/auth/captcha
+      - /rest/system/auth/register
+
