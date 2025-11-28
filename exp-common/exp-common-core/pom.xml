@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>jh.exp.common</groupId>
-        <artifactId>exp_common</artifactId>
+        <artifactId>exp-common</artifactId>
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>exp_common__service</artifactId>
+    <artifactId>exp-common-core</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

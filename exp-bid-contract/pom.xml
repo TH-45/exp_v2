@@ -10,8 +10,8 @@
         <relativePath/>
     </parent>
 
-    <groupId>jh.exp.corp</groupId>
-    <artifactId>exp_corp</artifactId>
+    <groupId>jh.exp.bid_contract</groupId>
+    <artifactId>exp-bid-contract</artifactId>
     <version>1.0.0</version>
 
     <properties>

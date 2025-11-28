@@ -11,7 +11,7 @@
     </parent>
 
     <groupId>jh.exp.gateway</groupId>
-    <artifactId>exp_gateway</artifactId>
+    <artifactId>exp-gateway</artifactId>
     <version>1.0.0</version>
 
     <properties>

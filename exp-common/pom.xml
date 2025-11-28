@@ -10,10 +10,10 @@
 	</parent>
 
 	<groupId>jh.exp.common</groupId>
-	<artifactId>exp_common</artifactId>
+	<artifactId>exp-common</artifactId>
 	<version>1.0.0</version>
 	<name>${project.artifactId}</name>
-	<description>exp_common</description>
+	<description>exp-common</description>
 
 	<packaging>pom</packaging>
 
@@ -23,6 +23,7 @@
 	</properties>
 
 	<modules>
+		<!-- 这里的 module 值对应物理目录名，目录尚未改名，因此仍然保留下划线 -->
 		<module>exp_common_client</module>
 		<module>exp_common_core</module>
 		<module>exp_common__service</module>

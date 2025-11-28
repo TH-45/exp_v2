@@ -5,16 +5,20 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>jh.exp.common</groupId>
-        <artifactId>exp_common</artifactId>
+        <artifactId>exp-common</artifactId>
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>exp_common_core</artifactId>
+    <artifactId>exp-common-client</artifactId>
+    <name>${project.artifactId}</name>
+
+    <packaging>jar</packaging>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring-cloud.version>2023.0.2</spring-cloud.version>
     </properties>
 
     <dependencies>

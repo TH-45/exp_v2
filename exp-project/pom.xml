@@ -10,8 +10,8 @@
         <relativePath/>
     </parent>
 
-    <groupId>jh.exp.auth_system</groupId>
-    <artifactId>exp_auth_system</artifactId>
+    <groupId>jh.exp.project</groupId>
+    <artifactId>exp-project</artifactId>
     <version>1.0.0</version>
 
     <properties>

@@ -11,12 +11,12 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>exp_common</module>
-        <module>exp_gateway</module>
-        <module>exp_auth_system</module>
-        <module>exp_bid_contract</module>
-        <module>exp_project</module>
-        <module>exp_corp</module>
+        <module>exp-common</module>
+        <module>exp-gateway</module>
+        <module>exp-auth</module>
+        <module>exp-bid-contract</module>
+        <module>exp-project</module>
+        <module>exp-corp</module>
 
     </modules>
 </project>
