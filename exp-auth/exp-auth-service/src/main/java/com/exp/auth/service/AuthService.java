@@ -1,9 +1,10 @@
-package jh.exp.auth.auth.service;
+package com.exp.auth.service;
 
+import com.exp.auth.api.AccountRepository;
+import com.exp.auth.entity.Account;
 import com.exp.common.auth.dto.LoginRequest;
 import com.exp.common.auth.dto.LoginUserInfo;
-import jh.exp.auth.account.domain.Account;
-import jh.exp.auth.account.repository.AccountRepository;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;

@@ -25,13 +25,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>jh.exp.auth_system</groupId>
-            <artifactId>exp-auth-core</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-
-
-        <dependency>
             <groupId>jh.exp.common</groupId>
             <artifactId>exp-common-core</artifactId>
             <version>1.0.0</version>

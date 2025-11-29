@@ -1,8 +1,8 @@
-package jh.exp.auth.auth.controller;
+package com.exp.auth.controller;
 
 import com.exp.common.auth.dto.LoginRequest;
 import com.exp.common.auth.dto.LoginUserInfo;
-import jh.exp.auth.auth.service.AuthService;
+import com.exp.auth.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

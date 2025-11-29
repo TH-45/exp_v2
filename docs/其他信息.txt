@@ -32,3 +32,18 @@ URL：jdbc:mysql://mysql:3306/exp_ubantudb?characterEncoding=utf8&connectTimeout
 Docker：docker-compose.yml
 Nacos 应用配置：nacos/conf/application.properties
 Nacos 数据库建表脚本：mysql/init/init-nacos-db.sql
+
+---
+
+常见对象缩写对照表（精简版）
+
+缩写 | 中文常见叫法 | 场景（精简）
+----|--------------|-------------
+DTO | 数据传输对象 | 各层/各服务之间传输数据，常用于接口入参出参。
+VO  | 视图对象     | 专门给前端/页面展示用的数据结构。
+DO  | 领域对象     | 表达业务概念和规则的核心业务对象。
+PO  | 持久化对象   | 和数据库表结构一一对应，用于持久化映射。
+Entity | 实体类    | ORM 中代表数据库记录的类，类似 PO/DO。
+DAO | 数据访问对象 | 封装数据库 CRUD 操作的类/接口。
+BO  | 业务对象     | 承载业务逻辑的对象，常在 Service 层使用。
+POJO | 简单 Java 对象 | 不依赖特定框架的普通数据类/Bean。

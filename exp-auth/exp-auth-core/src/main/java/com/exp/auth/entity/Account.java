@@ -1,4 +1,4 @@
-package jh.exp.auth.account.domain;
+package com.exp.auth.entity;
 
 import jakarta.persistence.*;
 
