@@ -15,12 +15,20 @@
     <artifactId>exp-auth</artifactId>
     <version>1.0.0</version>
 
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+    <packaging>pom</packaging>
 
-    <!-- 公共依赖已由 exp-dependency 统一声明，这里暂时无需重复 -->
+    <modules>
+        <module>exp-auth-core</module>
+        <module>exp-auth-service</module>
+        <module>exp-auth-client</module>
+    </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>jh.exp.auth_system</groupId>
+            <artifactId>exp-auth-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+    </dependencies>
 
 </project>

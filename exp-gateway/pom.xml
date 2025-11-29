@@ -14,6 +14,14 @@
     <artifactId>exp-gateway</artifactId>
     <version>1.0.0</version>
 
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>exp-gateway-service</module>
+        <module>exp-gateway-client</module>
+        <module>exp-gateway-service</module>
+    </modules>
+
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
@@ -37,10 +45,28 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- 公共模块：统一响应、认证 DTO、Feign Client 等 -->
+        <dependency>
+            <groupId>jh.exp.common</groupId>
+            <artifactId>exp-common-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>jh.exp.common</groupId>
+            <artifactId>exp-common-client</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- Spring Cloud Gateway（内含 WebFlux） -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway</artifactId>
+        </dependency>
+
+        <!-- OpenFeign，用于远程调用 auth 服务 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
 
         <!-- Nacos 服务注册发现 -->

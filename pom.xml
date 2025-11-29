@@ -18,5 +18,13 @@
         <module>exp-project</module>
         <module>exp-corp</module>
         <module>exp-dependency</module>
+        <module>exp-corp/exp-corp-client</module>
+        <module>exp-corp/exp-corp-core</module>
+        <module>exp-corp/exp-corp-service</module>
+        <module>exp-project/exp-project-client</module>
+        <module>exp-project/exp-project-core</module>
+        <module>exp-project/exp-project-service</module>
+        <module>exp-gateway/exp-gateway-client</module>
+        <module>exp-gateway/exp-gateway-core</module>
     </modules>
 </project>

@@ -15,6 +15,14 @@
     <artifactId>exp-bid-contract</artifactId>
     <version>1.0.0</version>
 
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>exp-bid-contract-client</module>
+        <module>exp-bid-contract-core</module>
+        <module>exp-bid-contract-service</module>
+    </modules>
+
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>

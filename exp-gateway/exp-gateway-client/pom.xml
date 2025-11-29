@@ -3,26 +3,19 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <!-- 继承统一依赖管理模块 exp-dependency -->
     <parent>
-        <groupId>jh.exp.dependency</groupId>
-        <artifactId>exp-dependency</artifactId>
+        <groupId>jh.exp</groupId>
+        <artifactId>exp_v2</artifactId>
         <version>1.0.0</version>
-        <relativePath>../exp-dependency/pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <groupId>jh.exp.project</groupId>
-    <artifactId>exp-project</artifactId>
-    <version>1.0.0</version>
-
-    <packaging>pom</packaging>
+    <artifactId>exp-gateway-client</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
-    <!-- 公共依赖已由 exp-dependency 统一声明，这里暂时无需重复 -->
 
 </project>

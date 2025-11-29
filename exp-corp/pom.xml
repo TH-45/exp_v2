@@ -11,6 +11,8 @@
         <relativePath>../exp-dependency/pom.xml</relativePath>
     </parent>
 
+    <packaging>pom</packaging>
+
     <groupId>jh.exp.corp</groupId>
     <artifactId>exp-corp</artifactId>
     <version>1.0.0</version>
