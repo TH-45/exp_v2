@@ -11,7 +11,7 @@
         <relativePath>../exp-dependency/pom.xml</relativePath>
     </parent>
 
-    <groupId>jh.exp.auth_system</groupId>
+    <groupId>jh.exp.auth</groupId>
     <artifactId>exp-auth</artifactId>
     <version>1.0.0</version>
 
@@ -29,6 +29,18 @@
             <artifactId>exp-auth-core</artifactId>
             <version>1.0.0</version>
         </dependency>
+
+
+        <dependency>
+            <groupId>jh.exp.common</groupId>
+            <artifactId>exp-common-core</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+
     </dependencies>
+
+
+
 
 </project>

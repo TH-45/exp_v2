@@ -17,9 +17,9 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>exp-gateway-service</module>
         <module>exp-gateway-client</module>
         <module>exp-gateway-service</module>
+        <module>exp-gateway-core</module>
     </modules>
 
     <properties>

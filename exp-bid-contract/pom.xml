@@ -11,7 +11,7 @@
         <relativePath>../exp-dependency/pom.xml</relativePath>
     </parent>
 
-    <groupId>jh.exp.bid_contract</groupId>
+    <groupId>jh.exp.bid-contract</groupId>
     <artifactId>exp-bid-contract</artifactId>
     <version>1.0.0</version>
 
