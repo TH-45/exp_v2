@@ -1,0 +1,77 @@
+server {
+    listen       80;
+    server_name  localhost;
+
+    ## 前端静态资源目录（npm run build 之后的 dist）
+    ## 请将本项目打包生成的 dist 目录拷贝到下方 root 指定的路径
+    ## 例如：/usr/share/nginx/html/exp-zfrontend
+    root   /usr/share/nginx/html/exp-zfrontend;
+    index  index.html;
+
+    ## 1）前端 SPA 路由（history 模式）
+    ##
+    ## 说明：
+    ## - 本项目使用 Vue Router 的 createWebHistory()
+    ## - 业务路径示例：/、/login、/system/user
+    ## - 这些路径在后端不存在物理文件时，需要统一回退到 index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    ## 2）后端 API 代理
+    ##
+    ## 本项目前端使用 axios，统一的 baseURL 为 /api，
+    ## 业务接口路径为 /api/exp/**（例如 /api/exp/auth/login）。
+    ##
+    ## 建议：
+    ## - Nginx 将 /api/ 前缀的请求转发到后端 Spring Cloud Gateway
+    ## - Gateway 再按 /api/exp/auth/**、/api/exp/system/** 等规则路由到各微服务
+    ##
+    ## 请将 proxy_pass 地址替换为你实际的网关地址（域名或内网 IP + 端口）
+    ## 示例：proxy_pass http://exp-gateway:9000;
+    location /api/ {
+        proxy_pass         http://gateway-service;
+
+        ## 一般推荐附加的代理头，根据实际网关配置可增删
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection "upgrade";
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    ## 3）静态资源缓存（可选优化）
+    ##
+    ## Vite 打包后，静态资源带有 hash，可以安全使用较长时间的缓存。
+    ## 如不需要，可删除该 location。
+    location /assets/ {
+        try_files $uri =404;
+        access_log off;
+        expires 7d;
+    }
+}
+
+## 使用说明（简要）：
+##
+## 1. 在本项目根目录执行：
+##      npm install
+##      npm run build
+##    会生成 dist/ 目录。
+##
+## 2. 将 dist/ 中的所有文件拷贝到上方 root 指向的目录（如 /usr/share/nginx/html/exp-zfrontend）。
+##
+## 3. 将本文件内容合并到你的 nginx.conf 中（注意包含 http { ... } 的结构），
+##    或按需调整 server_name、root、proxy_pass 等参数。
+##
+## 4. 重新加载 Nginx：
+##      nginx -s reload
+##
+## 5. 访问：
+##    - 前端页面：    http://<nginx-host>/
+##    - 登录：        http://<nginx-host>/login
+##    - 用户管理等：  http://<nginx-host>/system/user
+##    刷新页面时不会 404，接口请求会走 /api/exp/** 并被 Nginx 代理到后端网关。
+
+

@@ -50,11 +50,33 @@
             <groupId>jh.exp.common</groupId>
             <artifactId>exp-common-core</artifactId>
             <version>1.0.0</version>
+            <exclusions>
+                <!-- 排除数据库相关依赖，网关不需要数据库 -->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-data-jdbc</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-data-jpa</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>jh.exp.common</groupId>
             <artifactId>exp-common-client</artifactId>
             <version>1.0.0</version>
+            <exclusions>
+                <!-- 排除数据库相关依赖，网关不需要数据库 -->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-data-jdbc</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-data-jpa</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Spring Cloud Gateway（内含 WebFlux） -->
@@ -63,17 +85,28 @@
             <artifactId>spring-cloud-starter-gateway</artifactId>
         </dependency>
 
-        <!-- OpenFeign，用于远程调用 auth 服务 -->
+        <!-- 校验注解 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
-        </dependency>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>       
 
         <!-- Nacos 服务注册发现 -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
             <version>${spring-cloud-alibaba.version}</version>
+        </dependency>
+
+        <!-- Redis（Reactive 模式，用于 Token 黑名单） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
         </dependency>
 
         <!-- JWT 解析 -->

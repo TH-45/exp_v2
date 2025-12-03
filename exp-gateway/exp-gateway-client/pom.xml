@@ -17,4 +17,25 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencies>
+        <!-- 公共 DTO、认证相关对象 -->
+        <dependency>
+            <groupId>jh.exp.common</groupId>
+            <artifactId>exp-common-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- HTTP Interface 注解（@HttpExchange 等） -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+
+        <!-- Reactive 类型 Mono -->
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>

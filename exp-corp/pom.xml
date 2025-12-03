@@ -17,6 +17,11 @@
     <artifactId>exp-corp</artifactId>
     <version>1.0.0</version>
 
+    <modules>
+        <module>exp-corp-client</module>
+        <module>exp-corp-service</module>
+        <module>exp-corp-core</module>
+    </modules>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>

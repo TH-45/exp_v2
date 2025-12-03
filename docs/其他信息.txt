@@ -33,6 +33,15 @@ Docker：docker-compose.yml
 Nacos 应用配置：nacos/conf/application.properties
 Nacos 数据库建表脚本：mysql/init/init-nacos-db.sql
 
+
+
+访问 Redis：
+Host: 192.168.101.128
+Port: 6379
+Password: redis123456
+
+
+
 ---
 
 常见对象缩写对照表（精简版）
@@ -47,3 +56,6 @@ Entity | 实体类    | ORM 中代表数据库记录的类，类似 PO/DO。
 DAO | 数据访问对象 | 封装数据库 CRUD 操作的类/接口。
 BO  | 业务对象     | 承载业务逻辑的对象，常在 Service 层使用。
 POJO | 简单 Java 对象 | 不依赖特定框架的普通数据类/Bean。
+
+Spring Cloud Gateway（基于 WebFlux）  WebFlux + WebClient/HTTP Interface
+下游调用用 WebClient + HttpServiceProxyFactory，返回 Mono，不阻塞网关线程

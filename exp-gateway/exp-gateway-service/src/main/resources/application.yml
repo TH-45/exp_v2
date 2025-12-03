@@ -1,0 +1,76 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: exp-gateway
+  main:
+    web-application-type: reactive
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.101.128:8848
+        username: nacos
+        password: nacos
+    gateway:
+      # 关闭自动路由（不使用默认的 /service-name/** 路由规则）
+      discovery:
+        locator:
+          enabled: false
+      # CORS 跨域配置（解决浏览器跨域问题，OPTIONS 预检请求必须包含）
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origin-patterns: "*"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowed-headers:
+              - "*"
+            allow-credentials: true
+            max-age: 3600
+      # 路由配置：将请求转发到不同的微服务（lb:// 表示负载均衡，从 Nacos 获取服务实例）
+      routes:
+        - id: system-service
+          uri: lb://exp-auth
+          predicates:
+            - Path=/exp/system/**
+        - id: bidding-service
+          uri: lb://exp-bid-contract-service
+          predicates:
+            - Path=/exp/bidding/**
+        - id: contracts-service
+          uri: lb://exp-bid-contract-service
+          predicates:
+            - Path=/exp/contracts/**
+        - id: project-service
+          uri: lb://exp-project-service
+          predicates:
+            - Path=/exp/project/**
+        - id: corp-service
+          uri: lb://exp-corp-service
+          predicates:
+            - Path=/exp/corp/**
+  data:
+    redis:
+      host: 192.168.101.128
+      port: 6379
+      password: redis123456
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# JWT Token 配置
+exp:
+  gateway:
+    jwt:
+      secret: exp-secret
+      expire-minutes: 120
+

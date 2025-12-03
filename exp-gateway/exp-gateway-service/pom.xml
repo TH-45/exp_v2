@@ -17,4 +17,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencies>
+        <!-- 网关对外提供的客户端定义（HTTP Interface），供服务内部调用下游使用 -->
+        <dependency>
+            <groupId>jh.exp.gateway</groupId>
+            <artifactId>exp-gateway-client</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+    </dependencies>
+
 </project>

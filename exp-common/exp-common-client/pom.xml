@@ -29,9 +29,16 @@
             <version>1.0.0</version>
         </dependency>
 
+        <!-- Web 依赖（Feign 需要） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        
+        <!-- OpenFeign：Feign 客户端必需 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
     </dependencies>
 
