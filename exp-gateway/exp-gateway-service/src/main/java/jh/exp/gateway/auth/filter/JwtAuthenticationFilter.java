@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jh.exp.gateway.auth.service.JwtTokenService;
 import jh.exp.gateway.auth.service.TokenBlacklistService;
 import jh.exp.gateway.auth.support.JwtPayload;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
@@ -26,6 +28,8 @@ import java.util.Set;
 
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     /**
      * 白名单路径集合，这些路径不需要进行JWT认证即可访问
@@ -71,12 +75,16 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
+        String path = request.getURI().getPath();
+
         if (skipAuth(request)) {
+            log.debug("JWT 鉴权跳过白名单路径，path={}", path);
             return chain.filter(exchange);
         }
 
         String token = jwtTokenService.resolveToken(request.getHeaders());
         if (!StringUtils.hasText(token)) {
+            log.warn("请求未携带 Token，被拒绝，path={}", path);
             return reject(exchange, "AUTH_UNAUTHORIZED", "请先登录");
         }
 
@@ -84,6 +92,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         try {
             payload = jwtTokenService.parseToken(token);
         } catch (Exception ex) {
+            log.warn("Token 解析失败，被拒绝，path={}，error={}", path, ex.getMessage());
             return reject(exchange, "AUTH_INVALID_TOKEN", "登录状态已失效");
         }
 
@@ -91,6 +100,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         return tokenBlacklistService.isBlacklisted(payload.tokenId())
                 .flatMap(isBlack -> {
                     if (Boolean.TRUE.equals(isBlack)) {
+                        log.warn("Token 已在黑名单中，被拒绝，tokenId={}，path={}", finalPayload.tokenId(), path);
                         return reject(exchange, "AUTH_INVALID_TOKEN", "Token 已失效");
                     }
                     ServerHttpRequest mutated = request.mutate()
@@ -99,6 +109,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                             .header("X-User-Roles", String.join(",", finalPayload.roles()))
                             .header("X-User-Permissions", String.join(",", finalPayload.permissions()))
                             .build();
+                    log.debug("JWT 鉴权通过，userId={}，path={}", finalPayload.userId(), path);
                     return chain.filter(exchange.mutate().request(mutated).build());
                 });
     }
