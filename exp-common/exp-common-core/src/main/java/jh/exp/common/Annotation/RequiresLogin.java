@@ -1,0 +1,12 @@
+package jh.exp.common.Annotation;
+
+import java.lang.annotation.*;
+
+/**
+ * 校验当前用户是否已登录
+ */
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface RequiresLogin {
+}

@@ -1,5 +1,7 @@
 package jh.exp.common.api;
 
+import org.slf4j.MDC;
+
 /**
  * 统一响应结构，与前端 axios 封装及 docs 中的约定保持一致。
  *
@@ -34,6 +36,16 @@ public class ApiResponse<T> {
      */
     private T data;
 
+    /**
+     * 响应时间戳
+     */
+    private long timestamp;
+
+    /**
+     * 链路追踪 ID (对于微服务排查非常重要)
+     */
+    private String traceId;
+
     public ApiResponse() {
     }
 
@@ -42,6 +54,8 @@ public class ApiResponse<T> {
         this.code = code;
         this.message = message;
         this.data = data;
+        this.timestamp = System.currentTimeMillis();
+        this.traceId = MDC.get("traceId");
     }
 
     public static <T> ApiResponse<T> success(T data) {

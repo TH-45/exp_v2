@@ -1,8 +1,11 @@
+//package jh.exp.common.AuthController;
+//
 //import jh.exp.common.api.ApiResponse;
 //import jh.exp.common.audit.AuditLogOperation;
 //import jh.exp.common.auth.dto.LoginRequest;
 //import jh.exp.common.auth.dto.LoginResult;
 //import jh.exp.common.auth.dto.LoginUserInfo;
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.web.bind.annotation.PostMapping;
 //import org.springframework.web.bind.annotation.RequestBody;
 //import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +15,7 @@
 //@RequestMapping("/exp/auth")
 //public class AuthController {
 //
+//    @Autowired
 //    private final AuthService authService;
 //
 //    public AuthController(AuthService authService) {
