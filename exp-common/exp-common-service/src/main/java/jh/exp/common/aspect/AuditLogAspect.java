@@ -1,8 +1,11 @@
-package jh.exp.common.audit;
+package jh.exp.common.aspect;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import jh.exp.common.audit.AuditLog;
+import jh.exp.common.audit.AuditLogOperation;
+import jh.exp.common.audit.AuditLogRepository;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;

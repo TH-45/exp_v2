@@ -1,8 +1,9 @@
-package jh.exp.common.auth;
+package jh.exp.common.aspect;
 
 
 import jh.exp.common.Annotation.RequiresLogin;
 import jh.exp.common.Annotation.RequiresPermissions;
+import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.exception.AuthException;
 import org.aspectj.lang.JoinPoint;
