@@ -32,8 +32,7 @@ public class HttpClientConfig {
                 .build();
 
         HttpServiceProxyFactory factory = HttpServiceProxyFactory
-                .builder()
-                .clientAdapter(WebClientAdapter.create(client))
+                .builder().exchangeAdapter(WebClientAdapter.create(client))
                 .build();
         return factory.createClient(AuthInternalHttpClient.class);
     }

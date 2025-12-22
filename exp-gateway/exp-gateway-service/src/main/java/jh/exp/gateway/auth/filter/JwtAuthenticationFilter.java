@@ -36,6 +36,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
      */
     private static final Set<String> WHITE_LIST = Set.of(
             "/exp/auth/login",
+            "/api/exp/auth/login",
             "/actuator/health",
             "/actuator/info",
             "/swagger-ui.html",
@@ -114,6 +115,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 });
     }
 
+    @SuppressWarnings("null")
     private boolean skipAuth(ServerHttpRequest request) {
         if (HttpMethod.OPTIONS.equals(request.getMethod())) {
             return true;
@@ -122,6 +124,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         return WHITE_LIST.stream().anyMatch(pattern -> matcher.match(pattern, path));
     }
 
+    @SuppressWarnings("null")
     private Mono<Void> reject(ServerWebExchange exchange, String code, String message) {
         ServerHttpResponse response = exchange.getResponse();
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);

@@ -1,5 +1,8 @@
 package jh.exp.auth.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -10,12 +13,14 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "exp_account")
+@TableName("exp_account")
 public class Account {
 
 
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.ASSIGN_ID)
     @Column(name = "account_id")
     private Long accountId;
 

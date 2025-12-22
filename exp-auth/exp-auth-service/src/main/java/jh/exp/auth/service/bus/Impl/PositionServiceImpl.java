@@ -3,7 +3,7 @@ package jh.exp.auth.service.bus.Impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import jh.exp.auth.Mapper.PositionMapper;
+import jh.exp.auth.mapper.PositionMapper;
 import jh.exp.auth.entity.Position;
 import jh.exp.auth.entity.Req.QueryPositionReq;
 import jh.exp.auth.service.bus.PositionService;

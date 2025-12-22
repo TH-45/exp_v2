@@ -1,6 +1,6 @@
 package jh.exp.auth.autoData;
 
-import jh.exp.auth.api.AccountRepository;
+import jh.exp.auth.mapper.AccountMapper;
 import jh.exp.auth.entity.Account;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class DataInitializer implements CommandLineRunner {
 
     @Autowired
-    private AccountRepository accountRepository;
+    private AccountMapper accountMapper;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -27,7 +27,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         // 检查是否已有数据，避免重复插入
-        if (accountRepository.count() > 0) {
+        if (accountMapper.selectCount(null) > 0) {
             System.out.println("数据库已有数据，跳过初始化");
             return;
         }
@@ -44,7 +44,7 @@ public class DataInitializer implements CommandLineRunner {
         admin.setNeedChangePwd(false);
         admin.setCreatedTime(LocalDateTime.now());
         admin.setUpdatedTime(LocalDateTime.now());
-        accountRepository.save(admin);
+        accountMapper.insert(admin);
         System.out.println("创建管理员账号: admin / 123456");
 
         // 创建测试用户1
@@ -60,7 +60,7 @@ public class DataInitializer implements CommandLineRunner {
         testUser1.setOrgId(1L);
         testUser1.setCreatedTime(LocalDateTime.now());
         testUser1.setUpdatedTime(LocalDateTime.now());
-        accountRepository.save(testUser1);
+        accountMapper.insert(testUser1);
         System.out.println("创建测试用户1: testuser1 / 123456");
 
         // 创建测试用户2
@@ -76,7 +76,7 @@ public class DataInitializer implements CommandLineRunner {
         testUser2.setOrgId(2L);
         testUser2.setCreatedTime(LocalDateTime.now());
         testUser2.setUpdatedTime(LocalDateTime.now());
-        accountRepository.save(testUser2);
+        accountMapper.insert(testUser2);
         System.out.println("创建测试用户2: testuser2 / 123456");
 
         // 创建已禁用账号（用于测试）
@@ -89,7 +89,7 @@ public class DataInitializer implements CommandLineRunner {
         disabled.setNeedChangePwd(false);
         disabled.setCreatedTime(LocalDateTime.now());
         disabled.setUpdatedTime(LocalDateTime.now());
-        accountRepository.save(disabled);
+        accountMapper.insert(disabled);
         System.out.println("创建已禁用账号: disabled / 123456");
 
         System.out.println("测试数据初始化完成！");

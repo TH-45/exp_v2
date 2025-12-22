@@ -1,6 +1,7 @@
 package jh.exp.auth.service;
 
-import jh.exp.auth.api.AccountRepository;
+import jh.exp.auth.mapper.AccountMapper;
+
 import jh.exp.auth.entity.Account;
 import jh.exp.common.auth.dto.ProfileResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,7 @@ import java.util.List;
 public class ProfileService {
 
     @Autowired
-    private AccountRepository accountRepository;
+    private AccountMapper accountMapper;
 
     public ProfileResult getProfile(String userId) {
         if (!StringUtils.hasText(userId)) {
@@ -30,8 +31,10 @@ public class ProfileService {
             throw new IllegalArgumentException("userId 格式不正确");
         }
 
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+        Account account = accountMapper.selectById(accountId);
+        if (account == null) {
+            throw new IllegalArgumentException("用户不存在");
+        }
 
         if (!"ENABLED".equalsIgnoreCase(account.getStatus())) {
             throw new IllegalStateException("账号已被禁用或锁定");

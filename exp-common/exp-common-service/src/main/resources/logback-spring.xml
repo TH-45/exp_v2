@@ -1,8 +1,11 @@
 <configuration scan="true" scanPeriod="60 seconds">
 
-    <!-- 日志目录与文件名配置：统一在根目录 logs/auth.log -->
-    <property name="LOG_PATH" value="logs"/>
-    <property name="LOG_FILE" value="auth"/>
+    <!-- 从 Spring 环境读取可覆盖的日志路径/文件名，缺省使用应用名 -->
+    <springProperty name="LOG_PATH" source="LOG_PATH" defaultValue="logs"/>
+    <springProperty name="LOG_FILE_PROP" source="LOG_FILE"/>
+    <springProperty name="APP_NAME" source="spring.application.name" defaultValue="app"/>
+    <!-- 优先 LOG_FILE，其次 spring.application.name，最后 app -->
+    <property name="LOG_FILE" value="${LOG_FILE_PROP:-${APP_NAME}}"/>
 
     <contextName>${LOG_FILE}</contextName>
 
@@ -28,7 +31,7 @@
     </appender>
 
     <!-- 休眠监控：超过一定时间没有业务日志输出时打印醒目提示 -->
-    <appender name="IDLE_MONITOR" class="jh.exp.common.monitor.IdleMonitorAppender">
+    <appender name="IDLE_MONITOR" class="jh.exp.common.logging.IdleMonitorAppender">
         <!-- 使用 LOG_FILE 作为服务标识，例如 auth / bid-contract / project 等 -->
         <serviceName>${LOG_FILE}</serviceName>
         <!-- 判定休眠的阈值（秒），默认 120，可按需调整 -->

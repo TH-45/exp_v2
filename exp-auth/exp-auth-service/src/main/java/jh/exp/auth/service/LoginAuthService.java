@@ -1,6 +1,7 @@
 package jh.exp.auth.service;
 
-import jh.exp.auth.api.AccountRepository;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import jh.exp.auth.mapper.AccountMapper;
 import jh.exp.auth.entity.Account;
 import jh.exp.common.auth.dto.LoginRequest;
 import jh.exp.common.auth.dto.LoginUserInfo;
@@ -24,7 +25,7 @@ public class LoginAuthService {
     private static final Logger log = LoggerFactory.getLogger(LoginAuthService.class);
 
     @Autowired
-    private AccountRepository accountRepository;
+    private AccountMapper accountMapper;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -40,8 +41,10 @@ public class LoginAuthService {
 
         log.info("用户尝试登录，username={}", username);
 
-        Account account = accountRepository.findByAccountName(username)
-                .orElseThrow(() -> new IllegalArgumentException("账号或密码错误"));
+        QueryWrapper<Account> qw = new QueryWrapper<>();
+        qw.eq("account_name", username);
+        Account account = accountMapper.selectOne(qw);
+        if (account == null) {throw new IllegalArgumentException("账号或密码错误");}
 
         // 只允许启用状态登录
         if (!"ENABLED".equalsIgnoreCase(account.getStatus())) {
@@ -52,7 +55,7 @@ public class LoginAuthService {
         if (!passwordEncoder.matches(password, account.getPasswordHash())) {
             Integer failCount = account.getLoginFailCount();
             account.setLoginFailCount(failCount == null ? 1 : failCount + 1);
-            accountRepository.save(account);
+            accountMapper.updateById(account);
             log.warn("用户登录失败，密码错误，username={}，当前失败次数={}", username, account.getLoginFailCount());
             throw new IllegalArgumentException("账号或密码错误");
         }
@@ -60,7 +63,7 @@ public class LoginAuthService {
         // 登录成功，重置失败次数并记录登录时间
         account.setLoginFailCount(0);
         account.setLastLoginTime(LocalDateTime.now());
-        accountRepository.save(account);
+        accountMapper.update(account,null);
 
         LoginUserInfo info = new LoginUserInfo();
         info.setUserId(String.valueOf(account.getAccountId()));

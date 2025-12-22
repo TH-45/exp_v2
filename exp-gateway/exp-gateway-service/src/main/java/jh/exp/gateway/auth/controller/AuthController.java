@@ -22,7 +22,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 
 @RestController
-@RequestMapping("/exp/auth")
+@RequestMapping({"/exp/auth", "/api/exp/auth"})
 public class AuthController {
 
     /**
