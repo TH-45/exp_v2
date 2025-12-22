@@ -1,6 +1,12 @@
 package jh.exp.auth.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -8,51 +14,56 @@ import java.time.LocalDateTime;
  * 岗位定义表，对应 docs 中的：
  * 岗位定义表 exp_post
  */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "exp_post")
+@TableName("exp_post")
 public class Position {
-
+    // 岗位ID
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     @Column(name = "post_id")
     private Long postId;
-
+    // 岗位编码
     @Column(name = "post_code", nullable = false, unique = true, length = 64)
     private String postCode;
-
+    // 岗位名称
     @Column(name = "post_name", nullable = false, length = 100)
     private String postName;
-
+    // 岗位类型
     @Column(name = "post_type", length = 32)
     private String postType;
-
+    // 岗位级别
     @Column(name = "post_level", length = 32)
     private String postLevel;
-
+    // 岗位类别
     @Column(name = "post_category", length = 32)
     private String postCategory;
-
+    // 岗位描述
     @Column(name = "post_desc", columnDefinition = "TEXT")
     private String postDesc;
-
+    // 岗位状态
     @Column(name = "status", length = 32)
     private String status;
-
+    // 默认角色ID
     @Column(name = "default_role_id")
     private Long defaultRoleId;
-
+    // 默认数据范围
     @Column(name = "default_data_scope", length = 64)
     private String defaultDataScope;
-
+    // 是否系统内置
     @Column(name = "is_system")
     private Integer isSystem;
-
+    // 排序
     @Column(name = "sort_no")
     private Integer sortNo;
-
+    // 创建者
     @Column(name = "created_by")
     private Long createdBy;
-
+    // 创建时间
     @Column(name = "created_time")
     private LocalDateTime createdTime;
 
@@ -62,132 +73,6 @@ public class Position {
     @Column(name = "remark", length = 500)
     private String remark;
 
-    public Long getPostId() {
-        return postId;
-    }
 
-    public void setPostId(Long postId) {
-        this.postId = postId;
-    }
-
-    public String getPostCode() {
-        return postCode;
-    }
-
-    public void setPostCode(String postCode) {
-        this.postCode = postCode;
-    }
-
-    public String getPostName() {
-        return postName;
-    }
-
-    public void setPostName(String postName) {
-        this.postName = postName;
-    }
-
-    public String getPostType() {
-        return postType;
-    }
-
-    public void setPostType(String postType) {
-        this.postType = postType;
-    }
-
-    public String getPostLevel() {
-        return postLevel;
-    }
-
-    public void setPostLevel(String postLevel) {
-        this.postLevel = postLevel;
-    }
-
-    public String getPostCategory() {
-        return postCategory;
-    }
-
-    public void setPostCategory(String postCategory) {
-        this.postCategory = postCategory;
-    }
-
-    public String getPostDesc() {
-        return postDesc;
-    }
-
-    public void setPostDesc(String postDesc) {
-        this.postDesc = postDesc;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Long getDefaultRoleId() {
-        return defaultRoleId;
-    }
-
-    public void setDefaultRoleId(Long defaultRoleId) {
-        this.defaultRoleId = defaultRoleId;
-    }
-
-    public String getDefaultDataScope() {
-        return defaultDataScope;
-    }
-
-    public void setDefaultDataScope(String defaultDataScope) {
-        this.defaultDataScope = defaultDataScope;
-    }
-
-    public Integer getIsSystem() {
-        return isSystem;
-    }
-
-    public void setIsSystem(Integer isSystem) {
-        this.isSystem = isSystem;
-    }
-
-    public Integer getSortNo() {
-        return sortNo;
-    }
-
-    public void setSortNo(Integer sortNo) {
-        this.sortNo = sortNo;
-    }
-
-    public Long getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(Long createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public LocalDateTime getCreatedTime() {
-        return createdTime;
-    }
-
-    public void setCreatedTime(LocalDateTime createdTime) {
-        this.createdTime = createdTime;
-    }
-
-    public LocalDateTime getUpdatedTime() {
-        return updatedTime;
-    }
-
-    public void setUpdatedTime(LocalDateTime updatedTime) {
-        this.updatedTime = updatedTime;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
-    }
 }
 

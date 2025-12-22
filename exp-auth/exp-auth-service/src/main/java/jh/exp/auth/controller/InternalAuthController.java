@@ -1,11 +1,13 @@
 package jh.exp.auth.controller;
 
+import jh.exp.auth.service.LoginAuthService;
 import jh.exp.common.auth.dto.LoginRequest;
 import jh.exp.common.auth.dto.LoginUserInfo;
 import jh.exp.common.auth.dto.ProfileResult;
-import jh.exp.auth.service.AuthService;
+import jh.exp.auth.service.LoginAuthService;
 import jh.exp.auth.service.ProfileService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,18 +27,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/internal/auth")
 public class InternalAuthController {
-
-    private final AuthService authService;
-    private final ProfileService profileService;
-
-    public InternalAuthController(AuthService authService, ProfileService profileService) {
-        this.authService = authService;
-        this.profileService = profileService;
-    }
+    @Autowired
+    private LoginAuthService loginAuthService;
+    @Autowired
+    private  ProfileService profileService;
 
     @PostMapping("/login")
     public LoginUserInfo login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+        return loginAuthService.login(request);
     }
 
     @GetMapping("/profile")

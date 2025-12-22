@@ -1,4 +1,4 @@
-package jh.exp.common.Annotation;
+package jh.exp.common.annotation;
 
 import java.lang.annotation.*;
 

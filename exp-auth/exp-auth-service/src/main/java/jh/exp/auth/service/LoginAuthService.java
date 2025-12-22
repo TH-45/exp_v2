@@ -19,9 +19,9 @@ import java.util.Collections;
  * 提供账号密码校验的核心逻辑，由网关或其他服务通过内部接口调用。
  */
 @Service
-public class AuthService {
+public class LoginAuthService {
 
-    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+    private static final Logger log = LoggerFactory.getLogger(LoginAuthService.class);
 
     @Autowired
     private AccountRepository accountRepository;

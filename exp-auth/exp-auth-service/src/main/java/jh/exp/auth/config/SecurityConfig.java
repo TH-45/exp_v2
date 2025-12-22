@@ -15,15 +15,15 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(registry -> registry
-                        .anyRequest().permitAll()
-                );
-        return http.build();
-    }
+//    @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//                .csrf(csrf -> csrf.disable())
+//                .authorizeHttpRequests(registry -> registry
+//                        .anyRequest().permitAll()
+//                );
+//        return http.build();
+//    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {

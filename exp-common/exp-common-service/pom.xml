@@ -19,10 +19,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
             <groupId>jh.exp.common</groupId>
             <artifactId>exp-common-core</artifactId>
             <version>1.0.0</version>

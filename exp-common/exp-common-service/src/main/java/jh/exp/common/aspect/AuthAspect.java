@@ -1,8 +1,8 @@
 package jh.exp.common.aspect;
 
 
-import jh.exp.common.Annotation.RequiresLogin;
-import jh.exp.common.Annotation.RequiresPermissions;
+import jh.exp.common.annotation.RequiresLogin;
+import jh.exp.common.annotation.RequiresPermissions;
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.exception.AuthException;
@@ -30,8 +30,8 @@ public class AuthAspect {
      * 也可以更精确地定义 Controller 层的方法
      */
     private static final String POINTCUT_METHOD =
-            "@annotation(jh.exp.common.auth.annotation.RequiresLogin) || " +
-                    "@annotation(jh.exp.common.auth.annotation.RequiresPermissions)";
+            "@annotation(jh.exp.common.annotation.RequiresLogin) || " +
+                    "@annotation(jh.exp.common.annotation.RequiresPermissions)";
 
     @Before(POINTCUT_METHOD)
     public void before(JoinPoint joinPoint) throws Throwable {
