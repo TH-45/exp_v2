@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.auth.mapper.PersonMapper">
+    <update id="updateByExp" parameterType="jh.exp.auth.entity.ExpPerson">
+        update exp_person
+
+
+    </update>
+
+    <select id="selectPositionPage"
+            resultType="jh.exp.auth.entity.res.PersonInfoRes">
+
+        SELECT
+        p.person_id          AS personId,
+        p.person_name        AS personName,
+        p.mobile             AS mobile,
+        p.person_code        AS personCode,
+        p.job_title          AS jobTitle,
+        p.post_id            AS postId,
+        pos.post_name        AS postName,
+        p.org_id             AS orgId,
+        org.org_name         AS orgName,
+        p.account_id         AS accountId,
+        acc.account_name     AS accountName
+        FROM exp_person p
+        LEFT JOIN exp_org_unit org
+        ON p.org_id = org.org_id
+        LEFT JOIN exp_post pos
+        ON p.post_id = pos.post_id
+        LEFT JOIN exp_account acc
+        ON p.account_id = acc.account_id
+        <where>
+            1=1
+            <if test="queryParam.personCode != null and queryParam.personCode != ''">
+                AND p.person_code = #{queryParam.personCode}
+            </if>
+
+            <if test="queryParam.name != null and queryParam.name != ''">
+                AND p.person_name LIKE CONCAT('%', #{queryParam.name}, '%')
+            </if>
+
+            <if test="queryParam.phone != null and queryParam.phone != ''">
+                AND p.mobile = #{queryParam.phone}
+            </if>
+
+
+        </where>
+
+        ORDER BY p.status,p.created_time DESC
+    </select>
+
+</mapper>

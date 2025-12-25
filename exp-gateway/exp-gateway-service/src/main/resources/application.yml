@@ -35,10 +35,14 @@ spring:
             max-age: 3600
       # 路由配置：将请求转发到不同的微服务（lb:// 表示负载均衡，从 Nacos 获取服务实例）
       routes:
-        - id: system-service
+        - id: auth-service
           uri: lb://exp-auth
           predicates:
-            - Path=/exp/system/**
+            - Path=/exp/auth/**
+          filters:
+            # 外部统一以 /exp/auth/** 访问；下游 exp-auth 服务实际暴露的是 /**（例如 /roles/menus）
+            # 因此需要去掉前两段前缀：/exp/auth
+            - StripPrefix=2
         - id: bidding-service
           uri: lb://exp-bid-contract-service
           predicates:
@@ -66,6 +70,12 @@ management:
     web:
       exposure:
         include: health,info
+
+# 日志级别配置（默认 root=INFO 不会输出 debug；这里仅为网关鉴权相关开启 DEBUG）
+logging:
+  level:
+    root: INFO
+    jh.exp.gateway.auth.filter: DEBUG
 
 # JWT Token 配置
 exp:

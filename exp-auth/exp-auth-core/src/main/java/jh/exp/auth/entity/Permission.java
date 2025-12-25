@@ -1,5 +1,6 @@
 package jh.exp.auth.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.*;
 
 /**
@@ -8,6 +9,7 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(name = "exp_permission")
+@TableName("exp_permission")
 public class Permission {
 
     @Id

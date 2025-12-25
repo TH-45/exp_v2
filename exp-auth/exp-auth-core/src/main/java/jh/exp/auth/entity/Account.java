@@ -16,8 +16,6 @@ import java.time.LocalDateTime;
 @TableName("exp_account")
 public class Account {
 
-
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.ASSIGN_ID)

@@ -1,0 +1,985 @@
+2025-12-25 08:00:07.617 [main] INFO  c.a.n.client.logging.NacosLogging - Nacos Logging Adapter Builder: com.alibaba.nacos.logger.adapter.logback12.LogbackNacosLoggingAdapterBuilder
+2025-12-25 08:00:07.682 [main] INFO  c.a.n.client.logging.NacosLogging - Nacos Logging Adapter Builder: com.alibaba.nacos.logger.adapter.logback14.LogbackNacosLoggingAdapterBuilder
+2025-12-25 08:00:07.719 [main] INFO  c.a.n.client.logging.NacosLogging - Nacos Logging Adapter: com.alibaba.nacos.logger.adapter.logback14.LogbackNacosLoggingAdapter match ch.qos.logback.classic.Logger success.
+2025-12-25 08:00:07.740 [main] INFO  c.a.n.client.logging.NacosLogging - Nacos Logging Adapter Builder: com.alibaba.nacos.logger.adapter.log4j2.Log4j2NacosLoggingAdapterBuilder
+2025-12-25 08:00:07.778 [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.1.Final
+2025-12-25 08:00:08.885 [main] INFO  jh.exp.auth.AuthApplication - Starting AuthApplication using Java 17.0.12 with PID 2100 (D:\ieda_deta\exp_v2\exp-auth\exp-auth-service\target\classes started by Administrator in D:\ieda_deta\exp_v2)
+2025-12-25 08:00:08.886 [main] INFO  jh.exp.auth.AuthApplication - No active profile set, falling back to 1 default profile: "default"
+2025-12-25 08:00:11.795 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2025-12-25 08:00:11.802 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:00:11.865 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 27 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:00:11.948 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2025-12-25 08:00:11.952 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:00:12.004 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 14 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:00:12.908 [main] INFO  o.s.cloud.context.scope.GenericScope - BeanFactory id=8d625329-d2f8-3ab4-93b3-5747ec77fe1c
+2025-12-25 08:00:15.197 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8101 (http)
+2025-12-25 08:00:15.292 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8101"]
+2025-12-25 08:00:15.298 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-12-25 08:00:15.298 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.20]
+2025-12-25 08:00:15.612 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-12-25 08:00:15.612 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 6620 ms
+2025-12-25 08:00:16.389 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-25 08:00:16.645 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.4.4.Final
+2025-12-25 08:00:16.834 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-12-25 08:00:18.102 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-25 08:00:18.229 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-12-25 08:00:19.145 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1b372da8
+2025-12-25 08:00:19.157 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-12-25 08:00:24.533 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-25 08:00:24.699 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-12-25 08:00:25.984 [main] WARN  c.b.m.c.injector.DefaultSqlInjector - class jh.exp.auth.entity.Role ,Not found @TableId annotation, Cannot use Mybatis-Plus 'xxById' Method.
+2025-12-25 08:00:26.248 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-25 08:00:26.289 [main] WARN  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 460d0580-f6a2-4ee1-8a9d-163c0b795f22
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-12-25 08:00:27.197 [main] INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@3e08a2f8, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@4cef85cf, org.springframework.security.web.context.SecurityContextHolderFilter@6fe53587, org.springframework.security.web.header.HeaderWriterFilter@2def9292, org.springframework.web.filter.CorsFilter@53c8fdb, org.springframework.security.web.authentication.logout.LogoutFilter@a8b1613, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@6b6736bc, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@16516d26, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@6442c3ed, org.springframework.security.web.access.ExceptionTranslationFilter@3a53080a, org.springframework.security.web.access.intercept.AuthorizationFilter@2ffbbdd3]
+2025-12-25 08:00:28.129 [main] INFO  c.b.m.e.s.MybatisPlusApplicationContextAware - Register ApplicationContext instances org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@7c4921f1
+2025-12-25 08:00:29.555 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8101"]
+2025-12-25 08:00:29.653 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8101 (http) with context path ''
+2025-12-25 08:00:29.839 [main] INFO  c.a.n.p.a.s.c.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.impl.NacosClientAuthServiceImpl success.
+2025-12-25 08:00:29.839 [main] INFO  c.a.n.p.a.s.c.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.ram.RamClientAuthServiceImpl success.
+2025-12-25 08:00:32.702 [main] INFO  c.a.n.c.a.AbstractAbilityControlManager - Ready to get current node abilities...
+2025-12-25 08:00:32.705 [main] INFO  c.a.n.c.a.AbstractAbilityControlManager - Ready to initialize current node abilities, support modes: [SDK_CLIENT]
+2025-12-25 08:00:32.707 [main] INFO  c.a.n.c.a.AbstractAbilityControlManager - Initialize current abilities finish...
+2025-12-25 08:00:32.707 [main] INFO  c.a.n.c.a.d.NacosAbilityManagerHolder - [AbilityControlManager] Successfully initialize AbilityControlManager
+2025-12-25 08:00:32.796 [main] INFO  c.a.c.n.r.NacosServiceRegistry - nacos registry, DEFAULT_GROUP exp-auth 192.168.56.1:8101 register finished
+2025-12-25 08:00:33.087 [main] INFO  jh.exp.auth.AuthApplication - Started AuthApplication in 27.421 seconds (process running for 29.868)
+2025-12-25 08:02:37.559 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:04:37.560 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:07:07.557 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:08:27.509 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:08:27.533 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 23 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:08:27.534 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:08:27.542 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:08:27.555 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:09:10.046 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:09:10.098 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 51 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:09:10.099 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:09:10.106 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:09:10.110 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:09:35.324 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:09:35.335 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 9 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:09:35.336 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:09:35.340 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:09:35.345 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:10:44.493 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:10:44.504 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:10:44.504 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:10:44.509 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:10:44.512 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:13:07.566 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:15:37.561 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:15:59.350 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:15:59.357 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:15:59.358 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:15:59.365 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:15:59.370 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:16:10.371 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:16:10.378 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:16:10.378 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:16:10.380 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:16:10.384 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:16:39.289 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:16:39.294 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:16:39.294 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:16:39.297 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:16:39.300 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:16:51.167 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:16:51.172 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:16:51.172 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:16:51.175 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:16:51.178 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:19:07.566 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:19:20.576 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:19:20.583 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:19:20.584 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:19:20.592 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:19:20.596 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:19:37.485 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:19:37.489 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:19:37.489 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:19:37.492 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:19:37.495 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:19:55.026 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:19:55.031 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:19:55.032 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:19:55.034 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:19:55.036 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:21:04.226 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:21:04.234 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:21:04.234 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:21:04.238 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:21:04.242 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:21:59.871 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:21:59.885 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 12 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:21:59.885 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:21:59.891 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:21:59.895 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:24:07.558 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:24:48.321 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:24:48.338 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 17 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:24:48.340 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:24:48.347 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:24:48.352 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:27:07.563 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:27:34.144 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:27:34.147 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:27:34.148 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:27:34.150 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:27:34.152 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:29:37.562 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:31:24.579 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:31:24.606 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 26 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:31:24.606 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:31:24.621 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 14 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:31:24.632 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:31:39.822 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:31:39.828 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:31:39.828 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:31:39.831 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:31:39.833 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:32:18.513 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:32:18.520 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:32:18.520 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:32:18.525 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:32:18.528 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:33:41.812 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:33:41.820 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:33:41.820 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:33:41.826 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:33:41.829 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:34:19.252 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:34:19.260 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:34:19.261 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:34:19.264 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:34:19.267 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:34:36.543 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:34:36.548 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:34:36.548 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:34:36.551 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:34:36.556 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:35:03.409 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:35:03.418 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:35:03.419 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:35:03.423 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:35:03.427 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:35:21.759 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:35:21.769 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 10 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:35:21.769 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:35:21.776 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:35:21.783 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:37:37.563 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:39:20.020 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:39:20.028 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:39:20.029 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:39:20.035 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:39:20.038 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:41:37.554 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:43:37.566 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:44:39.945 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:44:39.956 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 10 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:44:39.957 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:44:39.960 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:44:39.964 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:47:07.567 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:48:05.671 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:48:05.679 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:48:05.680 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:48:05.686 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:48:05.690 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:48:21.715 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:48:21.722 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:48:21.722 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:48:21.727 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:48:21.731 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:50:37.555 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:51:00.859 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:51:00.868 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:51:00.868 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:51:00.874 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:51:32.785 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:51:32.797 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 11 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:51:32.797 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:51:32.804 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:53:37.561 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:55:19.419 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:55:19.449 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 29 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:55:19.449 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:55:19.464 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 14 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:55:19.467 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 08:57:37.560 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 08:59:01.871 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 08:59:01.946 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 62 ms. Found 0 Redis repository interfaces.
+2025-12-25 08:59:01.947 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 08:59:01.953 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2025-12-25 08:59:01.973 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:01:07.562 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:02:03.117 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:02:03.123 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:02:03.123 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:02:03.127 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:02:03.129 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:04:07.566 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:04:43.871 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:04:43.877 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:04:43.877 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:04:43.881 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:04:43.884 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:06:27.628 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:06:27.639 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 9 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:06:27.640 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:06:27.645 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:06:27.649 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:06:42.540 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:06:42.551 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 10 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:06:42.552 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:06:42.555 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:06:42.561 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:07:31.812 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:07:31.816 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:07:31.817 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:07:31.824 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:07:31.828 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:07:45.886 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:07:45.891 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:07:45.891 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:07:45.893 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:07:45.896 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:09:48.395 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:09:48.402 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:09:48.402 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:09:48.407 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:09:48.411 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:10:53.387 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:10:53.397 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 9 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:10:53.397 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:10:53.402 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:10:53.409 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:12:47.484 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:12:47.492 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:12:47.493 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:12:47.497 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:12:47.503 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:13:27.355 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:13:27.363 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:13:27.364 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:13:27.371 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:13:27.374 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:13:38.526 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:13:38.536 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 9 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:13:38.536 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:13:38.540 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:13:38.544 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:14:15.478 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:14:15.486 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:14:15.486 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:14:15.490 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:14:15.496 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:16:37.559 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:17:52.149 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:17:52.158 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:17:52.158 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:17:52.162 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:17:52.166 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:18:39.760 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:18:39.765 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:18:39.766 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:18:39.770 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:18:39.774 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:20:07.542 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:20:07.547 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:20:07.548 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:20:07.551 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:20:07.554 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:21:58.352 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:21:58.361 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:21:58.361 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:21:58.366 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:21:58.577 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:21:58.583 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:21:58.583 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:21:58.586 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:21:58.588 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:22:15.506 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:22:15.511 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:22:15.511 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:22:15.514 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:24:37.556 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:26:37.561 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:29:07.568 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:31:37.554 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:33:37.556 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:35:37.566 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:38:07.567 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:40:37.557 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:42:25.010 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:42:25.018 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:42:25.018 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:42:25.023 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:42:25.027 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:44:37.563 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:46:37.565 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:48:18.797 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:48:18.810 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 11 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:48:18.810 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:48:18.815 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:50:25.916 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:50:25.920 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:50:25.920 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:50:25.924 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:50:25.927 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:51:23.167 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:51:23.172 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:51:23.173 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:51:23.175 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:51:23.179 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:52:57.292 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:52:57.295 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:52:57.297 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:52:57.299 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:52:57.301 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:54:41.282 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:54:41.290 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:54:41.291 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:54:41.300 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:54:41.309 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:54:53.831 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 09:54:53.835 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
+2025-12-25 09:54:53.836 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 09:54:53.838 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 09:54:53.840 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 09:57:07.566 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 09:59:37.567 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:01:50.814 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:01:50.823 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:01:50.823 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:01:50.827 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:01:50.830 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:02:37.246 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:02:37.253 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:02:37.253 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:02:37.256 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:02:37.261 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:02:56.644 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:02:56.651 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:02:56.651 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:02:56.658 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:02:56.664 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:03:27.610 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:03:27.619 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:03:27.620 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:03:27.625 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:03:27.630 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:04:06.848 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:04:06.854 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:04:06.854 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:04:06.856 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:04:06.858 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:06:07.563 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:06:16.987 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:06:16.993 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:06:16.993 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:06:16.996 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:06:16.999 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:06:35.220 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:06:35.223 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:06:35.223 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:06:35.225 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 1 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:06:35.227 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:06:57.103 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:06:57.112 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:06:57.112 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:06:57.115 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:06:57.118 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:07:00.765 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:07:00.767 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:07:00.767 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:07:00.770 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:07:00.772 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:08:29.349 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:08:29.354 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:08:29.355 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:08:29.361 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:08:29.364 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:09:07.383 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:09:07.386 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:09:07.386 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:09:07.387 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 1 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:09:07.390 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:09:31.211 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:09:31.218 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:09:31.218 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:09:31.221 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:09:31.223 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:10:37.077 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:10:37.087 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 9 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:10:37.088 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:10:37.092 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:10:37.095 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:11:58.235 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:11:58.239 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:11:58.240 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:11:58.242 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:11:58.244 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:12:14.171 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:12:14.178 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:12:14.179 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:12:14.182 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 2 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:12:14.184 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:13:17.806 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:13:17.812 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:13:17.812 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:13:17.816 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:13:17.818 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:14:38.277 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:14:38.280 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:14:38.280 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:14:38.282 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 1 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:14:38.284 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:15:23.582 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 10:15:23.590 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2025-12-25 10:15:23.591 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 10:15:23.596 [rebel-change-detector-thread] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-12-25 10:15:23.599 [rebel-change-detector-thread] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 10:17:37.566 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:18:13.998 [http-nio-8101-exec-2] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-25 10:18:13.998 [http-nio-8101-exec-2] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-12-25 10:18:14.001 [http-nio-8101-exec-2] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 3 ms
+2025-12-25 10:18:14.233 [http-nio-8101-exec-2] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-25 10:18:14.252 [http-nio-8101-exec-2] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-25 10:18:14.668 [http-nio-8101-exec-2] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-25 10:18:15.070 [http-nio-8101-exec-2] INFO  j.exp.auth.service.LoginAuthService - 用户尝试登录，username=admin
+2025-12-25 10:18:15.627 [http-nio-8101-exec-2] INFO  j.exp.auth.service.LoginAuthService - 用户登录成功，username=admin，accountId=1
+2025-12-25 10:20:37.563 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:23:07.567 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:25:37.558 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:27:37.568 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:30:07.558 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:32:07.566 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:34:37.562 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:36:37.567 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:39:07.553 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:41:07.568 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:43:37.555 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:44:03.696 [http-nio-8101-exec-4] INFO  j.exp.auth.service.LoginAuthService - 用户尝试登录，username=admin
+2025-12-25 10:44:04.123 [http-nio-8101-exec-4] INFO  j.exp.auth.service.LoginAuthService - 用户登录成功，username=admin，accountId=1
+2025-12-25 10:44:38.381 [http-nio-8101-exec-1] ERROR o.a.c.c.C.[.[.[.[dispatcherServlet] - Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed: java.lang.IllegalArgumentException: 用户id不能为空] with root cause
+java.lang.IllegalArgumentException: 用户id不能为空
+	at cn.hutool.core.lang.Assert.lambda$notNull$3(Assert.java:217)
+	at cn.hutool.core.lang.Assert.notNull(Assert.java:197)
+	at cn.hutool.core.lang.Assert.notNull(Assert.java:217)
+	at jh.exp.auth.controller.bus.PersonController.updatePersonInfo(PersonController.java:67)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:255)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:188)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:926)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:831)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:206)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:365)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:352)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:268)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at jh.exp.common.filter.CurrentUserFilter.doFilterInternal(CurrentUserFilter.java:48)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.__invoke(StandardContextValve.java:90)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:41002)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:391)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:896)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1736)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+2025-12-25 10:46:27.512 [http-nio-8101-exec-5] WARN  o.s.w.s.m.s.DefaultHandlerExceptionResolver - Resolved [org.springframework.http.converter.HttpMessageNotReadableException: Required request body is missing: public jh.exp.common.res.SimplePageRes<jh.exp.auth.entity.res.PersonInfoRes> jh.exp.auth.controller.bus.PersonController.queryPersonInfo(jh.exp.common.req.SimplePageReq<jh.exp.auth.entity.req.QueryPersonReq>)]
+2025-12-25 10:46:59.232 [http-nio-8101-exec-6] WARN  o.s.w.s.m.s.DefaultHandlerExceptionResolver - Resolved [org.springframework.http.converter.HttpMessageNotReadableException: Required request body is missing: public jh.exp.common.res.SimplePageRes<jh.exp.auth.entity.res.PersonInfoRes> jh.exp.auth.controller.bus.PersonController.queryPersonInfo(jh.exp.common.req.SimplePageReq<jh.exp.auth.entity.req.QueryPersonReq>)]
+2025-12-25 10:47:08.486 [http-nio-8101-exec-9] WARN  o.s.w.s.m.s.DefaultHandlerExceptionResolver - Resolved [org.springframework.http.converter.HttpMessageNotReadableException: Required request body is missing: public jh.exp.common.res.SimplePageRes<jh.exp.auth.entity.res.PersonInfoRes> jh.exp.auth.controller.bus.PersonController.queryPersonInfo(jh.exp.common.req.SimplePageReq<jh.exp.auth.entity.req.QueryPersonReq>)]
+2025-12-25 10:47:23.202 [http-nio-8101-exec-10] WARN  o.s.w.s.m.s.DefaultHandlerExceptionResolver - Resolved [org.springframework.http.converter.HttpMessageNotReadableException: Required request body is missing: public jh.exp.common.res.SimplePageRes<jh.exp.auth.entity.res.PersonInfoRes> jh.exp.auth.controller.bus.PersonController.queryPersonInfo(jh.exp.common.req.SimplePageReq<jh.exp.auth.entity.req.QueryPersonReq>)]
+2025-12-25 10:49:37.558 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:52:07.554 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:54:07.567 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:56:07.567 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 10:58:37.566 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:01:07.566 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:03:37.558 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:05:37.563 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:08:07.559 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:10:07.567 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:12:37.553 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:14:37.559 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:17:07.565 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:19:37.567 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:22:07.562 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:24:37.568 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:27:07.566 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:29:37.555 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:30:17.754 [Thread-12] WARN  c.a.n.c.executor.ThreadPoolManager - [ThreadPoolManager] Start destroying ThreadPool
+2025-12-25 11:30:17.754 [Thread-26] WARN  c.a.nacos.common.notify.NotifyCenter - [NotifyCenter] Start destroying Publisher
+2025-12-25 11:30:17.754 [Thread-26] WARN  c.a.nacos.common.notify.NotifyCenter - [NotifyCenter] Destruction of the end
+2025-12-25 11:30:17.755 [Thread-12] WARN  c.a.n.c.executor.ThreadPoolManager - [ThreadPoolManager] Destruction of the end
+2025-12-25 11:30:17.756 [Thread-28] WARN  c.a.n.c.http.HttpClientBeanHolder - [HttpClientBeanHolder] Start destroying common HttpClient
+2025-12-25 11:30:17.758 [Thread-28] WARN  c.a.n.c.http.HttpClientBeanHolder - [HttpClientBeanHolder] Destruction of the end
+2025-12-25 11:30:17.761 [SpringApplicationShutdownHook] INFO  c.a.c.n.r.NacosServiceRegistry - De-registering from Nacos Server now...
+2025-12-25 11:30:17.778 [SpringApplicationShutdownHook] INFO  c.a.c.n.r.NacosServiceRegistry - De-registration finished.
+2025-12-25 11:30:28.236 [main] INFO  c.a.n.client.logging.NacosLogging - Nacos Logging Adapter Builder: com.alibaba.nacos.logger.adapter.logback12.LogbackNacosLoggingAdapterBuilder
+2025-12-25 11:30:28.246 [main] INFO  c.a.n.client.logging.NacosLogging - Nacos Logging Adapter Builder: com.alibaba.nacos.logger.adapter.logback14.LogbackNacosLoggingAdapterBuilder
+2025-12-25 11:30:28.247 [main] INFO  c.a.n.client.logging.NacosLogging - Nacos Logging Adapter: com.alibaba.nacos.logger.adapter.logback14.LogbackNacosLoggingAdapter match ch.qos.logback.classic.Logger success.
+2025-12-25 11:30:28.273 [main] INFO  c.a.n.client.logging.NacosLogging - Nacos Logging Adapter Builder: com.alibaba.nacos.logger.adapter.log4j2.Log4j2NacosLoggingAdapterBuilder
+2025-12-25 11:30:28.304 [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.1.Final
+2025-12-25 11:30:28.994 [main] INFO  jh.exp.auth.AuthApplication - Starting AuthApplication using Java 17.0.12 with PID 30332 (D:\ieda_deta\exp_v2\exp-auth\exp-auth-service\target\classes started by Administrator in D:\ieda_deta\exp_v2)
+2025-12-25 11:30:28.995 [main] INFO  jh.exp.auth.AuthApplication - No active profile set, falling back to 1 default profile: "default"
+2025-12-25 11:30:31.644 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2025-12-25 11:30:31.652 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 11:30:31.705 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 23 ms. Found 0 JPA repository interfaces.
+2025-12-25 11:30:31.762 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2025-12-25 11:30:31.765 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 11:30:31.803 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 12 ms. Found 0 Redis repository interfaces.
+2025-12-25 11:30:32.565 [main] INFO  o.s.cloud.context.scope.GenericScope - BeanFactory id=bffd30f7-aa37-3b98-aee1-c501ee746027
+2025-12-25 11:30:33.779 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8101 (http)
+2025-12-25 11:30:33.824 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8101"]
+2025-12-25 11:30:33.826 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-12-25 11:30:33.827 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.20]
+2025-12-25 11:30:34.014 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-12-25 11:30:34.015 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 4927 ms
+2025-12-25 11:30:34.441 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-25 11:30:34.585 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.4.4.Final
+2025-12-25 11:30:34.719 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-12-25 11:30:35.445 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-25 11:30:35.508 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-12-25 11:30:35.904 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@31cb8d24
+2025-12-25 11:30:35.909 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-12-25 11:30:38.483 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-25 11:30:38.648 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-12-25 11:30:40.067 [main] WARN  c.b.m.c.injector.DefaultSqlInjector - class jh.exp.auth.entity.Role ,Not found @TableId annotation, Cannot use Mybatis-Plus 'xxById' Method.
+2025-12-25 11:30:40.357 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-25 11:30:40.393 [main] WARN  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: cb8eab27-caaf-4069-ab38-682888203128
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-12-25 11:30:41.002 [main] INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@407d8db5, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@36ed5ec7, org.springframework.security.web.context.SecurityContextHolderFilter@438d63fa, org.springframework.security.web.header.HeaderWriterFilter@15f5679e, org.springframework.web.filter.CorsFilter@a3db615, org.springframework.security.web.authentication.logout.LogoutFilter@10993c44, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@7f74459a, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@439906e5, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@77510a13, org.springframework.security.web.access.ExceptionTranslationFilter@2ec930aa, org.springframework.security.web.access.intercept.AuthorizationFilter@37082dd0]
+2025-12-25 11:30:41.689 [main] INFO  c.b.m.e.s.MybatisPlusApplicationContextAware - Register ApplicationContext instances org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@41dcf819
+2025-12-25 11:30:43.169 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8101"]
+2025-12-25 11:30:43.260 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8101 (http) with context path ''
+2025-12-25 11:30:43.385 [main] INFO  c.a.n.p.a.s.c.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.impl.NacosClientAuthServiceImpl success.
+2025-12-25 11:30:43.386 [main] INFO  c.a.n.p.a.s.c.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.ram.RamClientAuthServiceImpl success.
+2025-12-25 11:30:45.660 [main] INFO  c.a.n.c.a.AbstractAbilityControlManager - Ready to get current node abilities...
+2025-12-25 11:30:45.662 [main] INFO  c.a.n.c.a.AbstractAbilityControlManager - Ready to initialize current node abilities, support modes: [SDK_CLIENT]
+2025-12-25 11:30:45.664 [main] INFO  c.a.n.c.a.AbstractAbilityControlManager - Initialize current abilities finish...
+2025-12-25 11:30:45.665 [main] INFO  c.a.n.c.a.d.NacosAbilityManagerHolder - [AbilityControlManager] Successfully initialize AbilityControlManager
+2025-12-25 11:30:45.731 [main] INFO  c.a.c.n.r.NacosServiceRegistry - nacos registry, DEFAULT_GROUP exp-auth 192.168.56.1:8101 register finished
+2025-12-25 11:30:45.985 [main] INFO  jh.exp.auth.AuthApplication - Started AuthApplication in 19.113 seconds (process running for 22.153)
+2025-12-25 11:30:50.166 [http-nio-8101-exec-2] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-25 11:30:50.167 [http-nio-8101-exec-2] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-12-25 11:30:50.168 [http-nio-8101-exec-2] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2025-12-25 11:31:55.624 [http-nio-8101-exec-3] ERROR j.e.a.c.bus.PersonController - 修改用户信息异常!
+java.lang.NullPointerException: Cannot invoke "String.equals(Object)" because "status" is null
+	at jh.exp.auth.service.bus.Impl.PersonServiceImpl.updatePersonInfo(PersonServiceImpl.java:84)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:354)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:716)
+	at jh.exp.auth.service.bus.Impl.PersonServiceImpl$$SpringCGLIB$$0.updatePersonInfo(<generated>)
+	at jh.exp.auth.controller.bus.PersonController.updatePersonInfo(PersonController.java:69)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:255)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:188)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:926)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:831)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:206)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:365)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:352)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:268)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at jh.exp.common.filter.CurrentUserFilter.doFilterInternal(CurrentUserFilter.java:48)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.__invoke(StandardContextValve.java:90)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:41002)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:391)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:896)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1736)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+2025-12-25 11:33:17.126 [http-nio-8101-exec-5] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 11:33:17.132 [http-nio-8101-exec-5] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 JPA repository interfaces.
+2025-12-25 11:33:17.133 [http-nio-8101-exec-5] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 11:33:17.138 [http-nio-8101-exec-5] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-12-25 11:33:17.144 [http-nio-8101-exec-5] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 11:33:17.422 [http-nio-8101-exec-5] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-25 11:33:17.446 [http-nio-8101-exec-5] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-25 11:33:17.921 [http-nio-8101-exec-5] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-25 11:33:17.962 [http-nio-8101-exec-5] ERROR j.e.a.c.bus.PersonController - 修改用户信息异常!
+java.lang.NullPointerException: Cannot invoke "String.equals(Object)" because "status" is null
+	at jh.exp.auth.service.bus.Impl.PersonServiceImpl.updatePersonInfo(PersonServiceImpl.java:84)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:354)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:716)
+	at jh.exp.auth.service.bus.Impl.PersonServiceImpl$$SpringCGLIB$$0.updatePersonInfo(<generated>)
+	at jh.exp.auth.controller.bus.PersonController.updatePersonInfo(PersonController.java:69)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:255)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:188)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:926)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:831)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:206)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:365)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:352)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:268)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at jh.exp.common.filter.CurrentUserFilter.doFilterInternal(CurrentUserFilter.java:48)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.__invoke(StandardContextValve.java:90)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:41002)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:391)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:896)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1736)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+2025-12-25 11:35:28.215 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:37:22.356 [http-nio-8101-exec-7] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-25 11:37:22.375 [http-nio-8101-exec-7] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 19 ms. Found 0 JPA repository interfaces.
+2025-12-25 11:37:22.376 [http-nio-8101-exec-7] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-12-25 11:37:22.383 [http-nio-8101-exec-7] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
+2025-12-25 11:37:22.388 [http-nio-8101-exec-7] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[jh.exp.auth]' package. Please check your configuration.
+2025-12-25 11:39:28.224 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:41:28.226 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:43:58.217 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:45:58.222 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:47:58.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:49:58.226 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:52:28.229 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:54:58.222 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:57:28.220 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 11:59:28.226 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:01:58.213 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:03:58.217 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:05:58.218 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:08:28.216 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:10:58.223 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:12:58.223 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:15:28.227 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:17:58.219 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:19:58.220 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:21:58.224 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:24:28.218 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:26:28.228 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:28:58.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:30:58.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:33:28.216 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:35:28.223 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:37:58.224 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:39:58.226 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:42:28.218 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:44:58.215 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:46:58.226 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:48:58.226 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:51:28.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:53:58.214 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:55:58.219 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 12:58:28.218 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:00:28.220 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:02:28.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:04:58.224 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:07:28.228 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:09:28.229 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:11:58.224 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:14:28.222 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:16:58.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:19:28.224 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:21:58.228 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:24:28.215 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:26:28.223 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:28:28.226 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:30:58.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:33:28.226 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:35:58.224 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:38:28.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:40:58.224 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:43:28.221 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:45:58.223 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:48:28.215 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:50:28.215 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:52:28.229 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:54:58.223 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:56:58.227 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 13:58:58.229 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:01:28.214 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:03:28.216 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:05:28.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:07:28.226 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:09:58.218 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:11:58.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:14:28.221 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:16:28.227 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:18:58.218 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:21:28.223 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:23:28.228 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:25:58.216 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:28:28.216 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:30:28.227 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:32:58.221 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:34:58.222 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:37:28.219 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:39:28.220 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:41:58.224 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:44:28.224 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:46:58.228 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:49:28.217 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:51:28.218 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:53:58.227 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:55:04.848 [http-nio-8101-exec-9] INFO  j.exp.auth.service.LoginAuthService - 用户尝试登录，username=admin
+2025-12-25 14:55:05.471 [http-nio-8101-exec-9] INFO  j.exp.auth.service.LoginAuthService - 用户登录成功，username=admin，accountId=1
+2025-12-25 14:57:28.214 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 14:59:28.223 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 15:01:28.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 15:03:58.221 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 15:06:28.221 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 15:08:58.215 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 15:10:58.225 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======
+2025-12-25 15:12:58.387 [idle-monitor-exp-auth] INFO  SERVICE_IDLE_MONITOR - ====== [SERVICE_IDLE] [exp-auth] 系统已进入休眠，等待激活 ======

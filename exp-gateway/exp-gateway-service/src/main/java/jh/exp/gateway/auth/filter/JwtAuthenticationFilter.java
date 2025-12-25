@@ -36,7 +36,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
      */
     private static final Set<String> WHITE_LIST = Set.of(
             "/exp/auth/login",
-            "/api/exp/auth/login",
+            "/exp/zz/**",
             "/actuator/health",
             "/actuator/info",
             "/swagger-ui.html",
@@ -107,10 +107,14 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     ServerHttpRequest mutated = request.mutate()
                             .header("X-User-Id", finalPayload.userId())
                             .header("X-User-Name", finalPayload.username())
+                            // 标准头：下游服务 CurrentUserFilter 默认读取 X-Roles / X-Permissions
+                            .header("X-Roles", String.join(",", finalPayload.roles()))
+                            .header("X-Permissions", String.join(",", finalPayload.permissions()))
+                            // 兼容旧命名（如历史服务读取 X-User-Roles / X-User-Permissions）
                             .header("X-User-Roles", String.join(",", finalPayload.roles()))
                             .header("X-User-Permissions", String.join(",", finalPayload.permissions()))
                             .build();
-                    log.debug("JWT 鉴权通过，userId={}，path={}", finalPayload.userId(), path);
+                    log.info("JWT 鉴权通过，userId={}，path={}", finalPayload.userId(), path);
                     return chain.filter(exchange.mutate().request(mutated).build());
                 });
     }

@@ -1,5 +1,6 @@
 package jh.exp.auth.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "exp_org_post_rel")
+@TableName("exp_org_post_rel")
 public class OrgPostRel {
 
     @Id

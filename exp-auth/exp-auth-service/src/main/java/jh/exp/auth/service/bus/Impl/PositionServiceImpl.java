@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.mapper.PositionMapper;
 import jh.exp.auth.entity.Position;
-import jh.exp.auth.entity.Req.QueryPositionReq;
+import jh.exp.auth.entity.req.QueryPositionReq;
 import jh.exp.auth.service.bus.PositionService;
 import jh.exp.common.constant.CommonConstant;
 import jh.exp.common.req.SimplePageReq;
@@ -20,8 +20,6 @@ public class PositionServiceImpl implements PositionService{
     private PositionMapper positionMapper;
     @Override
     public SimplePageRes<Position> queryPosition(SimplePageReq<QueryPositionReq> positionReq) {
-        //page参数校验
-        positionReq.pageDefault();
         int pageNum = positionReq.getPageNum();
         int pageSize = positionReq.getPageSize();
         String sort = positionReq.getSort();

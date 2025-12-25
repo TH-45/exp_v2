@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jh.exp.auth.entity.Position;
 
-import jh.exp.auth.entity.Req.QueryPositionReq;
+import jh.exp.auth.entity.req.QueryPositionReq;
 import jh.exp.auth.service.bus.PositionService;
 import jh.exp.common.annotation.RequiresPermissions;
 import jh.exp.common.auth.CurrentUserHolder;
@@ -30,8 +30,10 @@ public class PositionController {
      */
     @PostMapping(value = "/queryList")
     @RequiresPermissions( value = {"position:query"} )
-    public SimplePageRes<Position> queryList(HttpServletRequest request, @RequestBody @Valid SimplePageReq<QueryPositionReq> positionReq) {
+    public SimplePageRes<Position> queryList(@RequestBody @Valid SimplePageReq<QueryPositionReq> positionReq) {
         CurrentUser currentUser = CurrentUserHolder.get();
+        //page参数校验
+        positionReq.pageDefault();
         try{
             return positionService.queryPosition(positionReq);
         }catch (Exception e){

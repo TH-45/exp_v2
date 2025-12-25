@@ -1,4 +1,4 @@
-package jh.exp.auth.entity.Req;
+package jh.exp.auth.entity.req;
 
 import lombok.Data;
 

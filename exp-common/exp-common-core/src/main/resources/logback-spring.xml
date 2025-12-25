@@ -40,10 +40,7 @@
         <checkIntervalSeconds>30</checkIntervalSeconds>
     </appender>
 
-    <!-- 业务包可以单独调试级别（如需） -->
-    <logger name="jh.exp" level="INFO"/>
-
-    <!-- 根日志级别 -->
+    <!-- 根日志级别：具体包的级别建议通过 application.yml 的 logging.level.* 控制 -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>

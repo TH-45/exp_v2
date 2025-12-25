@@ -63,7 +63,7 @@ public class LoginAuthService {
         // 登录成功，重置失败次数并记录登录时间
         account.setLoginFailCount(0);
         account.setLastLoginTime(LocalDateTime.now());
-        accountMapper.update(account,null);
+        accountMapper.updateById(account);
 
         LoginUserInfo info = new LoginUserInfo();
         info.setUserId(String.valueOf(account.getAccountId()));

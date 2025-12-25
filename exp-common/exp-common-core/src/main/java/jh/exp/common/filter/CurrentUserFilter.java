@@ -5,7 +5,6 @@ import jh.exp.common.auth.dto.CurrentUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -25,10 +24,14 @@ import java.util.stream.Collectors;
  *     <li>X-Dept-Name：部门名称（可选）</li>
  *     <li>X-Roles：角色编码，英文逗号分隔（可选）</li>
  *     <li>X-Permissions：权限编码，英文逗号分隔（可选）</li>
- *     <li>X-Data-Scope：数据权限范围标识（可选）</li>
+ * </ul>
+ * <p>
+ * 兼容网关旧命名：
+ * <ul>
+ *     <li>X-User-Roles</li>
+ *     <li>X-User-Permissions</li>
  * </ul>
  */
-@Component
 public class CurrentUserFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(CurrentUserFilter.class);
@@ -37,7 +40,6 @@ public class CurrentUserFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull jakarta.servlet.http.HttpServletRequest request,
                                     @NonNull jakarta.servlet.http.HttpServletResponse response,
                                     @NonNull jakarta.servlet.FilterChain filterChain) throws jakarta.servlet.ServletException, IOException {
-
         try {
             CurrentUser currentUser = resolveFromHeaders(request);
             if (currentUser != null) {
@@ -64,12 +66,17 @@ public class CurrentUserFilter extends OncePerRequestFilter {
         currentUser.setUsername(userName);
         currentUser.setDeptId(request.getHeader("X-Dept-Id"));
         currentUser.setDeptName(request.getHeader("X-Dept-Name"));
-        currentUser.setDataScope(request.getHeader("X-Data-Scope"));
 
-        String rolesHeader = request.getHeader("X-Roles");
+        String rolesHeader = firstNonBlank(
+                request.getHeader("X-Roles"),
+                request.getHeader("X-User-Roles")
+        );
         currentUser.setRoles(splitToList(rolesHeader));
 
-        String permsHeader = request.getHeader("X-Permissions");
+        String permsHeader = firstNonBlank(
+                request.getHeader("X-Permissions"),
+                request.getHeader("X-User-Permissions")
+        );
         currentUser.setPermissions(splitToList(permsHeader));
 
         if (log.isDebugEnabled()) {
@@ -77,6 +84,15 @@ public class CurrentUserFilter extends OncePerRequestFilter {
         }
 
         return currentUser;
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String v : values) {
+            if (StringUtils.hasText(v)) {
+                return v;
+            }
+        }
+        return null;
     }
 
     private List<String> splitToList(String header) {
