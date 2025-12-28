@@ -1,6 +1,6 @@
 package jh.exp.auth.service.bus;
 
-import jh.exp.auth.entity.req.PersonExpReq;
+import jh.exp.auth.entity.exp.PersonExp;
 import jh.exp.auth.entity.req.QueryPersonReq;
 import jh.exp.auth.entity.res.PersonInfoRes;
 import jh.exp.common.req.SimplePageReq;
@@ -11,5 +11,7 @@ public interface PersonService {
 
     void updatePersonStatus(Long personId,String status);
 
-    void updatePersonInfo(PersonExpReq personExpReq);
+    void updatePersonInfo(PersonExp personExpReq);
+
+    PersonExp queryPersonDetail(Long personId);
 }

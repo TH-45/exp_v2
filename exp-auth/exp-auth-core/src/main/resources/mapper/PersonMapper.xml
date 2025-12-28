@@ -3,11 +3,13 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="jh.exp.auth.mapper.PersonMapper">
-    <update id="updateByExp" parameterType="jh.exp.auth.entity.ExpPerson">
-        update exp_person
-
-
+    <update id="updateByExp" parameterType="jh.exp.auth.entity.exp.PersonExp">
+        UPDATE exp_person
+        <set>
+            <if test="orgName!= null and orgName != ''">
+        </set>
     </update>
+
 
     <select id="selectPositionPage"
             resultType="jh.exp.auth.entity.res.PersonInfoRes">

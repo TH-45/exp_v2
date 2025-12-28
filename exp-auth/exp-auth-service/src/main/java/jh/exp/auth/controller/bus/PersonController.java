@@ -2,7 +2,7 @@ package jh.exp.auth.controller.bus;
 
 import cn.hutool.core.lang.Assert;
 import jakarta.validation.constraints.NotNull;
-import jh.exp.auth.entity.req.PersonExpReq;
+import jh.exp.auth.entity.exp.PersonExp;
 import jh.exp.auth.entity.req.QueryPersonReq;
 import jh.exp.auth.entity.res.PersonInfoRes;
 import jh.exp.auth.service.bus.PersonService;
@@ -12,10 +12,7 @@ import jh.exp.common.res.SimplePageRes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/person")
@@ -45,7 +42,7 @@ public class PersonController {
      * @return
      */
     @PostMapping("/enabledPerson")
-    public ApiResponse<Object> enabledPerson(@RequestBody @NotNull PersonExpReq personExpReq) {
+    public ApiResponse<Object> enabledPerson(@RequestBody @NotNull PersonExp personExpReq) {
         Long personId = personExpReq.getPersonId();
         String status = personExpReq.getStatus();
         Assert.notNull(personId,"用户ID不能为空");
@@ -63,13 +60,31 @@ public class PersonController {
      * 修改用户信息
      */
     @PostMapping("/updatePersonInfo")
-    public ApiResponse<Object> updatePersonInfo(@RequestBody @NotNull PersonExpReq personExpReq) {
+    public ApiResponse<Object> updatePersonInfo(@RequestBody @NotNull PersonExp personExpReq) {
         Assert.notNull(personExpReq.getPersonId(),"用户id不能为空");
         try {
             personService.updatePersonInfo(personExpReq);
             return ApiResponse.success(null);
         }catch (Exception e){
             log.error("修改用户信息异常!", e);
+            return ApiResponse.fail(null, e.getMessage());
+        }
+    }
+
+    /**
+     * 查询用户明细
+     * 请求/queryPersonDetail?personId=1
+     */
+    @PostMapping("/queryPersonDetail")
+    public ApiResponse<PersonExp> queryPersonDetail(@NotNull Long personId) {
+        Assert.notNull(personId,"用户id不能为空");
+        Assert.isTrue(personId > 0,"用户id错误");
+
+        try{
+            PersonExp personExp=personService.queryPersonDetail(personId);
+            return ApiResponse.success(personExp);
+        }catch (Exception e){
+            log.error("查询用户明细异常!", e);
             return ApiResponse.fail(null, e.getMessage());
         }
     }

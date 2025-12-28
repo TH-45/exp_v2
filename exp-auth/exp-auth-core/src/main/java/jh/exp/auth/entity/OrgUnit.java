@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "exp_org_unit")
 @TableName("exp_org_unit")
-public class ExpOrgUnit {
+public class OrgUnit {
     // 主键ID（自增）
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
