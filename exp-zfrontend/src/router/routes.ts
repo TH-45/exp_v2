@@ -32,9 +32,19 @@ const routes: RouteRecordRaw[] = [
         name: 'SystemUser',
         component: () => import('@/views/System/User/index.vue'),
         meta: {
-          title: '用户管理',
+          title: '账号管理',
           icon: 'User',
           perms: ['system:user:view'],
+        },
+      },
+      {
+        path: 'system/post',
+        name: 'SystemPost',
+        component: () => import('@/views/System/Post/index.vue'),
+        meta: {
+          title: '岗位管理',
+          icon: 'Suitcase',
+          perms: ['system:post:view'],
         },
       },
     ],

@@ -36,9 +36,12 @@ router.beforeEach(async (to, _from, next) => {
   // 简单路由级权限控制：根据 meta.perms 与用户 permissions 判断
   const requiredPerms = to.meta.perms as string[] | undefined;
   if (requiredPerms && requiredPerms.length > 0) {
-    const hasPerm = requiredPerms.some((p) => userStore.permissions.includes(p));
-    if (!hasPerm) {
-      return next({ path: '/403' });
+    // 管理员直接放行
+    if (!userStore.isAdmin) {
+      const hasPerm = requiredPerms.some((p) => userStore.permissions.includes(p));
+      if (!hasPerm) {
+        return next({ path: '/403' });
+      }
     }
   }
 

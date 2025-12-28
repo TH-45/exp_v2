@@ -13,6 +13,6 @@ public class OrgUnitController {
     /**
      * 查询部门信息
      */
-    public ApiResult<List<OrgUnit>> queryOrgUnit() {
+//    public ApiResult<List<OrgUnit>> queryOrgUnit() {
 
 }

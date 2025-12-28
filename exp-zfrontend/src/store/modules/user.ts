@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { computed,ref } from 'vue';
 import { loginApi, getProfileApi, type ProfileResult } from '@/api/auth';
 
 export const useUserStore = defineStore('user', () => {
@@ -10,6 +10,7 @@ export const useUserStore = defineStore('user', () => {
   const permissions = ref<string[]>([]);
   const menus = ref<string[]>([]);
   const profileLoaded = ref(false);
+  const isAdmin = computed(() => roles.value.some(role => role.toLowerCase() === 'admin'));
 
   const setToken = (val: string) => {
     token.value = val;
@@ -61,6 +62,7 @@ export const useUserStore = defineStore('user', () => {
     username,
     userId,
     roles,
+    isAdmin,
     permissions,
     menus,
     profileLoaded,

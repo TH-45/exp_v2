@@ -699,3 +699,34 @@ id	字段名称	备注
 9	is_primary	是否主要联系人（0/1）
 10	status	状态（ENABLED-启用，DISABLED-停用）
 11	remark	备注
+-----------------------------------------------------------------------
+
+字典项定义表 sys_dict_item
+1	id	主键ID
+2	dict_code	字典类型编码（全局唯一，如 USER_STATUS、ORDER_STATUS，供程序和业务引用）
+3	dict_name	字典类型名称（如“用户状态”“订单状态”）
+4	biz_module	所属业务模块（如 SYS、HR、FIN、OMS，用于模块化管理）
+5	description	字典类型说明（描述该字典的业务含义及使用场景）
+6	status	字典类型状态（启用：ENABLED，停用：DISABLED）
+7	is_system	是否系统内置字典（0/1，系统预置字典一般不允许删除，仅允许启停）
+8	created_by	创建人用户ID，关联账号信息表
+9	created_time	创建时间
+10	updated_by	更新人用户ID
+11	updated_time	更新时间
+
+字典项多语言定义表 sys_dict_item_i18n
+1	id	主键ID
+2	dict_code	所属字典类型编码（关联 sys_dict_type.dict_code）
+3	item_code	字典项编码（程序内部使用，如 ENABLE、DISABLE、ADMIN）
+4	item_value	字典项值（业务表实际存储的值，一旦上线禁止修改）
+5	item_label	字典项显示名称（如“启用”“停用”）
+6	parent_id	父级字典项ID（0 表示根节点，用于树形字典结构，如分类、省市区等）
+7	sort_no	排序号（用于下拉框、列表展示顺序）
+8	status	字典项状态（启用：ENABLED，停用：DISABLED）
+9	is_default	是否默认项（0/1，用于新建数据时的默认值）
+10	tenant_id	租户ID（0 表示平台级字典，用于多租户 ERP 场景）
+11	remark	备注说明
+12	created_time	创建时间
+13	updated_time	更新时间
+
+
