@@ -5,7 +5,6 @@ import jh.exp.auth.entity.Account;
 public class AccountExp extends Account implements ExpEntity{
 
     //123
-    //1234
 
 
     @Override
