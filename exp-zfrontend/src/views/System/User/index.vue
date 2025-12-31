@@ -301,6 +301,61 @@ const genderMap: Record<string, string> = {
   OTHER: '未知',
 };
 
+// 人员查询接口（按你提供的地址直连）
+const PERSON_QUERY_URL = 'http://192.168.101.128/api/exp/auth/person/queryPersonInfo';
+let lastListAbortController: AbortController | null = null;
+
+function normalizeListResponse(raw: any): { list: ExpPersonVO[]; total: number } {
+  // 兼容常见返回结构：{list,total} / {rows,total} / {records,total} / {data:{list,total}} / {data:{rows,total}} ...
+  const body = raw?.data ?? raw ?? {};
+  const list: ExpPersonVO[] =
+    body?.list ?? body?.rows ?? body?.records ?? body?.data?.list ?? body?.data?.rows ?? body?.data?.records ?? [];
+  // 注意：total 可能合法为 0，不能用 `||` 回退
+  const total: number =
+    body?.total ?? body?.data?.total ?? raw?.total ?? raw?.data?.total ?? (Array.isArray(list) ? list.length : 0);
+  return { list: Array.isArray(list) ? list : [], total: Number(total) || 0 };
+}
+
+async function requestPersonList(params: Record<string, any>) {
+  // 取消上一次未完成的列表请求，避免快速点击/翻页导致的结果覆盖
+  if (lastListAbortController) {
+    lastListAbortController.abort();
+  }
+  lastListAbortController = new AbortController();
+
+  // 尽量带上常见 token（如果项目用 cookie 会走 credentials: include）
+  const rawToken =
+    localStorage.getItem('token') ||
+    localStorage.getItem('access_token') ||
+    localStorage.getItem('Authorization') ||
+    sessionStorage.getItem('token') ||
+    sessionStorage.getItem('access_token') ||
+    sessionStorage.getItem('Authorization') ||
+    '';
+  const token = rawToken && rawToken.startsWith('Bearer ') ? rawToken : rawToken ? `Bearer ${rawToken}` : '';
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) headers.Authorization = token;
+
+  const resp = await fetch(PERSON_QUERY_URL, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(params),
+    credentials: 'include',
+    signal: lastListAbortController.signal,
+  });
+
+  if (!resp.ok) {
+    throw new Error(`queryPersonInfo http error: ${resp.status}`);
+  }
+
+  // 有些后端会返回空 body
+  const json = await resp.json().catch(() => ({}));
+  return json;
+}
+
 const genderOptions = [
   { label: '男', value: 'M' },
   { label: '女', value: 'F' },
@@ -430,13 +485,27 @@ function formatGender(row: ExpPersonVO) {
 async function fetchList() {
   loading.value = true;
   try {
-    const res = await queryPersonInfo({ ...query });
-    let list = (res.list || res.rows || res.records) ?? [];
-    if (!list.length) {
-      list = mockData;
+    // 优先按指定地址直连请求；如联调环境受 CORS/鉴权影响失败，则兜底用原 api 封装
+    let res: any;
+    try {
+      // 你的接口返回字段使用 page/size，这里请求参数也同时带上 page/size，兼容后端入参
+      res = await requestPersonList({
+        ...query,
+        page: query.pageNum,
+        size: query.pageSize,
+      });
+    } catch (e) {
+      // Abort 不算失败（用户快速操作时很常见）
+      if ((e as any)?.name === 'AbortError') return;
+      res = await queryPersonInfo({ ...query });
     }
+
+    const normalized = normalizeListResponse(res);
+    let list = normalized.list ?? [];
+    if (!list.length) list = mockData;
     tableData.value = list;
-    total.value = res.total ?? list.length;
+    // total=0 也是合法值，不能用 `||` 回退
+    total.value = normalized.total ?? list.length;
   } catch (e) {
     // 接口异常时也用本地示例数据，方便无后端联调
     tableData.value = mockData;
@@ -449,6 +518,11 @@ async function fetchList() {
 }
 
 function handleSearch() {
+  // 清洗输入，避免前后空格导致的“查不到”
+  query.personCode = (query.personCode || '').trim();
+  query.personName = (query.personName || '').trim();
+  query.mobile = (query.mobile || '').trim();
+
   query.pageNum = 1;
   fetchList();
 }
