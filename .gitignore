@@ -38,5 +38,5 @@ build/
 
 /docs/**
 
-*.md
+.md
 /docs/
