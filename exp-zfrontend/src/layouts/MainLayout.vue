@@ -50,6 +50,46 @@
           </el-menu-item>
         </el-sub-menu>
 
+        <!-- 企业信息管理 -->
+        <el-sub-menu v-if="canCorpView" index="/corp-project/corp-info">
+          <template #title>企业信息管理</template>
+          <!-- 概览页面 -->
+          <el-menu-item index="/corp-project">
+            概览
+          </el-menu-item>
+          <el-menu-item v-if="canAccountView" index="/corp-project/corp-info/accounts">
+            账号信息管理
+          </el-menu-item>
+          <el-menu-item v-if="canAnnouncementView" index="/corp-project/corp-info/announcements">
+            制度与公告
+          </el-menu-item>
+          <el-menu-item v-if="canQualificationView" index="/corp-project/corp-info/qualifications">
+            企业资质管理
+          </el-menu-item>
+          <el-menu-item v-if="canBasicInfoView" index="/corp-project/corp-info/basic-info">
+            企业基础信息
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 工程项目管理 -->
+        <el-sub-menu v-if="canProjectView" index="/corp-project/project-mgmt">
+          <template #title>工程项目管理</template>
+          <el-menu-item v-if="canProjectView" index="/corp-project/project-mgmt/projects">
+            项目管理
+          </el-menu-item>
+          <el-menu-item v-if="canProjectView" index="/corp-project/project-mgmt/members">
+            项目人员配置
+          </el-menu-item>
+          <el-menu-item v-if="canProjectView" index="/corp-project/project-mgmt/progress">
+            项目进度管理
+          </el-menu-item>
+          <el-menu-item v-if="canProjectView" index="/corp-project/project-mgmt/materials">
+            项目物料管理
+          </el-menu-item>
+        </el-sub-menu>
+
+
+
         <!-- 后续可按模块扩展更多菜单 -->
       </el-menu>
     </el-aside>
@@ -148,6 +188,17 @@ const canContractsAttachmentsView = computed(
 const canApprovalView = computed(
   () => userStore.isAdmin || userStore.permissions.includes('approval:task:view'),
 );
+// 企业信息与工程项目权限
+const canCorpView = computed(() => userStore.isAdmin || userStore.permissions.some(p =>
+  p.startsWith('corp:') && p.endsWith(':view')
+));
+const canProjectView = computed(() => userStore.isAdmin || userStore.permissions.some(p =>
+  p.startsWith('project:') && p.endsWith(':view')
+));
+const canAccountView = computed(() => userStore.isAdmin || userStore.permissions.includes('corp:account:view'));
+const canAnnouncementView = computed(() => userStore.isAdmin || userStore.permissions.includes('corp:announcement:view'));
+const canQualificationView = computed(() => userStore.isAdmin || userStore.permissions.includes('corp:qualification:view'));
+const canBasicInfoView = computed(() => userStore.isAdmin || userStore.permissions.includes('corp:basic:view'));
 
 const tabs = reactive<TabItem[]>([
   // {

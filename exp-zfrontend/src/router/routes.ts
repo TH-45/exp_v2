@@ -213,6 +213,100 @@ const routes: RouteRecordRaw[] = [
           perms: ['approval:task:view'],
         },
       },
+
+      // 企业信息与工程项目
+      {
+        path: 'corp-project',
+        name: 'CorpProject',
+        component: () => import('@/views/CorpProject/index.vue'),
+        meta: {
+          title: '企业信息与工程项目',
+          icon: 'OfficeBuilding',
+          perms: ['corp:info:view'],
+        },
+      },
+      // 企业信息管理
+      {
+        path: 'corp-project/corp-info/accounts',
+        name: 'CorpInfoAccounts',
+        component: () => import('@/views/CorpProject/CorpInfo/AccountManagement.vue'),
+        meta: {
+          title: '账号信息管理',
+          icon: 'User',
+          perms: ['corp:account:view'],
+        },
+      },
+      {
+        path: 'corp-project/corp-info/announcements',
+        name: 'CorpInfoAnnouncements',
+        component: () => import('@/views/CorpProject/CorpInfo/AnnouncementManagement.vue'),
+        meta: {
+          title: '制度与公告',
+          icon: 'Document',
+          perms: ['corp:announcement:view'],
+        },
+      },
+      {
+        path: 'corp-project/corp-info/qualifications',
+        name: 'CorpInfoQualifications',
+        component: () => import('@/views/CorpProject/CorpInfo/QualificationManagement.vue'),
+        meta: {
+          title: '企业资质管理',
+          icon: 'Medal',
+          perms: ['corp:qualification:view'],
+        },
+      },
+      {
+        path: 'corp-project/corp-info/basic-info',
+        name: 'CorpInfoBasicInfo',
+        component: () => import('@/views/CorpProject/CorpInfo/BasicInfoManagement.vue'),
+        meta: {
+          title: '企业基础信息',
+          icon: 'InfoFilled',
+          perms: ['corp:basic:view'],
+        },
+      },
+      // 工程项目管理
+      {
+        path: 'corp-project/project-mgmt/projects',
+        name: 'ProjectMgmtProjects',
+        component: () => import('@/views/CorpProject/ProjectMgmt/ProjectManagement.vue'),
+        meta: {
+          title: '项目管理',
+          icon: 'Management',
+          perms: ['project:project:view'],
+        },
+      },
+      {
+        path: 'corp-project/project-mgmt/members/:projectId?',
+        name: 'ProjectMgmtMembers',
+        component: () => import('@/views/CorpProject/ProjectMgmt/ProjectMembers.vue'),
+        meta: {
+          title: '项目人员配置',
+          icon: 'UserFilled',
+          perms: ['project:member:view'],
+        },
+      },
+      {
+        path: 'corp-project/project-mgmt/progress/:projectId?',
+        name: 'ProjectMgmtProgress',
+        component: () => import('@/views/CorpProject/ProjectMgmt/ProjectProgress.vue'),
+        meta: {
+          title: '项目进度管理',
+          icon: 'TrendCharts',
+          perms: ['project:progress:view'],
+        },
+      },
+      {
+        path: 'corp-project/project-mgmt/materials/:projectId?',
+        name: 'ProjectMgmtMaterials',
+        component: () => import('@/views/CorpProject/ProjectMgmt/ProjectMaterials.vue'),
+        meta: {
+          title: '项目物料管理',
+          icon: 'Box',
+          perms: ['project:material:view'],
+        },
+      },
     ],
   },
   {
