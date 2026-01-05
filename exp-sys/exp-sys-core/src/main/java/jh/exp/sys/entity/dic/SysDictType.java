@@ -1,4 +1,4 @@
-package jh.exp.auth.entity.dic;
+package jh.exp.sys.entity.dic;
 
 
 import com.baomidou.mybatisplus.annotation.*;

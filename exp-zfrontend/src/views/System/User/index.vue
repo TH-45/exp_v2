@@ -3,8 +3,29 @@
     <el-card>
       <template #header>
         <div class="header">
-          <div class="title">账号管理</div>
+          <div class="title">人员管理</div>
+          <!-- 顶部操作区（放在搜索与列表之间） -->
+          <div class="actions">
+            <el-button
+                type="primary"
+                size="small"
+                @click="handleAdd"
+                :disabled="!canManage"
+            >
+              新增人员信息
+            </el-button>
+            <el-button
+                size="small"
+                @click="openResetPwdDialog"
+                :disabled="!selectedRows.length || !canReset"
+            >
+              重置密码
+            </el-button>
+            <el-button size="small" :disabled="true">导入</el-button>
+            <el-button size="small" :disabled="true">导出</el-button>
+          </div>
         </div>
+
       </template>
 
       <!-- 搜索区 -->
@@ -14,10 +35,10 @@
         class="search-bar"
         @submit.prevent
       >
-        <el-form-item label="账号编码">
+        <el-form-item label="人员编码">
           <el-input
             v-model="query.personCode"
-            placeholder="请输入账号编码"
+            placeholder="请输入人员编码"
             clearable
             style="width: 200px"
           />
@@ -44,26 +65,7 @@
         </el-form-item>
       </el-form>
 
-      <!-- 顶部操作区（放在搜索与列表之间） -->
-      <div class="actions">
-        <el-button
-          type="primary"
-          size="small"
-          @click="handleAdd"
-          :disabled="!canManage"
-        >
-          新增账号
-        </el-button>
-        <el-button
-          size="small"
-          @click="openResetPwdDialog"
-          :disabled="!selectedRows.length || !canReset"
-        >
-          重置密码
-        </el-button>
-        <el-button size="small" :disabled="true">导入</el-button>
-        <el-button size="small" :disabled="true">导出</el-button>
-      </div>
+
 
     <!-- 列表区 -->
     <el-table
@@ -75,7 +77,7 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="50" />
-      <el-table-column prop="personCode" label="账号编码" min-width="140" />
+      <el-table-column prop="personCode" label="人员编码" min-width="140" />
       <el-table-column prop="personName" label="姓名" min-width="120" />
       <el-table-column
         prop="gender"
@@ -147,7 +149,7 @@
     <!-- 新增 / 编辑弹窗 -->
     <el-dialog
       v-model="editDialog.visible"
-      :title="editDialog.isEdit ? '编辑账号' : '新增账号'"
+      :title="editDialog.isEdit ? '编辑人员' : '新增人员'"
       width="760px"
       destroy-on-close
     >
@@ -158,7 +160,7 @@
         label-width="100px"
         class="dialog-form two-col"
       >
-        <el-form-item label="账号编码" prop="personCode">
+        <el-form-item label="人员编码" prop="personCode">
           <el-input v-model="form.personCode" disabled />
         </el-form-item>
         <el-form-item label="姓名" prop="personName">
@@ -246,7 +248,7 @@
       destroy-on-close
     >
       <div class="reset-tip">
-        将重置 {{ selectedRows.length }} 个账号的密码，请确认。
+        将重置 {{ selectedRows.length }} 个人员的密码，请确认。
       </div>
       <el-form ref="resetFormRef" :model="resetForm" :rules="resetRules" label-width="100px">
         <el-form-item label="新密码" prop="newPassword">
@@ -301,61 +303,6 @@ const genderMap: Record<string, string> = {
   OTHER: '未知',
 };
 
-// 人员查询接口（按你提供的地址直连）
-const PERSON_QUERY_URL = 'http://192.168.101.128/api/exp/auth/person/queryPersonInfo';
-let lastListAbortController: AbortController | null = null;
-
-function normalizeListResponse(raw: any): { list: ExpPersonVO[]; total: number } {
-  // 兼容常见返回结构：{list,total} / {rows,total} / {records,total} / {data:{list,total}} / {data:{rows,total}} ...
-  const body = raw?.data ?? raw ?? {};
-  const list: ExpPersonVO[] =
-    body?.list ?? body?.rows ?? body?.records ?? body?.data?.list ?? body?.data?.rows ?? body?.data?.records ?? [];
-  // 注意：total 可能合法为 0，不能用 `||` 回退
-  const total: number =
-    body?.total ?? body?.data?.total ?? raw?.total ?? raw?.data?.total ?? (Array.isArray(list) ? list.length : 0);
-  return { list: Array.isArray(list) ? list : [], total: Number(total) || 0 };
-}
-
-async function requestPersonList(params: Record<string, any>) {
-  // 取消上一次未完成的列表请求，避免快速点击/翻页导致的结果覆盖
-  if (lastListAbortController) {
-    lastListAbortController.abort();
-  }
-  lastListAbortController = new AbortController();
-
-  // 尽量带上常见 token（如果项目用 cookie 会走 credentials: include）
-  const rawToken =
-    localStorage.getItem('token') ||
-    localStorage.getItem('access_token') ||
-    localStorage.getItem('Authorization') ||
-    sessionStorage.getItem('token') ||
-    sessionStorage.getItem('access_token') ||
-    sessionStorage.getItem('Authorization') ||
-    '';
-  const token = rawToken && rawToken.startsWith('Bearer ') ? rawToken : rawToken ? `Bearer ${rawToken}` : '';
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) headers.Authorization = token;
-
-  const resp = await fetch(PERSON_QUERY_URL, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(params),
-    credentials: 'include',
-    signal: lastListAbortController.signal,
-  });
-
-  if (!resp.ok) {
-    throw new Error(`queryPersonInfo http error: ${resp.status}`);
-  }
-
-  // 有些后端会返回空 body
-  const json = await resp.json().catch(() => ({}));
-  return json;
-}
-
 const genderOptions = [
   { label: '男', value: 'M' },
   { label: '女', value: 'F' },
@@ -377,21 +324,6 @@ const query = reactive({
 const tableData = ref<ExpPersonVO[]>([]);
 const total = ref(0);
 const selectedRows = ref<ExpPersonVO[]>([]);
-
-// 本地示例数据，便于无后端时测试
-const mockData: ExpPersonVO[] = Array.from({ length: 21 }).map((_, idx) => ({
-  personId: idx + 1,
-  personCode: `Exp2025010${String(idx + 1).padStart(2, '0')}`,
-  personName: `示例用户${idx + 1}`,
-  gender: idx % 3 === 0 ? 'M' : idx % 3 === 1 ? 'F' : 'OTHER',
-  mobile: `1380000${String(1000 + idx)}`,
-  email: `user${idx + 1}@demo.com`,
-  status: idx % 4 === 0 ? 'DISABLED' : 'ONJOB',
-  createdTime: '2025-01-01 10:00:00',
-  deptName: '示例部门',
-  roleName: '示例角色',
-  isExternal: idx % 2,
-}));
 
 const editDialog = reactive({
   visible: false,
@@ -485,31 +417,14 @@ function formatGender(row: ExpPersonVO) {
 async function fetchList() {
   loading.value = true;
   try {
-    // 优先按指定地址直连请求；如联调环境受 CORS/鉴权影响失败，则兜底用原 api 封装
-    let res: any;
-    try {
-      // 你的接口返回字段使用 page/size，这里请求参数也同时带上 page/size，兼容后端入参
-      res = await requestPersonList({
-        ...query,
-        page: query.pageNum,
-        size: query.pageSize,
-      });
-    } catch (e) {
-      // Abort 不算失败（用户快速操作时很常见）
-      if ((e as any)?.name === 'AbortError') return;
-      res = await queryPersonInfo({ ...query });
-    }
-
-    const normalized = normalizeListResponse(res);
-    let list = normalized.list ?? [];
-    if (!list.length) list = mockData;
-    tableData.value = list;
-    // total=0 也是合法值，不能用 `||` 回退
-    total.value = normalized.total ?? list.length;
+    // 统一使用 axios/request：由拦截器自动携带 Authorization: Bearer <TOKEN>
+    const res = await queryPersonInfo({ ...query });
+    tableData.value = Array.isArray(res?.list) ? res.list : [];
+    total.value = Number(res?.total ?? 0) || 0;
   } catch (e) {
-    // 接口异常时也用本地示例数据，方便无后端联调
-    tableData.value = mockData;
-    total.value = mockData.length;
+    tableData.value = [];
+    total.value = 0;
+    ElMessage.error((e as any)?.message || '查询失败');
   } finally {
     loading.value = false;
     // 翻页后清空多选
@@ -616,7 +531,7 @@ async function submitForm() {
 
 function handleDelete(row: ExpPersonVO) {
   if (!canDelete.value) return;
-  ElMessageBox.confirm(`确认删除账号「${row.personName}」吗？`, '提示', {
+  ElMessageBox.confirm(`确认删除人员「${row.personName}」吗？`, '提示', {
     type: 'warning',
   })
     .then(async () => {
@@ -676,7 +591,9 @@ async function submitResetPwd() {
 .actions {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 12px;
+  margin-top: 20px;
+  margin-right: 30px;
+
 }
 
 .search-bar {

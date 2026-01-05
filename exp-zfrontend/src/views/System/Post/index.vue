@@ -56,53 +56,54 @@
           <el-card>
             <div class="right-header">
               <div class="title">岗位管理</div>
-              <div class="org-label" v-if="currentOrg">
-                当前组织：{{ currentOrg.orgName }}
+              <!-- 顶部按钮栏 -->
+              <div class="actions">
+                <el-button
+                    type="primary"
+                    size="small"
+                    @click="openPostForm(false)"
+                    :disabled="!canCreate"
+                >
+                  新增岗位
+                </el-button>
+                <el-button
+                    size="small"
+                    @click="openBindDialog"
+                    :disabled="!currentOrg || !canBind"
+                >
+                  关联岗位
+                </el-button>
+                <el-button
+                    size="small"
+                    @click="batchToggleRelStatus"
+                    :disabled="!currentOrg || !selectedRows.length || !canOrgStatus"
+                >
+                  启用/停用
+                </el-button>
+                <el-button
+                    size="small"
+                    @click="setPrimary"
+                    :disabled="!currentOrg || selectedRows.length !== 1 || !canSetPrimary"
+                >
+                  设为主岗位
+                </el-button>
+                <el-button
+                    size="small"
+                    type="danger"
+                    @click="unbindSelected"
+                    :disabled="!currentOrg || !selectedRows.length || !canUnbind"
+                >
+                  解除关联
+                </el-button>
+                <el-button size="small" :disabled="true">导入</el-button>
+                <el-button size="small" :disabled="true">导出</el-button>
               </div>
+<!--              <div class="org-label" v-if="currentOrg">-->
+<!--                当前组织：{{ currentOrg.orgName }}-->
+<!--              </div>-->
             </div>
 
-            <!-- 顶部按钮栏 -->
-            <div class="actions">
-              <el-button
-                type="primary"
-                size="small"
-                @click="openPostForm(false)"
-                :disabled="!canCreate"
-              >
-                新增岗位
-              </el-button>
-              <el-button
-                size="small"
-                @click="openBindDialog"
-                :disabled="!currentOrg || !canBind"
-              >
-                关联岗位
-              </el-button>
-              <el-button
-                size="small"
-                @click="batchToggleRelStatus"
-                :disabled="!currentOrg || !selectedRows.length || !canOrgStatus"
-              >
-                启用/停用
-              </el-button>
-              <el-button
-                size="small"
-                @click="setPrimary"
-                :disabled="!currentOrg || selectedRows.length !== 1 || !canSetPrimary"
-              >
-                设为主岗位
-              </el-button>
-              <el-button
-                size="small"
-                type="danger"
-                @click="unbindSelected"
-                :disabled="!currentOrg || !selectedRows.length || !canUnbind"
-              >
-                解除关联
-              </el-button>
-              <el-button size="small" :disabled="true">导入</el-button>
-              <el-button size="small" :disabled="true">导出</el-button>
-            </div>
+
 
             <!-- 查询栏 -->
             <el-form
@@ -134,7 +135,7 @@
                   <el-option label="停用" value="DISABLED" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="岗位字典状态">
+              <el-form-item label="岗位状态">
                 <el-select v-model="query.postStatus" clearable style="width: 160px">
                   <el-option label="启用" value="ENABLED" />
                   <el-option label="停用" value="DISABLED" />
@@ -975,7 +976,7 @@ async function submitBind() {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 20px;
   }
 
   .title {
@@ -991,7 +992,9 @@ async function submitBind() {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 5px;
+    margin-top: 10px;
+    margin-right: 10px;
   }
 
   .search-bar {

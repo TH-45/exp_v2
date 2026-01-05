@@ -12,9 +12,44 @@
       >
         <el-sub-menu index="/system">
           <template #title>系统管理</template>
-          <el-menu-item index="/system/user">账号管理</el-menu-item>
+          <el-menu-item index="/system/account">账号管理</el-menu-item>
+          <el-menu-item index="/system/user">人员管理</el-menu-item>
           <el-menu-item index="/system/post">岗位管理</el-menu-item>
+          <el-menu-item v-if="canRoleView" index="/system/role">角色管理</el-menu-item>
+          <el-menu-item v-if="canMenuView" index="/system/menu">菜单管理</el-menu-item>
         </el-sub-menu>
+        <el-sub-menu
+          v-if="canBiddingProjectView || canBiddingBidView || canBiddingEvaluationView || canBiddingAttachmentsView"
+          index="/bidding"
+        >
+          <template #title>招投标管理</template>
+          <el-menu-item index="/bidding/project">招标项目</el-menu-item>
+          <el-menu-item v-if="canBiddingBidView" index="/bidding/bid">投标登记</el-menu-item>
+          <el-menu-item v-if="canBiddingEvaluationView" index="/bidding/evaluation">评标/定标</el-menu-item>
+          <el-menu-item v-if="canBiddingAttachmentsView" index="/bidding/attachments">招投标附件库</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu
+          v-if="canContractsContractView || canContractsChangeView || canContractsPaymentView || canContractsAttachmentsView"
+          index="/contracts"
+        >
+          <template #title>合同管理</template>
+          <el-menu-item v-if="canContractsContractView" index="/contracts/contract">合同台账</el-menu-item>
+          <el-menu-item v-if="canContractsChangeView" index="/contracts/change">合同变更</el-menu-item>
+          <el-menu-item v-if="canContractsPaymentView" index="/contracts/payment">收付款台账</el-menu-item>
+          <el-menu-item v-if="canContractsAttachmentsView" index="/contracts/attachments">合同附件库</el-menu-item>
+        </el-sub-menu>
+
+        <!-- 审批管理 -->
+        <el-sub-menu v-if="canApprovalView" index="/approval">
+          <template #title>
+            <span>审批管理</span>
+          </template>
+
+          <el-menu-item index="/approval">
+            审批/待办中心
+          </el-menu-item>
+        </el-sub-menu>
+
         <!-- 后续可按模块扩展更多菜单 -->
       </el-menu>
     </el-aside>
@@ -84,6 +119,35 @@ const router = useRouter();
 const userStore = useUserStore();
 
 const activeMenu = computed(() => route.path || '/');
+const canRoleView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:role:view'));
+const canMenuView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:menu:view'));
+const canBiddingProjectView = computed(
+  () => userStore.isAdmin || userStore.permissions.includes('bidding:project:view'),
+);
+const canBiddingBidView = computed(
+  () => userStore.isAdmin || userStore.permissions.includes('bidding:bid:view'),
+);
+const canBiddingEvaluationView = computed(
+  () => userStore.isAdmin || userStore.permissions.includes('bidding:evaluation:view'),
+);
+const canBiddingAttachmentsView = computed(
+  () => userStore.isAdmin || userStore.permissions.includes('bidding:attachments:view'),
+);
+const canContractsContractView = computed(
+  () => userStore.isAdmin || userStore.permissions.includes('contracts:contract:view'),
+);
+const canContractsChangeView = computed(
+  () => userStore.isAdmin || userStore.permissions.includes('contracts:change:view'),
+);
+const canContractsPaymentView = computed(
+  () => userStore.isAdmin || userStore.permissions.includes('contracts:payment:view'),
+);
+const canContractsAttachmentsView = computed(
+  () => userStore.isAdmin || userStore.permissions.includes('contracts:attachments:view'),
+);
+const canApprovalView = computed(
+  () => userStore.isAdmin || userStore.permissions.includes('approval:task:view'),
+);
 
 const tabs = reactive<TabItem[]>([
   // {

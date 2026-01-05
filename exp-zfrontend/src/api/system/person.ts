@@ -50,6 +50,26 @@ export interface QueryPersonParams {
   pageSize: number;
 }
 
+export interface SimplePageReq<T> {
+  pageNum: number;
+  pageSize: number;
+  sort?: string;
+  queryParam?: T;
+}
+
+export interface SimplePageRes<T> {
+  total: number;
+  page: number;
+  size: number;
+  list: T[];
+}
+
+export interface QueryPersonReq {
+  personCode?: string;
+  personName?: string;
+  mobile?: string;
+}
+
 export type SavePersonPayload = Partial<ExpPersonVO> & {
   /** 新增时必填，编辑时只读回显 */
   personCode: string;
@@ -58,13 +78,22 @@ export type SavePersonPayload = Partial<ExpPersonVO> & {
   status: PersonStatus | 'ONJOB' | 'DISABLED';
 };
 
-const BASE = '/exp/person';
+// 后端实际路径：/api/exp/auth/person/*
+const BASE = '/exp/auth/person';
 
 export function queryPersonInfo(params: QueryPersonParams) {
-  // 示例方法名：queryPersonInfo
-  return request.post<PageResult<ExpPersonVO>, PageResult<ExpPersonVO>>(
+  const req: SimplePageReq<QueryPersonReq> = {
+    pageNum: params.pageNum,
+    pageSize: params.pageSize,
+    queryParam: {
+      personCode: params.personCode,
+      personName: params.personName,
+      mobile: params.mobile,
+    },
+  };
+  return request.post<SimplePageRes<ExpPersonVO>, SimplePageRes<ExpPersonVO>>(
     `${BASE}/queryPersonInfo`,
-    params,
+    req,
   );
 }
 

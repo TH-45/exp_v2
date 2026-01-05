@@ -1,9 +1,10 @@
-package jh.exp.auth.service.dic.Impl;
+package jh.exp.sys.servcie.dic.Impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import jh.exp.auth.entity.dic.SysDictType;
-import jh.exp.auth.mapper.dic.SysDictTypeMapper;
-import jh.exp.auth.service.dic.SysDictTypeService;
+
+import jh.exp.sys.entity.dic.SysDictType;
+import jh.exp.sys.mapper.dic.SysDictTypeMapper;
+import jh.exp.sys.servcie.dic.SysDictTypeService;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;

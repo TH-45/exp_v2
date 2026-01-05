@@ -1,11 +1,9 @@
-package jh.exp.auth.entity.dic;
-
+package jh.exp.sys.entity.dic;
 
 
 import com.baomidou.mybatisplus.annotation.*;
 import jakarta.persistence.*;
 import lombok.Data;
-
 
 import java.io.Serializable;
 import java.time.LocalDateTime;

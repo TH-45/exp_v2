@@ -1,8 +1,8 @@
-package jh.exp.auth.mapper.dic;
+package jh.exp.sys.mapper.dic;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import jh.exp.auth.entity.dic.SysDictType;
+import jh.exp.sys.entity.dic.SysDictType;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

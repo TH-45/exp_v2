@@ -1,8 +1,8 @@
-package jh.exp.auth.service.dic;
+package jh.exp.sys.servcie.dic;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import jh.exp.auth.entity.dic.SysDictType;
+import jh.exp.sys.entity.dic.SysDictType;
 
 import java.util.List;
 
