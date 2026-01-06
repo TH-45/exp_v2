@@ -101,23 +101,26 @@
             <House />
           </el-icon>
 
-          <el-tabs
-              v-model="activeTab"
-              type="card"
-              :stretch="false"
-              class="tabs-with-home"
-              @tab-remove="removeTab"
-              @tab-click="handleTabClick"
-          >
-            <span class="tabs-divider"></span>
-            <el-tab-pane
-                v-for="tab in visibleTabs"
-                :key="tab.path"
-                :label="renderLabel(tab)"
-                :name="tab.path"
-                :closable="tab.closable"
-            />
-          </el-tabs>
+          <div class="tabs-wrapper">
+            <el-tabs
+                v-model="activeTab"
+                type="card"
+                :stretch="false"
+                class="tabs-with-home"
+                @tab-remove="removeTab"
+                @tab-click="handleTabClick"
+            >
+              <span class="tabs-divider"></span>
+              <el-tab-pane
+                  v-for="tab in visibleTabs"
+                  :key="tab.path"
+                  :label="renderLabel(tab)"
+                  :name="tab.path"
+                  :closable="tab.closable"
+              />
+            </el-tabs>
+          </div>
+
           <!-- 标签页下拉菜单 -->
           <el-dropdown v-if="showDropdown" class="tabs-dropdown" @command="handleDropdownCommand">
             <el-icon class="dropdown-icon">
@@ -140,7 +143,6 @@
                     </el-icon>
                   </div>
                 </el-dropdown-item>
-                <el-divider v-if="hiddenTabs.length > 0" />
                 <el-dropdown-item command="closeAll" class="close-all-option">
                   <el-icon class="close-all-icon"><Close /></el-icon>
                   关闭全部
@@ -190,7 +192,7 @@ const router = useRouter();
 const userStore = useUserStore();
 
 // 标签页最大显示数量
-const MAX_VISIBLE_TABS = 8;
+const MAX_VISIBLE_TABS = 9;
 
 const activeMenu = computed(() => route.path || '/');
 const canRoleView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:role:view'));
@@ -427,6 +429,7 @@ const closeAllTabs = () => {
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
   padding: 8px 16px;
   min-height: 64px;
+  //height: 80px;
 
 }
 
@@ -442,11 +445,12 @@ const closeAllTabs = () => {
   gap: 8px;
   flex: 1;
   min-width: 0;
+  padding-top: 30px;
 
   .home-icon {
     cursor: pointer;
     color: #409eff;// ✅ 首页激活态（蓝色）
-    font-size: 22px;
+    font-size: 25px;
     transform: translateY(-6px);
   }
 
@@ -613,6 +617,13 @@ const closeAllTabs = () => {
     margin-right: 6px;
   }
 }
+.tabs-wrapper {
+  margin-left: 10px;
+  width: 900px;       // 或固定像素，比如 800px
+  max-width: 1000px; // 限制整体最大宽度
+  overflow: hidden;  // 超出隐藏（你用下拉菜单显示）
+}
+
 </style>
 
 

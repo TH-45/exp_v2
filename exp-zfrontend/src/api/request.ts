@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ElMessage } from 'element-plus';
+import { messageError } from '@/utils/message';
 import { useUserStore } from '@/store/modules/user';
 
 export interface ApiResponse<T> {
@@ -39,7 +39,7 @@ request.interceptors.response.use(
       if (res.success) {
         return res.data;
       }
-      ElMessage.error(res.message || '请求失败');
+      messageError(res.message || '请求失败');
       return Promise.reject(new Error(res.message || '请求失败'));
     }
     // 非统一响应结构，直接返回原始数据
@@ -47,9 +47,9 @@ request.interceptors.response.use(
   },
   (error) => {
     if (error.response) {
-      ElMessage.error('系统异常，请联系管理员');
+      messageError('系统异常，请联系管理员');
     } else {
-      ElMessage.error('网络异常，请检查网络连接');
+      messageError('网络异常，请检查网络连接');
     }
     return Promise.reject(error);
   },
