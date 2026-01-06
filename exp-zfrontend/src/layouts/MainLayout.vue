@@ -1,8 +1,14 @@
 <template>
   <el-container class="main-layout">
-<el-aside width="200px" class="sidebar">
-      <div class="logo">招投标协同管理系统</div>
-      <el-menu
+  <el-aside width="200px" class="sidebar">
+      <!-- 固定标题区域 -->
+      <div class="sidebar-header">
+        <div class="logo">招投标协同管理系统</div>
+      </div>
+
+      <!-- 可滚动菜单区域 -->
+      <div class="sidebar-content">
+        <el-menu
         :default-active="activeMenu"
         class="el-menu-vertical"
         router
@@ -91,7 +97,8 @@
 
 
         <!-- 后续可按模块扩展更多菜单 -->
-      </el-menu>
+        </el-menu>
+      </div>
     </el-aside>
 
     <el-container>
@@ -389,6 +396,44 @@ const closeAllTabs = () => {
 .sidebar {
   background: linear-gradient(180deg, #1f1f3f 0%, #48485a 100%);
   color: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100vh; // 确保sidebar占满整个视口高度
+
+  .sidebar-header {
+    flex-shrink: 0; // 固定头部，不参与滚动
+    background: linear-gradient(180deg, #2a2a50 0%, #3a3a65 100%); // 标题区域使用浅色调背景
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15); // 添加底部边框分隔
+  }
+
+  .sidebar-content {
+    flex: 1; // 内容区域占据剩余空间
+    overflow-y: auto; // 启用垂直滚动
+    overflow-x: hidden; // 隐藏水平滚动
+
+    // 自定义滚动条样式
+    &::-webkit-scrollbar {
+      width: 6px; // 滚动条宽度
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1); // 轨道背景色
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3); // 滑块颜色
+      border-radius: 3px;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.5); // 悬停时颜色
+      }
+    }
+
+    // Firefox 滚动条样式
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+  }
 
   .logo {
     height: 60px;
@@ -403,6 +448,7 @@ const closeAllTabs = () => {
   .el-menu {
     border-right: none;
     background-color: transparent;
+    padding-bottom: 20vh; // 底部额外空间，约20%的视口高度
   }
 
   :deep(.el-menu-item),
