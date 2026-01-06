@@ -100,23 +100,54 @@
           <el-icon class="home-icon" :class="{ inactive: route.path !== '/' }" @click="goHome">
             <House />
           </el-icon>
+
           <el-tabs
-            v-model="activeTab"
-            type="card"
-            :stretch="false"
-            class="tabs-with-home"
-            @tab-remove="removeTab"
-            @tab-click="handleTabClick"
+              v-model="activeTab"
+              type="card"
+              :stretch="false"
+              class="tabs-with-home"
+              @tab-remove="removeTab"
+              @tab-click="handleTabClick"
           >
             <span class="tabs-divider"></span>
             <el-tab-pane
-              v-for="tab in tabs"
-              :key="tab.path"
-              :label="renderLabel(tab)"
-              :name="tab.path"
-              :closable="tab.closable"
+                v-for="tab in visibleTabs"
+                :key="tab.path"
+                :label="renderLabel(tab)"
+                :name="tab.path"
+                :closable="tab.closable"
             />
           </el-tabs>
+          <!-- 标签页下拉菜单 -->
+          <el-dropdown v-if="showDropdown" class="tabs-dropdown" @command="handleDropdownCommand">
+            <el-icon class="dropdown-icon">
+              <ArrowDown />
+            </el-icon>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  v-for="tab in hiddenTabs"
+                  :key="tab.path"
+                  :command="{ action: 'switch', tab }"
+                  class="dropdown-menu-item"
+                >
+                  <div class="tab-item-content">
+                    <span class="tab-item-label">
+                      {{ tab.icon ? '' : '' }}{{ tab.title }}
+                    </span>
+                    <el-icon class="close-icon" @click.stop="closeTabFromDropdown(tab.path)">
+                      <Close />
+                    </el-icon>
+                  </div>
+                </el-dropdown-item>
+                <el-divider v-if="hiddenTabs.length > 0" />
+                <el-dropdown-item command="closeAll" class="close-all-option">
+                  <el-icon class="close-all-icon"><Close /></el-icon>
+                  关闭全部
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
         <div class="header-right">
           <el-dropdown>
@@ -143,7 +174,7 @@
 import { computed, h, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
-import { House } from '@element-plus/icons-vue';
+import { House, ArrowDown, Close } from '@element-plus/icons-vue';
 import * as Icons from '@element-plus/icons-vue';
 import type { Component } from 'vue';
 
@@ -157,6 +188,9 @@ type TabItem = {
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
+
+// 标签页最大显示数量
+const MAX_VISIBLE_TABS = 8;
 
 const activeMenu = computed(() => route.path || '/');
 const canRoleView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:role:view'));
@@ -199,6 +233,34 @@ const canAccountView = computed(() => userStore.isAdmin || userStore.permissions
 const canAnnouncementView = computed(() => userStore.isAdmin || userStore.permissions.includes('corp:announcement:view'));
 const canQualificationView = computed(() => userStore.isAdmin || userStore.permissions.includes('corp:qualification:view'));
 const canBasicInfoView = computed(() => userStore.isAdmin || userStore.permissions.includes('corp:basic:view'));
+
+// 标签页显示逻辑
+const visibleTabs = computed(() => {
+  if (tabs.length <= MAX_VISIBLE_TABS) {
+    return tabs;
+  }
+  // 如果当前激活的标签页不在前 MAX_VISIBLE_TABS 个中，则调整显示范围
+  const activeIndex = tabs.findIndex(tab => tab.path === activeTab.value);
+  if (activeIndex >= MAX_VISIBLE_TABS) {
+    const startIndex = Math.max(0, activeIndex - MAX_VISIBLE_TABS + 1);
+    return tabs.slice(startIndex, startIndex + MAX_VISIBLE_TABS);
+  }
+  return tabs.slice(0, MAX_VISIBLE_TABS);
+});
+
+const hiddenTabs = computed(() => {
+  if (tabs.length <= MAX_VISIBLE_TABS) {
+    return [];
+  }
+  const activeIndex = tabs.findIndex(tab => tab.path === activeTab.value);
+  if (activeIndex >= MAX_VISIBLE_TABS) {
+    const startIndex = Math.max(0, activeIndex - MAX_VISIBLE_TABS + 1);
+    return [...tabs.slice(0, startIndex), ...tabs.slice(startIndex + MAX_VISIBLE_TABS)];
+  }
+  return tabs.slice(MAX_VISIBLE_TABS);
+});
+
+const showDropdown = computed(() => tabs.length > MAX_VISIBLE_TABS);
 
 const tabs = reactive<TabItem[]>([
   // {
@@ -292,6 +354,28 @@ const goHome = () => {
 const handleLogout = () => {
   userStore.logout();
   router.replace('/login');
+};
+
+// 处理下拉菜单命令
+const handleDropdownCommand = (command: { action: string; tab?: TabItem } | string) => {
+  if (typeof command === 'string') {
+    if (command === 'closeAll') {
+      closeAllTabs();
+    }
+  } else if (command.action === 'switch' && command.tab) {
+    router.push(command.tab.path);
+  }
+};
+
+// 从下拉菜单关闭标签页
+const closeTabFromDropdown = (tabPath: string) => {
+  removeTab(tabPath);
+};
+
+// 关闭所有标签页
+const closeAllTabs = () => {
+  tabs.splice(0, tabs.length);
+  router.push('/');
 };
 </script>
 
@@ -399,6 +483,41 @@ const handleLogout = () => {
   }
 }
 
+/* 标签可滚动区域 */
+.tabs-scroll-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tabs-with-home {
+  flex: 1;
+  min-width: 0;
+
+  :deep(.el-tabs__nav-wrap) {
+    overflow: hidden; // 禁用默认滚动
+  }
+
+  :deep(.el-tabs__nav-scroll) {
+    overflow: hidden;
+  }
+}
+
+/* 左右箭头 */
+.scroll-btn {
+  cursor: pointer;
+  color: #606266;
+  font-size: 18px;
+  padding: 0 4px;
+
+  &:hover {
+    color: #409eff;
+  }
+}
+
+
 .tab-label {
   display: inline-flex;
   align-items: center;
@@ -426,6 +545,73 @@ const handleLogout = () => {
   height: 24px;
   background-color: #dcdfe6;
   margin: 0 8px;
+}
+
+// 标签页下拉菜单样式
+.tabs-dropdown {
+  //margin-left:0px;
+  color: #606266;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 4px;
+
+  .dropdown-icon {
+    font-size: 16px;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #409eff;
+    }
+  }
+}
+
+:deep(.dropdown-menu-item) {
+  padding: 8px 12px;
+
+  .tab-item-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+
+    .tab-item-label {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .tab-icon {
+        font-size: 14px;
+      }
+    }
+
+    .close-icon {
+      color: #f56c6c;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 8px;
+      transition: color 0.2s;
+
+      &:hover {
+        color: #f78989;
+      }
+    }
+  }
+}
+
+:deep(.close-all-option) {
+  color: #f56c6c;
+  border-top: 1px solid #ebeef5;
+  margin-top: 4px;
+  padding-top: 8px;
+
+  &:hover {
+    background-color: #fef0f0;
+  }
+
+  .close-all-icon {
+    margin-right: 6px;
+  }
 }
 </style>
 
