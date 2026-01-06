@@ -160,12 +160,45 @@
         </div>
         <div class="header-right">
           <el-dropdown>
-            <span class="el-dropdown-link">
-              {{ userStore.username || '未登录' }}
-            </span>
+            <div class="user-avatar">
+              <img
+                v-if="userStore.avatar"
+                :src="userStore.avatar"
+                alt="头像"
+                class="avatar-image"
+              />
+              <div v-else class="avatar-placeholder">
+                {{ getInitials(userStore.username || '未登录') }}
+              </div>
+            </div>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
+                <div class="user-info">
+                  <div class="user-avatar-dropdown">
+                    <img
+                      v-if="userStore.avatar"
+                      :src="userStore.avatar"
+                      alt="头像"
+                      class="avatar-image"
+                    />
+                    <div v-else class="avatar-placeholder">
+                      {{ getInitials(userStore.username || '未登录') }}
+                    </div>
+                  </div>
+                  <div class="user-details">
+                    <div class="username">{{ userStore.username || '未登录' }}</div>
+                    <div class="user-role">{{ getUserRole() }}</div>
+                  </div>
+                </div>
+
+                <el-dropdown-item>
+                  <el-icon><User /></el-icon>
+                  个人信息
+                </el-dropdown-item>
+                <el-dropdown-item @click="handleLogout">
+                  <el-icon><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -183,7 +216,7 @@
 import { computed, h, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
-import { House, ArrowDown, Close } from '@element-plus/icons-vue';
+import { House, ArrowDown, Close, User, SwitchButton } from '@element-plus/icons-vue';
 import * as Icons from '@element-plus/icons-vue';
 import type { Component } from 'vue';
 
@@ -365,6 +398,27 @@ const handleLogout = () => {
   router.replace('/login');
 };
 
+// 获取用户名的首字符（支持中英文）
+const getInitials = (name: string) => {
+  if (!name || name === '未登录') return '?';
+  // 获取第一个字符，如果是中文则直接返回，否则取大写
+  const firstChar = name.charAt(0);
+  // 检查是否为中文字符
+  if (/[\u4e00-\u9fa5]/.test(firstChar)) {
+    return firstChar;
+  }
+  return firstChar.toUpperCase();
+};
+
+// 获取用户角色显示
+const getUserRole = () => {
+  if (userStore.isAdmin) return '系统管理员';
+  if (userStore.roles.length > 0) {
+    return userStore.roles[0]; // 显示第一个角色
+  }
+  return '普通用户';
+};
+
 // 处理下拉菜单命令
 const handleDropdownCommand = (command: { action: string; tab?: TabItem } | string) => {
   if (typeof command === 'string') {
@@ -475,8 +529,44 @@ const closeAllTabs = () => {
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
   padding: 8px 16px;
   min-height: 64px;
-  //height: 80px;
 
+  .header-right {
+    flex-shrink: 0;
+    margin-left: 16px;
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: scale(1.05);
+        border-color: rgba(255, 255, 255, 0.4);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .avatar-image {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .avatar-placeholder {
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+    }
+  }
 }
 
 .content {
@@ -491,7 +581,7 @@ const closeAllTabs = () => {
   gap: 8px;
   flex: 1;
   min-width: 0;
-  padding-top: 30px;
+  padding-top: 10px;
 
   .home-icon {
     cursor: pointer;
@@ -661,6 +751,58 @@ const closeAllTabs = () => {
 
   .close-all-icon {
     margin-right: 6px;
+  }
+}
+
+// 用户信息下拉菜单样式
+:deep(.user-info) {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #ebeef5;
+  margin-bottom: 8px;
+
+  .user-avatar-dropdown {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+
+    .avatar-image {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .avatar-placeholder {
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+  }
+
+  .user-details {
+    text-align: center;
+
+    .username {
+      font-size: 16px;
+      font-weight: 600;
+      color: #303133;
+      margin-bottom: 4px;
+    }
+
+    .user-role {
+      font-size: 12px;
+      color: #909399;
+    }
   }
 }
 .tabs-wrapper {
