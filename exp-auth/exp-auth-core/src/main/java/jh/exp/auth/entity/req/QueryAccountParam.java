@@ -2,14 +2,16 @@ package jh.exp.auth.entity.req;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-public class QueryAccountPara {
+@NoArgsConstructor
+public class QueryAccountParam {
     //账号名称
     private String accountName;
     //账号人姓名
-    private String accountDisplay;
+    private String personName;;
     //手机号
     private String mobile;
 }

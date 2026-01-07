@@ -16,12 +16,21 @@
               启用/禁用
             </el-button>
             <el-button
-              size="small"
-              @click="openResetPwdDialog"
-              :disabled="!selectedRows.length || !canReset"
+                size="small"
+                @click="openResetPwdDialog"
+                :disabled="!selectedRows.length || !canReset"
             >
               重置密码
             </el-button>
+            <el-button
+              type="danger"
+              size="small"
+              @click="handleBatchDelete"
+              :disabled="!selectedRows.length || !canDelete"
+            >
+              删除
+            </el-button>
+
             <el-button size="small" :disabled="true">导入</el-button>
             <el-button size="small" :disabled="true">导出</el-button>
           </div>
@@ -30,19 +39,29 @@
 
       <!-- 搜索区 -->
       <el-form :inline="true" :model="query" class="search-bar" @submit.prevent>
-        <el-form-item label="关键词">
+        <el-form-item label="账号名称">
           <el-input
-            v-model="query.keyword"
-            placeholder="账号/姓名/手机号/邮箱"
+            v-model="query.accountName"
+            placeholder="请输入账号名称"
             clearable
-            style="width: 240px"
+            style="width: 160px"
           />
         </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="query.status" clearable style="width: 160px">
-            <el-option label="启用" :value="1" />
-            <el-option label="禁用" :value="0" />
-          </el-select>
+        <el-form-item label="账号人姓名">
+          <el-input
+            v-model="query.personName"
+            placeholder="请输入账号人姓名"
+            clearable
+            style="width: 160px"
+          />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input
+            v-model="query.mobile"
+            placeholder="请输入手机号"
+            clearable
+            style="width: 160px"
+          />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">查询</el-button>
@@ -52,19 +71,22 @@
 
       <!-- 列表区 -->
       <el-table
+        ref="tableRef"
         v-loading="loading"
         :data="tableData"
-        row-key="userId"
+        row-key="accountId"
         border
         style="width: 100%"
         @selection-change="handleSelectionChange"
+        @row-click="handleRowClick"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="username" label="账号" min-width="140" />
-        <el-table-column prop="realName" label="姓名" min-width="140" />
-        <el-table-column prop="deptName" label="部门" min-width="160" />
-        <el-table-column prop="mobile" label="手机号" min-width="140" />
-        <el-table-column prop="email" label="邮箱" min-width="200" />
+        <el-table-column prop="accountName" label="账号名" min-width="120" />
+        <el-table-column prop="personName" label="姓名" min-width="120" />
+        <el-table-column prop="orgName" label="组织名称" min-width="140" />
+        <el-table-column prop="postName" label="岗位名称" min-width="120" />
+        <el-table-column prop="mobile" label="手机号" min-width="130" />
+        <el-table-column prop="email" label="邮箱" min-width="180" />
         <el-table-column label="状态" min-width="100">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)">
@@ -72,20 +94,18 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" min-width="170" />
-        <el-table-column label="操作" fixed="right" width="260">
+        <el-table-column label="创建时间" min-width="150">
+          <template #default="{ row }">
+            {{ formatDateTime(row.createdTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" fixed="right" width="100">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="handleEdit(row)" :disabled="!canManage">
               编辑
             </el-button>
             <el-button link size="small" @click="toggleStatus(row)" :disabled="!canManage">
-              {{ row.status === 0 ? '启用' : '禁用' }}
-            </el-button>
-            <el-button link size="small" @click="openResetPwdDialog([row])" :disabled="!canReset">
-              重置密码
-            </el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)" :disabled="!canDelete">
-              删除
+              {{ row.status === 'DISABLED' ? '启用' : '禁用' }}
             </el-button>
           </template>
         </el-table-column>
@@ -96,7 +116,7 @@
         <el-pagination
           background
           layout="total, prev, pager, next, sizes"
-          :current-page="query.page"
+          :current-page="query.pageNum"
           :page-size="query.pageSize"
           :page-sizes="[10, 20, 50, 100]"
           :total="total"
@@ -119,15 +139,15 @@
           label-width="100px"
           class="dialog-form two-col"
         >
-          <el-form-item label="账号" prop="username">
+          <el-form-item label="账号名" prop="accountName">
             <el-input
-              v-model="form.username"
-              placeholder="请输入账号"
+              v-model="form.accountName"
+              placeholder="请输入账号名"
               :disabled="editDialog.isEdit"
             />
           </el-form-item>
-          <el-form-item label="姓名" prop="realName">
-            <el-input v-model="form.realName" placeholder="请输入姓名" />
+          <el-form-item label="姓名" prop="personName">
+            <el-input v-model="form.personName" placeholder="请输入姓名" />
           </el-form-item>
           <el-form-item label="手机号">
             <el-input v-model="form.mobile" placeholder="请输入手机号" />
@@ -135,20 +155,20 @@
           <el-form-item label="邮箱">
             <el-input v-model="form.email" placeholder="请输入邮箱" />
           </el-form-item>
-          <el-form-item label="部门ID">
-            <el-input v-model="form.deptId" placeholder="占位：后续替换为部门选择" />
+          <el-form-item label="关联人员" prop="personId">
+            <el-input v-model="form.personId" placeholder="占位：后续替换为人员选择器" />
           </el-form-item>
-          <el-form-item label="角色ID">
-            <el-input v-model="roleIdsText" placeholder="占位：用逗号分隔，如 r_admin,r_normal" />
+          <el-form-item label="所属组织" prop="orgId">
+            <el-input v-model="form.orgId" placeholder="占位：后续替换为组织选择器" />
+          </el-form-item>
+          <el-form-item label="主岗位" prop="postId">
+            <el-input v-model="form.postId" placeholder="占位：后续替换为主岗位选择器" />
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input v-model="form.remark" placeholder="请输入备注" />
           </el-form-item>
           <el-form-item v-if="!editDialog.isEdit" label="初始密码" prop="password">
             <el-input v-model="form.password" type="password" show-password placeholder="请输入初始密码" />
-          </el-form-item>
-          <el-form-item label="状态">
-            <el-select v-model="form.status" style="width: 100%">
-              <el-option label="启用" :value="1" />
-              <el-option label="禁用" :value="0" />
-            </el-select>
           </el-form-item>
         </el-form>
         <template #footer>
@@ -188,54 +208,108 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
 import {
-  queryUserList,
+  queryAccountList,
   createUser,
   updateUser,
   deleteUser,
   setUserStatus,
   resetUserPassword,
-  type SystemUserVO,
-  type UserStatus,
+  type AccountVO,
 } from '@/api/system/account';
 
 const loading = ref(false);
 const saving = ref(false);
 const resetting = ref(false);
+const tableRef = ref();
 
 const query = reactive({
-  keyword: '',
-  status: undefined as UserStatus | undefined,
-  page: 1,
+  accountName: '',
+  personName: '',
+  mobile: '',
+  pageNum: 1,
   pageSize: 10,
+  sort: '',
+  queryParam: {} as any,
 });
 
-const tableData = ref<SystemUserVO[]>([]);
+const tableData = ref<AccountVO[]>([]);
 const total = ref(0);
-const selectedRows = ref<SystemUserVO[]>([]);
+const selectedRows = ref<AccountVO[]>([]);
 
 const canManage = computed(() => hasPermission('system:user:manage'));
 const canDelete = computed(() => hasPermission('system:user:delete'));
 const canReset = computed(() => hasPermission('system:user:reset'));
 
-function statusTagType(status?: UserStatus) {
-  if (status === 1) return 'success';
-  if (status === 0) return 'info';
+function statusTagType(status?: string) {
+  if (status === 'ENABLED') return 'success';
+  if (status === 'DISABLED') return 'info';
+  if (status === 'LOCKED') return 'danger';
+  if (status === 'INIT') return 'warning';
   return '';
 }
 
-function statusText(status?: UserStatus) {
-  if (status === 1) return '启用';
-  if (status === 0) return '禁用';
+function statusText(status?: string) {
+  if (status === 'ENABLED') return '启用';
+  if (status === 'DISABLED') return '禁用';
+  if (status === 'LOCKED') return '锁定';
+  if (status === 'INIT') return '初始';
   return '-';
+}
+
+function formatDateTime(dateTime?: string) {
+  if (!dateTime) return '-';
+
+  try {
+    const date = new Date(dateTime);
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  } catch (e) {
+    return '-';
+  }
 }
 
 async function fetchList() {
   loading.value = true;
   try {
-    const res = await queryUserList({ ...query });
-    const records = (res as any)?.records ?? (res as any)?.list ?? (res as any)?.rows ?? [];
-    tableData.value = Array.isArray(records) ? records : [];
-    total.value = Number((res as any)?.total ?? tableData.value.length) || 0;
+    // 构造查询参数
+    const searchParams = { ...query };
+
+    // 构造queryParam，包含搜索条件
+    searchParams.queryParam = {};
+    if (query.accountName.trim()) {
+      searchParams.queryParam.accountName = query.accountName.trim();
+    }
+    if (query.personName.trim()) {
+      searchParams.queryParam.personName = query.personName.trim();
+    }
+    if (query.mobile.trim()) {
+      searchParams.queryParam.mobile = query.mobile.trim();
+    }
+
+    // 从searchParams中移除单独的搜索字段，只保留queryParam中的
+    delete (searchParams as any).accountName;
+    delete (searchParams as any).personName;
+    delete (searchParams as any).mobile;
+
+    const res = await queryAccountList(searchParams);
+
+    console.log('响应数据 (已由拦截器处理):', JSON.stringify(res));
+    // 注意：由于axios响应拦截器的处理，这里收到的res已经是apiResponse.data了
+    const data = res as any;
+
+    if (data) {
+      console.log("进入到数据处理逻辑");
+      tableData.value = Array.isArray(data.list) ? data.list : [];
+      total.value = Number(data.total) || 0;
+    } else {
+      tableData.value = [];
+      total.value = 0;
+    }
   } catch (e) {
     tableData.value = [];
     total.value = 0;
@@ -251,31 +325,40 @@ onMounted(() => {
 });
 
 function handleSearch() {
-  query.keyword = (query.keyword || '').trim();
-  query.page = 1;
+  query.accountName = (query.accountName || '').trim();
+  query.personName = (query.personName || '').trim();
+  query.mobile = (query.mobile || '').trim();
+  query.pageNum = 1;
   fetchList();
 }
 
 function handleReset() {
-  query.keyword = '';
-  query.status = undefined;
-  query.page = 1;
+  query.accountName = '';
+  query.personName = '';
+  query.mobile = '';
+  query.pageNum = 1;
+  query.queryParam = {};
   fetchList();
 }
 
 function handleCurrentChange(page: number) {
-  query.page = page;
+  query.pageNum = page;
   fetchList();
 }
 
 function handleSizeChange(size: number) {
   query.pageSize = size;
-  query.page = 1;
+  query.pageNum = 1;
   fetchList();
 }
 
-function handleSelectionChange(rows: SystemUserVO[]) {
+function handleSelectionChange(rows: AccountVO[]) {
   selectedRows.value = rows;
+}
+
+function handleRowClick(row: AccountVO) {
+  // 使用表格的toggleRowSelection方法切换选中状态
+  tableRef.value?.toggleRowSelection(row);
 }
 
 // 新增/编辑
@@ -285,28 +368,30 @@ const editDialog = reactive({
 });
 
 type EditFormModel = {
-  userId: string;
-  username: string;
-  realName: string;
-  deptId?: string;
+  accountId?: number;
+  accountName: string;
+  personName: string;  // 原accountDisplay
+  personId?: number;
+  orgId?: number;
+  postId?: number;
   mobile?: string;
   email?: string;
-  status: UserStatus;
-  roleIds?: string[];
   password?: string;
+  remark?: string;
 };
 
 const formRef = ref<FormInstance>();
 const form = reactive<EditFormModel>({
-  userId: '',
-  username: '',
-  realName: '',
-  deptId: '',
+  accountId: undefined,
+  accountName: '',
+  personName: '',
+  personId: undefined,
+  orgId: undefined,
+  postId: undefined,
   mobile: '',
   email: '',
-  status: 1,
-  roleIds: [],
   password: '123456',
+  remark: '',
 });
 
 const roleIdsText = ref('');
@@ -322,25 +407,28 @@ watch(
 );
 
 function resetFormModel() {
-  form.userId = '';
-  form.username = '';
-  form.realName = '';
-  form.deptId = '';
+  form.accountId = undefined;
+  form.accountName = '';
+  form.personName = '';
+  form.personId = undefined;
+  form.orgId = undefined;
+  form.postId = undefined;
   form.mobile = '';
   form.email = '';
-  form.status = 1;
-  form.roleIds = [];
   form.password = '123456';
-  roleIdsText.value = '';
+  form.remark = '';
 }
 
 const rules: FormRules = {
-  username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
-  realName: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+  accountName: [{ required: true, message: '请输入账号名', trigger: 'blur' }],
+  personName: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+  personId: [{ required: true, message: '请选择关联人员', trigger: 'change' }],
+  orgId: [{ required: true, message: '请选择所属组织', trigger: 'change' }],
+  postId: [{ required: true, message: '请选择主岗位', trigger: 'change' }],
   password: [
     {
       validator: (_rule, value, callback) => {
-        // 编辑账号时不修改初始密码，因此不校验
+        // 编辑账号时不修改密码，因此不校验
         if (editDialog.isEdit) return callback();
         if (!value) return callback(new Error('请输入初始密码'));
         return callback();
@@ -356,19 +444,18 @@ function handleAdd() {
   editDialog.visible = true;
 }
 
-function handleEdit(row: SystemUserVO) {
+function handleEdit(row: AccountVO) {
   editDialog.isEdit = true;
   resetFormModel();
-  form.userId = row.userId;
-  form.username = row.username;
-  form.realName = row.realName || '';
-  form.deptId = row.deptId || '';
+  form.accountId = row.accountId;
+  form.accountName = row.accountName;
+  form.personName = row.personName || '';
+  form.personId = undefined; // TODO: 需要从row中获取personId
+  form.orgId = undefined; // TODO: 需要从row中获取orgId
+  form.postId = undefined; // TODO: 需要从row中获取postId
   form.mobile = row.mobile || '';
   form.email = row.email || '';
-  form.status = (row.status ?? 1) as UserStatus;
-  const ids = Array.isArray(row.roleIds) ? row.roleIds : [];
-  form.roleIds = ids;
-  roleIdsText.value = ids.join(',');
+  form.remark = ''; // TODO: 需要从row中获取remark
   editDialog.visible = true;
 }
 
@@ -380,23 +467,27 @@ async function submitForm() {
   try {
     if (editDialog.isEdit) {
       await updateUser({
-        userId: form.userId,
-        realName: form.realName,
-        deptId: form.deptId,
+        accountId: form.accountId,
+        personName: form.personName, // 使用personName作为accountDisplay
+        personId: form.personId,
+        orgId: form.orgId,
+        postId: form.postId,
         mobile: form.mobile,
         email: form.email,
-        roleIds: form.roleIds,
+        remark: form.remark,
       });
       ElMessage.success('编辑成功');
     } else {
       await createUser({
-        username: form.username,
-        realName: form.realName,
-        deptId: form.deptId,
+        accountName: form.accountName,
+        accountDisplay: form.personName, // 使用personName作为accountDisplay
+        password: form.password,
         mobile: form.mobile,
         email: form.email,
-        roleIds: form.roleIds,
-        password: form.password,
+        personId: form.personId!,
+        orgId: form.orgId!,
+        postId: form.postId!,
+        remark: form.remark,
       });
       ElMessage.success('新增成功');
     }
@@ -408,37 +499,85 @@ async function submitForm() {
 }
 
 // 删除
-function handleDelete(row: SystemUserVO) {
+function handleDelete(row: AccountVO) {
   if (!canDelete.value) return;
-  ElMessageBox.confirm(`确认删除账号「${row.username}」吗？`, '提示', { type: 'warning' })
+  ElMessageBox.confirm(`确认删除账号「${row.accountName}」吗？`, '提示', { type: 'warning' })
     .then(async () => {
-      await deleteUser(row.userId);
+      await deleteUser(row.accountId);
       ElMessage.success('删除成功');
       fetchList();
     })
     .catch(() => {});
 }
 
+// 批量删除
+async function handleBatchDelete() {
+  if (!canDelete.value || !selectedRows.value.length) return;
+
+  const count = selectedRows.value.length;
+  const accountNames = selectedRows.value.map(row => row.accountName).join('、');
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${count} 个账号吗？\n\n账号列表：${accountNames}`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger',
+        customClass: 'batch-delete-dialog',
+      }
+    );
+
+    const ids = selectedRows.value.map(row => row.accountId);
+    await Promise.all(ids.map(id => deleteUser(id)));
+    ElMessage.success(`成功删除 ${count} 个账号`);
+    fetchList();
+  } catch (e) {
+    if ((e as any)?.response) {
+      ElMessage.error((e as any)?.message || '删除失败');
+    }
+    // 用户取消操作，不显示错误信息
+  }
+}
+
 // 启用/禁用
-async function toggleStatus(row: SystemUserVO) {
+async function toggleStatus(row: AccountVO) {
   if (!canManage.value) return;
-  const next: UserStatus = row.status === 0 ? 1 : 0;
-  await setUserStatus(row.userId, next);
+  const nextStatus = row.status === 'DISABLED' ? 'ENABLED' : 'DISABLED';
+  await setUserStatus(row.accountId, nextStatus);
   ElMessage.success('状态已更新');
   fetchList();
 }
 
 async function batchToggleStatus() {
   if (!canManage.value || !selectedRows.value.length) return;
-  const hasDisabled = selectedRows.value.some((r) => r.status === 0);
-  const target: UserStatus = hasDisabled ? 1 : 0;
-  const ids = selectedRows.value.map((r) => r.userId);
+  const hasDisabled = selectedRows.value.some((r) => r.status === 'DISABLED');
+  const targetStatus = hasDisabled ? 'ENABLED' : 'DISABLED';
+  const statusText = targetStatus === 'ENABLED' ? '启用' : '禁用';
+  const ids = selectedRows.value.map((r) => r.accountId);
+
   try {
-    await Promise.all(ids.map((id) => setUserStatus(id, target)));
-    ElMessage.success('状态已更新');
+    await ElMessageBox.confirm(
+      `确定要${statusText}选中的 ${selectedRows.value.length} 个账号吗？`,
+      '批量操作确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--primary',
+      }
+    );
+
+    await Promise.all(ids.map((id) => setUserStatus(id, targetStatus)));
+    ElMessage.success(`批量${statusText}成功`);
     fetchList();
   } catch (e) {
-    ElMessage.error((e as any)?.message || '状态更新失败');
+    if ((e as any)?.response) {
+      ElMessage.error((e as any)?.message || `批量${statusText}失败`);
+    }
+    // 用户取消操作，不显示错误信息
   }
 }
 
@@ -469,10 +608,10 @@ const resetRules: FormRules = {
   ],
 };
 
-function openResetPwdDialog(rows?: SystemUserVO[]) {
+function openResetPwdDialog(rows?: AccountVO[]) {
   const targets = rows && rows.length ? rows : selectedRows.value;
   if (!targets.length) return;
-  resetDialog.targetIds = targets.map((r) => r.userId);
+  resetDialog.targetIds = targets.map((r) => r.accountId);
   resetDialog.targetCount = targets.length;
   resetForm.password = '123456';
   resetForm.confirmPassword = '123456';

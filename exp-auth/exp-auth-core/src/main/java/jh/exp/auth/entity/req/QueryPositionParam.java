@@ -3,7 +3,7 @@ package jh.exp.auth.entity.req;
 import lombok.Data;
 
 @Data
-public class QueryPositionReq {
+public class QueryPositionParam {
     private String postCode;
     private String postName;
     private String postType;

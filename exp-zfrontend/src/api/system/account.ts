@@ -44,29 +44,73 @@ export interface QueryUserParams {
   status?: UserStatus;
 }
 
+// 新的账号查询参数接口
+export interface QueryAccountParams {
+  pageNum: number;
+  pageSize: number;
+  sort?: string;
+  queryParam: {
+    accountName?: string;
+    accountDisplay?: string;
+    mobile?: string;
+  };
+}
+
+// 新的账号数据接口 - 对应实际返回数据
+export interface AccountVO {
+  accountId: number;        // 账号ID
+  accountName: string;      // 登录账号名
+  personName?: string;      // 姓名 (原accountDisplay)
+  mobile?: string;          // 手机号
+  email?: string;           // 邮箱
+  orgCode?: string;         // 组织代码
+  orgName?: string;         // 组织名称
+  status: 'ENABLED' | 'DISABLED' | 'LOCKED' | 'INIT'; // 状态
+  postCode?: string;        // 岗位代码
+  postName?: string;        // 岗位名称
+  createdTime?: string;     // 创建时间
+}
+
+// 新的账号分页结果接口
+export interface AccountPageResult {
+  total: number;
+  page: number;
+  size: number;
+  list: AccountVO[];
+}
+
 export interface CreateUserPayload {
-  username: string;
-  realName: string;
-  deptId?: string;
+  accountName: string;
+  accountDisplay: string;
+  password: string;
   mobile?: string;
   email?: string;
-  roleIds?: string[];
-  password?: string;
+  personId: number;
+  orgId: number;
+  postId: number;
+  remark?: string;
 }
 
 export interface UpdateUserPayload {
-  userId: string;
-  realName?: string;
-  deptId?: string;
+  accountId: number;
+  accountDisplay: string;
   mobile?: string;
   email?: string;
-  roleIds?: string[];
+  personId: number;
+  orgId: number;
+  postId: number;
+  remark?: string;
 }
 
 export function queryUserList(params: QueryUserParams) {
   return request.get<PageResult<SystemUserVO>, PageResult<SystemUserVO>>('/exp/system/user/list', {
     params,
   });
+}
+
+// 新的账号查询接口
+export function queryAccountList(params: QueryAccountParams) {
+  return request.post<AccountPageResult, AccountPageResult>('/exp/auth/account/list', params);
 }
 
 export function createUser(data: CreateUserPayload) {
@@ -77,27 +121,16 @@ export function updateUser(data: UpdateUserPayload) {
   return request.post<void, void>('/exp/system/user/update', data);
 }
 
-export function deleteUser(userIds: string[] | string) {
-  const ids = Array.isArray(userIds) ? userIds : [userIds];
-  // 文档是 userId，批量场景扩展为 userIds；这里兼容两种入参
-  return request.post<void, void>('/exp/system/user/delete', {
-    userId: ids.length === 1 ? ids[0] : undefined,
-    userIds: ids,
-  });
+export function deleteUser(accountId: number, remark?: string) {
+  return request.post<void, void>('/exp/auth/account/delete', { accountId, remark });
 }
 
-export function setUserStatus(userId: string, status: UserStatus) {
-  return request.post<void, void>('/exp/system/user/status', { userId, status });
+export function setUserStatus(accountId: number, status: string, remark?: string) {
+  return request.post<AccountVO, AccountVO>('/exp/auth/account/status', { accountId, status, remark });
 }
 
-export function resetUserPassword(userIds: string[] | string, password: string) {
-  const ids = Array.isArray(userIds) ? userIds : [userIds];
-  // 文档是 userId + password；这里兼容批量 userIds
-  return request.post<void, void>('/exp/system/user/resetPassword', {
-    userId: ids.length === 1 ? ids[0] : undefined,
-    userIds: ids,
-    password,
-  });
+export function resetUserPassword(accountId: number, newPassword: string, remark?: string) {
+  return request.post<void, void>('/exp/auth/account/resetPassword', { accountId, newPassword, remark });
 }
 
 

@@ -3,9 +3,9 @@ package jh.exp.auth.service.bus.Impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.entity.req.QueryPositionParam;
 import jh.exp.auth.mapper.PositionMapper;
 import jh.exp.auth.entity.Position;
-import jh.exp.auth.entity.req.QueryPositionReq;
 import jh.exp.auth.service.bus.PositionService;
 import jh.exp.common.constant.CommonConstant;
 import jh.exp.common.req.SimplePageReq;
@@ -19,12 +19,12 @@ public class PositionServiceImpl implements PositionService{
     @Autowired
     private PositionMapper positionMapper;
     @Override
-    public SimplePageRes<Position> queryPosition(SimplePageReq<QueryPositionReq> positionReq) {
+    public SimplePageRes<Position> queryPosition(SimplePageReq<QueryPositionParam> positionReq) {
         int pageNum = positionReq.getPageNum();
         int pageSize = positionReq.getPageSize();
         String sort = positionReq.getSort();
         Page<Position> page = new Page<>(pageNum, pageSize);
-        QueryPositionReq queryParam = positionReq.getQueryParam();
+        QueryPositionParam queryParam = positionReq.getQueryParam();
         QueryWrapper<Position> positionQueryWrapper = new QueryWrapper<>();
         positionQueryWrapper.eq(StringUtils.hasText(queryParam.getPostCode()), "post_code", queryParam.getPostCode())
                 .eq(StringUtils.hasText(queryParam.getPostName()), "post_name", queryParam.getPostName())

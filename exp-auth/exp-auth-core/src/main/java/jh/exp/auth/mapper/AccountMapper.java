@@ -2,13 +2,36 @@ package jh.exp.auth.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import jh.exp.auth.entity.Account;
+import jh.exp.auth.entity.res.AccountListRes;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
 
 @Mapper
 public interface AccountMapper extends BaseMapper<Account> {
 
-//    Optional<Account> findByAccountName(String accountName);
+    /**
+     * 检查账号名称是否存在
+     * @param accountName 账号名称
+     * @param excludeAccountId 排除的账号ID（用于更新时检查）
+     * @return 存在数量
+     */
+    int countByAccountName(@Param("accountName") String accountName, @Param("excludeAccountId") Long excludeAccountId);
+
+    /**
+     * 分页查询账号列表（多表联查）
+     * @param page 分页对象
+     * @param accountName 账号名称筛选
+     * @param personName 人员姓名筛选
+     * @param mobile 手机号筛选
+     * @return 账号列表（分页结果会自动填充到page对象中）
+     */
+    IPage<AccountListRes> selectAccountList(IPage<AccountListRes> page,
+                                           @Param("accountName") String accountName,
+                                           @Param("personName") String personName,
+                                           @Param("mobile") String mobile);
 }
 
 

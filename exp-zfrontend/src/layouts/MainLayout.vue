@@ -756,17 +756,16 @@ const closeAllTabs = () => {
 
 // 用户信息下拉菜单样式
 :deep(.user-info) {
-  padding: 16px;
+  padding: 12px 16px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid #ebeef5;
   margin-bottom: 8px;
 
   .user-avatar-dropdown {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -783,14 +782,14 @@ const closeAllTabs = () => {
 
     .avatar-placeholder {
       color: white;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
       text-transform: uppercase;
     }
   }
 
   .user-details {
-    text-align: center;
+    flex: 1;
 
     .username {
       font-size: 16px;

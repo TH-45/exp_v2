@@ -1,30 +1,112 @@
 package jh.exp.auth.controller.bus;
 
-import jh.exp.auth.entity.Account;
-import jh.exp.auth.entity.req.QueryAccountPara;
+import jh.exp.auth.entity.exp.AccountExp;
+import jh.exp.auth.entity.req.*;
+import jh.exp.auth.entity.res.AccountListRes;
 import jh.exp.auth.service.bus.AccountService;
 import jh.exp.common.api.ApiResponse;
 import jh.exp.common.req.SimplePageReq;
+import jh.exp.common.res.SimplePageRes;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/account")
 @RequiredArgsConstructor
 public class AccountController {
 
-
-    private AccountService accountService;
+    private final AccountService accountService;
 
     /**
-     * 查询账号信息
-     * @return
+     * 分页查询账号列表
      */
-    public ApiResponse<QueryAccountPara> getAccount(SimplePageReq<QueryAccountPara> req) {
+    @PostMapping("/list")
+    public ApiResponse<SimplePageRes<AccountListRes>> list(@RequestBody SimplePageReq<QueryAccountParam> req) {
+        req.pageDefault();
+        SimplePageRes<AccountListRes> result = accountService.queryAccountList(req);
+        return ApiResponse.success(result);
+    }
 
-        return null;
+    /**
+     * 根据ID查询账号详情
+     */
+    @GetMapping("/detail")
+    public ApiResponse<AccountExp> detail(@RequestParam Long accountId) {
+        AccountExp result = accountService.getAccountById(accountId);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 创建账号
+     */
+    @PostMapping("/create")
+    public ApiResponse<AccountExp> create(@RequestBody @Valid CreateAccountReq req) {
+        AccountExp result = accountService.createAccount(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 更新账号
+     */
+    @PostMapping("/update")
+    public ApiResponse<AccountExp> update(@RequestBody @Valid UpdateAccountReq req) {
+        AccountExp result = accountService.updateAccount(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 删除账号
+     */
+    @PostMapping("/delete")
+    public ApiResponse<Void> delete(@RequestBody DeleteAccountReq req) {
+        accountService.deleteAccount(req.getAccountId());
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 批量删除账号
+     */
+    @PostMapping("/batchDelete")
+    public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteAccountReq req) {
+        accountService.batchDeleteAccounts(req);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 更改账号状态
+     */
+    @PostMapping("/status")
+    public ApiResponse<AccountExp> updateStatus(@RequestBody @Valid AccountStatusReq req) {
+        AccountExp result = accountService.updateAccountStatus(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 批量更改账号状态
+     */
+    @PostMapping("/batchStatus")
+    public ApiResponse<Void> batchUpdateStatus(@RequestBody @Valid BatchAccountStatusReq req) {
+        accountService.batchUpdateAccountStatus(req);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 重置密码
+     */
+    @PostMapping("/resetPassword")
+    public ApiResponse<Void> resetPassword(@RequestBody @Valid ResetPasswordReq req) {
+        accountService.resetPassword(req);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 检查账号名称是否存在
+     */
+    @GetMapping("/checkAccountName")
+    public ApiResponse<Boolean> checkAccountName(@RequestParam String accountName,
+                                                 @RequestParam(required = false) Long excludeAccountId) {
+        boolean exists = accountService.checkAccountNameExists(accountName, excludeAccountId);
+        return ApiResponse.success(exists);
     }
 }
