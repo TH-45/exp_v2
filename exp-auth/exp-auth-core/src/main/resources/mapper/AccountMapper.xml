@@ -4,14 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="jh.exp.auth.mapper.AccountMapper">
 
-    <!-- 检查账号名称是否存在 -->
-    <select id="countByAccountName" resultType="int">
-        SELECT COUNT(1) FROM exp_account
-        WHERE account_name = #{accountName}
-        AND (#{excludeAccountId} IS NULL OR account_id != #{excludeAccountId})
-    </select>
-
-    <!-- 分页查询账号列表（多表联查）- MyBatis-Plus自动分页 -->
+    <!-- 分页查询账号列表（多表联查） -->
     <select id="selectAccountList" resultType="jh.exp.auth.entity.res.AccountListRes">
         SELECT a.account_id, a.account_name, a.account_display, a.mobile, a.email, a.status, a.created_time,
                p.person_code, p.person_name,
@@ -35,6 +28,28 @@
             </if>
         </where>
         ORDER BY a.created_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 查询账号总数 -->
+    <select id="selectAccountCount" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_account a
+        LEFT JOIN exp_person p ON a.person_id = p.person_id
+        LEFT JOIN exp_org_unit o ON a.org_id = o.org_id
+        LEFT JOIN exp_post pos ON a.post_id = pos.post_id
+        LEFT JOIN exp_account creator ON a.created_by = creator.account_id
+        <where>
+            <if test="accountName != null and accountName.trim() != ''">
+                AND a.account_name LIKE CONCAT('%', #{accountName}, '%')
+            </if>
+            <if test="personName != null and personName.trim() != ''">
+                AND p.person_name LIKE CONCAT('%', #{personName}, '%')
+            </if>
+            <if test="mobile != null and mobile.trim() != ''">
+                AND a.mobile LIKE CONCAT('%', #{mobile}, '%')
+            </if>
+        </where>
     </select>
 
 </mapper>

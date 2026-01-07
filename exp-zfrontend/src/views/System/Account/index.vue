@@ -142,34 +142,49 @@
           <el-form-item label="账号名" prop="accountName">
             <el-input
               v-model="form.accountName"
-              placeholder="请输入账号名"
-              :disabled="editDialog.isEdit"
+              placeholder="系统自动生成"
+              readonly
+              class="readonly-input"
+            />
+          </el-form-item>
+          <el-form-item label="关联人员" prop="personId">
+            <PersonSelector
+              v-model="selectedPerson"
+              placeholder="请选择关联人员"
+              @change="handlePersonChange"
             />
           </el-form-item>
           <el-form-item label="姓名" prop="personName">
-            <el-input v-model="form.personName" placeholder="请输入姓名" />
-          </el-form-item>
-          <el-form-item label="手机号">
-            <el-input v-model="form.mobile" placeholder="请输入手机号" />
-          </el-form-item>
-          <el-form-item label="邮箱">
-            <el-input v-model="form.email" placeholder="请输入邮箱" />
-          </el-form-item>
-          <el-form-item label="关联人员" prop="personId">
-            <el-input v-model="form.personId" placeholder="占位：后续替换为人员选择器" />
+            <el-input v-model="form.personName" placeholder="选择人员后自动带出" readonly class="readonly-input" />
           </el-form-item>
           <el-form-item label="所属组织" prop="orgId">
-            <el-input v-model="form.orgId" placeholder="占位：后续替换为组织选择器" />
+            <OrgSelector
+                v-model="selectedOrg"
+                placeholder="请选择所属组织"
+                @change="handleOrgChange"
+            />
           </el-form-item>
-          <el-form-item label="主岗位" prop="postId">
-            <el-input v-model="form.postId" placeholder="占位：后续替换为主岗位选择器" />
+
+          <el-form-item label="手机号" prop="mobile">
+            <el-input v-model="form.mobile" placeholder="选择人员后自动带出" readonly class="readonly-input" />
           </el-form-item>
+          <el-form-item label="岗位" prop="postId">
+            <PostSelector
+                v-model="selectedPost"
+                :org-id="form.orgId"
+                placeholder="请选择岗位"
+                @change="handlePostChange"
+            />
+          </el-form-item>
+
+          <el-form-item label="邮箱" prop="email">
+            <el-input v-model="form.email" placeholder="选择人员后自动带出" readonly class="readonly-input" />
+          </el-form-item>
+
           <el-form-item label="备注">
             <el-input v-model="form.remark" placeholder="请输入备注" />
           </el-form-item>
-          <el-form-item v-if="!editDialog.isEdit" label="初始密码" prop="password">
-            <el-input v-model="form.password" type="password" show-password placeholder="请输入初始密码" />
-          </el-form-item>
+
         </el-form>
         <template #footer>
           <el-button @click="editDialog.visible = false">取消</el-button>
@@ -207,6 +222,10 @@ import { onMounted, reactive, ref, computed, watch } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
+import { generateAccountName } from '@/utils/account';
+import PersonSelector from '@/components/Selector/PersonSelector.vue';
+import OrgSelector from '@/components/Selector/OrgSelector.vue';
+import PostSelector from '@/components/Selector/PostSelector.vue';
 import {
   queryAccountList,
   createUser,
@@ -214,8 +233,12 @@ import {
   deleteUser,
   setUserStatus,
   resetUserPassword,
+  getAccountDetail,
   type AccountVO,
 } from '@/api/system/account';
+import type { ExpPersonVO } from '@/api/system/person';
+import type { OrgNode } from '@/api/system/post';
+import type { PostVO } from '@/api/system/post';
 
 const loading = ref(false);
 const saving = ref(false);
@@ -297,13 +320,10 @@ async function fetchList() {
     delete (searchParams as any).mobile;
 
     const res = await queryAccountList(searchParams);
-
-    console.log('响应数据 (已由拦截器处理):', JSON.stringify(res));
     // 注意：由于axios响应拦截器的处理，这里收到的res已经是apiResponse.data了
     const data = res as any;
 
     if (data) {
-      console.log("进入到数据处理逻辑");
       tableData.value = Array.isArray(data.list) ? data.list : [];
       total.value = Number(data.total) || 0;
     } else {
@@ -370,13 +390,12 @@ const editDialog = reactive({
 type EditFormModel = {
   accountId?: number;
   accountName: string;
-  personName: string;  // 原accountDisplay
-  personId?: number;
-  orgId?: number;
-  postId?: number;
-  mobile?: string;
-  email?: string;
-  password?: string;
+  personName: string;  // 姓名（只读，由人员选择器带出）
+  personId?: number;   // 关联人员ID
+  orgId?: number;      // 所属组织ID
+  postId?: number;     // 主岗位ID
+  mobile?: string;     // 手机号（只读，由人员选择器带出）
+  email?: string;      // 邮箱（只读，由人员选择器带出）
   remark?: string;
 };
 
@@ -390,9 +409,13 @@ const form = reactive<EditFormModel>({
   postId: undefined,
   mobile: '',
   email: '',
-  password: '123456',
   remark: '',
 });
+
+// 选择器数据
+const selectedPerson = ref<ExpPersonVO>();
+const selectedOrg = ref<OrgNode>();
+const selectedPost = ref<PostVO>();
 
 const roleIdsText = ref('');
 watch(
@@ -415,48 +438,103 @@ function resetFormModel() {
   form.postId = undefined;
   form.mobile = '';
   form.email = '';
-  form.password = '123456';
   form.remark = '';
+
+  // 重置选择器数据
+  selectedPerson.value = undefined;
+  selectedOrg.value = undefined;
+  selectedPost.value = undefined;
+}
+
+// 选择器事件处理
+function handlePersonChange(person: ExpPersonVO | undefined) {
+  form.personId = person?.personId;
+  form.personName = person?.personName || '';
+  form.mobile = person?.mobile || '';
+  form.email = person?.email || '';
+}
+
+function handleOrgChange(org: OrgNode | undefined) {
+  form.orgId = org?.orgId;
+  // 组织改变时，清空岗位选择
+  selectedPost.value = undefined;
+  form.postId = undefined;
+}
+
+function handlePostChange(post: PostVO | undefined) {
+  form.postId = post?.postId;
 }
 
 const rules: FormRules = {
-  accountName: [{ required: true, message: '请输入账号名', trigger: 'blur' }],
-  personName: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+  accountName: [{ required: true, message: '账号名不能为空', trigger: 'blur' }],
+  personName: [{ required: true, message: '请选择关联人员', trigger: 'blur' }],
   personId: [{ required: true, message: '请选择关联人员', trigger: 'change' }],
   orgId: [{ required: true, message: '请选择所属组织', trigger: 'change' }],
-  postId: [{ required: true, message: '请选择主岗位', trigger: 'change' }],
-  password: [
-    {
-      validator: (_rule, value, callback) => {
-        // 编辑账号时不修改密码，因此不校验
-        if (editDialog.isEdit) return callback();
-        if (!value) return callback(new Error('请输入初始密码'));
-        return callback();
-      },
-      trigger: 'blur',
-    },
-  ],
+  postId: [{ required: true, message: '请选择岗位', trigger: 'change' }],
 };
 
 function handleAdd() {
   editDialog.isEdit = false;
   resetFormModel();
+  // 自动生成账号名
+  form.accountName = generateAccountName();
   editDialog.visible = true;
 }
 
-function handleEdit(row: AccountVO) {
+async function handleEdit(row: AccountVO) {
   editDialog.isEdit = true;
   resetFormModel();
-  form.accountId = row.accountId;
-  form.accountName = row.accountName;
-  form.personName = row.personName || '';
-  form.personId = undefined; // TODO: 需要从row中获取personId
-  form.orgId = undefined; // TODO: 需要从row中获取orgId
-  form.postId = undefined; // TODO: 需要从row中获取postId
-  form.mobile = row.mobile || '';
-  form.email = row.email || '';
-  form.remark = ''; // TODO: 需要从row中获取remark
-  editDialog.visible = true;
+
+  try {
+    // 获取账号详情数据
+    const detailData = await getAccountDetail(row.accountId);
+
+    // 设置表单基本数据
+    form.accountId = detailData.accountId;
+    form.accountName = detailData.accountName;
+    form.personName = detailData.personName || '';
+    form.personId = detailData.personId;
+    form.mobile = detailData.mobile || '';
+    form.email = detailData.email || '';
+    form.orgId = detailData.orgId;
+    form.postId = detailData.postId;
+    form.remark = detailData.remark || '';
+
+    // 设置选择器数据
+    if (detailData.personId && detailData.personName) {
+      selectedPerson.value = {
+        personId: detailData.personId,
+        personCode: detailData.personName, // 临时使用姓名作为工号，后续可扩展详情接口返回完整数据
+        personName: detailData.personName,
+        gender: 'OTHER' as const,
+        mobile: detailData.mobile,
+        email: detailData.email,
+        status: 'ONJOB' as const,
+      };
+    }
+
+    if (detailData.orgId && detailData.orgName) {
+      selectedOrg.value = {
+        orgId: detailData.orgId,
+        orgName: detailData.orgName,
+        orgCode: detailData.orgCode,
+      };
+    }
+
+    if (detailData.postId && detailData.postName) {
+      selectedPost.value = {
+        postId: detailData.postId,
+        postCode: detailData.postName, // 临时使用岗位名作为岗位编码
+        postName: detailData.postName,
+        postStatus: 'ENABLED' as const,
+      };
+    }
+
+    editDialog.visible = true;
+  } catch (e) {
+    ElMessage.error('获取账号详情失败');
+    console.error('获取账号详情失败:', e);
+  }
 }
 
 async function submitForm() {
@@ -468,7 +546,7 @@ async function submitForm() {
     if (editDialog.isEdit) {
       await updateUser({
         accountId: form.accountId,
-        personName: form.personName, // 使用personName作为accountDisplay
+        accountDisplay: form.personName, // 使用personName作为accountDisplay
         personId: form.personId,
         orgId: form.orgId,
         postId: form.postId,
@@ -481,7 +559,6 @@ async function submitForm() {
       await createUser({
         accountName: form.accountName,
         accountDisplay: form.personName, // 使用personName作为accountDisplay
-        password: form.password,
         mobile: form.mobile,
         email: form.email,
         personId: form.personId!,
@@ -677,6 +754,14 @@ async function submitResetPwd() {
 .dialog-form.two-col :deep(.el-form-item) {
   margin-bottom: 0;
 }
+
+.readonly-input :deep(.el-input__inner) {
+  background-color: #f5f7fa;
+  color: #606266;
+  cursor: not-allowed;
+
+}
+
 </style>
 
 

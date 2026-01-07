@@ -68,6 +68,7 @@ export interface QueryPersonReq {
   personCode?: string;
   personName?: string;
   mobile?: string;
+  status?: string;
 }
 
 export type SavePersonPayload = Partial<ExpPersonVO> & {

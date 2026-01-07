@@ -61,14 +61,18 @@ export interface AccountVO {
   accountId: number;        // 账号ID
   accountName: string;      // 登录账号名
   personName?: string;      // 姓名 (原accountDisplay)
+  personId?: number;        // 关联人员ID
   mobile?: string;          // 手机号
   email?: string;           // 邮箱
+  orgId?: number;           // 组织ID
   orgCode?: string;         // 组织代码
   orgName?: string;         // 组织名称
-  status: 'ENABLED' | 'DISABLED' | 'LOCKED' | 'INIT'; // 状态
+  postId?: number;          // 岗位ID
   postCode?: string;        // 岗位代码
   postName?: string;        // 岗位名称
+  status: 'ENABLED' | 'DISABLED' | 'LOCKED' | 'INIT'; // 状态
   createdTime?: string;     // 创建时间
+  remark?: string;          // 备注
 }
 
 // 新的账号分页结果接口
@@ -82,7 +86,6 @@ export interface AccountPageResult {
 export interface CreateUserPayload {
   accountName: string;
   accountDisplay: string;
-  password: string;
   mobile?: string;
   email?: string;
   personId: number;
@@ -131,6 +134,10 @@ export function setUserStatus(accountId: number, status: string, remark?: string
 
 export function resetUserPassword(accountId: number, newPassword: string, remark?: string) {
   return request.post<void, void>('/exp/auth/account/resetPassword', { accountId, newPassword, remark });
+}
+
+export function getAccountDetail(accountId: number) {
+  return request.get<AccountVO, AccountVO>('/exp/auth/account/detail', { params: { accountId } });
 }
 
 
