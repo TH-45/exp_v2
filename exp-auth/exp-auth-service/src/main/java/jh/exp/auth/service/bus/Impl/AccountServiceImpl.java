@@ -9,6 +9,7 @@ import jh.exp.auth.entity.exp.AccountExp;
 import jh.exp.auth.entity.res.AccountListRes;
 import jh.exp.auth.entity.req.*;
 import jh.exp.auth.mapper.AccountMapper;
+import jh.exp.auth.mapper.PersonMapper;
 import jh.exp.auth.service.bus.AccountService;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
@@ -25,6 +26,8 @@ import java.time.LocalDateTime;
 public class AccountServiceImpl implements AccountService {
 
     private final AccountMapper accountMapper;
+
+    private final PersonMapper personMapper;
 
     @Override
     public SimplePageRes<AccountListRes> queryAccountList(SimplePageReq<QueryAccountParam> req) {
