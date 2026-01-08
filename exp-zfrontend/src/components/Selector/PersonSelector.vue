@@ -103,7 +103,7 @@
 import { ref, reactive, watch, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Search } from '@element-plus/icons-vue';
-import { queryPersonInfo, type ExpPersonVO } from '@/api/system/person';
+import { queryPersonList, type ExpPersonVO } from '@/api/system/person';
 
 interface Props {
   modelValue?: ExpPersonVO;
@@ -192,7 +192,7 @@ async function fetchPersonList() {
       status: 'ONJOB', // 只查询在职人员
     };
 
-    const res = await queryPersonInfo(params);
+    const res = await queryPersonList(params);
     tableData.value = res.list || [];
     total.value = res.total || 0;
   } catch (e) {

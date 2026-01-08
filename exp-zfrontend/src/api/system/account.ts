@@ -117,11 +117,11 @@ export function queryAccountList(params: QueryAccountParams) {
 }
 
 export function createUser(data: CreateUserPayload) {
-  return request.post<void, void>('/exp/system/user/create', data);
+  return request.post<void, void>('/exp/auth/account/create', data);
 }
 
 export function updateUser(data: UpdateUserPayload) {
-  return request.post<void, void>('/exp/system/user/update', data);
+  return request.post<void, void>('/exp/auth/account/update', data);
 }
 
 export function deleteUser(accountId: number, remark?: string) {
@@ -132,8 +132,8 @@ export function setUserStatus(accountId: number, status: string, remark?: string
   return request.post<AccountVO, AccountVO>('/exp/auth/account/status', { accountId, status, remark });
 }
 
-export function resetUserPassword(accountId: number, newPassword: string, remark?: string) {
-  return request.post<void, void>('/exp/auth/account/resetPassword', { accountId, newPassword, remark });
+export function resetUserPassword(accountIds: number[], newPassword: string, remark?: string) {
+  return request.post<void, void>('/exp/auth/account/resetPassword', { accountIds, newPassword, remark });
 }
 
 export function getAccountDetail(accountId: number) {
