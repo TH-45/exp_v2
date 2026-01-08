@@ -1,49 +1,124 @@
 package jh.exp.auth.controller.bus;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jh.exp.auth.entity.Position;
-
-import jh.exp.auth.entity.req.QueryPositionParam;
+import jh.exp.auth.entity.req.*;
+import jh.exp.auth.entity.res.PositionDetailRes;
+import jh.exp.auth.entity.res.PositionListRes;
 import jh.exp.auth.service.bus.PositionService;
-import jh.exp.common.annotation.RequiresPermissions;
-import jh.exp.common.auth.CurrentUserHolder;
-import jh.exp.common.auth.dto.CurrentUser;
-
+import jh.exp.common.api.ApiResponse;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
-@RequestMapping(value = "/position",produces = "application/json;charset=UTF-8")
+@RequestMapping("/position")
+@RequiredArgsConstructor
 public class PositionController {
 
-    @Autowired
-    private PositionService positionService;
+    private final PositionService positionService;
 
     /**
-     * 分页查询岗位信息
+     * 分页查询岗位列表
      */
-    @PostMapping(value = "/queryList")
-    @RequiresPermissions( value = {"position:query"} )
-    public SimplePageRes<Position> queryList(@RequestBody @Valid SimplePageReq<QueryPositionParam> positionReq) {
-        CurrentUser currentUser = CurrentUserHolder.get();
-        //page参数校验
-        positionReq.pageDefault();
-        try{
-            return positionService.queryPosition(positionReq);
-        }catch (Exception e){
-            throw new RuntimeException(e.getMessage());
-        }
-
+    @PostMapping("/list")
+    public ApiResponse<SimplePageRes<Position>> list(@RequestBody SimplePageReq<QueryPositionParam> req) {
+        req.pageDefault();
+        SimplePageRes<Position> result = positionService.queryPosition(req);
+        return ApiResponse.success(result);
     }
 
+    /**
+     * 根据ID查询岗位详情
+     */
+    @GetMapping("/detail")
+    public ApiResponse<PositionDetailRes> detail(@RequestParam Long postId) {
+        PositionDetailRes result = positionService.getPositionById(postId);
+        return ApiResponse.success(result);
+    }
 
+    /**
+     * 创建岗位
+     */
+    @PostMapping("/create")
+    public ApiResponse<PositionDetailRes> create(@RequestBody @Valid CreatePositionReq req) {
+        PositionDetailRes result = positionService.createPosition(req);
+        return ApiResponse.success(result);
+    }
 
+    /**
+     * 更新岗位
+     */
+    @PostMapping("/update")
+    public ApiResponse<PositionDetailRes> update(@RequestBody @Valid UpdatePositionReq req) {
+        PositionDetailRes result = positionService.updatePosition(req);
+        return ApiResponse.success(result);
+    }
 
+    /**
+     * 删除岗位
+     */
+    @PostMapping("/delete")
+    public ApiResponse<Void> delete(@RequestBody @Valid DeletePositionReq req) {
+        positionService.deletePosition(req.getPostId());
+        return ApiResponse.success(null);
+    }
 
+    /**
+     * 批量删除岗位
+     */
+    @PostMapping("/batchDelete")
+    public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeletePositionReq req) {
+        positionService.batchDeletePositions(req);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 更新岗位状态
+     */
+    @PostMapping("/status")
+    public ApiResponse<PositionDetailRes> updateStatus(@RequestBody @Valid PositionStatusReq req) {
+        PositionDetailRes result = positionService.updatePositionStatus(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 批量更新岗位状态
+     */
+    @PostMapping("/batchStatus")
+    public ApiResponse<Void> batchUpdateStatus(@RequestBody @Valid BatchPositionStatusReq req) {
+        positionService.batchUpdatePositionStatus(req);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 根据组织ID查询岗位
+     */
+    @PostMapping("/queryByOrg")
+    public ApiResponse<List<PositionListRes>> queryByOrg(@RequestBody @Valid QueryPositionByOrgReq req) {
+        List<PositionListRes> result = positionService.queryPositionsByOrgId(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 检查岗位编码是否存在
+     */
+    @GetMapping("/checkPostCode")
+    public ApiResponse<Boolean> checkPostCode(@RequestParam String postCode,
+                                             @RequestParam(required = false) Long excludePostId) {
+        boolean exists = positionService.checkPostCodeExists(postCode, excludePostId);
+        return ApiResponse.success(exists);
+    }
+
+    /**
+     * 获取所有启用的岗位
+     */
+    @GetMapping("/enabledList")
+    public ApiResponse<List<PositionListRes>> getEnabledList() {
+        List<PositionListRes> result = positionService.getAllEnabledPositions();
+        return ApiResponse.success(result);
+    }
 }

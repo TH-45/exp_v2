@@ -15,6 +15,15 @@ public class CommonConstant {
     public static final Integer DISABLED_STATUS = 0;
 
     /**
+     * 启动标志
+     */
+    public static final String ENABLED_STATUS_STR = "1";
+    /**
+     * 禁用标志
+     */
+    public static final String DISABLED_STATUS_STR = "0";
+
+    /**
      * 操作成功
      */
     public static final Integer SUCCESS_CODE = 0000;

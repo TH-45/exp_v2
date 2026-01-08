@@ -114,4 +114,23 @@ export function queryPostDict(params: { keyword?: string; pageNum: number; pageS
   );
 }
 
+// 组织管理相关接口
+export interface CreateOrgPayload {
+  orgName: string;
+  orgCode: string;
+  parentOrgId?: number;
+  orgType: string;
+  managerPersonId?: number;
+}
+
+// 创建组织
+export function createOrg(data: CreateOrgPayload) {
+  return request.post<OrgNode, OrgNode>(`${BASE_POST}/createOrg`, data);
+}
+
+// 删除组织
+export function deleteOrg(orgId: number) {
+  return request.post<void, void>(`${BASE_POST}/deleteOrg`, { orgId });
+}
+
 

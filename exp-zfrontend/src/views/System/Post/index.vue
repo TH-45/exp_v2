@@ -12,13 +12,60 @@
         >
           <el-card class="tree-card" body-class="tree-card-body">
             <div class="tree-header">
-              <el-input
-                v-model="treeFilter"
-                size="small"
-                placeholder="搜索组织名称/编码"
-                clearable
-                @input="filterTree"
-              />
+              <div class="tree-controls">
+                <el-input
+                  v-model="treeFilter"
+                  size="small"
+                  placeholder="搜索组织名称/编码"
+                  clearable
+                  @input="filterTree"
+                  style="width: 210px;"
+                />
+                <el-select
+                  v-model="relStatusFilter"
+                  size="small"
+                  placeholder="状态"
+                  clearable
+                  @change="applyRelStatusFilter"
+                  style="width: 70px; margin-left: 8px;"
+                >
+                  <el-option label="全部" value="ALL" />
+                  <el-option label="启用" value="ENABLED" />
+                  <el-option label="停用" value="DISABLED" />
+                </el-select>
+              </div>
+              <div class="tree-buttons">
+                <el-button
+                  size="small"
+                  type="text"
+                  @click="toggleTreeExpansion"
+                  :title="isTreeExpanded ? '收起组织树' : '展开组织树'"
+                  class="tree-toggle-btn"
+                >
+                  <el-icon :size="14">
+                    <ArrowDown v-if="isTreeExpanded" />
+                    <ArrowUp v-else />
+                  </el-icon>
+                </el-button>
+                <el-button
+                  size="small"
+                  type="primary"
+                  @click="showAddOrgDialog"
+                  :disabled="!currentTreeOrg"
+                  title="添加子组织"
+                >
+                  +
+                </el-button>
+                <el-button
+                  size="small"
+                  type="danger"
+                  @click="confirmDeleteOrg"
+                  :disabled="!currentTreeOrg"
+                  title="删除组织"
+                >
+                  -
+                </el-button>
+              </div>
             </div>
             <el-tree
               ref="treeRef"
@@ -378,13 +425,39 @@
           </el-button>
         </template>
       </el-dialog>
+
+      <!-- 添加组织弹窗 -->
+      <el-dialog
+        v-model="addOrgDialog.visible"
+        title="添加子组织"
+        width="400px"
+        destroy-on-close
+      >
+        <div class="add-org-content">
+          <p class="add-org-tip">在组织「{{ currentTreeOrg?.orgName }}」下添加子组织</p>
+          <el-input
+            ref="orgNameInputRef"
+            v-model="addOrgDialog.orgName"
+            placeholder="请输入组织名称"
+            @keyup.enter="submitAddOrg"
+            @blur="submitAddOrg"
+          />
+        </div>
+        <template #footer>
+          <el-button @click="addOrgDialog.visible = false">取消</el-button>
+          <el-button type="primary" :loading="addOrgDialog.saving" @click="submitAddOrg">
+            确定
+          </el-button>
+        </template>
+      </el-dialog>
+
     </div>
   </el-config-provider>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, computed, onBeforeUnmount } from 'vue';
-import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
+import { onMounted, reactive, ref, computed, onBeforeUnmount, nextTick } from 'vue';
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown } from '@element-plus/icons-vue';
 import {
   fetchOrgTree,
   queryOrgPosts,
@@ -395,6 +468,8 @@ import {
   setOrgPrimaryPost,
   unbindOrgPosts,
   queryPostDict,
+  createOrg,
+  deleteOrg,
   type OrgNode,
   type PostVO,
   type PostStatus,
@@ -414,6 +489,10 @@ const orgTree = ref<OrgNode[]>([]);
 const treeFilter = ref('');
 const treeLoading = ref(false);
 const currentOrg = ref<OrgNode | null>(null);
+const currentTreeOrg = ref<OrgNode | null>(null); // 左侧树选中的组织
+const relStatusFilter = ref('ALL'); // 组织可用状态筛选
+const originalTableData = ref<PostVO[]>([]); // 原始表格数据，用于前端筛选
+const isTreeExpanded = ref(false); // 组织树是否展开
 const splitRef = ref<HTMLElement>();
 const leftWidth = ref(320);
 const lastLeftWidth = ref(320);
@@ -479,6 +558,14 @@ const bindDialog = reactive({
   pageSize: 10,
   total: 0,
 });
+
+const addOrgDialog = reactive({
+  visible: false,
+  saving: false,
+  orgName: '',
+});
+
+const orgNameInputRef = ref();
 
 // 权限控制
 const canCreate = computed(() => hasPermission('system:post:create'));
@@ -596,6 +683,43 @@ function filterTree() {
   treeRef.value?.filter(treeFilter.value);
 }
 
+// 切换树形结构展开/收起
+function toggleTreeExpansion() {
+  isTreeExpanded.value = !isTreeExpanded.value;
+  
+  // 获取所有节点
+  const allNodes = getAllTreeNodes(orgTree.value);
+  
+  if (isTreeExpanded.value) {
+    // 展开所有节点
+    allNodes.forEach(node => {
+      treeRef.value?.store.nodesMap[node.orgId]?.expand();
+    });
+  } else {
+    // 收起所有节点
+    allNodes.forEach(node => {
+      treeRef.value?.store.nodesMap[node.orgId]?.collapse();
+    });
+  }
+}
+
+// 递归获取所有节点
+function getAllTreeNodes(nodes: OrgNode[]): OrgNode[] {
+  const result: OrgNode[] = [];
+  
+  function traverse(nodeList: OrgNode[]) {
+    nodeList.forEach(node => {
+      result.push(node);
+      if (node.children && node.children.length > 0) {
+        traverse(node.children);
+      }
+    });
+  }
+  
+  traverse(nodes);
+  return result;
+}
+
 async function loadOrgTree() {
   treeLoading.value = true;
   try {
@@ -609,6 +733,7 @@ async function loadOrgTree() {
 }
 
 function handleTreeClick(node: OrgNode) {
+  currentTreeOrg.value = node;
   currentOrg.value = node;
   query.orgId = node.orgId;
   query.pageNum = 1;
@@ -624,12 +749,26 @@ async function fetchTable() {
   if (!currentOrg.value) return;
   tableLoading.value = true;
   try {
-    const res = await queryOrgPosts({ ...query, orgId: currentOrg.value.orgId });
+    // 构造查询参数，不包含relStatus，后端返回所有状态
+    const searchQuery = {
+      orgId: currentOrg.value.orgId,
+      postCode: query.postCode,
+      postName: query.postName,
+      postStatus: query.postStatus,
+      pageNum: query.pageNum,
+      pageSize: query.pageSize,
+    };
+
+    const res = await queryOrgPosts(searchQuery);
     let list = (res.list || res.rows || res.records) ?? [];
     if (!list.length) list = mockPostList;
-    tableData.value = list;
-    total.value = res.total ?? list.length;
+
+    // 保存原始数据
+    originalTableData.value = list;
+    // 应用前端筛选
+    applyRelStatusFilter();
   } catch (e) {
+    originalTableData.value = mockPostList;
     tableData.value = mockPostList;
     total.value = mockPostList.length;
   } finally {
@@ -661,6 +800,18 @@ function handleSizeChange(size: number) {
   query.pageSize = size;
   query.pageNum = 1;
   fetchTable();
+}
+
+// 前端筛选组织可用状态
+function applyRelStatusFilter() {
+  if (relStatusFilter.value === 'ALL' || !relStatusFilter.value) {
+    tableData.value = originalTableData.value;
+  } else {
+    tableData.value = originalTableData.value.filter(item =>
+      item.relStatus === relStatusFilter.value
+    );
+  }
+  total.value = tableData.value.length;
 }
 
 function openPostForm(isEdit: boolean, row?: PostVO) {
@@ -844,6 +995,87 @@ async function submitBind() {
     bindDialog.saving = false;
   }
 }
+
+// 显示添加组织对话框
+function showAddOrgDialog() {
+  if (!currentTreeOrg.value) return;
+  addOrgDialog.orgName = `org${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+  addOrgDialog.visible = true;
+
+  // 聚焦到输入框
+  nextTick(() => {
+    orgNameInputRef.value?.focus();
+  });
+}
+
+// 生成组织编码
+function generateOrgCode() {
+  const now = new Date();
+  const year = String(now.getFullYear()).slice(-2);
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const rand = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+  return `org${year}${month}${day}${rand}`;
+}
+
+// 提交添加组织
+async function submitAddOrg() {
+  if (!addOrgDialog.orgName.trim() || !currentTreeOrg.value) return;
+
+  addOrgDialog.saving = true;
+  try {
+    const orgCode = generateOrgCode();
+    await createOrg({
+      orgName: addOrgDialog.orgName.trim(),
+      orgCode,
+      parentOrgId: currentTreeOrg.value.orgId,
+      orgType: 'OTHER',
+      managerPersonId: undefined, // 当前登录人ID，暂时设为undefined
+    });
+
+    ElMessage.success('组织添加成功');
+    addOrgDialog.visible = false;
+    addOrgDialog.orgName = '';
+    loadOrgTree(); // 重新加载组织树
+  } catch (e) {
+    ElMessage.error('组织添加失败');
+  } finally {
+    addOrgDialog.saving = false;
+  }
+}
+
+// 确认删除组织
+function confirmDeleteOrg() {
+  if (!currentTreeOrg.value) return;
+
+  ElMessageBox.confirm(
+    `确定要删除组织「${currentTreeOrg.value.orgName}」吗？删除后不可恢复！`,
+    '删除确认',
+    {
+      confirmButtonText: '确定删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--danger',
+    }
+  ).then(() => {
+    deleteOrgAction();
+  }).catch(() => {});
+}
+
+// 执行删除组织
+async function deleteOrgAction() {
+  if (!currentTreeOrg.value) return;
+
+  try {
+    await deleteOrg(currentTreeOrg.value.orgId);
+    ElMessage.success('组织删除成功');
+    currentTreeOrg.value = null;
+    currentOrg.value = null;
+    loadOrgTree(); // 重新加载组织树
+  } catch (e) {
+    ElMessage.error('组织删除失败');
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -965,6 +1197,44 @@ async function submitBind() {
 
   .tree-header {
     margin-bottom: 8px;
+  }
+
+  .tree-controls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .tree-buttons {
+    display: flex;
+    gap: 1px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  .tree-buttons .el-button {
+    padding: 0 4px;  /* 左右内边距更小 */
+    min-width: 20px; /* 最小宽度 */
+    height: 20px;    /* 高度 */
+    font-size: 12px; /* 字体更小 */
+  }
+  .tree-toggle-btn {
+    background: transparent !important;
+    border: none !important;
+    &:hover {
+      background: rgba(0, 0, 0, 0.04) !important;
+    }
+  }
+
+  .add-org-content {
+    .add-org-tip {
+      margin-bottom: 12px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .el-input {
+      width: 100%;
+    }
   }
 
   .org-tree {
