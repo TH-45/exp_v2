@@ -131,6 +131,7 @@
         :title="editDialog.isEdit ? '编辑账号' : '新增账号'"
         width="760px"
         destroy-on-close
+        draggable
       >
         <el-form
           ref="formRef"
@@ -193,7 +194,7 @@
       </el-dialog>
 
       <!-- 重置密码弹窗 -->
-      <el-dialog v-model="resetDialog.visible" title="重置密码" width="460px" destroy-on-close>
+      <el-dialog v-model="resetDialog.visible" title="重置密码" width="460px" destroy-on-close draggable>
         <div class="reset-tip">将重置 {{ resetDialog.targetCount }} 个账号的密码，请确认。</div>
         <el-form ref="resetFormRef" :model="resetForm" :rules="resetRules" label-width="100px">
           <el-form-item label="新密码" prop="password">

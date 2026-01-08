@@ -128,53 +128,45 @@
         </el-tag>
       </el-table-column>
       <el-table-column prop="createdTime" label="创建时间" min-width="170" />
-      <el-table-column label="操作" fixed="right" width="180">
+
+      <el-table-column label="操作" fixed="right" width="110">
         <template #default="{ row }">
-          <el-button
-            link
-            type="primary"
-            size="small"
-            @click="handleEdit(row)"
-            :disabled="!canManage"
-          >
-            编辑
-          </el-button>
-          <el-dropdown
-            @command="(status) => changeStatus(row, status)"
-            :disabled="!canManage"
-            trigger="click"
-          >
-            <el-button link size="small">
-              状态变更
-              <el-icon class="el-icon--right">
-                <arrow-down />
-              </el-icon>
+          <el-button-group>
+            <el-button
+                link
+                type="primary"
+                size="small"
+                @click="handleEdit(row)"
+                :disabled="!canManage"
+            >
+              编辑
             </el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item
-                  :command="'ONJOB'"
-                  :disabled="row.status === 'ONJOB'"
-                >
-                  设为在职
-                </el-dropdown-item>
-                <el-dropdown-item
-                  :command="'LEAVE'"
-                  :disabled="row.status === 'LEAVE'"
-                >
-                  设为离职
-                </el-dropdown-item>
-                <el-dropdown-item
-                  :command="'DISABLED'"
-                  :disabled="row.status === 'DISABLED'"
-                >
-                  设为停用
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+
+            <el-dropdown
+                trigger="click"
+                :disabled="!canManage"
+                @command="(status) => changeStatus(row, status)"
+            >
+              <el-button link size="small">
+                状态
+                <el-icon class="el-icon--right">
+                  <ArrowDown />
+                </el-icon>
+              </el-button>
+
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="ONJOB">在职</el-dropdown-item>
+                  <el-dropdown-item command="LEAVE">离职</el-dropdown-item>
+                  <el-dropdown-item command="DISABLED">停用</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </el-button-group>
         </template>
       </el-table-column>
+
+
     </el-table>
 
     <!-- 分页 -->
@@ -197,6 +189,7 @@
       :title="editDialog.isEdit ? '编辑人员' : '新增人员'"
       width="760px"
       destroy-on-close
+      draggable
     >
       <el-form
         ref="formRef"
@@ -252,7 +245,7 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="form.status" placeholder="请选择状态">
-            <el-option label="在职" value="ONJOB" />
+              <el-option label="在职" value="ONJOB" />
             <el-option label="禁用" value="DISABLED" />
             <el-option label="离职" value="LEAVE" />
           </el-select>

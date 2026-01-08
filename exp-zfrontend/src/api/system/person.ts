@@ -79,8 +79,8 @@ export type SavePersonPayload = Partial<ExpPersonVO> & {
   status: PersonStatus | 'ONJOB' | 'DISABLED';
 };
 
-// 后端实际路径：/auth/person/*
-const BASE = '/auth/person';
+// 后端实际路径：/exp/auth/person/*
+const BASE = '/exp/auth/person';
 
 export function queryPersonList(params: QueryPersonParams) {
   const req: SimplePageReq<QueryPersonReq> = {
