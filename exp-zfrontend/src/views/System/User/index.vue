@@ -205,7 +205,7 @@
           <el-input v-model="form.personName" placeholder="请输入姓名" />
         </el-form-item>
         <el-form-item label="性别" prop="gender">
-          <el-select v-model="form.gender" placeholder="请选择性别">
+          <el-select v-model="form.gender" placeholder="请选择性别" clearable>
             <el-option
               v-for="item in genderOptions"
               :key="item.value"
@@ -245,22 +245,35 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="form.status" placeholder="请选择状态">
-              <el-option label="在职" value="ONJOB" />
-            <el-option label="禁用" value="DISABLED" />
-            <el-option label="离职" value="LEAVE" />
+            <el-option
+              v-for="item in statusOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="部门">
-          <el-input
-            v-model="form.deptName"
-            placeholder="后端 VO 返回，前端不拼装"
+        <el-form-item label="组织" prop="orgId">
+          <OrgSelector
+            v-model="selectedOrg"
+            placeholder="请选择组织"
+            @change="handleOrgChange"
           />
         </el-form-item>
-        <el-form-item label="角色">
-          <el-input
-            v-model="form.roleName"
-            placeholder="后端 VO 返回，前端不拼装"
-          />
+        <el-form-item label="岗位" prop="postId">
+          <el-select
+            v-model="form.postId"
+            placeholder="请先选择组织"
+            :disabled="!selectedOrg"
+            @change="handlePostChange"
+          >
+            <el-option
+              v-for="post in postOptions"
+              :key="post.postId"
+              :label="post.postName"
+              :value="post.postId"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="备注" class="full-row">
           <el-input
@@ -298,6 +311,8 @@ import {
   type PersonStatus,
 } from '@/api/system/person';
 import { hasPermission } from '@/utils/permission';
+import OrgSelector from '@/components/Selector/OrgSelector.vue';
+import { queryOrgPosts, type OrgNode, type PostVO } from '@/api/system/post';
 
 
 
@@ -310,8 +325,25 @@ const genderMap: Record<string, string> = {
 const genderOptions = [
   { label: '男', value: 'M' },
   { label: '女', value: 'F' },
-  { label: '未知', value: 'OTHER' },
 ];
+
+// 状态选项（新增时不显示离职）
+const statusOptions = computed(() => {
+  if (editDialog.isEdit) {
+    // 编辑时显示所有状态
+    return [
+      { label: '在职', value: 'ONJOB' },
+      { label: '禁用', value: 'DISABLED' },
+      { label: '离职', value: 'LEAVE' },
+    ];
+  } else {
+    // 新增时不显示离职
+    return [
+      { label: '在职', value: 'ONJOB' },
+      { label: '禁用', value: 'DISABLED' },
+    ];
+  }
+});
 
 const loading = ref(false);
 const saving = ref(false);
@@ -356,11 +388,54 @@ const form = reactive<ExpPersonVO>({
   roleName: '',
 });
 
+// 选择器数据
+const selectedOrg = ref<OrgNode>();
+const postOptions = ref<PostVO[]>([]);
+
 const rules: FormRules = {
   personName: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
   personCode: [{ required: true, message: 'personCode 缺失', trigger: 'change' }],
+  orgId: [{ required: true, message: '请选择组织', trigger: 'change' }],
+  postId: [{ required: true, message: '请选择岗位', trigger: 'change' }],
+  mobile: [{ required: true, message: '请输入手机号', trigger: 'blur' }],
+  idCardNo: [
+    {
+      validator: (_rule, value, callback) => {
+        if (!value) {
+          callback();
+          return;
+        }
+        // 18位身份证校验
+        const idCardRegex = /^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/;
+        if (!idCardRegex.test(value)) {
+          callback(new Error('请输入正确的18位身份证号'));
+        } else {
+          callback();
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  email: [
+    {
+      validator: (_rule, value, callback) => {
+        if (!value) {
+          callback();
+          return;
+        }
+        // 邮件格式校验
+        const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+        if (!emailRegex.test(value)) {
+          callback(new Error('请输入正确的邮箱格式'));
+        } else {
+          callback();
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
 };
 
 
@@ -452,20 +527,61 @@ function handleRowClick(row: ExpPersonVO) {
   tableRef.value?.toggleRowSelection(row);
 }
 
+// 组织选择处理
+async function handleOrgChange(org: OrgNode | undefined) {
+  form.orgId = org?.orgId;
+  // 清空岗位选择
+  form.postId = undefined;
+  // 获取岗位列表
+  if (org?.orgId) {
+    await fetchPostOptions(org.orgId);
+  } else {
+    postOptions.value = [];
+  }
+}
+
+// 岗位选择处理
+function handlePostChange(postId: number | undefined) {
+  form.postId = postId;
+}
+
+// 获取岗位选项列表
+async function fetchPostOptions(orgId: number) {
+  try {
+    const res = await queryOrgPosts({
+      orgId,
+      pageNum: 1,
+      pageSize: 1000, // 获取所有岗位
+      relStatus: 'ENABLED',
+      postStatus: 'ENABLED'
+    });
+
+    const posts = res?.list || [];
+    // 添加"待定"选项，但要去重
+    const hasPending = posts.some(post => post.postName === '待定');
+    const options = hasPending ? posts : [{ postId: -1, postName: '待定', postCode: 'PENDING', postStatus: 'ENABLED' as const }, ...posts];
+
+    postOptions.value = options;
+  } catch (e) {
+    console.error('获取岗位列表失败:', e);
+    postOptions.value = [{ postId: -1, postName: '待定', postCode: 'PENDING', postStatus: 'ENABLED' }];
+  }
+}
+
 function generatePersonCode() {
   const now = new Date();
-  const yyyyMMdd = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(
-    now.getDate(),
-  ).padStart(2, '0')}`;
+  const year = String(now.getFullYear()).slice(-2); // 年份后2位
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
   const rand = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
-  return `Exp${yyyyMMdd}${rand}`;
+  return `exp${year}${month}${day}${rand}`;
 }
 
 function resetFormModel() {
   form.personId = 0;
   form.personCode = generatePersonCode();
   form.personName = '';
-  form.gender = 'OTHER';
+  form.gender = undefined; // 性别默认空
   form.mobile = '';
   form.email = '';
   form.idCardNo = '';
@@ -479,6 +595,10 @@ function resetFormModel() {
   form.remark = '';
   form.deptName = '';
   form.roleName = '';
+
+  // 重置选择器数据
+  selectedOrg.value = undefined;
+  postOptions.value = [];
 }
 
 function handleAdd() {
@@ -487,9 +607,25 @@ function handleAdd() {
   editDialog.visible = true;
 }
 
-function handleEdit(row: ExpPersonVO) {
+async function handleEdit(row: ExpPersonVO) {
   editDialog.isEdit = true;
   Object.assign(form, row);
+
+  // 设置组织选择器数据
+  if (row.orgId) {
+    // 这里需要根据orgId获取组织信息，或者从row中获取
+    // 暂时设置一个基础的组织对象，后续可以优化
+    selectedOrg.value = {
+      orgId: row.orgId,
+      orgName: row.deptName || '',
+      orgCode: '',
+      children: []
+    };
+
+    // 获取岗位列表
+    await fetchPostOptions(row.orgId);
+  }
+
   editDialog.visible = true;
 }
 
