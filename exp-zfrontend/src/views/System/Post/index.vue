@@ -19,20 +19,8 @@
                   placeholder="搜索组织名称/编码"
                   clearable
                   @input="filterTree"
-                  style="width: 210px;"
+                  style="width: 280px;"
                 />
-                <el-select
-                  v-model="relStatusFilter"
-                  size="small"
-                  placeholder="状态"
-                  clearable
-                  @change="applyRelStatusFilter"
-                  style="width: 70px; margin-left: 8px;"
-                >
-                  <el-option label="全部" value="ALL" />
-                  <el-option label="启用" value="ENABLED" />
-                  <el-option label="停用" value="DISABLED" />
-                </el-select>
               </div>
               <div class="tree-buttons">
                 <el-button
@@ -50,26 +38,16 @@
                 <el-button
                   size="small"
                   type="primary"
-                  @click="showAddOrgDialog"
-                  :disabled="!currentTreeOrg"
-                  title="添加子组织"
+                  @click="toggleEditMode"
+                  :title="isEditMode ? '退出编辑' : '编辑组织'"
                 >
-                  +
-                </el-button>
-                <el-button
-                  size="small"
-                  type="danger"
-                  @click="confirmDeleteOrg"
-                  :disabled="!currentTreeOrg"
-                  title="删除组织"
-                >
-                  -
+                  {{ isEditMode ? '完成' : '编辑' }}
                 </el-button>
               </div>
             </div>
             <el-tree
               ref="treeRef"
-              class="org-tree"
+              :class="['org-tree', { 'edit-mode': isEditMode }]"
               node-key="orgId"
               :data="orgTree"
               :props="treeProps"
@@ -77,7 +55,24 @@
               :filter-node-method="treeFilterMethod"
               @node-click="handleTreeClick"
               v-loading="treeLoading"
-            />
+            >
+              <template #default="{ node, data }">
+                <div class="custom-tree-node">
+                  <span class="node-label">{{ node.label }}</span>
+                  <span v-if="isEditMode && currentTreeOrg?.orgId === data.orgId" class="node-actions">
+                    <el-icon @click.stop="showAddOrgDialog(data)" title="新增子组织" class="action-icon add-icon">
+                      <Plus />
+                    </el-icon>
+                    <el-icon @click.stop="showEditOrgDialog(data)" title="修改组织" class="action-icon edit-icon">
+                      <Edit />
+                    </el-icon>
+                    <el-icon @click.stop="confirmDeleteOrg(data)" title="删除组织" class="action-icon delete-icon">
+                      <Delete />
+                    </el-icon>
+                  </span>
+                </div>
+              </template>
+            </el-tree>
           </el-card>
         </div>
 
@@ -426,26 +421,123 @@
         </template>
       </el-dialog>
 
-      <!-- 添加组织弹窗 -->
+      <!-- 新增/编辑组织弹窗 -->
       <el-dialog
-        v-model="addOrgDialog.visible"
-        title="添加子组织"
-        width="400px"
+        v-model="orgDialog.visible"
+        :title="orgDialog.isEdit ? '修改组织' : '新增组织'"
+        width="720px"
         destroy-on-close
       >
-        <div class="add-org-content">
-          <p class="add-org-tip">在组织「{{ currentTreeOrg?.orgName }}」下添加子组织</p>
+        <el-form
+          ref="orgFormRef"
+          :model="orgForm"
+          :rules="orgRules"
+          label-width="100px"
+          class="dialog-form two-col"
+        >
+          <el-form-item label="组织编码" prop="orgCode">
+            <el-input v-model="orgForm.orgCode" readonly class="readonly-input" />
+          </el-form-item>
+          <el-form-item label="组织名称" prop="orgName">
+            <el-input v-model="orgForm.orgName" placeholder="请输入组织名称" />
+          </el-form-item>
+          <el-form-item label="组织类型" prop="orgType">
+            <el-select v-model="orgForm.orgType" placeholder="请选择组织类型" style="width: 100%">
+              <el-option label="公司/法人主体" value="COMPANY" />
+              <el-option label="部门" value="DEPT" />
+              <el-option label="项目部/项目组织" value="PROJECT" />
+              <el-option label="其他" value="OTHER" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="上级组织" prop="parentOrgId">
+            <el-input
+              v-model="orgForm.parentOrgName"
+              readonly
+              placeholder="请选择上级组织"
+              @click="openParentOrgSelector"
+              style="cursor: pointer"
+            >
+              <template #suffix>
+                <el-icon class="cursor-pointer">
+                  <Search />
+                </el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item label="负责人员" prop="managerPersonId">
+            <PersonSelector
+              v-model="selectedManager"
+              placeholder="请选择负责人员"
+              @change="handleManagerChange"
+            />
+          </el-form-item>
+          <el-form-item label="状态" prop="status">
+            <el-select v-model="orgForm.status" placeholder="请选择状态" style="width: 100%">
+              <el-option label="启用" value="ENABLED" />
+              <el-option label="停用" value="DISABLED" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="备注" class="full-row">
+            <el-input
+              v-model="orgForm.remark"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入备注"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="orgDialog.visible = false">取消</el-button>
+          <el-button type="primary" :loading="orgDialog.saving" @click="submitOrgForm">
+            保存
+          </el-button>
+        </template>
+      </el-dialog>
+
+      <!-- 上级组织选择器弹窗 -->
+      <el-dialog
+        v-model="parentOrgDialog.visible"
+        title="选择上级组织"
+        width="900px"
+        destroy-on-close
+      >
+        <div class="parent-org-search">
           <el-input
-            ref="orgNameInputRef"
-            v-model="addOrgDialog.orgName"
-            placeholder="请输入组织名称"
-            @keyup.enter="submitAddOrg"
-            @blur="submitAddOrg"
+            v-model="parentOrgDialog.keyword"
+            placeholder="搜索组织编号"
+            clearable
+            style="width: 240px"
+            @change="fetchParentOrgList"
           />
         </div>
+        <el-table
+          v-loading="parentOrgDialog.loading"
+          :data="parentOrgDialog.list"
+          row-key="orgId"
+          height="400px"
+          highlight-current-row
+          @current-change="handleParentOrgSelect"
+        >
+          <el-table-column prop="orgCode" label="组织编号" min-width="140" />
+          <el-table-column prop="orgName" label="组织名称" min-width="140" />
+          <el-table-column prop="parentOrgCode" label="上级组织编号" min-width="140" />
+          <el-table-column prop="parentOrgName" label="上级组织名称" min-width="140" />
+          <el-table-column prop="managerName" label="负责人" min-width="100" />
+          <el-table-column label="状态" min-width="80">
+            <template #default="{ row }">
+              <el-tag :type="row.status === 'ENABLED' ? 'success' : 'info'">
+                {{ row.status === 'ENABLED' ? '启用' : '停用' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
         <template #footer>
-          <el-button @click="addOrgDialog.visible = false">取消</el-button>
-          <el-button type="primary" :loading="addOrgDialog.saving" @click="submitAddOrg">
+          <el-button @click="parentOrgDialog.visible = false">取消</el-button>
+          <el-button
+            type="primary"
+            :disabled="!parentOrgDialog.selected"
+            @click="confirmParentOrgSelect"
+          >
             确定
           </el-button>
         </template>
@@ -457,7 +549,7 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, computed, onBeforeUnmount, nextTick } from 'vue';
-import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown } from '@element-plus/icons-vue';
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Plus, Edit, Delete, Search } from '@element-plus/icons-vue';
 import {
   fetchOrgTree,
   queryOrgPosts,
@@ -478,6 +570,8 @@ import {
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
+import PersonSelector from '@/components/Selector/PersonSelector.vue';
+import type { ExpPersonVO } from '@/api/system/person';
 
 const treeProps = {
   children: 'children',
@@ -493,6 +587,7 @@ const currentTreeOrg = ref<OrgNode | null>(null); // 左侧树选中的组织
 const relStatusFilter = ref('ALL'); // 组织可用状态筛选
 const originalTableData = ref<PostVO[]>([]); // 原始表格数据，用于前端筛选
 const isTreeExpanded = ref(false); // 组织树是否展开
+const isEditMode = ref(false); // 编辑模式
 const splitRef = ref<HTMLElement>();
 const leftWidth = ref(320);
 const lastLeftWidth = ref(320);
@@ -559,13 +654,46 @@ const bindDialog = reactive({
   total: 0,
 });
 
-const addOrgDialog = reactive({
+// 组织表单弹窗
+const orgDialog = reactive({
   visible: false,
+  isEdit: false,
   saving: false,
-  orgName: '',
 });
 
-const orgNameInputRef = ref();
+const orgFormRef = ref<FormInstance>();
+const orgForm = reactive({
+  orgId: undefined as number | undefined,
+  orgCode: '',
+  orgName: '',
+  orgType: 'OTHER' as 'COMPANY' | 'DEPT' | 'PROJECT' | 'OTHER',
+  parentOrgId: undefined as number | undefined,
+  parentOrgName: '',
+  managerPersonId: undefined as number | undefined,
+  managerName: '',
+  status: 'ENABLED' as 'ENABLED' | 'DISABLED',
+  remark: '',
+});
+
+const orgRules: FormRules = {
+  orgCode: [{ required: true, message: '组织编码不能为空', trigger: 'blur' }],
+  orgName: [{ required: true, message: '请输入组织名称', trigger: 'blur' }],
+  orgType: [{ required: true, message: '请选择组织类型', trigger: 'change' }],
+  parentOrgId: [{ required: true, message: '请选择上级组织', trigger: 'change' }],
+  managerPersonId: [{ required: true, message: '请选择负责人员', trigger: 'change' }],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+};
+
+const selectedManager = ref<ExpPersonVO>();
+
+// 上级组织选择器弹窗
+const parentOrgDialog = reactive({
+  visible: false,
+  loading: false,
+  keyword: '',
+  list: [] as OrgNode[],
+  selected: null as OrgNode | null,
+});
 
 // 权限控制
 const canCreate = computed(() => hasPermission('system:post:create'));
@@ -996,16 +1124,146 @@ async function submitBind() {
   }
 }
 
-// 显示添加组织对话框
-function showAddOrgDialog() {
-  if (!currentTreeOrg.value) return;
-  addOrgDialog.orgName = `org${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
-  addOrgDialog.visible = true;
+// 切换编辑模式
+function toggleEditMode() {
+  isEditMode.value = !isEditMode.value;
+  if (!isEditMode.value) {
+    // 退出编辑模式时，清除选中状态
+    currentTreeOrg.value = null;
+  }
+}
 
-  // 聚焦到输入框
-  nextTick(() => {
-    orgNameInputRef.value?.focus();
+// 显示添加组织对话框
+function showAddOrgDialog(node?: OrgNode) {
+  if (!currentTreeOrg.value && !node) return;
+  
+  orgDialog.isEdit = false;
+  orgDialog.visible = true;
+  
+  // 重置表单
+  orgForm.orgId = undefined;
+  orgForm.orgCode = generateOrgCode();
+  orgForm.orgName = '';
+  orgForm.orgType = 'OTHER';
+  orgForm.parentOrgId = currentTreeOrg.value?.orgId;
+  orgForm.parentOrgName = currentTreeOrg.value?.orgName || '';
+  orgForm.managerPersonId = undefined;
+  orgForm.managerName = '';
+  orgForm.status = 'ENABLED';
+  orgForm.remark = '';
+  selectedManager.value = undefined;
+}
+
+// 显示编辑组织对话框
+function showEditOrgDialog(node: OrgNode) {
+  orgDialog.isEdit = true;
+  orgDialog.visible = true;
+  
+  // 回显数据 - TODO: 需要调用后端接口获取完整数据
+  orgForm.orgId = node.orgId;
+  orgForm.orgCode = node.orgCode || '';
+  orgForm.orgName = node.orgName;
+  orgForm.orgType = 'OTHER'; // TODO: 从后端获取
+  orgForm.parentOrgId = undefined; // TODO: 从后端获取
+  orgForm.parentOrgName = '';
+  orgForm.managerPersonId = undefined;
+  orgForm.managerName = '';
+  orgForm.status = 'ENABLED';
+  orgForm.remark = '';
+  selectedManager.value = undefined;
+}
+
+// 打开上级组织选择器
+function openParentOrgSelector() {
+  parentOrgDialog.visible = true;
+  parentOrgDialog.keyword = '';
+  fetchParentOrgList();
+}
+
+// 获取上级组织列表
+async function fetchParentOrgList() {
+  parentOrgDialog.loading = true;
+  try {
+    const res = await fetchOrgTree({ keyword: parentOrgDialog.keyword });
+    // 将树形结构展开为列表
+    parentOrgDialog.list = flattenOrgTree(res || []);
+  } catch (e) {
+    parentOrgDialog.list = [];
+  } finally {
+    parentOrgDialog.loading = false;
+  }
+}
+
+// 将组织树展开为列表
+function flattenOrgTree(nodes: OrgNode[], parentInfo?: { code?: string; name?: string }): OrgNode[] {
+  const result: OrgNode[] = [];
+  nodes.forEach(node => {
+    const flatNode = {
+      ...node,
+      parentOrgCode: parentInfo?.code || '',
+      parentOrgName: parentInfo?.name || '',
+      managerName: '', // TODO: 从后端获取
+      status: 'ENABLED' as const, // TODO: 从后端获取
+    };
+    result.push(flatNode);
+    if (node.children && node.children.length > 0) {
+      result.push(...flattenOrgTree(node.children, { code: node.orgCode, name: node.orgName }));
+    }
   });
+  return result;
+}
+
+// 选择上级组织
+function handleParentOrgSelect(row: OrgNode | null) {
+  parentOrgDialog.selected = row;
+}
+
+// 确认选择上级组织
+function confirmParentOrgSelect() {
+  if (!parentOrgDialog.selected) return;
+  orgForm.parentOrgId = parentOrgDialog.selected.orgId;
+  orgForm.parentOrgName = parentOrgDialog.selected.orgName;
+  parentOrgDialog.visible = false;
+}
+
+// 选择负责人
+function handleManagerChange(person: ExpPersonVO | undefined) {
+  orgForm.managerPersonId = person?.personId;
+  orgForm.managerName = person?.personName || '';
+}
+
+// 提交组织表单
+async function submitOrgForm() {
+  if (!orgFormRef.value) return;
+  
+  const valid = await orgFormRef.value.validate();
+  if (!valid) return;
+  
+  orgDialog.saving = true;
+  try {
+    const payload = {
+      orgName: orgForm.orgName.trim(),
+      orgCode: orgForm.orgCode,
+      parentOrgId: orgForm.parentOrgId,
+      orgType: orgForm.orgType,
+      managerPersonId: orgForm.managerPersonId,
+    };
+    
+    if (orgDialog.isEdit) {
+      // TODO: 调用修改接口
+      ElMessage.success('修改成功');
+    } else {
+      await createOrg(payload);
+      ElMessage.success('新增成功');
+    }
+    
+    orgDialog.visible = false;
+    loadOrgTree(); // 重新加载组织树
+  } catch (e) {
+    ElMessage.error(orgDialog.isEdit ? '修改失败' : '新增失败');
+  } finally {
+    orgDialog.saving = false;
+  }
 }
 
 // 生成组织编码
@@ -1018,38 +1276,19 @@ function generateOrgCode() {
   return `org${year}${month}${day}${rand}`;
 }
 
-// 提交添加组织
-async function submitAddOrg() {
-  if (!addOrgDialog.orgName.trim() || !currentTreeOrg.value) return;
-
-  addOrgDialog.saving = true;
-  try {
-    const orgCode = generateOrgCode();
-    await createOrg({
-      orgName: addOrgDialog.orgName.trim(),
-      orgCode,
-      parentOrgId: currentTreeOrg.value.orgId,
-      orgType: 'OTHER',
-      managerPersonId: undefined, // 当前登录人ID，暂时设为undefined
-    });
-
-    ElMessage.success('组织添加成功');
-    addOrgDialog.visible = false;
-    addOrgDialog.orgName = '';
-    loadOrgTree(); // 重新加载组织树
-  } catch (e) {
-    ElMessage.error('组织添加失败');
-  } finally {
-    addOrgDialog.saving = false;
-  }
-}
-
 // 确认删除组织
-function confirmDeleteOrg() {
-  if (!currentTreeOrg.value) return;
+function confirmDeleteOrg(node?: OrgNode) {
+  const targetNode = node || currentTreeOrg.value;
+  if (!targetNode) return;
+
+  // 检查是否有子节点
+  if (targetNode.children && targetNode.children.length > 0) {
+    ElMessage.warning('该组织存在子组织，无法删除！');
+    return;
+  }
 
   ElMessageBox.confirm(
-    `确定要删除组织「${currentTreeOrg.value.orgName}」吗？删除后不可恢复！`,
+    `确定要删除组织「${targetNode.orgName}」吗？删除后不可恢复！`,
     '删除确认',
     {
       confirmButtonText: '确定删除',
@@ -1058,16 +1297,14 @@ function confirmDeleteOrg() {
       confirmButtonClass: 'el-button--danger',
     }
   ).then(() => {
-    deleteOrgAction();
+    deleteOrgAction(targetNode);
   }).catch(() => {});
 }
 
 // 执行删除组织
-async function deleteOrgAction() {
-  if (!currentTreeOrg.value) return;
-
+async function deleteOrgAction(node: OrgNode) {
   try {
-    await deleteOrg(currentTreeOrg.value.orgId);
+    await deleteOrg(node.orgId);
     ElMessage.success('组织删除成功');
     currentTreeOrg.value = null;
     currentOrg.value = null;
@@ -1242,6 +1479,72 @@ async function deleteOrgAction() {
     overflow: auto;
   }
 
+  // 编辑模式下的树节点样式
+  .custom-tree-node {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding-right: 8px;
+
+    .node-label {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .node-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-left: 8px;
+
+      .action-icon {
+        cursor: pointer;
+        font-size: 16px;
+        padding: 2px;
+        border-radius: 4px;
+        transition: all 0.2s;
+
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.05);
+        }
+      }
+
+      .add-icon {
+        color: #67c23a;
+        &:hover {
+          color: #529b2e;
+          background-color: rgba(103, 194, 58, 0.1);
+        }
+      }
+
+      .edit-icon {
+        color: #409eff;
+        &:hover {
+          color: #337ecc;
+          background-color: rgba(64, 158, 255, 0.1);
+        }
+      }
+
+      .delete-icon {
+        color: #f56c6c;
+        &:hover {
+          color: #c45656;
+          background-color: rgba(245, 108, 108, 0.1);
+        }
+      }
+    }
+  }
+
+  // 编辑模式下的树样式调整
+  .org-tree.edit-mode {
+    :deep(.el-tree-node__content) {
+      padding-right: 0;
+    }
+  }
+
   .right-header {
     display: flex;
     align-items: center;
@@ -1295,6 +1598,20 @@ async function deleteOrgAction() {
 
   .dialog-form.two-col .full-row {
     grid-column: 1 / span 2;
+  }
+
+  .readonly-input :deep(.el-input__inner) {
+    background-color: #f5f7fa;
+    color: #606266;
+    cursor: not-allowed;
+  }
+
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  .parent-org-search {
+    margin-bottom: 12px;
   }
 }
 </style>
