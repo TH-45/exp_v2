@@ -1,13 +1,13 @@
 package jh.exp.auth.service.bus.Impl;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.constant.AuthConstant;
-import jh.exp.auth.entity.ExpPerson;
-import jh.exp.auth.entity.exp.PersonExp;
-import jh.exp.auth.entity.req.QueryPersonReq;
+
+import jh.exp.auth.entity.Person;
+import jh.exp.auth.entity.req.*;
+import jh.exp.auth.entity.res.PersonDetailRes;
 import jh.exp.auth.entity.res.PersonInfoRes;
 import jh.exp.auth.mapper.AccountMapper;
 import jh.exp.auth.mapper.OrgUnitMapper;
@@ -18,28 +18,24 @@ import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class PersonServiceImpl implements PersonService {
-    @Autowired
-    private PersonMapper personMapper;
-    @Autowired
-    private OrgUnitMapper orgUnitMapper;
-    @Autowired
-    private PositionMapper positionMapper;
-    @Autowired
-    private AccountMapper accountMapper;
+
+    private final PersonMapper personMapper;
+    private final OrgUnitMapper orgUnitMapper;
+    private final PositionMapper positionMapper;
+    private final AccountMapper accountMapper;
     /**
-     * 查询人员信息
-     * @param personReq
-     * @return
+     * 分页查询人员列表
      */
     @Override
     @Transactional(readOnly = true)
@@ -47,7 +43,7 @@ public class PersonServiceImpl implements PersonService {
         SimplePageRes<PersonInfoRes> res = new SimplePageRes<>();
         Page<PersonInfoRes> page = new Page<>(personReq.getPageNum(), personReq.getPageSize());
 
-        IPage<PersonInfoRes> personInfoIPage= personMapper.selectPositionPage(page, personReq.getQueryParam());
+        IPage<PersonInfoRes> personInfoIPage = personMapper.selectPositionPage(page, personReq.getQueryParam());
         res.setTotal(personInfoIPage.getTotal());
         res.setPage(personInfoIPage.getCurrent());
         res.setSize(personInfoIPage.getSize());
@@ -60,57 +56,210 @@ public class PersonServiceImpl implements PersonService {
      * @param personId
      */
     @Override
-    public void updatePersonStatus(Long personId,String status) {
-        ExpPerson expPerson = personMapper.selectById(personId);
-        if(status.equals(AuthConstant.ENABLED)&&expPerson.getStatus().equals(AuthConstant.LEAVE)){
+    public void updatePersonStatus(Long personId, String status) {
+        Person Person = personMapper.selectById(personId);
+        if(status.equals(AuthConstant.ENABLED)&&Person.getStatus().equals(AuthConstant.LEAVE)){
             throw new IllegalArgumentException("该人员已经离职不能启用，请检查！");
         }
-        expPerson.setStatus(AuthConstant.isInside(status));
-        personMapper.updateById(expPerson);
+        Person.setStatus(AuthConstant.isInside(status));
+        personMapper.updateById(Person);
+    }
+
+
+    /**
+     * 根据ID查询人员详情
+     */
+    @Override
+    public PersonDetailRes getPersonById(Long personId) {
+        PersonDetailRes personDetail = personMapper.selectPersonDetailById(personId);
+        if (personDetail == null) {
+            throw new RuntimeException("人员不存在");
+        }
+        // 使用XML多表联查已填充扩展字段：组织信息、岗位信息、账号信息、创建人信息
+        return personDetail;
     }
 
     /**
-     * 修改人员信息
-     * 不更新的字段值为null/0
+     * 创建人员
      */
     @Override
-    public void updatePersonInfo(PersonExp personExp) {
-        Long personId = personExp.getPersonId();
-        ExpPerson expPerson = personMapper.selectById(personId);
-        if(expPerson==null){ throw new IllegalArgumentException("该人员不存在！");}
-        String status = personExp.getStatus();
-        if(AuthConstant.ENABLED.equals(status)&&AuthConstant.LEAVE.equals(expPerson.getStatus())){
+    @Transactional
+    public PersonDetailRes createPerson(CreatePersonReq req) {
+        // 检查人员工号是否已存在
+        if (checkPersonCodeExists(req.getPersonCode(), null)) {
+            throw new RuntimeException("人员工号已存在");
+        }
+
+        Person person = new Person();
+        person.setPersonCode(req.getPersonCode());
+        person.setPersonName(req.getPersonName());
+        person.setGender(req.getGender());
+        person.setMobile(req.getMobile());
+        person.setEmail(req.getEmail());
+        person.setIdCardNo(req.getIdCardNo());
+        person.setJobTitle(req.getJobTitle());
+        person.setOrgId(req.getOrgId());
+        person.setPostId(req.getPostId());
+        person.setAccountId(req.getAccountId());
+        person.setEntryDate(req.getEntryDate());
+        person.setIsExternal(req.getIsExternal());
+        person.setStatus("ONJOB"); // 新建人员默认为在职状态
+        person.setRemark(req.getRemark());
+        person.setCreatedTime(LocalDateTime.now());
+        person.setUpdatedTime(LocalDateTime.now());
+
+        CurrentUser currentUser = CurrentUserHolder.get();
+        person.setCreatedBy(Long.valueOf(currentUser.getUserId()));
+
+        personMapper.insert(person);
+
+        // 返回创建后的详情信息
+        return getPersonById(person.getPersonId());
+    }
+
+    /**
+     * 更新人员
+     */
+    @Override
+    @Transactional
+    public PersonDetailRes updatePerson(UpdatePersonReq req) {
+        // 检查人员是否存在
+        Person existingPerson = personMapper.selectById(req.getPersonId());
+        if (existingPerson == null) {
+            throw new RuntimeException("人员不存在");
+        }
+
+        // 检查人员工号是否已存在（排除当前人员）
+        if (checkPersonCodeExists(req.getPersonCode(), req.getPersonId())) {
+            throw new RuntimeException("人员工号已存在");
+        }
+
+        Person person = new Person();
+        person.setPersonId(req.getPersonId());
+        person.setPersonCode(req.getPersonCode());
+        person.setPersonName(req.getPersonName());
+        person.setGender(req.getGender());
+        person.setMobile(req.getMobile());
+        person.setEmail(req.getEmail());
+        person.setIdCardNo(req.getIdCardNo());
+        person.setJobTitle(req.getJobTitle());
+        person.setOrgId(req.getOrgId());
+        person.setPostId(req.getPostId());
+        person.setAccountId(req.getAccountId());
+        person.setEntryDate(req.getEntryDate());
+        person.setLeaveDate(req.getLeaveDate());
+        person.setIsExternal(req.getIsExternal());
+        person.setRemark(req.getRemark());
+        person.setUpdatedTime(LocalDateTime.now());
+
+        personMapper.updateById(person);
+
+        // 返回更新后的详情信息
+        return getPersonById(req.getPersonId());
+    }
+
+    /**
+     * 删除人员
+     */
+    @Override
+    @Transactional
+    public void deletePerson(Long personId) {
+        // 检查人员是否存在
+        Person person = personMapper.selectById(personId);
+        if (person == null) {
+            throw new RuntimeException("人员不存在");
+        }
+
+        // TODO: 检查人员是否有相关联的业务数据，如果有则不允许删除
+
+        personMapper.deleteById(personId);
+    }
+
+    /**
+     * 批量删除人员
+     */
+    @Override
+    @Transactional
+    public void batchDeletePersons(BatchDeletePersonReq req) {
+        if (CollectionUtils.isEmpty(req.getPersonIds())) {
+            return;
+        }
+
+        // 检查所有人员是否存在
+        for (Long personId : req.getPersonIds()) {
+            Person person = personMapper.selectById(personId);
+            if (person == null) {
+                throw new RuntimeException("人员ID " + personId + " 不存在");
+            }
+            // TODO: 检查人员是否有相关联的业务数据
+        }
+
+        // 批量删除
+        personMapper.deleteBatchIds(req.getPersonIds());
+    }
+
+    /**
+     * 更改人员状态
+     */
+    @Override
+    @Transactional
+    public PersonDetailRes updatePersonStatus(PersonStatusReq req) {
+        // 检查人员是否存在
+        Person person = personMapper.selectById(req.getPersonId());
+        if (person == null) {
+            throw new RuntimeException("人员不存在");
+        }
+
+        // 业务规则校验
+        if ("ENABLED".equals(req.getStatus()) && "LEAVE".equals(person.getStatus())) {
             throw new IllegalArgumentException("该人员已经离职不能启用，请检查！");
         }
-        CurrentUser currentUser = CurrentUserHolder.get();
-        List<String> roles = currentUser.getRoles();
-        if(StrUtil.isNotBlank(personExp.getIdCardNo())){
-            if(!roles.contains(AuthConstant.ADMIN)){
-                throw new IllegalArgumentException("无权限修改人员身份证信息！");
+
+        // 更新状态
+        UpdateWrapper<Person> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("person_id", req.getPersonId())
+                .set("status", req.getStatus())
+                .set("updated_time", LocalDateTime.now());
+
+        personMapper.update(null, updateWrapper);
+
+        // 返回更新后的详情信息
+        return getPersonById(req.getPersonId());
+    }
+
+    /**
+     * 批量更改人员状态
+     */
+    @Override
+    @Transactional
+    public void batchUpdatePersonStatus(BatchPersonStatusReq req) {
+        if (CollectionUtils.isEmpty(req.getPersonIds())) {
+            return;
+        }
+
+        // 检查所有人员是否存在
+        for (Long personId : req.getPersonIds()) {
+            Person person = personMapper.selectById(personId);
+            if (person == null) {
+                throw new RuntimeException("人员ID " + personId + " 不存在");
             }
         }
 
-        personMapper.updateByExp(personExp);
+        // 批量更新状态
+        UpdateWrapper<Person> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.in("person_id", req.getPersonIds())
+                .set("status", req.getStatus())
+                .set("updated_time", LocalDateTime.now());
 
-
-
+        personMapper.update(null, updateWrapper);
     }
 
+    /**
+     * 检查人员工号是否存在
+     */
     @Override
-    public PersonExp queryPersonDetail(Long personId) {
-        ExpPerson expPerson = personMapper.selectById(personId);
-        if(expPerson==null){ throw new IllegalArgumentException("该人员不存在！");}
-        PersonExp personExp = new PersonExp();
-        BeanUtils.copyProperties(expPerson, personExp);
-
-        String orgName = orgUnitMapper.selectById(expPerson.getOrgId()).getOrgName();
-        String postName = positionMapper.selectById(expPerson.getPersonId()).getPostName();
-        String accountName = accountMapper.selectById(expPerson.getAccountId()).getAccountName();
-        personExp.setOrgName(orgName);
-        personExp.setPostName(postName);
-        personExp.setAccountName(accountName);
-
-        return null;
+    public boolean checkPersonCodeExists(String personCode, Long excludePersonId) {
+        return personMapper.countByPersonCode(personCode, excludePersonId) > 0;
     }
 
 

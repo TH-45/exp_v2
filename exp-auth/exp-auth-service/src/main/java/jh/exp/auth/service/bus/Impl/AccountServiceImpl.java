@@ -5,12 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.entity.Account;
-import jh.exp.auth.entity.exp.AccountExp;
+import jh.exp.auth.entity.res.AccountDetailRes;
 import jh.exp.auth.entity.res.AccountListRes;
 import jh.exp.auth.entity.req.*;
 import jh.exp.auth.mapper.AccountMapper;
 import jh.exp.auth.mapper.PersonMapper;
 import jh.exp.auth.service.bus.AccountService;
+import jh.exp.common.auth.CurrentUserHolder;
+import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
 import jh.exp.common.util.EntityMapperUtil;
@@ -56,19 +58,18 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountExp getAccountById(Long accountId) {
-        Account account = accountMapper.selectById(accountId);
-        if (account == null) {
+    public AccountDetailRes getAccountById(Long accountId) {
+        AccountDetailRes accountDetail = accountMapper.selectAccountDetailById(accountId);
+        if (accountDetail == null) {
             throw new RuntimeException("账号不存在");
         }
-        AccountExp accountExp = EntityMapperUtil.copyToNewInstance(account, AccountExp.class);
-        // TODO: 这里可以填充扩展字段，如人员信息、组织信息等
-        return accountExp;
+        // 使用XML多表联查已填充扩展字段：人员信息、组织信息、岗位信息、创建人信息
+        return accountDetail;
     }
 
     @Override
     @Transactional
-    public AccountExp createAccount(CreateAccountReq req) {
+    public AccountDetailRes createAccount(CreateAccountReq req) {
         // 检查账号名称是否已存在
         if (checkAccountNameExists(req.getAccountName(), null)) {
             throw new RuntimeException("账号名称已存在");
@@ -88,18 +89,17 @@ public class AccountServiceImpl implements AccountService {
         account.setRemark(req.getRemark());
         account.setCreatedTime(LocalDateTime.now());
         account.setUpdatedTime(LocalDateTime.now());
-        // TODO: 设置创建人ID，从当前登录用户获取
-        // account.setCreatedBy(currentUserId);
-
+        CurrentUser currentUser = CurrentUserHolder.get();
+        account.setCreatedBy(Long.valueOf(currentUser.getUserId()));
         accountMapper.insert(account);
 
-        AccountExp accountExp = EntityMapperUtil.copyToNewInstance(account, AccountExp.class);
-        return accountExp;
+        // 返回创建后的账号详情信息
+        return getAccountById(account.getAccountId());
     }
 
     @Override
     @Transactional
-    public AccountExp updateAccount(UpdateAccountReq req) {
+    public AccountDetailRes updateAccount(UpdateAccountReq req) {
         // 检查账号是否存在
         Account existingAccount = accountMapper.selectById(req.getAccountId());
         if (existingAccount == null) {
@@ -164,7 +164,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public AccountExp updateAccountStatus(AccountStatusReq req) {
+    public AccountDetailRes updateAccountStatus(AccountStatusReq req) {
         // 检查账号是否存在
         Account account = accountMapper.selectById(req.getAccountId());
         if (account == null) {

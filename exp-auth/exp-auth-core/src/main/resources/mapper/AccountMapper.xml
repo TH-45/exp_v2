@@ -28,7 +28,6 @@
             </if>
         </where>
         ORDER BY a.created_time DESC
-        LIMIT #{offset}, #{pageSize}
     </select>
 
     <!-- 查询账号总数 -->
@@ -50,6 +49,24 @@
                 AND a.mobile LIKE CONCAT('%', #{mobile}, '%')
             </if>
         </where>
+    </select>
+
+    <!-- 根据账号ID查询账号详情信息（多表联查） -->
+    <select id="selectAccountDetailById" resultType="jh.exp.auth.entity.res.AccountDetailRes">
+        SELECT a.account_id, a.account_name, a.account_display, a.mobile, a.email,
+               a.person_id, p.person_code, p.person_name,
+               a.org_id, o.org_code, o.org_name,
+               a.post_id, pos.post_code, pos.post_name,
+               a.status, a.login_fail_count, a.last_login_time, a.last_login_ip,
+               a.pwd_last_change_time, a.need_change_pwd,
+               a.created_by, creator.account_display as created_name,
+               a.created_time, a.updated_time, a.remark
+        FROM exp_account a
+        LEFT JOIN exp_person p ON a.person_id = p.person_id
+        LEFT JOIN exp_org_unit o ON a.org_id = o.org_id
+        LEFT JOIN exp_post pos ON a.post_id = pos.post_id
+        LEFT JOIN exp_account creator ON a.created_by = creator.account_id
+        WHERE a.account_id = #{accountId}
     </select>
 
 </mapper>

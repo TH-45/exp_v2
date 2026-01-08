@@ -319,18 +319,23 @@ async function fetchList() {
     delete (searchParams as any).personName;
     delete (searchParams as any).mobile;
 
+    console.log('Fetching account list with params:', searchParams);
     const res = await queryAccountList(searchParams);
+    console.log('Account list response:', res);
     // 注意：由于axios响应拦截器的处理，这里收到的res已经是apiResponse.data了
     const data = res as any;
 
     if (data) {
       tableData.value = Array.isArray(data.list) ? data.list : [];
       total.value = Number(data.total) || 0;
+      console.log('Loaded accounts:', tableData.value.length, 'total:', total.value);
     } else {
       tableData.value = [];
       total.value = 0;
+      console.log('No data returned from account list API');
     }
   } catch (e) {
+    console.error('Failed to fetch account list:', e);
     tableData.value = [];
     total.value = 0;
     ElMessage.error((e as any)?.message || '查询失败');
@@ -486,9 +491,10 @@ async function handleEdit(row: AccountVO) {
   resetFormModel();
 
   try {
+
     // 获取账号详情数据
     const detailData = await getAccountDetail(row.accountId);
-
+    console.log('detailData = ', detailData);
     // 设置表单基本数据
     form.accountId = detailData.accountId;
     form.accountName = detailData.accountName;
@@ -504,7 +510,7 @@ async function handleEdit(row: AccountVO) {
     if (detailData.personId && detailData.personName) {
       selectedPerson.value = {
         personId: detailData.personId,
-        personCode: detailData.personName, // 临时使用姓名作为工号，后续可扩展详情接口返回完整数据
+        personCode: detailData.personName, // 账号详情接口目前只返回personName，暂时用作personCode
         personName: detailData.personName,
         gender: 'OTHER' as const,
         mobile: detailData.mobile,
@@ -517,16 +523,35 @@ async function handleEdit(row: AccountVO) {
       selectedOrg.value = {
         orgId: detailData.orgId,
         orgName: detailData.orgName,
-        orgCode: detailData.orgCode,
+        orgCode: detailData.orgCode || '',
+        parentOrgId: 0, // 默认根节点
+        orgType: 'DEPT' as const,
+        orgPath: '',
+        orgLevel: 1,
+        managerPersonId: undefined,
+        contactPhone: '',
+        address: '',
+        status: 'ENABLED' as const,
+        sortNo: 0,
+        children: [], // 树形结构需要的字段
       };
     }
 
     if (detailData.postId && detailData.postName) {
       selectedPost.value = {
         postId: detailData.postId,
-        postCode: detailData.postName, // 临时使用岗位名作为岗位编码
+        postCode: detailData.postCode || detailData.postName, // 优先使用postCode，如果没有则使用postName
         postName: detailData.postName,
-        postStatus: 'ENABLED' as const,
+        postType: '',
+        postLevel: '',
+        postCategory: '',
+        postDesc: '',
+        status: 'ENABLED' as const,
+        defaultRoleId: undefined,
+        defaultDataScope: '',
+        isSystem: 0,
+        sortNo: 0,
+        postStatus: 'ENABLED' as const, // 添加postStatus字段
       };
     }
 

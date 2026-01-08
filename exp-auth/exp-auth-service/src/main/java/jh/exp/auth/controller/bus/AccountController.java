@@ -1,7 +1,7 @@
 package jh.exp.auth.controller.bus;
 
-import jh.exp.auth.entity.exp.AccountExp;
 import jh.exp.auth.entity.req.*;
+import jh.exp.auth.entity.res.AccountDetailRes;
 import jh.exp.auth.entity.res.AccountListRes;
 import jh.exp.auth.service.bus.AccountService;
 import jh.exp.common.api.ApiResponse;
@@ -32,8 +32,8 @@ public class AccountController {
      * 根据ID查询账号详情
      */
     @GetMapping("/detail")
-    public ApiResponse<AccountExp> detail(@RequestParam Long accountId) {
-        AccountExp result = accountService.getAccountById(accountId);
+    public ApiResponse<AccountDetailRes> detail(@RequestParam Long accountId) {
+        AccountDetailRes result = accountService.getAccountById(accountId);
         return ApiResponse.success(result);
     }
 
@@ -41,8 +41,8 @@ public class AccountController {
      * 创建账号
      */
     @PostMapping("/create")
-    public ApiResponse<AccountExp> create(@RequestBody @Valid CreateAccountReq req) {
-        AccountExp result = accountService.createAccount(req);
+    public ApiResponse<AccountDetailRes> create(@RequestBody @Valid CreateAccountReq req) {
+        AccountDetailRes result = accountService.createAccount(req);
         return ApiResponse.success(result);
     }
 
@@ -50,8 +50,8 @@ public class AccountController {
      * 更新账号
      */
     @PostMapping("/update")
-    public ApiResponse<AccountExp> update(@RequestBody @Valid UpdateAccountReq req) {
-        AccountExp result = accountService.updateAccount(req);
+    public ApiResponse<AccountDetailRes> update(@RequestBody @Valid UpdateAccountReq req) {
+        AccountDetailRes result = accountService.updateAccount(req);
         return ApiResponse.success(result);
     }
 
@@ -77,8 +77,8 @@ public class AccountController {
      * 更改账号状态
      */
     @PostMapping("/status")
-    public ApiResponse<AccountExp> updateStatus(@RequestBody @Valid AccountStatusReq req) {
-        AccountExp result = accountService.updateAccountStatus(req);
+    public ApiResponse<AccountDetailRes> updateStatus(@RequestBody @Valid AccountStatusReq req) {
+        AccountDetailRes result = accountService.updateAccountStatus(req);
         return ApiResponse.success(result);
     }
 

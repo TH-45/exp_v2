@@ -15,12 +15,38 @@
               新增人员信息
             </el-button>
             <el-button
-                size="small"
-                @click="openResetPwdDialog"
-                :disabled="!selectedRows.length || !canReset"
+              type="danger"
+              size="small"
+              @click="handleBatchDelete"
+              :disabled="!selectedRows.length || !canDelete"
             >
-              重置密码
+              删除
             </el-button>
+            <el-dropdown
+              @command="handleBatchStatusChange"
+              :disabled="!selectedRows.length || !canManage"
+              trigger="click"
+            >
+              <el-button size="small">
+                批量状态变更
+                <el-icon class="el-icon--right">
+                  <ArrowDown />
+                </el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="ONJOB">
+                    批量设为在职
+                  </el-dropdown-item>
+                  <el-dropdown-item command="LEAVE">
+                    批量设为离职
+                  </el-dropdown-item>
+                  <el-dropdown-item command="DISABLED">
+                    批量设为停用
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
             <el-button size="small" :disabled="true">导入</el-button>
             <el-button size="small" :disabled="true">导出</el-button>
           </div>
@@ -69,12 +95,14 @@
 
     <!-- 列表区 -->
     <el-table
+      ref="tableRef"
       v-loading="loading"
       :data="tableData"
       row-key="personId"
       border
       style="width: 100%"
       @selection-change="handleSelectionChange"
+      @row-click="handleRowClick"
     >
       <el-table-column type="selection" width="50" />
       <el-table-column prop="personCode" label="人员编码" min-width="140" />
@@ -100,7 +128,7 @@
         </el-tag>
       </el-table-column>
       <el-table-column prop="createdTime" label="创建时间" min-width="170" />
-      <el-table-column label="操作" fixed="right" width="220">
+      <el-table-column label="操作" fixed="right" width="180">
         <template #default="{ row }">
           <el-button
             link
@@ -111,23 +139,40 @@
           >
             编辑
           </el-button>
-          <el-button
-            link
-            type="danger"
-            size="small"
-            @click="handleDelete(row)"
-            :disabled="!canDelete"
-          >
-            删除
-          </el-button>
-          <el-button
-            link
-            size="small"
-            @click="toggleStatus(row)"
+          <el-dropdown
+            @command="(status) => changeStatus(row, status)"
             :disabled="!canManage"
+            trigger="click"
           >
-            {{ row.status === 'DISABLED' ? '启用' : '禁用' }}
-          </el-button>
+            <el-button link size="small">
+              状态变更
+              <el-icon class="el-icon--right">
+                <arrow-down />
+              </el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  :command="'ONJOB'"
+                  :disabled="row.status === 'ONJOB'"
+                >
+                  设为在职
+                </el-dropdown-item>
+                <el-dropdown-item
+                  :command="'LEAVE'"
+                  :disabled="row.status === 'LEAVE'"
+                >
+                  设为离职
+                </el-dropdown-item>
+                <el-dropdown-item
+                  :command="'DISABLED'"
+                  :disabled="row.status === 'DISABLED'"
+                >
+                  设为停用
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </template>
       </el-table-column>
     </el-table>
@@ -240,41 +285,6 @@
       </template>
     </el-dialog>
 
-    <!-- 重置密码弹窗 -->
-    <el-dialog
-      v-model="resetDialog.visible"
-      title="重置密码"
-      width="460px"
-      destroy-on-close
-    >
-      <div class="reset-tip">
-        将重置 {{ selectedRows.length }} 个人员的密码，请确认。
-      </div>
-      <el-form ref="resetFormRef" :model="resetForm" :rules="resetRules" label-width="100px">
-        <el-form-item label="新密码" prop="newPassword">
-          <el-input
-            v-model="resetForm.newPassword"
-            type="password"
-            show-password
-            placeholder="请输入新密码"
-          />
-        </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input
-            v-model="resetForm.confirmPassword"
-            type="password"
-            show-password
-            placeholder="请再次输入"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="resetDialog.visible = false">取消</el-button>
-        <el-button type="primary" :loading="resetting" @click="submitResetPwd">
-          确认
-        </el-button>
-      </template>
-    </el-dialog>
     </el-card>
   </el-config-provider>
 </template>
@@ -282,14 +292,15 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, computed } from 'vue';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
+import { ArrowDown } from '@element-plus/icons-vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import {
-  queryPersonInfo,
+  queryPersonList,
   createPerson,
   updatePerson,
   deletePerson,
   changePersonStatus,
-  resetPassword,
+  batchChangePersonStatus,
   type ExpPersonVO,
   type PersonStatus,
 } from '@/api/system/person';
@@ -311,7 +322,7 @@ const genderOptions = [
 
 const loading = ref(false);
 const saving = ref(false);
-const resetting = ref(false);
+const tableRef = ref();
 
 const query = reactive({
   personCode: '',
@@ -359,35 +370,10 @@ const rules: FormRules = {
   personCode: [{ required: true, message: 'personCode 缺失', trigger: 'change' }],
 };
 
-const resetDialog = reactive({
-  visible: false,
-});
-const resetFormRef = ref<FormInstance>();
-const resetForm = reactive({
-  newPassword: '123456',
-  confirmPassword: '123456',
-});
-const resetRules: FormRules = {
-  newPassword: [{ required: true, message: '请输入新密码', trigger: 'blur' }],
-  confirmPassword: [
-    { required: true, message: '请再次输入密码', trigger: 'blur' },
-    {
-      validator: (_rule, value, callback) => {
-        if (value !== resetForm.newPassword) {
-          callback(new Error('两次输入的密码不一致'));
-        } else {
-          callback();
-        }
-      },
-      trigger: 'blur',
-    },
-  ],
-};
 
 
 const canManage = computed(() => hasPermission('system:user:manage'));
 const canDelete = computed(() => hasPermission('system:user:delete'));
-const canReset  = computed(() => hasPermission('system:user:reset'));
 
 onMounted(() => {
   fetchList();
@@ -417,8 +403,8 @@ function formatGender(row: ExpPersonVO) {
 async function fetchList() {
   loading.value = true;
   try {
-    // 统一使用 axios/request：由拦截器自动携带 Authorization: Bearer <TOKEN>
-    const res = await queryPersonInfo({ ...query });
+    // 使用新的API接口
+    const res = await queryPersonList({ ...query });
     tableData.value = Array.isArray(res?.list) ? res.list : [];
     total.value = Number(res?.total ?? 0) || 0;
   } catch (e) {
@@ -466,6 +452,11 @@ function handleSizeChange(size: number) {
 
 function handleSelectionChange(rows: ExpPersonVO[]) {
   selectedRows.value = rows;
+}
+
+function handleRowClick(row: ExpPersonVO) {
+  // 使用表格的toggleRowSelection方法切换选中状态
+  tableRef.value?.toggleRowSelection(row);
 }
 
 function generatePersonCode() {
@@ -529,48 +520,87 @@ async function submitForm() {
   }
 }
 
-function handleDelete(row: ExpPersonVO) {
-  if (!canDelete.value) return;
-  ElMessageBox.confirm(`确认删除人员「${row.personName}」吗？`, '提示', {
-    type: 'warning',
-  })
-    .then(async () => {
-      await deletePerson(row.personId);
-      ElMessage.success('删除成功');
-      fetchList();
-    })
-    .catch(() => {});
-}
+// 批量删除
+async function handleBatchDelete() {
+  if (!canDelete.value || !selectedRows.value.length) return;
 
-async function toggleStatus(row: ExpPersonVO) {
-  if (!canManage.value) return;
-  const nextStatus: PersonStatus = row.status === 'DISABLED' ? 'ONJOB' : 'DISABLED';
-  await changePersonStatus(row.personId, nextStatus);
-  ElMessage.success('状态已更新');
-  fetchList();
-}
+  const count = selectedRows.value.length;
+  const personNames = selectedRows.value.map(row => row.personName).join('、');
 
-function openResetPwdDialog() {
-  if (!selectedRows.value.length) return;
-  resetDialog.visible = true;
-  resetForm.newPassword = '123456';
-  resetForm.confirmPassword = '123456';
-}
-
-async function submitResetPwd() {
-  if (!resetFormRef.value) return;
-  const valid = await resetFormRef.value.validate();
-  if (!valid) return;
-  resetting.value = true;
   try {
-    const ids = selectedRows.value.map((r) => r.personId);
-    await resetPassword(ids, resetForm.newPassword);
-    ElMessage.success('密码已重置');
-    resetDialog.visible = false;
-  } finally {
-    resetting.value = false;
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${count} 个人员吗？\n\n人员列表：${personNames}`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger',
+        customClass: 'batch-delete-dialog',
+      }
+    );
+
+    const ids = selectedRows.value.map(row => row.personId);
+    await deletePerson(ids);
+    ElMessage.success(`成功删除 ${count} 个人员`);
+    fetchList();
+  } catch (e) {
+    if ((e as any)?.response) {
+      ElMessage.error((e as any)?.message || '删除失败');
+    }
+    // 用户取消操作，不显示错误信息
   }
 }
+
+// 批量状态变更
+async function handleBatchStatusChange(newStatus: PersonStatus) {
+  if (!canManage.value || !selectedRows.value.length) return;
+
+  const count = selectedRows.value.length;
+  const personNames = selectedRows.value.map(row => row.personName).join('、');
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要将选中的 ${count} 个人员状态设为"${statusText(newStatus)}"吗？\n\n人员列表：${personNames}`,
+      '批量状态变更确认',
+      {
+        confirmButtonText: '确定变更',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--primary',
+      }
+    );
+
+    const ids = selectedRows.value.map(row => row.personId);
+    await batchChangePersonStatus(ids, newStatus);
+    ElMessage.success(`批量状态变更成功`);
+    fetchList();
+  } catch (e) {
+    if ((e as any)?.response) {
+      ElMessage.error((e as any)?.message || '状态变更失败');
+    }
+    // 用户取消操作，不显示错误信息
+  }
+}
+
+async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
+  if (!canManage.value || row.status === newStatus) return;
+
+  try {
+    // 检查状态变更规则
+    if (row.status === 'LEAVE' && newStatus === 'ONJOB') {
+      ElMessage.warning('离职人员不能直接设为在职状态');
+      return;
+    }
+
+    await changePersonStatus(row.personId, newStatus);
+    ElMessage.success('状态已更新');
+    fetchList();
+  } catch (e) {
+    ElMessage.error((e as any)?.message || '状态更新失败');
+  }
+}
+
 </script>
 
 <style scoped lang="scss">
@@ -584,16 +614,12 @@ async function submitResetPwd() {
   font-weight: 600;
 }
 
-.actions > * + * {
-  margin-left: 8px;
-}
-
 .actions {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
   margin-right: 30px;
-
+  gap: 8px;
 }
 
 .search-bar {
@@ -606,10 +632,6 @@ async function submitResetPwd() {
   justify-content: flex-end;
 }
 
-.reset-tip {
-  margin-bottom: 12px;
-  color: #666;
-}
 
 .dialog-form.two-col {
   display: grid;

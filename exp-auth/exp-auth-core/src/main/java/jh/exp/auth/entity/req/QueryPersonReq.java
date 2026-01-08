@@ -1,11 +1,15 @@
 package jh.exp.auth.entity.req;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class QueryPersonReq {
     public String personCode;
-    public String name;
-    public String phone;
+    public String personName;
+    public String mobile;
 
 }

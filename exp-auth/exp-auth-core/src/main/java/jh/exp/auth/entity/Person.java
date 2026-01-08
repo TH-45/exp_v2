@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "exp_person")
 @TableName("exp_person")
-public class ExpPerson {
+public class Person {
     // 主键ID
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

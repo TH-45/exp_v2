@@ -1,7 +1,7 @@
 package jh.exp.auth.service.bus;
 
-import jh.exp.auth.entity.exp.AccountExp;
 import jh.exp.auth.entity.req.*;
+import jh.exp.auth.entity.res.AccountDetailRes;
 import jh.exp.auth.entity.res.AccountListRes;
 
 import jh.exp.common.req.SimplePageReq;
@@ -17,17 +17,17 @@ public interface AccountService {
     /**
      * 根据ID查询账号详情
      */
-    AccountExp getAccountById(Long accountId);
+    AccountDetailRes getAccountById(Long accountId);
 
     /**
      * 创建账号
      */
-    AccountExp createAccount(CreateAccountReq req);
+    AccountDetailRes createAccount(CreateAccountReq req);
 
     /**
      * 更新账号
      */
-    AccountExp updateAccount(UpdateAccountReq req);
+    AccountDetailRes updateAccount(UpdateAccountReq req);
 
     /**
      * 删除账号
@@ -42,7 +42,7 @@ public interface AccountService {
     /**
      * 更改账号状态
      */
-    AccountExp updateAccountStatus(AccountStatusReq req);
+    AccountDetailRes updateAccountStatus(AccountStatusReq req);
 
     /**
      * 批量更改账号状态

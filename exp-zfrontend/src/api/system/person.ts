@@ -79,45 +79,58 @@ export type SavePersonPayload = Partial<ExpPersonVO> & {
   status: PersonStatus | 'ONJOB' | 'DISABLED';
 };
 
-// 后端实际路径：/api/exp/auth/person/*
-const BASE = '/exp/auth/person';
+// 后端实际路径：/auth/person/*
+const BASE = '/auth/person';
 
-export function queryPersonInfo(params: QueryPersonParams) {
+export function queryPersonList(params: QueryPersonParams) {
   const req: SimplePageReq<QueryPersonReq> = {
     pageNum: params.pageNum,
     pageSize: params.pageSize,
     queryParam: {
       personCode: params.personCode,
-      personName: params.personName,
-      mobile: params.mobile,
+      personName: params.personName, // 文档中使用 name 而不是 personName
+      mobile: params.mobile,    // 文档中使用 phone 而不是 mobile
     },
   };
   return request.post<SimplePageRes<ExpPersonVO>, SimplePageRes<ExpPersonVO>>(
-    `${BASE}/queryPersonInfo`,
+    `${BASE}/list`,
     req,
   );
 }
 
+export function getPersonDetail(personId: number) {
+  return request.get<ExpPersonVO, ExpPersonVO>(`${BASE}/detail`, {
+    params: { personId }
+  });
+}
+
 export function createPerson(data: SavePersonPayload) {
-  // 示例方法名：createPerson
-  return request.post<void, void>(`${BASE}/createPerson`, data);
+  return request.post<ExpPersonVO, ExpPersonVO>(`${BASE}/create`, data);
 }
 
 export function updatePerson(data: SavePersonPayload) {
-  // 示例方法名：updatePerson
-  return request.post<void, void>(`${BASE}/updatePerson`, data);
+  return request.post<ExpPersonVO, ExpPersonVO>(`${BASE}/update`, data);
 }
 
 export function deletePerson(personIds: number[] | number) {
-  // 示例方法名：deletePerson（允许单条/批量）
   const ids = Array.isArray(personIds) ? personIds : [personIds];
-  return request.post<void, void>(`${BASE}/deletePerson`, { personIds: ids });
+  if (ids.length === 1) {
+    return request.post<void, void>(`${BASE}/delete`, { personId: ids[0] });
+  } else {
+    return request.post<void, void>(`${BASE}/batchDelete`, { personIds: ids });
+  }
 }
 
 export function changePersonStatus(personId: number, status: PersonStatus) {
-  // 示例方法名：changePersonStatus（单条）
-  return request.post<void, void>(`${BASE}/changePersonStatus`, {
+  return request.post<ExpPersonVO, ExpPersonVO>(`${BASE}/status`, {
     personId,
+    status,
+  });
+}
+
+export function batchChangePersonStatus(personIds: number[], status: PersonStatus) {
+  return request.post<void, void>(`${BASE}/batchStatus`, {
+    personIds,
     status,
   });
 }

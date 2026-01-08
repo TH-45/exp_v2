@@ -3,54 +3,53 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="jh.exp.auth.mapper.PersonMapper">
-    <update id="updateByExp" parameterType="jh.exp.auth.entity.exp.PersonExp">
-<!--        UPDATE exp_person-->
-<!--        <set>-->
-<!--            <if test="orgName!= null and orgName != ''">-->
-<!--        </set>-->
-    </update>
 
-
-    <select id="selectPositionPage"
-            resultType="jh.exp.auth.entity.res.PersonInfoRes">
-
-        SELECT
-        p.person_id          AS personId,
-        p.person_name        AS personName,
-        p.mobile             AS mobile,
-        p.person_code        AS personCode,
-        p.job_title          AS jobTitle,
-        p.post_id            AS postId,
-        pos.post_name        AS postName,
-        p.org_id             AS orgId,
-        org.org_name         AS orgName,
-        p.account_id         AS accountId,
-        acc.account_name     AS accountName
+    <!-- 分页查询人员列表（多表联查） -->
+    <select id="selectPositionPage" resultType="jh.exp.auth.entity.res.PersonInfoRes">
+        SELECT p.person_id, p.person_name, p.mobile, p.person_code, p.job_title,
+               p.post_id, pos.post_name, p.org_id, o.org_name, p.account_id, a.account_name
         FROM exp_person p
-        LEFT JOIN exp_org_unit org
-        ON p.org_id = org.org_id
-        LEFT JOIN exp_post pos
-        ON p.post_id = pos.post_id
-        LEFT JOIN exp_account acc
-        ON p.account_id = acc.account_id
+        LEFT JOIN exp_org_unit o ON p.org_id = o.org_id
+        LEFT JOIN exp_post pos ON p.post_id = pos.post_id
+        LEFT JOIN exp_account a ON p.account_id = a.account_id
         <where>
-            1=1
-            <if test="queryParam.personCode != null and queryParam.personCode != ''">
-                AND p.person_code = #{queryParam.personCode}
+            <if test="queryParam.personCode != null and queryParam.personCode.trim() != ''">
+                AND p.person_code LIKE CONCAT('%', #{queryParam.personCode}, '%')
             </if>
-
-            <if test="queryParam.name != null and queryParam.name != ''">
-                AND p.person_name LIKE CONCAT('%', #{queryParam.name}, '%')
+            <if test="queryParam.personName != null and queryParam.personName.trim() != ''">
+                AND p.person_name LIKE CONCAT('%', #{queryParam.personName}, '%')
             </if>
-
-            <if test="queryParam.phone != null and queryParam.phone != ''">
-                AND p.mobile = #{queryParam.phone}
+            <if test="queryParam.mobile != null and queryParam.mobile.trim() != ''">
+                AND p.mobile LIKE CONCAT('%', #{queryParam.mobile}, '%')
             </if>
-
-
         </where>
+        ORDER BY p.created_time DESC
+    </select>
 
-        ORDER BY p.status,p.created_time DESC
+    <!-- 根据人员ID查询人员详情信息（多表联查） -->
+    <select id="selectPersonDetailById" resultType="jh.exp.auth.entity.res.PersonDetailRes">
+        SELECT p.person_id, p.person_code, p.person_name, p.gender, p.mobile, p.email,
+               p.id_card_no, p.job_title, p.org_id, o.org_code, o.org_name,
+               p.post_id, pos.post_code, pos.post_name, p.account_id,
+               a.account_name, a.account_display, p.status, p.entry_date, p.leave_date,
+               p.is_external, p.created_by, creator.account_display as created_name,
+               p.created_time, p.updated_time, p.remark
+        FROM exp_person p
+        LEFT JOIN exp_org_unit o ON p.org_id = o.org_id
+        LEFT JOIN exp_post pos ON p.post_id = pos.post_id
+        LEFT JOIN exp_account a ON p.account_id = a.account_id
+        LEFT JOIN exp_account creator ON p.created_by = creator.account_id
+        WHERE p.person_id = #{personId}
+    </select>
+
+    <!-- 检查人员工号是否存在 -->
+    <select id="countByPersonCode" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_person
+        WHERE person_code = #{personCode}
+        <if test="excludePersonId != null">
+            AND person_id != #{excludePersonId}
+        </if>
     </select>
 
 </mapper>
