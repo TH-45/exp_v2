@@ -17,5 +17,7 @@ public class PersonInfoRes {
     private String orgName;
     private Long accountId;
     private String accountName;
+    private String gender;
+    private String email;
 
 }

@@ -115,7 +115,7 @@
       />
       <el-table-column prop="mobile" label="手机号" min-width="130" />
       <el-table-column prop="email" label="邮箱" min-width="180" />
-      <el-table-column prop="deptName" label="部门名称" min-width="140" />
+      <el-table-column prop="deptName" label="主部门" min-width="140" />
       <el-table-column prop="roleName" label="角色名称" min-width="140" />
       <el-table-column
         prop="status"
