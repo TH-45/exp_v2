@@ -25,6 +25,8 @@ import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +46,10 @@ public class PersonServiceImpl implements PersonService {
         Page<PersonInfoRes> page = new Page<>(personReq.getPageNum(), personReq.getPageSize());
 
         IPage<PersonInfoRes> personInfoIPage = personMapper.selectPositionPage(page, personReq.getQueryParam());
+
+        Set<Long> accounts = personInfoIPage.getRecords().stream().map(PersonInfoRes::getAccountId).collect(Collectors.toSet());
+
+
         res.setTotal(personInfoIPage.getTotal());
         res.setPage(personInfoIPage.getCurrent());
         res.setSize(personInfoIPage.getSize());

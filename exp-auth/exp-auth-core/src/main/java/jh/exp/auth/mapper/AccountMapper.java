@@ -40,6 +40,12 @@ public interface AccountMapper extends BaseMapper<Account> {
      * @return 账号详情信息
      */
     AccountDetailRes selectAccountDetailById(@Param("accountId") Long accountId);
+
+    /**
+     * 根据账号id列表查角色信息（多表联查）
+     */
+
+
 }
 
 

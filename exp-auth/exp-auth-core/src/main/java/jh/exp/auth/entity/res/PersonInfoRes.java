@@ -20,4 +20,8 @@ public class PersonInfoRes {
     private String gender;
     private String email;
 
+    //拼接字段
+    private String roleId;
+    private String roleName;
+
 }
