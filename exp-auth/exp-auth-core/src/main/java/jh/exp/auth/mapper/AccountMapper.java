@@ -6,8 +6,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import jh.exp.auth.entity.Account;
 import jh.exp.auth.entity.res.AccountDetailRes;
 import jh.exp.auth.entity.res.AccountListRes;
+import jh.exp.auth.entity.res.AccountRoleRes;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 @Mapper
@@ -44,7 +47,7 @@ public interface AccountMapper extends BaseMapper<Account> {
     /**
      * 根据账号id列表查角色信息（多表联查）
      */
-
+    List<AccountRoleRes> selectRolesByAccountIds(@Param("accountIds") List<Long> accountIds);
 
 }
 

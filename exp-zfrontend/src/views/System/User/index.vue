@@ -116,7 +116,19 @@
       <el-table-column prop="mobile" label="手机号" min-width="130" />
       <el-table-column prop="email" label="邮箱" min-width="180" />
       <el-table-column prop="deptName" label="归属组织" min-width="140" />
-      <el-table-column prop="roleName" label="角色名称" min-width="140" />
+      <el-table-column label="角色名称" min-width="140">
+        <template #default="{ row }">
+          <el-tooltip
+            :content="row.roleNames || '无'"
+            placement="top"
+            :disabled="!row.roleNames || row.roleNames.length <= 15"
+          >
+            <span class="role-text" :class="{ 'ellipsis': row.roleNames && row.roleNames.length > 15 }">
+              {{ row.roleNames || '无' }}
+            </span>
+          </el-tooltip>
+        </template>
+      </el-table-column>
       <el-table-column
         prop="status"
         label="状态"
@@ -595,6 +607,8 @@ function resetFormModel() {
   form.remark = '';
   form.deptName = '';
   form.roleName = '';
+  form.roleIds = '';
+  form.roleNames = '';
 
   // 重置选择器数据
   selectedOrg.value = undefined;
@@ -775,5 +789,18 @@ async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
 
 .dialog-form.two-col .full-row {
   grid-column: 1 / span 2;
+}
+
+.role-text {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.role-text.ellipsis {
+  cursor: pointer;
 }
 </style>

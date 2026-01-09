@@ -69,4 +69,28 @@
         WHERE a.account_id = #{accountId}
     </select>
 
+    <!-- 检查账号名称是否存在 -->
+    <select id="countByAccountName" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_account
+        WHERE account_name = #{accountName}
+        <if test="excludeAccountId != null">
+            AND account_id != #{excludeAccountId}
+        </if>
+    </select>
+
+    <!-- 根据账号id列表查角色信息（多表联查） -->
+    <select id="selectRolesByAccountIds" resultType="jh.exp.auth.entity.res.AccountRoleRes">
+        SELECT ra.principal_id as accountId, r.role_id as roleId, r.role_name as roleName
+        FROM exp_role_assign ra
+        INNER JOIN exp_role r ON ra.role_id = r.role_id
+        WHERE ra.principal_type = 'ACCOUNT'
+        AND ra.status = 'ENABLED'
+        AND ra.principal_id IN
+        <foreach item="accountId" collection="accountIds" open="(" separator="," close=")">
+            #{accountId}
+        </foreach>
+        ORDER BY ra.principal_id, r.sort_no
+    </select>
+
 </mapper>

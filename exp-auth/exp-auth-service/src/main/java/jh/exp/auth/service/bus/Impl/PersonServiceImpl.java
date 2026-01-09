@@ -7,6 +7,7 @@ import jh.exp.auth.constant.AuthConstant;
 
 import jh.exp.auth.entity.Person;
 import jh.exp.auth.entity.req.*;
+import jh.exp.auth.entity.res.AccountRoleRes;
 import jh.exp.auth.entity.res.PersonDetailRes;
 import jh.exp.auth.entity.res.PersonInfoRes;
 import jh.exp.auth.mapper.AccountMapper;
@@ -25,6 +26,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,14 +48,31 @@ public class PersonServiceImpl implements PersonService {
         Page<PersonInfoRes> page = new Page<>(personReq.getPageNum(), personReq.getPageSize());
 
         IPage<PersonInfoRes> personInfoIPage = personMapper.selectPositionPage(page, personReq.getQueryParam());
+        List<PersonInfoRes> personInfoList = personInfoIPage.getRecords();
+        List<Long> accounts = personInfoList.stream().map(PersonInfoRes::getAccountId).toList();
+        List<AccountRoleRes> accountRoleRes = accountMapper.selectRolesByAccountIds(accounts);
 
-        Set<Long> accounts = personInfoIPage.getRecords().stream().map(PersonInfoRes::getAccountId).collect(Collectors.toSet());
+        Map<Long, String> roleIdsMap = accountRoleRes.stream()
+                        .collect(Collectors.groupingBy(AccountRoleRes::getAccountId, Collectors.mapping(
+                                        r -> String.valueOf(r.getRoleId()),
+                                        Collectors.joining(","))));
+
+        Map<Long, String> roleNamesMap = accountRoleRes.stream()
+                        .collect(Collectors.groupingBy(AccountRoleRes::getAccountId,
+                                Collectors.mapping(
+                                        AccountRoleRes::getRoleName,
+                                        Collectors.joining(","))));
 
 
+        personInfoList.forEach(person -> {
+            Long accountId = person.getAccountId();
+            person.setRoleIds(roleIdsMap.getOrDefault(accountId, ""));
+            person.setRoleNames(roleNamesMap.getOrDefault(accountId, ""));
+        });
         res.setTotal(personInfoIPage.getTotal());
         res.setPage(personInfoIPage.getCurrent());
         res.setSize(personInfoIPage.getSize());
-        res.setList(personInfoIPage.getRecords());
+        res.setList(personInfoList);
         return res;
     }
 

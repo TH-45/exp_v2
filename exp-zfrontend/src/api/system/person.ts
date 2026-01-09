@@ -31,6 +31,8 @@ export interface ExpPersonVO {
   /** 非实体字段（后端 VO 返回） */
   deptName?: string;
   roleName?: string;
+  roleIds?: string;      // 角色ID，逗号分隔
+  roleNames?: string;    // 角色名称，逗号分隔
 }
 
 export interface PageResult<T> {

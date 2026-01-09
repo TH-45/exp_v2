@@ -3,6 +3,8 @@ package jh.exp.auth.entity.res;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 public class PersonInfoRes {
@@ -19,9 +21,11 @@ public class PersonInfoRes {
     private String accountName;
     private String gender;
     private String email;
+    private String status;
+    private LocalDateTime createdTime;
 
     //拼接字段
-    private String roleId;
-    private String roleName;
+    private String roleIds;
+    private String roleNames;
 
 }
