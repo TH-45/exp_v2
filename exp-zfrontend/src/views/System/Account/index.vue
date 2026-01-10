@@ -85,7 +85,7 @@
         <el-table-column prop="personName" label="姓名" min-width="120" />
         <el-table-column prop="orgName" label="主组织" min-width="140" />
         <el-table-column prop="postName" label="主岗位" min-width="120" />
-        <el-table-column prop="mobile" label="手机号" min-width="130" />
+        <el-table-column prop="mobile" label="手机号" min-width="110" />
         <el-table-column prop="email" label="邮箱" min-width="180" />
         <el-table-column label="状态" min-width="100">
           <template #default="{ row }">
@@ -94,7 +94,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" min-width="150">
+        <el-table-column label="创建时间" min-width="140">
           <template #default="{ row }">
             {{ formatDateTime(row.createdTime) }}
           </template>

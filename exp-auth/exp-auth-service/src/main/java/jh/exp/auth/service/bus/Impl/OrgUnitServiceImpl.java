@@ -76,7 +76,7 @@ public class OrgUnitServiceImpl implements OrgUnitService {
                 .orderByAsc(OrgUnit::getSortNo)
                 .orderByAsc(OrgUnit::getCreatedTime));
 
-        return buildOrgTree(allOrgs, 0L);
+        return buildOrgTree(allOrgs, null);
     }
 
     /**
@@ -313,7 +313,17 @@ public class OrgUnitServiceImpl implements OrgUnitService {
      */
     private List<OrgUnitTreeRes> buildOrgTree(List<OrgUnit> allOrgs, Long parentId) {
         return allOrgs.stream()
-                .filter(org -> parentId.equals(org.getParentOrgId()))
+                .filter(org -> {
+                    Long orgParentId = org.getParentOrgId();
+                    // 处理根节点：parentId为null或0的情况
+                    if (parentId == null) {
+                        return orgParentId == null || orgParentId == 0;
+                    } else if (parentId == 0) {
+                        return orgParentId == null || orgParentId.equals(0L);
+                    } else {
+                        return parentId.equals(orgParentId);
+                    }
+                })
                 .map(org -> {
                     OrgUnitTreeRes node = new OrgUnitTreeRes();
                     BeanUtils.copyProperties(org, node);

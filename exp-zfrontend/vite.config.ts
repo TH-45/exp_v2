@@ -17,7 +17,13 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+    // 开发环境 source map 配置
+    build: {
+      sourcemap: true,  // 生成 source map 文件
+    },
+    // 开发服务器配置
     server: {
+      sourcemapIgnoreList: false,  // 不忽略任何源文件
       proxy: {
         '/api': {
           target: apiProxyTarget,

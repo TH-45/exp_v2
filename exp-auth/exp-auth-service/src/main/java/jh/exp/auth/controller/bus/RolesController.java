@@ -1,39 +1,138 @@
 package jh.exp.auth.controller.bus;
 
+import jh.exp.auth.entity.req.*;
 import jh.exp.auth.entity.res.MenusRes;
+import jh.exp.auth.entity.res.RoleDetailRes;
+import jh.exp.auth.entity.res.RoleListRes;
 import jh.exp.auth.service.bus.MenuService;
+import jh.exp.auth.service.bus.RoleService;
 import jh.exp.common.api.ApiResponse;
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jh.exp.common.req.SimplePageReq;
+import jh.exp.common.res.SimplePageRes;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/roles")
+@RequiredArgsConstructor
 public class RolesController {
 
-    @Autowired
-    private MenuService menuService;
+    private final RoleService roleService;
+    private final MenuService menuService;
 
-    //角色绑定菜单
+    /**
+     * 分页查询角色列表
+     */
+    @PostMapping("/list")
+    public ApiResponse<SimplePageRes<RoleListRes>> list(@RequestBody SimplePageReq<QueryRoleReq> req) {
+        req.pageDefault();
+        SimplePageRes<RoleListRes> result = roleService.queryRoleList(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 根据ID查询角色详情
+     */
+    @GetMapping("/detail")
+    public ApiResponse<RoleDetailRes> detail(@RequestParam Long roleId) {
+        RoleDetailRes result = roleService.getRoleById(roleId);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 创建角色
+     */
+    @PostMapping("/create")
+    public ApiResponse<RoleDetailRes> create(@RequestBody @Valid CreateRoleReq req) {
+        RoleDetailRes result = roleService.createRole(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 更新角色
+     */
+    @PostMapping("/update")
+    public ApiResponse<RoleDetailRes> update(@RequestBody @Valid UpdateRoleReq req) {
+        RoleDetailRes result = roleService.updateRole(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 删除角色
+     */
+    @PostMapping("/delete")
+    public ApiResponse<Void> delete(@RequestBody @Valid DeleteRoleReq req) {
+        roleService.deleteRole(req.getRoleId());
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 批量删除角色
+     */
+    @PostMapping("/batchDelete")
+    public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteRoleReq req) {
+        roleService.batchDeleteRoles(req);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 更改角色状态
+     */
+    @PostMapping("/status")
+    public ApiResponse<RoleDetailRes> updateStatus(@RequestBody @Valid RoleStatusReq req) {
+        RoleDetailRes result = roleService.updateRoleStatus(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 批量更改角色状态
+     */
+    @PostMapping("/batchStatus")
+    public ApiResponse<Void> batchUpdateStatus(@RequestBody @Valid BatchRoleStatusReq req) {
+        roleService.batchUpdateRoleStatus(req);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 检查角色编码是否存在
+     */
+    @GetMapping("/checkRoleCode")
+    public ApiResponse<Boolean> checkRoleCode(@RequestParam String roleCode,
+                                             @RequestParam(required = false) Long excludeRoleId) {
+        boolean exists = roleService.checkRoleCodeExists(roleCode, excludeRoleId);
+        return ApiResponse.success(exists);
+    }
+
+    /**
+     * 获取所有启用的角色
+     */
+    @GetMapping("/enabledList")
+    public ApiResponse<List<RoleListRes>> getEnabledList() {
+        List<RoleListRes> result = roleService.getAllEnabledRoles();
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 获取当前用户的菜单权限（原有接口）
+     */
     @GetMapping("/menus")
     public ApiResponse<MenusRes> getMenus() {
         CurrentUser currentUser = CurrentUserHolder.get();
-        ApiResponse<MenusRes> apiResponse = new ApiResponse<>();
-        try{
-            MenusRes menusRes = menuService.getMenus(currentUser);
-            apiResponse.setSuccess(true);
-            apiResponse.setData(menusRes);
-        }catch (Exception e){
-            apiResponse.setSuccess(false);
-            apiResponse.setMessage(e.getMessage());
+        if (currentUser == null) {
+            return ApiResponse.fail("401", "用户未登录");
         }
-        return apiResponse;
+
+        try {
+            MenusRes menusRes = menuService.getMenus(currentUser);
+            return ApiResponse.success(menusRes);
+        } catch (Exception e) {
+            return ApiResponse.fail("500", e.getMessage());
+        }
     }
 
 }

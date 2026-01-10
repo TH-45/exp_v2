@@ -110,8 +110,8 @@
                 </el-button>
                 <el-button
                     size="small"
-                    @click="openBindDialog"
-                    :disabled="!currentOrg || !canBind"
+                    disabled
+                    title="新版本API暂不支持"
                 >
                   关联岗位
                 </el-button>
@@ -121,21 +121,6 @@
                     :disabled="!currentOrg || !selectedRows.length || !canOrgStatus"
                 >
                   启用/停用
-                </el-button>
-                <el-button
-                    size="small"
-                    @click="setPrimary"
-                    :disabled="!currentOrg || selectedRows.length !== 1 || !canSetPrimary"
-                >
-                  设为主岗位
-                </el-button>
-                <el-button
-                    size="small"
-                    type="danger"
-                    @click="unbindSelected"
-                    :disabled="!currentOrg || !selectedRows.length || !canUnbind"
-                >
-                  解除关联
                 </el-button>
                 <el-button size="small" :disabled="true">导入</el-button>
                 <el-button size="small" :disabled="true">导出</el-button>
@@ -170,7 +155,7 @@
                     style="width: 180px"
                   />
                 </el-form-item>
-                <el-form-item label="岗位状态">
+                <el-form-item label="状态">
                   <el-select v-model="query.postStatus" clearable style="width: 100px">
                     <el-option label="启用" value="ENABLED" />
                     <el-option label="停用" value="DISABLED" />
@@ -192,6 +177,7 @@
 
             <!-- 表格 -->
             <el-table
+              ref="tableRef"
               v-else
               v-loading="tableLoading"
               :data="tableData"
@@ -199,27 +185,16 @@
               border
               style="width: 100%"
               @selection-change="handleSelectionChange"
+              @row-click="handleRowClick"
             >
               <el-table-column type="selection" width="50" />
               <el-table-column prop="postCode" label="岗位编码" min-width="140" />
               <el-table-column prop="postName" label="岗位名称" min-width="140" />
-              <el-table-column prop="postType" label="岗位类型" min-width="120" />
-              <el-table-column
-                prop="defaultRoleName"
-                label="默认角色"
-                min-width="140"
-              />
-              <el-table-column label="岗位字典状态" min-width="140">
+              <el-table-column prop="postType" label="类型" min-width="70" />
+              <el-table-column label="状态" min-width="70">
                 <template #default="{ row }">
                   <el-tag :type="row.postStatus === 'ENABLED' ? 'success' : 'info'">
                     {{ row.postStatus === 'ENABLED' ? '启用' : '停用' }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column label="组织可用状态" min-width="140">
-                <template #default="{ row }">
-                  <el-tag :type="row.relStatus === 'ENABLED' ? 'success' : 'info'">
-                    {{ row.relStatus === 'ENABLED' ? '启用' : '停用' }}
                   </el-tag>
                 </template>
               </el-table-column>
@@ -229,7 +204,7 @@
                 min-width="170"
                 :formatter="formatDateTime"
               />
-              <el-table-column label="操作" fixed="right" width="200">
+              <el-table-column label="操作" fixed="right" width="120">
                 <template #default="{ row }">
                   <el-button
                     link
@@ -247,15 +222,6 @@
                     :disabled="!canOrgStatus"
                   >
                     停用
-                  </el-button>
-                  <el-button
-                    link
-                    type="danger"
-                    size="small"
-                    @click="unbindSingle(row)"
-                    :disabled="!canUnbind"
-                  >
-                    解除关联
                   </el-button>
                 </template>
               </el-table-column>
@@ -303,9 +269,6 @@
               <el-option label="启用" value="ENABLED" />
               <el-option label="停用" value="DISABLED" />
             </el-select>
-          </el-form-item>
-          <el-form-item label="默认角色">
-            <el-input v-model="postForm.defaultRoleName" placeholder="角色名称（占位）" />
           </el-form-item>
           <el-form-item label="数据范围">
             <el-select v-model="postForm.defaultDataScope" clearable placeholder="预留枚举">
@@ -566,7 +529,6 @@ const treeFilter = ref('');
 const treeLoading = ref(false);
 const currentOrg = ref<OrgNode | null>(null);
 const currentTreeOrg = ref<OrgNode | null>(null); // 左侧树选中的组织
-const relStatusFilter = ref('ALL'); // 组织可用状态筛选
 const originalTableData = ref<PostVO[]>([]); // 原始表格数据，用于前端筛选
 const isTreeExpanded = ref(false); // 组织树是否展开
 const isEditMode = ref(false); // 编辑模式
@@ -605,17 +567,14 @@ const postForm = reactive<PostVO>({
   postCode: '',
   postName: '',
   postStatus: 'ENABLED',
-  defaultRoleName: '',
   defaultDataScope: '',
   postType: '',
   postLevel: '',
   postCategory: '',
-  sortNo: 0,
-  postDesc: '',
-  remark: '',
-  isSystem: 0,
-  relStatus: 'ENABLED',
-  isPrimary: 0,
+      sortNo: 0,
+      postDesc: '',
+      remark: '',
+      isSystem: 0,
 });
 const postRules: FormRules = {
   postCode: [{ required: true, message: '请输入岗位编码', trigger: 'blur' }],
@@ -684,38 +643,6 @@ const canSetPrimary = computed(() => hasPermission('system:orgPost:setPrimary'))
 const canUnbind = computed(() => hasPermission('system:orgPost:unbind'));
 const canBind = computed(() => hasPermission('system:orgPost:bind'));
 
-// mock 数据（无后端时使用）
-const mockOrgTree: OrgNode[] = [
-  {
-    orgId: 1,
-    orgName: '总部',
-    orgCode: 'ORG-001',
-    children: [
-      { orgId: 11, orgName: '研发中心', orgCode: 'ORG-001-01' },
-      { orgId: 12, orgName: '市场部', orgCode: 'ORG-001-02' },
-    ],
-  },
-  {
-    orgId: 2,
-    orgName: '分公司A',
-    orgCode: 'ORG-002',
-    children: [{ orgId: 21, orgName: '实施部', orgCode: 'ORG-002-01' }],
-  },
-];
-
-const mockPostList: PostVO[] = Array.from({ length: 15 }).map((_, idx) => ({
-  postId: idx + 1,
-  postCode: `POST${String(100 + idx)}`,
-  postName: `示例岗位${idx + 1}`,
-  postStatus: idx % 2 === 0 ? 'ENABLED' : 'DISABLED',
-  relStatus: idx % 3 === 0 ? 'DISABLED' : 'ENABLED',
-  postType: idx % 2 === 0 ? '职能' : '技术',
-  postLevel: `L${(idx % 3) + 1}`,
-  defaultRoleName: '默认角色',
-  isPrimary: idx === 0 ? 1 : 0,
-  relSortNo: idx + 1,
-  createdTime: '2025-01-01 10:00:00',
-}));
 
 onMounted(() => {
   loadOrgTree();
@@ -833,9 +760,11 @@ async function loadOrgTree() {
   treeLoading.value = true;
   try {
     const res = await fetchOrgTree();
-    orgTree.value = (res && res.length ? res : mockOrgTree) as OrgNode[];
+    // 由于请求拦截器已经处理了响应，直接使用返回的数据
+    orgTree.value = (res && Array.isArray(res) && res.length ? res : []) as OrgNode[];
   } catch (e) {
-    orgTree.value = mockOrgTree;
+    console.error('加载组织树失败:', e);
+    orgTree.value = [];
   } finally {
     treeLoading.value = false;
   }
@@ -854,32 +783,38 @@ function handleSelectionChange(rows: PostVO[]) {
   selectedRows.value = rows;
 }
 
+function handleRowClick(row: PostVO) {
+  // 使用表格的toggleRowSelection方法切换选中状态
+  tableRef.value?.toggleRowSelection(row);
+}
+
 async function fetchTable() {
   if (!currentOrg.value) return;
   tableLoading.value = true;
   try {
-    // 构造查询参数，不包含relStatus，后端返回所有状态
+    // 构造查询参数
     const searchQuery = {
       orgId: currentOrg.value.orgId,
-      postCode: query.postCode,
-      postName: query.postName,
-      postStatus: query.postStatus,
-      pageNum: query.pageNum,
-      pageSize: query.pageSize,
+      includeChildren: true
     };
 
     const res = await queryOrgPosts(searchQuery);
-    let list = (res.list || res.rows || res.records) ?? [];
-    if (!list.length) list = mockPostList;
+    let list = (res && Array.isArray(res)) ? res : [];
+
+    // 应用前端筛选（根据岗位状态）
+    tableData.value = list.filter(item => {
+      if (!query.postStatus) return true;
+      return item.postStatus === query.postStatus;
+    });
 
     // 保存原始数据
     originalTableData.value = list;
-    // 应用前端筛选
-    applyRelStatusFilter();
+    total.value = tableData.value.length;
   } catch (e) {
-    originalTableData.value = mockPostList;
-    tableData.value = mockPostList;
-    total.value = mockPostList.length;
+    console.error('加载岗位列表失败:', e);
+    originalTableData.value = [];
+    tableData.value = [];
+    total.value = 0;
   } finally {
     tableLoading.value = false;
     selectedRows.value = [];
@@ -910,18 +845,6 @@ function handleSizeChange(size: number) {
   fetchTable();
 }
 
-// 前端筛选组织可用状态
-function applyRelStatusFilter() {
-  if (relStatusFilter.value === 'ALL' || !relStatusFilter.value) {
-    tableData.value = originalTableData.value;
-  } else {
-    tableData.value = originalTableData.value.filter(item =>
-      item.relStatus === relStatusFilter.value
-    );
-  }
-  total.value = tableData.value.length;
-}
-
 function openPostForm(isEdit: boolean, row?: PostVO) {
   postDialog.isEdit = isEdit;
   if (isEdit && row) {
@@ -932,7 +855,6 @@ function openPostForm(isEdit: boolean, row?: PostVO) {
       postCode: '',
       postName: '',
       postStatus: 'ENABLED',
-      defaultRoleName: '',
       defaultDataScope: '',
       postType: '',
       postLevel: '',
@@ -962,96 +884,43 @@ async function submitPostForm() {
     postDialog.visible = false;
     if (currentOrg.value) fetchTable();
   } catch (e) {
-    // 若后端未通，仍关闭弹窗并提示
-    ElMessage.success('已保存（示例模式）');
-    postDialog.visible = false;
+    ElMessage.error((e as any)?.message || '操作失败');
   } finally {
     postSaving.value = false;
   }
 }
 
 function rowToggleStatus(row: PostVO) {
-  if (!currentOrg.value) return;
-  const next: RelStatus = row.relStatus === 'ENABLED' ? 'DISABLED' : 'ENABLED';
-  changeOrgPostStatus(currentOrg.value.orgId, [row.postId], next)
+  const next: PostStatus = row.postStatus === 'ENABLED' ? 'DISABLED' : 'ENABLED';
+  changePostStatus([row.postId], next)
     .then(() => {
       ElMessage.success('状态已更新');
       fetchTable();
     })
     .catch(() => {
-      // 示例回退
-      row.relStatus = next;
+      ElMessage.error('状态更新失败');
     });
 }
 
 function batchToggleRelStatus() {
-  if (!currentOrg.value || !selectedRows.value.length) return;
-  const hasDisabled = selectedRows.value.some((r) => r.relStatus !== 'ENABLED');
-  const target: RelStatus = hasDisabled ? 'ENABLED' : 'DISABLED';
+  if (!selectedRows.value.length) return;
+  const hasDisabled = selectedRows.value.some((r) => r.postStatus !== 'ENABLED');
+  const target: PostStatus = hasDisabled ? 'ENABLED' : 'DISABLED';
   const ids = selectedRows.value.map((r) => r.postId);
-  changeOrgPostStatus(currentOrg.value.orgId, ids, target)
+  changePostStatus(ids, target)
     .then(() => {
       ElMessage.success('状态已更新');
       fetchTable();
     })
     .catch(() => {
-      selectedRows.value.forEach((r) => (r.relStatus = target));
+      ElMessage.error('状态更新失败');
     });
 }
 
-function setPrimary(row?: PostVO) {
-  if (!currentOrg.value) return;
-  const targetRow = row || selectedRows.value[0];
-  if (!targetRow) return;
-  setOrgPrimaryPost(currentOrg.value.orgId, targetRow.postId)
-    .then(() => {
-      ElMessage.success('已设为主岗位');
-      fetchTable();
-    })
-    .catch(() => {
-      tableData.value.forEach((r) => (r.isPrimary = r.postId === targetRow.postId ? 1 : 0));
-    });
-}
-
-function unbindSingle(row: PostVO) {
-  if (!currentOrg.value) return;
-  ElMessageBox.confirm(`确认解除岗位「${row.postName}」与当前组织的关联吗？`, '提示', {
-    type: 'warning',
-  })
-    .then(() => doUnbind([row.postId]))
-    .catch(() => {});
-}
-
-function unbindSelected() {
-  if (!currentOrg.value || !selectedRows.value.length) return;
-  ElMessageBox.confirm(
-    `确认解除已选 ${selectedRows.value.length} 个岗位的组织关联吗？`,
-    '提示',
-    { type: 'warning' },
-  )
-    .then(() => doUnbind(selectedRows.value.map((r) => r.postId)))
-    .catch(() => {});
-}
-
-function doUnbind(postIds: number[]) {
-  if (!currentOrg.value) return;
-  unbindOrgPosts(currentOrg.value.orgId, postIds)
-    .then(() => {
-      ElMessage.success('已解除关联');
-      fetchTable();
-    })
-    .catch(() => {
-      // 示例：直接前端移除
-      tableData.value = tableData.value.filter((r) => !postIds.includes(r.postId));
-      total.value = tableData.value.length;
-    });
-}
 
 function openBindDialog() {
-  bindDialog.visible = true;
-  bindDialog.keyword = '';
-  bindDialog.pageNum = 1;
-  fetchBindList();
+  // 新版本API暂不支持此功能
+  ElMessage.warning('新版本API暂不支持关联岗位功能');
 }
 
 async function fetchBindList() {
@@ -1062,13 +931,13 @@ async function fetchBindList() {
       pageNum: bindDialog.pageNum,
       pageSize: bindDialog.pageSize,
     });
-    let list = (res.list || res.rows || res.records) ?? [];
-    if (!list.length) list = mockPostList;
+    let list = (res?.success && res.data?.list) ? res.data.list : [];
     bindDialog.list = list;
-    bindDialog.total = res.total ?? list.length;
+    bindDialog.total = res?.data?.total ?? list.length;
   } catch (e) {
-    bindDialog.list = mockPostList;
-    bindDialog.total = mockPostList.length;
+    console.error('加载岗位字典失败:', e);
+    bindDialog.list = [];
+    bindDialog.total = 0;
   } finally {
     bindDialog.loading = false;
     bindDialog.selected = [];
@@ -1086,22 +955,8 @@ function changeBindPage(pageNum: number, pageSize: number) {
 }
 
 async function submitBind() {
-  if (!currentOrg.value || !bindDialog.selected.length) return;
-  bindDialog.saving = true;
-  const ids = bindDialog.selected.map((r) => r.postId);
-  try {
-    await bindPostsToOrg(currentOrg.value.orgId, ids);
-    ElMessage.success('关联成功');
-    bindDialog.visible = false;
-    fetchTable();
-  } catch (e) {
-    // 示例模式：直接把选中项追加
-    tableData.value = [...tableData.value, ...bindDialog.selected];
-    total.value = tableData.value.length;
-    bindDialog.visible = false;
-  } finally {
-    bindDialog.saving = false;
-  }
+  // 新版本API暂不支持此功能
+  ElMessage.warning('新版本API暂不支持关联岗位功能');
 }
 
 // 切换编辑模式

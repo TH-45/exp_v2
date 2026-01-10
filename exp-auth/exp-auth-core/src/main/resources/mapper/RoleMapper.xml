@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.auth.mapper.RoleMapper">
+
+    <!-- 分页查询角色列表 -->
+    <select id="selectRoleList" resultType="jh.exp.auth.entity.res.RoleListRes">
+        SELECT r.role_id, r.role_code, r.role_name, r.role_type, r.status,
+               r.data_scope_type, r.is_system, r.sort_no, r.created_time, r.remark,
+               creator.account_display as created_name
+        FROM exp_role r
+        LEFT JOIN exp_account creator ON r.created_by = creator.account_id
+        <where>
+            <if test="roleCode != null and roleCode.trim() != ''">
+                AND r.role_code LIKE CONCAT('%', #{roleCode}, '%')
+            </if>
+            <if test="roleName != null and roleName.trim() != ''">
+                AND r.role_name LIKE CONCAT('%', #{roleName}, '%')
+            </if>
+            <if test="status != null and status.trim() != ''">
+                AND r.status = #{status}
+            </if>
+            <if test="roleType != null and roleType.trim() != ''">
+                AND r.role_type = #{roleType}
+            </if>
+        </where>
+        ORDER BY r.sort_no ASC, r.created_time DESC
+    </select>
+
+    <!-- 根据角色ID查询角色详情信息（多表联查） -->
+    <select id="selectRoleDetailById" resultType="jh.exp.auth.entity.res.RoleDetailRes">
+        SELECT r.role_id, r.role_code, r.role_name, r.role_type, r.status,
+               r.data_scope_type, r.data_scope_detail, r.is_system, r.sort_no,
+               r.created_time, r.updated_time, r.remark,
+               creator.account_display as created_name
+        FROM exp_role r
+        LEFT JOIN exp_account creator ON r.created_by = creator.account_id
+        WHERE r.role_id = #{roleId}
+    </select>
+
+    <!-- 检查角色编码是否存在 -->
+    <select id="countByRoleCode" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_role
+        WHERE role_code = #{roleCode}
+        <if test="excludeRoleId != null">
+            AND role_id != #{excludeRoleId}
+        </if>
+    </select>
+
+    <!-- 根据角色ID列表批量查询角色详情 -->
+    <select id="selectRoleDetailByIds" resultType="jh.exp.auth.entity.res.RoleDetailRes">
+        SELECT r.role_id, r.role_code, r.role_name, r.role_type, r.status,
+               r.data_scope_type, r.data_scope_detail, r.is_system, r.sort_no,
+               r.created_time, r.updated_time, r.remark,
+               creator.account_display as created_name
+        FROM exp_role r
+        LEFT JOIN exp_account creator ON r.created_by = creator.account_id
+        WHERE r.role_id IN
+        <foreach item="roleId" collection="roleIds" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+        ORDER BY r.sort_no ASC, r.created_time DESC
+    </select>
+
+</mapper>

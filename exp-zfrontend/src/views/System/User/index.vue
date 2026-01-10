@@ -110,13 +110,13 @@
       <el-table-column
         prop="gender"
         label="性别"
-        min-width="90"
+        min-width="60"
         :formatter="formatGender"
       />
-      <el-table-column prop="mobile" label="手机号" min-width="130" />
-      <el-table-column prop="email" label="邮箱" min-width="180" />
+      <el-table-column prop="mobile" label="手机号" min-width="110" />
+      <el-table-column prop="email" label="邮箱" min-width="160" />
       <el-table-column prop="orgName" label="归属组织" min-width="140" />
-      <el-table-column label="角色名称" min-width="140">
+      <el-table-column label="角色名称" min-width="110">
         <template #default="{ row }">
           <el-tooltip
             :content="row.roleNames || '无'"
@@ -132,7 +132,7 @@
       <el-table-column
         prop="status"
         label="状态"
-        min-width="100"
+        min-width="70"
         #default="{ row }"
       >
         <el-tag :type="statusTagType(row.status)">
@@ -142,7 +142,7 @@
       <el-table-column
         prop="createdTime"
         label="创建时间"
-        min-width="170"
+        min-width="140"
         :formatter="formatDateTime"
       />
 
@@ -219,7 +219,12 @@
           <el-input v-model="form.personCode" disabled />
         </el-form-item>
         <el-form-item label="姓名" prop="personName">
-          <el-input v-model="form.personName" placeholder="请输入姓名" />
+          <PersonSelector
+            v-model="selectedPerson"
+            placeholder="请选择人员"
+            @change="handlePersonChange"
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="性别" prop="gender">
           <el-select v-model="form.gender" placeholder="请选择性别" clearable>
@@ -329,6 +334,7 @@ import {
 } from '@/api/system/person';
 import { hasPermission } from '@/utils/permission';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
+import PersonSelector from '@/components/Selector/PersonSelector.vue';
 import { queryOrgPosts, type OrgNode, type PostVO } from '@/api/system/post';
 
 
@@ -407,6 +413,7 @@ const form = reactive<ExpPersonVO>({
 
 // 选择器数据
 const selectedOrg = ref<OrgNode>();
+const selectedPerson = ref<ExpPersonVO>();
 const postOptions = ref<PostVO[]>([]);
 
 const rules: FormRules = {
@@ -559,6 +566,41 @@ function handleRowClick(row: ExpPersonVO) {
   tableRef.value?.toggleRowSelection(row);
 }
 
+// 人员选择处理
+async function handlePersonChange(person: ExpPersonVO | undefined) {
+  if (person) {
+    // 自动填充人员信息
+    Object.assign(form, {
+      personId: person.personId,
+      personCode: person.personCode,
+      personName: person.personName,
+      gender: person.gender,
+      mobile: person.mobile,
+      email: person.email,
+      orgName: person.orgName,
+      roleIds: person.roleIds,
+      roleNames: person.roleNames,
+    });
+
+    // 设置组织选择器
+    if (person.orgId) {
+      selectedOrg.value = {
+        orgId: person.orgId,
+        orgName: person.orgName || '',
+        orgCode: '',
+        children: []
+      };
+      form.orgId = person.orgId;
+
+      // 获取岗位列表
+      await fetchPostOptions(person.orgId);
+    }
+  } else {
+    // 清空选择
+    selectedPerson.value = undefined;
+  }
+}
+
 // 组织选择处理
 async function handleOrgChange(org: OrgNode | undefined) {
   form.orgId = org?.orgId;
@@ -632,6 +674,7 @@ function resetFormModel() {
 
   // 重置选择器数据
   selectedOrg.value = undefined;
+  selectedPerson.value = undefined;
   postOptions.value = [];
 }
 
