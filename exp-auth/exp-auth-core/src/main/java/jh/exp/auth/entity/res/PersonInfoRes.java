@@ -2,11 +2,12 @@ package jh.exp.auth.entity.res;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
-@AllArgsConstructor
+@NoArgsConstructor
 public class PersonInfoRes {
     private String personId;
     private String personName;

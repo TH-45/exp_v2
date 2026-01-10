@@ -115,7 +115,7 @@
       />
       <el-table-column prop="mobile" label="手机号" min-width="130" />
       <el-table-column prop="email" label="邮箱" min-width="180" />
-      <el-table-column prop="deptName" label="归属组织" min-width="140" />
+      <el-table-column prop="orgName" label="归属组织" min-width="140" />
       <el-table-column label="角色名称" min-width="140">
         <template #default="{ row }">
           <el-tooltip
@@ -139,7 +139,12 @@
           {{ statusText(row.status) }}
         </el-tag>
       </el-table-column>
-      <el-table-column prop="createdTime" label="创建时间" min-width="170" />
+      <el-table-column
+        prop="createdTime"
+        label="创建时间"
+        min-width="170"
+        :formatter="formatDateTime"
+      />
 
       <el-table-column label="操作" fixed="right" width="110">
         <template #default="{ row }">
@@ -396,7 +401,7 @@ const form = reactive<ExpPersonVO>({
   isExternal: 0,
   createdTime: '',
   remark: '',
-  deptName: '',
+  orgName: '',
   roleName: '',
 });
 
@@ -478,6 +483,21 @@ function statusText(status: string) {
 
 function formatGender(row: ExpPersonVO) {
   return genderMap[row.gender] || row.gender;
+}
+
+function formatDateTime(row: ExpPersonVO, column: any, cellValue: string) {
+  if (!cellValue) return '';
+  try {
+    const date = new Date(cellValue);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  } catch (e) {
+    return cellValue;
+  }
 }
 
 async function fetchList() {
@@ -605,7 +625,7 @@ function resetFormModel() {
   form.entryDate = '';
   form.isExternal = 0;
   form.remark = '';
-  form.deptName = '';
+  form.orgName = '';
   form.roleName = '';
   form.roleIds = '';
   form.roleNames = '';
@@ -631,7 +651,7 @@ async function handleEdit(row: ExpPersonVO) {
     // 暂时设置一个基础的组织对象，后续可以优化
     selectedOrg.value = {
       orgId: row.orgId,
-      orgName: row.deptName || '',
+      orgName: row.orgName || '',
       orgCode: '',
       children: []
     };

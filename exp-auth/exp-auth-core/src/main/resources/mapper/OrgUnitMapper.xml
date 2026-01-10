@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.auth.mapper.OrgUnitMapper">
+
+    <!-- 分页查询组织列表 -->
+    <select id="selectOrgUnitList" resultType="jh.exp.auth.entity.res.OrgUnitListRes">
+        SELECT o.org_id, o.parent_org_id, o.org_code, o.org_name, o.org_type,
+               o.org_path, o.org_level, o.manager_person_id, o.contact_phone,
+               o.status, o.sort_no, o.created_time, o.remark,
+               p.person_name as manager_name,
+               creator.account_display as created_name
+        FROM exp_org_unit o
+        LEFT JOIN exp_person p ON o.manager_person_id = p.person_id
+        LEFT JOIN exp_account creator ON o.created_by = creator.account_id
+        <where>
+            <if test="orgCode != null and orgCode.trim() != ''">
+                AND o.org_code LIKE CONCAT('%', #{orgCode}, '%')
+            </if>
+            <if test="orgName != null and orgName.trim() != ''">
+                AND o.org_name LIKE CONCAT('%', #{orgName}, '%')
+            </if>
+        </where>
+        ORDER BY o.sort_no ASC, o.created_time DESC
+    </select>
+
+    <!-- 根据组织ID查询组织详情信息（多表联查） -->
+    <select id="selectOrgUnitDetailById" resultType="jh.exp.auth.entity.res.OrgUnitDetailRes">
+        SELECT o.org_id, o.parent_org_id, o.org_code, o.org_name, o.org_type,
+               o.org_path, o.org_level, o.manager_person_id, o.contact_phone,
+               o.address, o.status, o.sort_no, o.created_time, o.updated_time, o.remark,
+               p.person_name as manager_name,
+               creator.account_display as created_name
+        FROM exp_org_unit o
+        LEFT JOIN exp_person p ON o.manager_person_id = p.person_id
+        LEFT JOIN exp_account creator ON o.created_by = creator.account_id
+        WHERE o.org_id = #{orgId}
+    </select>
+
+    <!-- 检查组织编码是否存在 -->
+    <select id="countByOrgCode" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_org_unit
+        WHERE org_code = #{orgCode}
+        <if test="excludeOrgId != null">
+            AND org_id != #{excludeOrgId}
+        </if>
+    </select>
+
+    <!-- 根据组织ID列表批量查询组织详情 -->
+    <select id="selectOrgUnitDetailByIds" resultType="jh.exp.auth.entity.res.OrgUnitDetailRes">
+        SELECT o.org_id, o.parent_org_id, o.org_code, o.org_name, o.org_type,
+               o.org_path, o.org_level, o.manager_person_id, o.contact_phone,
+               o.address, o.status, o.sort_no, o.created_time, o.updated_time, o.remark,
+               p.person_name as manager_name,
+               creator.account_display as created_name
+        FROM exp_org_unit o
+        LEFT JOIN exp_person p ON o.manager_person_id = p.person_id
+        LEFT JOIN exp_account creator ON o.created_by = creator.account_id
+        WHERE o.org_id IN
+        <foreach item="orgId" collection="orgIds" open="(" separator="," close=")">
+            #{orgId}
+        </foreach>
+        ORDER BY o.sort_no ASC, o.created_time DESC
+    </select>
+
+    <!-- 根据上级组织ID查询直接子组织列表 -->
+    <select id="selectChildrenByParentId" resultType="jh.exp.auth.entity.OrgUnit">
+        SELECT org_id, parent_org_id, org_code, org_name, org_type, org_path,
+               org_level, manager_person_id, contact_phone, address, status,
+               sort_no, created_by, created_time, updated_time, remark
+        FROM exp_org_unit
+        WHERE parent_org_id = #{parentOrgId}
+        ORDER BY sort_no ASC, created_time DESC
+    </select>
+
+    <!-- 根据组织路径查询所有子组织（包含间接子组织） -->
+    <select id="selectAllChildrenByPath" resultType="jh.exp.auth.entity.OrgUnit">
+        SELECT org_id, parent_org_id, org_code, org_name, org_type, org_path,
+               org_level, manager_person_id, contact_phone, address, status,
+               sort_no, created_by, created_time, updated_time, remark
+        FROM exp_org_unit
+        WHERE org_path LIKE CONCAT(#{orgPath}, '/%')
+        ORDER BY org_path ASC, sort_no ASC
+    </select>
+
+</mapper>

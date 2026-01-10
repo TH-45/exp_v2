@@ -29,7 +29,7 @@ export interface ExpPersonVO {
   remark?: string;
 
   /** 非实体字段（后端 VO 返回） */
-  deptName?: string;
+  orgName?: string;      // 归属组织名称
   roleName?: string;
   roleIds?: string;      // 角色ID，逗号分隔
   roleNames?: string;    // 角色名称，逗号分隔

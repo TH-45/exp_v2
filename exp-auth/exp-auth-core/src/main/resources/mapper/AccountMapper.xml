@@ -85,11 +85,11 @@
         FROM exp_role_assign ra
         INNER JOIN exp_role r ON ra.role_id = r.role_id
         WHERE ra.principal_type = 'ACCOUNT'
-        AND ra.status = 'ENABLED'
-        AND ra.principal_id IN
-        <foreach item="accountId" collection="accountIds" open="(" separator="," close=")">
+          AND ra.status = 'ENABLED'
+          AND ra.principal_id IN
+          <foreach item="accountId" collection="accountIds" open="(" separator="," close=")">
             #{accountId}
-        </foreach>
+          </foreach>
         ORDER BY ra.principal_id, r.sort_no
     </select>
 
