@@ -149,44 +149,38 @@
 
             <!-- 查询栏 -->
             <el-form
-              :inline="true"
               :model="query"
               class="search-bar"
               @submit.prevent
             >
-              <el-form-item label="岗位编码">
-                <el-input
-                  v-model="query.postCode"
-                  placeholder="请输入岗位编码"
-                  clearable
-                  style="width: 200px"
-                />
-              </el-form-item>
-              <el-form-item label="岗位名称">
-                <el-input
-                  v-model="query.postName"
-                  placeholder="请输入岗位名称"
-                  clearable
-                  style="width: 200px"
-                />
-              </el-form-item>
-              <el-form-item label="组织可用状态">
-                <el-select v-model="query.relStatus" style="width: 160px">
-                  <el-option label="全部" value="ALL" />
-                  <el-option label="启用" value="ENABLED" />
-                  <el-option label="停用" value="DISABLED" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="岗位状态">
-                <el-select v-model="query.postStatus" clearable style="width: 160px">
-                  <el-option label="启用" value="ENABLED" />
-                  <el-option label="停用" value="DISABLED" />
-                </el-select>
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="handleSearch">查询</el-button>
-                <el-button @click="handleReset">重置</el-button>
-              </el-form-item>
+              <div class="search-row">
+                <el-form-item label="岗位编码">
+                  <el-input
+                    v-model="query.postCode"
+                    placeholder="请输入岗位编码"
+                    clearable
+                    style="width: 180px"
+                  />
+                </el-form-item>
+                <el-form-item label="岗位名称">
+                  <el-input
+                    v-model="query.postName"
+                    placeholder="请输入岗位名称"
+                    clearable
+                    style="width: 180px"
+                  />
+                </el-form-item>
+                <el-form-item label="岗位状态">
+                  <el-select v-model="query.postStatus" clearable style="width: 100px">
+                    <el-option label="启用" value="ENABLED" />
+                    <el-option label="停用" value="DISABLED" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="handleSearch">查询</el-button>
+                  <el-button @click="handleReset">重置</el-button>
+                </el-form-item>
+              </div>
             </el-form>
 
             <!-- 未选组织提示 -->
@@ -210,7 +204,6 @@
               <el-table-column prop="postCode" label="岗位编码" min-width="140" />
               <el-table-column prop="postName" label="岗位名称" min-width="140" />
               <el-table-column prop="postType" label="岗位类型" min-width="120" />
-              <el-table-column prop="postLevel" label="岗位级别" min-width="120" />
               <el-table-column
                 prop="defaultRoleName"
                 label="默认角色"
@@ -230,16 +223,13 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="主岗位" min-width="100">
-                <template #default="{ row }">
-                  <el-tag :type="row.isPrimary ? 'warning' : 'info'">
-                    {{ row.isPrimary ? '主' : '否' }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column prop="relSortNo" label="组织内排序" min-width="120" />
-              <el-table-column prop="createdTime" label="创建时间" min-width="170" />
-              <el-table-column label="操作" fixed="right" width="250">
+              <el-table-column
+                prop="createdTime"
+                label="创建时间"
+                min-width="170"
+                :formatter="formatDateTime"
+              />
+              <el-table-column label="操作" fixed="right" width="200">
                 <template #default="{ row }">
                   <el-button
                     link
@@ -248,7 +238,7 @@
                     @click="openPostForm(true, row)"
                     :disabled="!canUpdate"
                   >
-                    编辑岗位
+                    编辑
                   </el-button>
                   <el-button
                     link
@@ -256,15 +246,7 @@
                     @click="rowToggleStatus(row)"
                     :disabled="!canOrgStatus"
                   >
-                    {{ row.relStatus === 'ENABLED' ? '停用' : '启用' }}
-                  </el-button>
-                  <el-button
-                    link
-                    size="small"
-                    @click="setPrimary(row)"
-                    :disabled="!canSetPrimary"
-                  >
-                    设为主岗位
+                    停用
                   </el-button>
                   <el-button
                     link
@@ -602,7 +584,6 @@ const query = reactive({
   orgId: 0,
   postCode: '',
   postName: '',
-  relStatus: 'ALL' as 'ALL' | RelStatus,
   postStatus: undefined as PostStatus | undefined,
   pageNum: 1,
   pageSize: 10,
@@ -913,7 +894,6 @@ function handleSearch() {
 function handleReset() {
   query.postCode = '';
   query.postName = '';
-  query.relStatus = 'ALL';
   query.postStatus = undefined;
   query.pageNum = 1;
   fetchTable();
@@ -1313,6 +1293,21 @@ async function deleteOrgAction(node: OrgNode) {
     ElMessage.error('组织删除失败');
   }
 }
+
+function formatDateTime(row: any, column: any, cellValue: string) {
+  if (!cellValue) return '';
+  try {
+    const date = new Date(cellValue);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  } catch (e) {
+    return cellValue;
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -1572,6 +1567,17 @@ async function deleteOrgAction(node: OrgNode) {
 
   .search-bar {
     margin-bottom: 12px;
+
+    .search-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+
+      :deep(.el-form-item) {
+        margin-bottom: 0;
+      }
+    }
   }
 
   .pagination {
