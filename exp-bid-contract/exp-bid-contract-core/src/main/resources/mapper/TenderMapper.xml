@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.bid.contract.mapper.TenderMapper">
+
+    <!-- 分页查询招标列表（多表联查） -->
+    <select id="selectTenderList" resultType="jh.exp.bid.contract.entity.res.TenderListRes">
+        SELECT t.tender_id, t.tender_code, t.tender_name, t.tender_type, t.tender_mode,
+               t.budget_amount, t.currency, t.bid_start_time, t.bid_end_time, t.status,
+               t.created_time,
+               p.company_name as purchaser_name,
+               pr.project_name,
+               creator.account_display as created_by_name
+        FROM exp_tender t
+        LEFT JOIN exp_company p ON t.purchaser_id = p.company_id
+        LEFT JOIN exp_project pr ON t.project_id = pr.project_id
+        LEFT JOIN exp_account creator ON t.created_by = creator.account_id
+        <where>
+            <if test="req.tenderCode != null and req.tenderCode.trim() != ''">
+                AND t.tender_code LIKE CONCAT('%', #{req.tenderCode}, '%')
+            </if>
+            <if test="req.tenderName != null and req.tenderName.trim() != ''">
+                AND t.tender_name LIKE CONCAT('%', #{req.tenderName}, '%')
+            </if>
+            <if test="req.tenderType != null and req.tenderType.trim() != ''">
+                AND t.tender_type = #{req.tenderType}
+            </if>
+            <if test="req.tenderMode != null and req.tenderMode.trim() != ''">
+                AND t.tender_mode = #{req.tenderMode}
+            </if>
+            <if test="req.purchaserId != null">
+                AND t.purchaser_id = #{req.purchaserId}
+            </if>
+            <if test="req.status != null and req.status.trim() != ''">
+                AND t.status = #{req.status}
+            </if>
+            <if test="req.projectId != null">
+                AND t.project_id = #{req.projectId}
+            </if>
+            <if test="req.createdBy != null">
+                AND t.created_by = #{req.createdBy}
+            </if>
+            <if test="req.bidStartTimeStart != null">
+                AND t.bid_start_time >= #{req.bidStartTimeStart}
+            </if>
+            <if test="req.bidStartTimeEnd != null">
+                AND t.bid_start_time <![CDATA[<=]]> #{req.bidStartTimeEnd}
+            </if>
+            <if test="req.bidEndTimeStart != null">
+                AND t.bid_end_time >= #{req.bidEndTimeStart}
+            </if>
+            <if test="req.bidEndTimeEnd != null">
+                AND t.bid_end_time <![CDATA[<=]]> #{req.bidEndTimeEnd}
+            </if>
+        </where>
+        ORDER BY t.created_time DESC
+    </select>
+
+    <!-- 根据招标ID查询招标详情信息（多表联查） -->
+    <select id="selectTenderDetailById" resultType="jh.exp.bid.contract.entity.res.TenderDetailRes">
+        SELECT t.tender_id, t.tender_code, t.tender_name, t.tender_type, t.tender_mode,
+               t.purchaser_id, t.budget_amount, t.currency, t.tender_brief, t.publish_time,
+               t.bid_start_time, t.bid_end_time, t.open_time, t.open_address, t.status,
+               t.project_id, t.created_by, t.created_dept_id, t.created_post_id,
+               t.created_time, t.updated_time, t.remark,
+               p.company_name as purchaser_name,
+               pr.project_name,
+               pm.person_name as project_manager_name,
+               creator.account_display as created_by_name,
+               dept.org_name as created_dept_name,
+               post.post_name as created_post_name
+        FROM exp_tender t
+        LEFT JOIN exp_company p ON t.purchaser_id = p.company_id
+        LEFT JOIN exp_project pr ON t.project_id = pr.project_id
+        LEFT JOIN exp_person pm ON pr.manager_person_id = pm.person_id
+        LEFT JOIN exp_account creator ON t.created_by = creator.account_id
+        LEFT JOIN exp_org_unit dept ON t.created_dept_id = dept.org_id
+        LEFT JOIN exp_post post ON t.created_post_id = post.post_id
+        WHERE t.tender_id = #{tenderId}
+    </select>
+
+    <!-- 检查招标编号是否存在 -->
+    <select id="countByTenderCode" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_tender
+        WHERE tender_code = #{tenderCode}
+        <if test="excludeTenderId != null">
+            AND tender_id != #{excludeTenderId}
+        </if>
+    </select>
+
+    <!-- 根据项目ID查询该项目的负责人信息 -->
+    <select id="selectProjectManagerByProjectId" resultType="jh.exp.bid.contract.entity.res.TenderDetailRes">
+        SELECT pr.project_id, pr.project_name, pr.manager_person_id as project_manager_id,
+               p.person_name as project_manager_name, pr.org_id,
+               org.manager_person_id as org_manager_id,
+               org_p.person_name as org_manager_name
+        FROM exp_project pr
+        LEFT JOIN exp_person p ON pr.manager_person_id = p.person_id
+        LEFT JOIN exp_org_unit org ON pr.org_id = org.org_id
+        LEFT JOIN exp_person org_p ON org.manager_person_id = org_p.person_id
+        WHERE pr.project_id = #{projectId}
+    </select>
+
+    <!-- 批量更新招标状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE exp_tender
+        SET status = #{status}, updated_time = NOW()
+        WHERE tender_id IN
+        <foreach item="tenderId" collection="tenderIds" open="(" separator="," close=")">
+            #{tenderId}
+        </foreach>
+    </update>
+
+</mapper>
