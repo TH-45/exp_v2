@@ -3,6 +3,7 @@ package jh.exp.auth.service.bus.Impl;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.service.bus.PersonService;
 import jh.exp.auth.constant.AuthConstant;
 
 import jh.exp.auth.entity.Person;
@@ -14,7 +15,7 @@ import jh.exp.auth.mapper.AccountMapper;
 import jh.exp.auth.mapper.OrgUnitMapper;
 import jh.exp.auth.mapper.PersonMapper;
 import jh.exp.auth.mapper.PositionMapper;
-import jh.exp.auth.service.bus.PersonService;
+
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.req.SimplePageReq;
@@ -27,7 +28,6 @@ import org.springframework.util.CollectionUtils;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service

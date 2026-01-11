@@ -25,12 +25,12 @@ public class CreateAccountReq {
      */
     @NotBlank(message = "账号显示名称不能为空")
     private String accountDisplay;
-
-    /**
-     * 密码
-     */
-    @NotBlank(message = "密码不能为空")
-    private String password;
+//
+//    /**
+//     * 密码
+//     */
+//    @NotBlank(message = "密码不能为空")
+//    private String password;
 
     /**
      * 手机号

@@ -1,7 +1,11 @@
 package jh.exp.common.filter;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONUtil;
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
+import jh.exp.common.constant.ServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -53,8 +57,18 @@ public class CurrentUserFilter extends OncePerRequestFilter {
     }
 
     private CurrentUser resolveFromHeaders(jakarta.servlet.http.HttpServletRequest request) {
-        String userId = request.getHeader("X-User-Id");
-        String userName = request.getHeader("X-User-Name");
+        String apiCurrentUser = request.getHeader(ServiceContext.REQUEST_SOURCE_HEADER);
+        if (StrUtil.isNotBlank(apiCurrentUser)) {
+            try{
+                return JSONUtil.toBean(apiCurrentUser, CurrentUser.class);
+            }catch (Exception e){
+                log.error("服务之间传递CurrentUser失败", e);
+            }
+
+        }
+
+        String userId = request.getHeader(ServiceContext.USER_ID_HEADER);
+        String userName = request.getHeader(ServiceContext.USER_NAME_HEADER);
 
         // 如果连 userId 都没有，认为是未登录/匿名请求，不创建 CurrentUser
         if (!StringUtils.hasText(userId)) {
@@ -64,18 +78,18 @@ public class CurrentUserFilter extends OncePerRequestFilter {
         CurrentUser currentUser = new CurrentUser();
         currentUser.setUserId(userId);
         currentUser.setUsername(userName);
-        currentUser.setDeptId(request.getHeader("X-Dept-Id"));
-        currentUser.setDeptName(request.getHeader("X-Dept-Name"));
+        currentUser.setDeptId(request.getHeader(ServiceContext.DEPT_ID_HEADER));
+        currentUser.setDeptName(request.getHeader(ServiceContext.DEPT_NAME_HEADER));
 
         String rolesHeader = firstNonBlank(
-                request.getHeader("X-Roles"),
-                request.getHeader("X-User-Roles")
+                request.getHeader(ServiceContext.ROLES_HEADER),
+                request.getHeader(ServiceContext.USER_ROLES_HEADER)
         );
         currentUser.setRoles(splitToList(rolesHeader));
 
         String permsHeader = firstNonBlank(
-                request.getHeader("X-Permissions"),
-                request.getHeader("X-User-Permissions")
+                request.getHeader(ServiceContext.PERMISSIONS_HEADER),
+                request.getHeader(ServiceContext.USER_PERMISSIONS_HEADER)
         );
         currentUser.setPermissions(splitToList(permsHeader));
 

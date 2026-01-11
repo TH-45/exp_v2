@@ -4,6 +4,9 @@ import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
+import jh.exp.auth.service.bus.AccountService;
+import jh.exp.auth.constant.AuthConstant;
 import jh.exp.auth.entity.Account;
 import jh.exp.auth.entity.res.AccountDetailRes;
 import jh.exp.auth.entity.res.AccountListRes;
@@ -11,12 +14,11 @@ import jh.exp.auth.entity.res.AccountRoleRes;
 import jh.exp.auth.entity.req.*;
 import jh.exp.auth.mapper.AccountMapper;
 import jh.exp.auth.mapper.PersonMapper;
-import jh.exp.auth.service.bus.AccountService;
+
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
-import jh.exp.common.util.EntityMapperUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,7 +82,7 @@ public class AccountServiceImpl implements AccountService {
         Account account = new Account();
         account.setAccountName(req.getAccountName());
         account.setAccountDisplay(req.getAccountDisplay());
-        account.setPasswordHash(BCrypt.hashpw(req.getPassword()));
+        account.setPasswordHash(BCrypt.hashpw(AuthConstant.INITIAL_PASSWORD));
         account.setMobile(req.getMobile());
         account.setEmail(req.getEmail());
         account.setPersonId(req.getPersonId());

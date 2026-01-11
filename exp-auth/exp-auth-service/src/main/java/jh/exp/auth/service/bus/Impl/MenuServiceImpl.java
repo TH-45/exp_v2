@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.service.bus.MenuService;
 import jh.exp.auth.entity.ExpMenu;
 import jh.exp.auth.entity.Role;
 import jh.exp.auth.entity.middle.ExpRoleMenuRel;
@@ -18,7 +19,7 @@ import jh.exp.auth.entity.req.*;
 import jh.exp.auth.entity.res.*;
 import jh.exp.auth.mapper.MenuMapper;
 import jh.exp.auth.mapper.RoleMapper;
-import jh.exp.auth.service.bus.MenuService;
+
 import jh.exp.auth.mapper.middle.ExpRoleMenuRelMapper;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.exception.BizException;

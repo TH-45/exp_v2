@@ -1,4 +1,4 @@
-package jh.exp.auth.service.bus;
+package jh.exp.auth.api;
 
 import jh.exp.auth.entity.req.*;
 import jh.exp.auth.entity.res.OrgUnitDetailRes;

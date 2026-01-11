@@ -1,4 +1,4 @@
-package jh.exp.auth.service.bus;
+package jh.exp.auth.api;
 
 import jh.exp.auth.entity.req.*;
 import jh.exp.auth.entity.res.AccountDetailRes;
@@ -6,10 +6,13 @@ import jh.exp.auth.entity.res.AccountListRes;
 import jh.exp.auth.entity.res.AccountRoleRes;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PostExchange;
 
 import java.util.List;
 
-
+@HttpExchange("/account")
 public interface AccountService {
     /**
      * 分页查询账号列表
@@ -19,6 +22,7 @@ public interface AccountService {
     /**
      * 根据ID查询账号详情
      */
+    @GetMapping("/detail/{accountId}")
     AccountDetailRes getAccountById(Long accountId);
 
     /**

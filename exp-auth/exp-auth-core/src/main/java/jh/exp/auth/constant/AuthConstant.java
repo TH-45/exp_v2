@@ -3,6 +3,12 @@ package jh.exp.auth.constant;
 import java.lang.reflect.Field;
 
 public class AuthConstant {
+
+    /**
+     * 初始账号密码 123456
+     */
+    public static final String INITIAL_PASSWORD = "123456";
+
     /**
      * 启用
      */

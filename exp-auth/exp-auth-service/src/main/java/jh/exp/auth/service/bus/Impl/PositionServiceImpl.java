@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.service.bus.PositionService;
 import jh.exp.auth.entity.OrgPostRel;
 import jh.exp.auth.entity.Position;
 import jh.exp.auth.entity.req.*;
@@ -11,7 +12,7 @@ import jh.exp.auth.entity.res.PositionDetailRes;
 import jh.exp.auth.entity.res.PositionListRes;
 import jh.exp.auth.mapper.OrgPostRelMapper;
 import jh.exp.auth.mapper.PositionMapper;
-import jh.exp.auth.service.bus.PositionService;
+
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.constant.CommonConstant;

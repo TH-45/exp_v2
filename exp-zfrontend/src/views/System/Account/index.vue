@@ -187,12 +187,21 @@
             <el-input v-model="form.mobile" placeholder="选择人员后自动带出" readonly class="readonly-input" />
           </el-form-item>
           <el-form-item label="岗位" prop="postId">
-            <PostSelector
-                v-model="selectedPost"
-                :org-id="form.orgId"
-                placeholder="请选择岗位"
-                @change="handlePostChange"
-            />
+            <el-select
+              v-model="form.postId"
+              placeholder="请先选择组织"
+              :disabled="!form.orgId"
+              clearable
+              @change="handlePostChange"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="post in postOptions"
+                :key="post.postId"
+                :label="post.postName"
+                :value="post.postId"
+              />
+            </el-select>
           </el-form-item>
 
           <el-form-item label="邮箱" prop="email">
@@ -243,7 +252,7 @@ import { hasPermission } from '@/utils/permission';
 import { generateAccountName } from '@/utils/account';
 import PersonSelector from '@/components/Selector/PersonSelector.vue';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
-import PostSelector from '@/components/Selector/PostSelector.vue';
+import { queryOrgPosts } from '@/api/system/post';
 import {
   queryAccountList,
   createUser,
@@ -256,8 +265,7 @@ import {
   type AccountVO,
 } from '@/api/system/account';
 import type { ExpPersonVO } from '@/api/system/person';
-import type { OrgNode } from '@/api/system/post';
-import type { PostVO } from '@/api/system/post';
+import type { OrgNode, PostVO } from '@/api/system/post';
 
 const loading = ref(false);
 const saving = ref(false);
@@ -489,6 +497,9 @@ const selectedPerson = ref<ExpPersonVO>();
 const selectedOrg = ref<OrgNode>();
 const selectedPost = ref<PostVO>();
 
+// 岗位选项
+const postOptions = ref<PostVO[]>([]);
+
 const roleIdsText = ref('');
 watch(
   () => roleIdsText.value,
@@ -516,6 +527,22 @@ function resetFormModel() {
   selectedPerson.value = undefined;
   selectedOrg.value = undefined;
   selectedPost.value = undefined;
+  postOptions.value = [];
+}
+
+// 加载岗位选项
+async function loadPostOptions(orgId: number) {
+  try {
+    const params = {
+      orgId,
+      includeChildren: false, // 不包括子组织
+    };
+    const posts = await queryOrgPosts(params);
+    postOptions.value = posts || [];
+  } catch (e) {
+    console.error('加载岗位选项失败:', e);
+    postOptions.value = [];
+  }
 }
 
 // 选择器事件处理
@@ -524,6 +551,35 @@ function handlePersonChange(person: ExpPersonVO | undefined) {
   form.personName = person?.personName || '';
   form.mobile = person?.mobile || '';
   form.email = person?.email || '';
+
+  // 如果组织选择器没有值，才自动填充人员的组织和岗位
+  if (!selectedOrg.value && person?.orgId && person?.postId) {
+    // 自动填充组织
+    selectedOrg.value = {
+      orgId: person.orgId,
+      orgName: person.orgName || '',
+      orgCode: '',
+      children: []
+    };
+    form.orgId = person.orgId;
+
+    // 自动填充岗位
+    selectedPost.value = {
+      postId: person.postId,
+      postName: person.postName || '',
+      postCode: '',
+      postType: '',
+      postLevel: '',
+      postCategory: '',
+      postStatus: 'ENABLED' as const,
+      isSystem: 0,
+      sortNo: 0,
+    };
+    form.postId = person.postId;
+
+    // 加载岗位选项
+    loadPostOptions(person.orgId);
+  }
 }
 
 function handleOrgChange(org: OrgNode | undefined) {
@@ -531,10 +587,24 @@ function handleOrgChange(org: OrgNode | undefined) {
   // 组织改变时，清空岗位选择
   selectedPost.value = undefined;
   form.postId = undefined;
+
+  // 加载新的岗位选项
+  if (org?.orgId) {
+    loadPostOptions(org.orgId);
+  } else {
+    postOptions.value = [];
+  }
 }
 
-function handlePostChange(post: PostVO | undefined) {
-  form.postId = post?.postId;
+function handlePostChange(postId: number | undefined) {
+  form.postId = postId;
+  // 更新selectedPost
+  if (postId) {
+    const post = postOptions.value.find(p => p.postId === postId);
+    selectedPost.value = post;
+  } else {
+    selectedPost.value = undefined;
+  }
 }
 
 const rules: FormRules = {
@@ -620,6 +690,11 @@ async function handleEdit(row: AccountVO) {
         sortNo: 0,
         postStatus: 'ENABLED' as const, // 添加postStatus字段
       };
+    }
+
+    // 如果有组织ID，加载岗位选项
+    if (detailData.orgId) {
+      await loadPostOptions(detailData.orgId);
     }
 
     editDialog.visible = true;

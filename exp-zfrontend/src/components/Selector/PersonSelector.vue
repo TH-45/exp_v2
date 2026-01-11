@@ -48,17 +48,7 @@
       </div>
 
       <!-- 人员列表 -->
-      <div v-if="!hasSearchCondition" class="no-search-tip">
-        <el-empty description="请先输入查询条件进行搜索" :image-size="80">
-          <template #image>
-            <el-icon size="80" class="no-search-icon">
-              <Search />
-            </el-icon>
-          </template>
-        </el-empty>
-      </div>
       <el-table
-        v-else
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
@@ -66,6 +56,7 @@
         style="width: 100%"
         height="400px"
         @row-click="handleRowClick"
+        :empty-text="loading ? '加载中...' : '暂无数据'"
       >
 
         <el-table-column prop="personCode" label="工号" min-width="120" />
@@ -76,7 +67,7 @@
       </el-table>
 
       <!-- 分页 -->
-      <div v-if="hasSearchCondition" class="pagination">
+      <div class="pagination">
         <el-pagination
           background
           layout="total, prev, pager, next, sizes"
@@ -142,8 +133,9 @@ const displayText = computed(() => {
   return props.modelValue ? `${props.modelValue.personName}(${props.modelValue.personCode})` : '';
 });
 
-const hasSearchCondition = computed(() => {
-  return searchForm.personName.trim() || searchForm.personCode.trim();
+// 总是显示表格，不需要搜索条件
+const showTable = computed(() => {
+  return dialogVisible.value;
 });
 
 
@@ -151,16 +143,11 @@ const hasSearchCondition = computed(() => {
 function openDialog() {
   dialogVisible.value = true;
   selectedPerson.value = props.modelValue;
-  // fetchPersonList();
+  // 不自动查询，等待用户输入搜索条件
 }
 
 // 搜索
 function handleSearch() {
-  // 检查是否有查询条件
-  if (!searchForm.personName.trim() && !searchForm.personCode.trim()) {
-    ElMessage.warning('请至少输入一个查询条件（姓名或工号）');
-    return;
-  }
   query.pageNum = 1;
   fetchPersonList();
 }
@@ -170,25 +157,19 @@ function handleReset() {
   searchForm.personName = '';
   searchForm.personCode = '';
   query.pageNum = 1;
-  // 清空表格数据
-  tableData.value = [];
-  total.value = 0;
   selectedPerson.value = undefined;
+  // 重新查询所有人员
+  fetchPersonList();
 }
 
 // 获取人员列表
 async function fetchPersonList() {
-  // 检查是否有查询条件
-  if (!searchForm.personName.trim() && !searchForm.personCode.trim()) {
-    return;
-  }
-
   loading.value = true;
   try {
     const params = {
       ...query,
-      personName: searchForm.personName || undefined,
-      personCode: searchForm.personCode || undefined,
+      personName: searchForm.personName.trim() || undefined,
+      personCode: searchForm.personCode.trim() || undefined,
       status: 'ONJOB', // 只查询在职人员
     };
 
