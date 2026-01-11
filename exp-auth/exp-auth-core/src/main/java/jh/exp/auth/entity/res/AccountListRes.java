@@ -81,6 +81,11 @@ public class AccountListRes {
     private String createdName;
 
     /**
+     * 最近一次登录时间
+     */
+    private LocalDateTime lastLoginTime;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createdTime;

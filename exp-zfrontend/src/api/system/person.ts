@@ -30,6 +30,7 @@ export interface ExpPersonVO {
 
   /** 非实体字段（后端 VO 返回） */
   orgName?: string;      // 归属组织名称
+  postName?: string;     // 归属岗位名称
   roleName?: string;
   roleIds?: string;      // 角色ID，逗号分隔
   roleNames?: string;    // 角色名称，逗号分隔

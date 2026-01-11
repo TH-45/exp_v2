@@ -81,17 +81,34 @@
         @row-click="handleRowClick"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="accountName" label="账号名" min-width="120" />
+        <el-table-column prop="accountName" label="账号名称" min-width="120" />
         <el-table-column prop="personName" label="姓名" min-width="120" />
-        <el-table-column prop="orgName" label="主组织" min-width="140" />
-        <el-table-column prop="postName" label="主岗位" min-width="120" />
         <el-table-column prop="mobile" label="手机号" min-width="110" />
+        <el-table-column prop="orgName" label="归属组织" min-width="140" />
+        <el-table-column label="角色" min-width="150">
+          <template #default="{ row }">
+            <el-tooltip
+              :content="Array.isArray(row.roleNames) ? row.roleNames.join('、') : (row.roleNames || '无')"
+              placement="top"
+              :disabled="!row.roleNames || (Array.isArray(row.roleNames) ? row.roleNames.length <= 2 : row.roleNames.length <= 6)"
+            >
+              <span class="role-text" :class="{ 'ellipsis': (Array.isArray(row.roleNames) ? row.roleNames.length > 2 : row.roleNames && row.roleNames.length > 6) }">
+                {{ Array.isArray(row.roleNames) ? row.roleNames.join('、') : (row.roleNames || '无') }}
+              </span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
         <el-table-column prop="email" label="邮箱" min-width="180" />
         <el-table-column label="状态" min-width="100">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)">
               {{ statusText(row.status) }}
             </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="最近登录时间" min-width="140">
+          <template #default="{ row }">
+            {{ formatDateTime(row.lastLoginTime) }}
           </template>
         </el-table-column>
         <el-table-column label="创建时间" min-width="140">
@@ -235,6 +252,7 @@ import {
   setUserStatus,
   resetUserPassword,
   getAccountDetail,
+  getAccountRoles,
   type AccountVO,
 } from '@/api/system/account';
 import type { ExpPersonVO } from '@/api/system/person';
@@ -334,9 +352,50 @@ async function fetchList() {
     const data = res as any;
 
     if (data) {
-      tableData.value = Array.isArray(data.list) ? data.list : [];
+      let accounts = Array.isArray(data.list) ? data.list : [];
       total.value = Number(data.total) || 0;
-      console.log('Loaded accounts:', tableData.value.length, 'total:', total.value);
+      console.log('Loaded accounts:', accounts.length, 'total:', total.value);
+
+      // 获取账号角色信息
+      if (accounts.length > 0) {
+        try {
+          const accountIds = accounts.map((account: AccountVO) => account.accountId);
+          const rolesRes = await getAccountRoles(accountIds);
+          const rolesData = rolesRes as any;
+
+          // 将角色信息合并到账号数据中
+          if (Array.isArray(rolesData)) {
+            // 按账号ID分组角色信息
+            const rolesMap = new Map<number, { roleIds: number[], roleNames: string[] }>();
+            rolesData.forEach((role: any) => {
+              if (!rolesMap.has(role.accountId)) {
+                rolesMap.set(role.accountId, { roleIds: [], roleNames: [] });
+              }
+              const roleInfo = rolesMap.get(role.accountId)!;
+              roleInfo.roleIds.push(role.roleId);
+              roleInfo.roleNames.push(role.roleName);
+            });
+
+            // 合并角色信息到账号数据
+            accounts = accounts.map((account: AccountVO) => {
+              const roleInfo = rolesMap.get(account.accountId);
+              if (roleInfo) {
+                return {
+                  ...account,
+                  roleIds: roleInfo.roleIds,
+                  roleNames: roleInfo.roleNames
+                };
+              }
+              return account;
+            });
+          }
+        } catch (roleError) {
+          console.warn('Failed to fetch account roles:', roleError);
+          // 角色信息获取失败不影响账号列表显示
+        }
+      }
+
+      tableData.value = accounts;
     } else {
       tableData.value = [];
       total.value = 0;
@@ -792,7 +851,19 @@ async function submitResetPwd() {
   background-color: #f5f7fa;
   color: #606266;
   cursor: not-allowed;
+}
 
+.role-text {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.role-text.ellipsis {
+  cursor: pointer;
 }
 
 </style>

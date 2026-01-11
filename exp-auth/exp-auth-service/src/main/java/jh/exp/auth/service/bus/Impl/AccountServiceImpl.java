@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.entity.Account;
 import jh.exp.auth.entity.res.AccountDetailRes;
 import jh.exp.auth.entity.res.AccountListRes;
+import jh.exp.auth.entity.res.AccountRoleRes;
 import jh.exp.auth.entity.req.*;
 import jh.exp.auth.mapper.AccountMapper;
 import jh.exp.auth.mapper.PersonMapper;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -237,5 +239,13 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public boolean checkAccountNameExists(String accountName, Long excludeAccountId) {
         return accountMapper.countByAccountName(accountName, excludeAccountId) > 0;
+    }
+
+    @Override
+    public List<AccountRoleRes> getAccountRoles(List<Long> accountIds) {
+        if (CollectionUtils.isEmpty(accountIds)) {
+            return java.util.Collections.emptyList();
+        }
+        return accountMapper.selectRolesByAccountIds(accountIds);
     }
 }

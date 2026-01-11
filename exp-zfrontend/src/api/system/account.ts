@@ -71,6 +71,9 @@ export interface AccountVO {
   postCode?: string;        // 岗位代码
   postName?: string;        // 岗位名称
   status: 'ENABLED' | 'DISABLED' | 'LOCKED' | 'INIT'; // 状态
+  roleIds?: string[];       // 角色ID列表
+  roleNames?: string[] | string; // 角色名称列表，便于表格展示
+  lastLoginTime?: string;   // 最近登录时间
   createdTime?: string;     // 创建时间
   remark?: string;          // 备注
 }
@@ -138,6 +141,11 @@ export function resetUserPassword(accountIds: number[], newPassword: string, rem
 
 export function getAccountDetail(accountId: number) {
   return request.get<AccountVO, AccountVO>('/exp/auth/account/detail', { params: { accountId } });
+}
+
+// 获取账号角色信息
+export function getAccountRoles(accountIds: number[]) {
+  return request.post<{ accountId: number; roleId: number; roleName: string }[], { accountId: number; roleId: number; roleName: string }[]>('/exp/auth/account/roles', { accountIds });
 }
 
 

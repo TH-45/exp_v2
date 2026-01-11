@@ -3,6 +3,7 @@ package jh.exp.auth.controller.bus;
 import jh.exp.auth.entity.req.*;
 import jh.exp.auth.entity.res.AccountDetailRes;
 import jh.exp.auth.entity.res.AccountListRes;
+import jh.exp.auth.entity.res.AccountRoleRes;
 import jh.exp.auth.service.bus.AccountService;
 import jh.exp.common.api.ApiResponse;
 import jh.exp.common.req.SimplePageReq;
@@ -10,6 +11,10 @@ import jh.exp.common.res.SimplePageRes;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/account")
@@ -108,5 +113,18 @@ public class AccountController {
                                                  @RequestParam(required = false) Long excludeAccountId) {
         boolean exists = accountService.checkAccountNameExists(accountName, excludeAccountId);
         return ApiResponse.success(exists);
+    }
+
+    /**
+     * 获取账号角色信息
+     */
+    @PostMapping("/roles")
+    public ApiResponse<List<AccountRoleRes>> getAccountRoles(@RequestBody Map<String, List<Long>> req) {
+        List<Long> accountIds = req.get("accountIds");
+        if (accountIds == null || accountIds.isEmpty()) {
+            return ApiResponse.success(new ArrayList<>());
+        }
+        List<AccountRoleRes> result = accountService.getAccountRoles(accountIds);
+        return ApiResponse.success(result);
     }
 }

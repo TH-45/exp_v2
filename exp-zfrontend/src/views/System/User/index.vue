@@ -116,6 +116,7 @@
       <el-table-column prop="mobile" label="手机号" min-width="110" />
       <el-table-column prop="email" label="邮箱" min-width="160" />
       <el-table-column prop="orgName" label="归属组织" min-width="140" />
+      <el-table-column prop="postName" label="归属岗位" min-width="120" />
       <el-table-column label="角色名称" min-width="110">
         <template #default="{ row }">
           <el-tooltip
@@ -162,7 +163,7 @@
             <el-dropdown
                 trigger="click"
                 :disabled="!canManage"
-                @command="(status) => changeStatus(row, status)"
+                @command="(status: PersonStatus) => changeStatus(row, status)"
             >
               <el-button link size="small">
                 状态
@@ -624,14 +625,11 @@ async function fetchPostOptions(orgId: number) {
   try {
     const res = await queryOrgPosts({
       orgId,
-      pageNum: 1,
-      pageSize: 1000, // 获取所有岗位
-      relStatus: 'ENABLED',
-      postStatus: 'ENABLED'
+      includeChildren: false, // 不包括子组织
     });
 
-    const posts = res?.list || [];
-    // 添加"待定"选项，但要去重
+    const posts = res || [];
+    // 添加“待定”选项，但要去重
     const hasPending = posts.some(post => post.postName === '待定');
     const options = hasPending ? posts : [{ postId: -1, postName: '待定', postCode: 'PENDING', postStatus: 'ENABLED' as const }, ...posts];
 
@@ -655,7 +653,7 @@ function resetFormModel() {
   form.personId = 0;
   form.personCode = generatePersonCode();
   form.personName = '';
-  form.gender = undefined; // 性别默认空
+  form.gender = 'OTHER'; // 性别默认OTHER
   form.mobile = '';
   form.email = '';
   form.idCardNo = '';

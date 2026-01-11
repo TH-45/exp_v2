@@ -45,7 +45,7 @@
           v-loading="loading"
           :data="treeData"
           :props="treeProps"
-          :filter-node-method="filterNode"
+          node-key="orgId"
           :highlight-current="true"
           :default-expand-all="false"
           :expand-on-click-node="false"
@@ -99,6 +99,7 @@ const treeRef = ref();
 const treeData = ref<OrgNode[]>([]);
 const selectedOrg = ref<OrgNode>();
 const keyword = ref('');
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const treeProps = {
   label: 'orgName',
@@ -113,6 +114,7 @@ const displayText = computed(() => {
 function openDialog() {
   dialogVisible.value = true;
   selectedOrg.value = props.modelValue;
+  keyword.value = ''; // 重置搜索关键词
   fetchOrgTreeData();
 }
 
@@ -120,16 +122,32 @@ function openDialog() {
 async function fetchOrgTreeData() {
   loading.value = true;
   try {
-    const params = keyword.value ? { keyword: keyword.value } : undefined;
+    // 使用 orgName 参数进行后端搜索，而不是 keyword
+    const params = keyword.value ? { orgName: keyword.value } : undefined;
     const res = await fetchOrgTree(params);
-    treeData.value = res || [];
+    
+    // 确保返回的是数组
+    if (Array.isArray(res)) {
+      treeData.value = res;
+    } else if (res && typeof res === 'object' && 'data' in res) {
+      // 如果返回的是包装对象，尝试提取 data
+      treeData.value = (res as any).data || [];
+    } else {
+      treeData.value = [];
+    }
 
     // 如果有选中的组织，展开到该节点
     await nextTick();
-    if (selectedOrg.value && treeRef.value) {
-      treeRef.value.setCurrentKey(selectedOrg.value.orgId);
+    if (selectedOrg.value && treeRef.value && treeData.value.length > 0) {
+      try {
+        treeRef.value.setCurrentKey(selectedOrg.value.orgId);
+      } catch (err) {
+        console.warn('设置当前节点失败:', err);
+        // 忽略 setCurrentKey 错误，不影响整体功能
+      }
     }
   } catch (e) {
+    console.error('获取组织树失败:', e);
     treeData.value = [];
     ElMessage.error('获取组织树失败');
   } finally {
@@ -137,17 +155,16 @@ async function fetchOrgTreeData() {
   }
 }
 
-// 搜索
+// 搜索（带防抖）
 function handleSearch() {
-  if (treeRef.value) {
-    treeRef.value.filter(keyword.value);
+  // 清除之前的定时器
+  if (searchTimer) {
+    clearTimeout(searchTimer);
   }
-}
-
-// 过滤节点
-function filterNode(value: string, data: OrgNode) {
-  if (!value) return true;
-  return data.orgName.includes(value) || (data.orgCode && data.orgCode.includes(value));
+  // 500ms 后执行搜索
+  searchTimer = setTimeout(() => {
+    fetchOrgTreeData();
+  }, 500);
 }
 
 // 节点点击
@@ -173,11 +190,6 @@ function handleConfirm() {
 watch(() => props.modelValue, (newVal) => {
   selectedOrg.value = newVal;
 }, { immediate: true });
-
-// 监听关键词变化
-watch(() => keyword.value, () => {
-  handleSearch();
-});
 </script>
 
 <style scoped lang="scss">

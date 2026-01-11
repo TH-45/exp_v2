@@ -3,9 +3,12 @@ package jh.exp.auth.service.bus;
 import jh.exp.auth.entity.req.*;
 import jh.exp.auth.entity.res.AccountDetailRes;
 import jh.exp.auth.entity.res.AccountListRes;
+import jh.exp.auth.entity.res.AccountRoleRes;
 
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
+
+import java.util.List;
 
 
 public interface AccountService {
@@ -58,4 +61,9 @@ public interface AccountService {
      * 检查账号名称是否存在
      */
     boolean checkAccountNameExists(String accountName, Long excludeAccountId);
+
+    /**
+     * 获取账号角色信息
+     */
+    List<AccountRoleRes> getAccountRoles(List<Long> accountIds);
 }
