@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.auth.mapper.MenuMapper">
+
+    <!-- 分页查询菜单列表 -->
+    <select id="selectMenuList" resultType="jh.exp.auth.entity.res.MenuListRes">
+        SELECT m.menu_id, m.parent_menu_id, m.menu_code, m.menu_name, m.menu_type,
+               m.route_path, m.component, m.icon, m.visible, m.status, m.sort_no, m.remark
+        FROM exp_menu m
+        <where>
+            <if test="menuCode != null and menuCode.trim() != ''">
+                AND m.menu_code LIKE CONCAT('%', #{menuCode}, '%')
+            </if>
+            <if test="menuName != null and menuName.trim() != ''">
+                AND m.menu_name LIKE CONCAT('%', #{menuName}, '%')
+            </if>
+            <if test="menuType != null and menuType.trim() != ''">
+                AND m.menu_type = #{menuType}
+            </if>
+            <if test="status != null and status.trim() != ''">
+                AND m.status = #{status}
+            </if>
+        </where>
+        ORDER BY m.sort_no ASC
+    </select>
+
+    <!-- 根据菜单ID查询菜单详情信息 -->
+    <select id="selectMenuDetailById" resultType="jh.exp.auth.entity.res.MenuDetailRes">
+        SELECT m.menu_id, m.parent_menu_id, m.menu_code, m.menu_name, m.menu_type,
+               m.route_path, m.component, m.icon, m.visible, m.status, m.sort_no, m.remark
+        FROM exp_menu m
+        WHERE m.menu_id = #{menuId}
+    </select>
+
+    <!-- 检查菜单编码是否存在 -->
+    <select id="countByMenuCode" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_menu
+        WHERE menu_code = #{menuCode}
+        <if test="excludeMenuId != null">
+            AND menu_id != #{excludeMenuId}
+        </if>
+    </select>
+
+    <!-- 根据菜单ID列表批量查询菜单详情 -->
+    <select id="selectMenuDetailByIds" resultType="jh.exp.auth.entity.res.MenuDetailRes">
+        SELECT m.menu_id, m.parent_menu_id, m.menu_code, m.menu_name, m.menu_type,
+               m.route_path, m.component, m.icon, m.visible, m.status, m.sort_no, m.remark
+        FROM exp_menu m
+        WHERE m.menu_id IN
+        <foreach item="menuId" collection="menuIds" open="(" separator="," close=")">
+            #{menuId}
+        </foreach>
+        ORDER BY m.sort_no ASC
+    </select>
+
+</mapper>
