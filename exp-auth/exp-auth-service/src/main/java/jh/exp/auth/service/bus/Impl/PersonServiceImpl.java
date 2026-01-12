@@ -241,7 +241,6 @@ public class PersonServiceImpl implements PersonService {
             throw new RuntimeException("人员不存在");
         }
 
-
         // 更新状态
         String status = req.getStatus();
         UpdateWrapper<Person> updateWrapper = new UpdateWrapper<>();
@@ -251,12 +250,13 @@ public class PersonServiceImpl implements PersonService {
 
         personMapper.update(null, updateWrapper);
 
+        String accountStatus="";
         if(AuthConstant.LEAVE.equals(status)||AuthConstant.DISABLED.equals(status)){
-            status=AuthConstant.DISABLED;
+            accountStatus=AuthConstant.DISABLED;
         }if(AuthConstant.ONJOB.equals(status)){
-            status=AuthConstant.ENABLED;
+            accountStatus=AuthConstant.ENABLED;
         }else{
-            status=AuthConstant.ENABLED;
+            accountStatus=AuthConstant.ENABLED;
         }
 
         accountService.updateAccountStatus(new AccountStatusReq(req.getPersonId(),status));
