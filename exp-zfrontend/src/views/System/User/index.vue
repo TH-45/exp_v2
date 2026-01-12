@@ -155,10 +155,10 @@
                 link
                 type="primary"
                 size="small"
-                @click="handleEdit(row)"
-                :disabled="!canManage"
+                @click="handleDetail(row)"
+                :disabled="!canView"
             >
-              编辑
+              详细
             </el-button>
 
             <el-dropdown
@@ -201,6 +201,160 @@
         @size-change="handleSizeChange"
       />
     </div>
+
+    <!-- 人员详细侧边栏 -->
+    <el-drawer
+      v-model="detailDrawer.visible"
+      title="人员详细信息"
+      direction="rtl"
+      size="420px"
+      :close-on-click-modal="false"
+      destroy-on-close
+      custom-class="person-detail-drawer"
+    >
+      <div v-if="detailDrawer.person" class="person-detail">
+        <!-- 基础信息 -->
+        <el-card class="info-card" shadow="never" style="flex-shrink: 0;">
+          <template #header>
+            <div class="card-header">
+              <el-icon><User /></el-icon>
+              基础信息
+            </div>
+          </template>
+
+          <div class="basic-info">
+            <!-- 个人信息头部 -->
+            <div class="person-header">
+              <div class="person-name">{{ detailDrawer.person.personName }}</div>
+              <div class="person-code">{{ detailDrawer.person.personCode }}</div>
+            </div>
+
+            <!-- 联系信息 -->
+            <div class="contact-section">
+              <div class="contact-item">
+                <el-icon><Message /></el-icon>
+                <span>{{ detailDrawer.person.email || '未设置' }}</span>
+              </div>
+              <div class="contact-item">
+                <el-icon><Phone /></el-icon>
+                <span>{{ detailDrawer.person.mobile || '未设置' }}</span>
+              </div>
+            </div>
+
+            <!-- 标签信息 -->
+            <div class="tag-section">
+              <el-tag :type="getGenderTagType(detailDrawer.person.gender)">
+                {{ getGenderText(detailDrawer.person.gender) }}
+              </el-tag>
+              <el-tag :type="getStatusTagType(detailDrawer.person.status)">
+                {{ getStatusText(detailDrawer.person.status) }}
+              </el-tag>
+              <el-tag>{{ detailDrawer.person.isExternal === 0 ? '内部' : '外部' }}</el-tag>
+              <el-tag type="info" v-if="detailDrawer.person.entryDate">
+                <el-icon><Calendar /></el-icon>
+                {{ formatDate(detailDrawer.person.entryDate) }}
+              </el-tag>
+            </div>
+
+            <!-- 组织岗位信息 -->
+            <div class="org-section">
+              <div class="org-item">
+                <el-icon><OfficeBuilding /></el-icon>
+                <div class="org-content">
+                  <div class="org-label">主组织</div>
+                  <div class="org-value">{{ detailDrawer.person.orgName || '未分配' }}</div>
+                </div>
+              </div>
+              <div class="org-item">
+                <el-icon><Management /></el-icon>
+                <div class="org-content">
+                  <div class="org-label">主岗位</div>
+                  <div class="org-value">{{ detailDrawer.person.postName || '未分配' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-card>
+
+        <!-- 兼职岗位 -->
+        <el-card class="info-card" shadow="never" style="flex: 1;">
+          <template #header>
+            <div class="card-header">
+              <el-icon><Briefcase /></el-icon>
+              兼职岗位
+            </div>
+          </template>
+
+          <div class="parttime-posts">
+            <div class="post-row">
+              <div class="selector-group">
+                <label class="selector-label">组织：</label>
+                <OrgSelector
+                  v-model="selectedPartTimeOrg1"
+                  placeholder="请选择组织"
+                  @change="handlePartTimeOrgChange(1)"
+                  style="flex: 1;"
+                />
+              </div>
+              <div class="selector-group">
+                <label class="selector-label">岗位：</label>
+                <el-select
+                  v-model="selectedPartTimePost1"
+                  placeholder="请先选择组织"
+                  :disabled="!selectedPartTimeOrg1"
+                  style="flex: 1;"
+                  @change="handlePartTimePostChange(1)"
+                >
+                  <el-option
+                    v-for="post in partTimePosts1"
+                    :key="post.postId"
+                    :label="post.postName"
+                    :value="post.postId"
+                  />
+                </el-select>
+              </div>
+            </div>
+
+            <div class="post-row">
+              <div class="selector-group">
+                <label class="selector-label">组织：</label>
+                <OrgSelector
+                  v-model="selectedPartTimeOrg2"
+                  placeholder="请选择组织"
+                  @change="handlePartTimeOrgChange(2)"
+                  style="flex: 1;"
+                />
+              </div>
+              <div class="selector-group">
+                <label class="selector-label">岗位：</label>
+                <el-select
+                  v-model="selectedPartTimePost2"
+                  placeholder="请先选择组织"
+                  :disabled="!selectedPartTimeOrg2"
+                  style="flex: 1;"
+                  @change="handlePartTimePostChange(2)"
+                >
+                  <el-option
+                    v-for="post in partTimePosts2"
+                    :key="post.postId"
+                    :label="post.postName"
+                    :value="post.postId"
+                  />
+                </el-select>
+              </div>
+            </div>
+          </div>
+        </el-card>
+
+        <!-- 操作按钮 -->
+        <div class="drawer-footer" style="flex-shrink: 0;">
+          <el-button @click="detailDrawer.visible = false">取消</el-button>
+          <el-button type="primary" :loading="savingPartTime" @click="savePartTimePosts">
+            保存修改
+          </el-button>
+        </div>
+      </div>
+    </el-drawer>
 
     <!-- 新增 / 编辑弹窗 -->
     <el-dialog
@@ -317,7 +471,16 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, computed } from 'vue';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
-import { ArrowDown } from '@element-plus/icons-vue';
+import {
+  ArrowDown,
+  User,
+  Message,
+  Phone,
+  Calendar,
+  OfficeBuilding,
+  Management,
+  Briefcase
+} from '@element-plus/icons-vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import {
   queryPersonList,
@@ -326,8 +489,10 @@ import {
   deletePerson,
   changePersonStatus,
   batchChangePersonStatus,
+  updatePersonPartTimePosts,
   type ExpPersonVO,
   type PersonStatus,
+  type PartTimePost,
 } from '@/api/system/person';
 import { hasPermission } from '@/utils/permission';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
@@ -379,6 +544,21 @@ const query = reactive({
 const tableData = ref<ExpPersonVO[]>([]);
 const total = ref(0);
 const selectedRows = ref<ExpPersonVO[]>([]);
+
+// 详细侧边栏
+const detailDrawer = reactive({
+  visible: false,
+  person: null as ExpPersonVO | null,
+});
+
+// 兼职岗位相关
+const savingPartTime = ref(false);
+const selectedPartTimeOrg1 = ref<OrgNode>();
+const selectedPartTimeOrg2 = ref<OrgNode>();
+const selectedPartTimePost1 = ref<number>();
+const selectedPartTimePost2 = ref<number>();
+const partTimePosts1 = ref<PostVO[]>([]);
+const partTimePosts2 = ref<PostVO[]>([]);
 
 const editDialog = reactive({
   visible: false,
@@ -461,6 +641,7 @@ const rules: FormRules = {
 
 const canManage = computed(() => hasPermission('system:user:manage'));
 const canDelete = computed(() => hasPermission('system:user:delete'));
+const canView = computed(() => hasPermission('system:user:view'));
 
 onMounted(() => {
   fetchList();
@@ -607,6 +788,161 @@ function generatePersonCode() {
   const day = String(now.getDate()).padStart(2, '0');
   const rand = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
   return `exp${year}${month}${day}${rand}`;
+}
+
+// 详细功能
+function handleDetail(row: ExpPersonVO) {
+  detailDrawer.person = row;
+  // 初始化兼职岗位数据
+  selectedPartTimeOrg1.value = row.partTimeOrgId1 ? {
+    orgId: row.partTimeOrgId1,
+    orgName: row.partTimeOrgName1 || '',
+    orgCode: '',
+    children: []
+  } : undefined;
+  selectedPartTimePost1.value = row.partTimePostId1;
+
+  selectedPartTimeOrg2.value = row.partTimeOrgId2 ? {
+    orgId: row.partTimeOrgId2,
+    orgName: row.partTimeOrgName2 || '',
+    orgCode: '',
+    children: []
+  } : undefined;
+  selectedPartTimePost2.value = row.partTimePostId2;
+
+  // 如果已有组织，加载对应的岗位列表
+  if (selectedPartTimeOrg1.value) {
+    loadPartTimePosts(1, selectedPartTimeOrg1.value.orgId);
+  }
+  if (selectedPartTimeOrg2.value) {
+    loadPartTimePosts(2, selectedPartTimeOrg2.value.orgId);
+  }
+
+  detailDrawer.visible = true;
+}
+
+// 兼职岗位组织选择处理
+async function handlePartTimeOrgChange(index: 1 | 2, org?: OrgNode) {
+  if (index === 1) {
+    selectedPartTimePost1.value = undefined;
+    if (org?.orgId) {
+      await loadPartTimePosts(1, org.orgId);
+    } else {
+      partTimePosts1.value = [];
+    }
+  } else {
+    selectedPartTimePost2.value = undefined;
+    if (org?.orgId) {
+      await loadPartTimePosts(2, org.orgId);
+    } else {
+      partTimePosts2.value = [];
+    }
+  }
+}
+
+// 兼职岗位选择处理
+function handlePartTimePostChange(index: 1 | 2, postId?: number) {
+  // 这里可以添加一些业务逻辑验证
+  console.log(`兼职岗位${index}选择:`, postId);
+}
+
+// 加载兼职岗位列表
+async function loadPartTimePosts(index: 1 | 2, orgId: number) {
+  try {
+    const res = await queryOrgPosts({
+      orgId,
+      includeChildren: false,
+    });
+
+    const posts = res || [];
+    // 添加"待定"选项
+    const hasPending = posts.some(post => post.postName === '待定');
+    const options = hasPending ? posts : [{ postId: -1, postName: '待定', postCode: 'PENDING', postStatus: 'ENABLED' as const }, ...posts];
+
+    if (index === 1) {
+      partTimePosts1.value = options;
+    } else {
+      partTimePosts2.value = options;
+    }
+  } catch (e) {
+    console.error('获取兼职岗位列表失败:', e);
+    if (index === 1) {
+      partTimePosts1.value = [{ postId: -1, postName: '待定', postCode: 'PENDING', postStatus: 'ENABLED' }];
+    } else {
+      partTimePosts2.value = [{ postId: -1, postName: '待定', postCode: 'PENDING', postStatus: 'ENABLED' }];
+    }
+  }
+}
+
+// 保存兼职岗位
+async function savePartTimePosts() {
+  if (!detailDrawer.person) return;
+
+  savingPartTime.value = true;
+  try {
+    // 构建兼职岗位数据
+    const partTimePosts: any[] = [];
+
+    if (selectedPartTimeOrg1.value && selectedPartTimePost1.value) {
+      partTimePosts.push({
+        orgId: selectedPartTimeOrg1.value.orgId,
+        orgName: selectedPartTimeOrg1.value.orgName,
+        postId: selectedPartTimePost1.value,
+        postName: partTimePosts1.value.find(p => p.postId === selectedPartTimePost1.value)?.postName || '',
+      });
+    }
+
+    if (selectedPartTimeOrg2.value && selectedPartTimePost2.value) {
+      partTimePosts.push({
+        orgId: selectedPartTimeOrg2.value.orgId,
+        orgName: selectedPartTimeOrg2.value.orgName,
+        postId: selectedPartTimePost2.value,
+        postName: partTimePosts2.value.find(p => p.postId === selectedPartTimePost2.value)?.postName || '',
+      });
+    }
+
+    // 调用API更新兼职岗位
+    await updatePersonPartTimePosts(detailDrawer.person.personId, partTimePosts);
+
+    ElMessage.success('兼职岗位保存成功');
+    detailDrawer.visible = false;
+
+    // 刷新列表数据
+    fetchList();
+  } catch (error) {
+    ElMessage.error('保存失败');
+  } finally {
+    savingPartTime.value = false;
+  }
+}
+
+// 工具函数
+function getGenderTagType(gender?: string) {
+  return gender === 'M' ? 'primary' : gender === 'F' ? 'danger' : '';
+}
+
+function getGenderText(gender?: string) {
+  return gender === 'M' ? '男' : gender === 'F' ? '女' : '未知';
+}
+
+function getStatusTagType(status?: string) {
+  if (status === 'ONJOB') return 'success';
+  if (status === 'DISABLED') return 'info';
+  if (status === 'LEAVE') return 'warning';
+  return '';
+}
+
+function getStatusText(status?: string) {
+  return status === 'ONJOB' ? '在职' : status === 'DISABLED' ? '禁用' : status === 'LEAVE' ? '离职' : '未知';
+}
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return '';
+  try {
+    return new Date(dateStr).toLocaleDateString('zh-CN');
+  } catch {
+    return dateStr;
+  }
 }
 
 function resetFormModel() {
@@ -816,5 +1152,163 @@ async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
 
 .role-text.ellipsis {
   cursor: pointer;
+}
+
+// 人员详细侧边栏样式
+:deep(.person-detail-drawer) {
+  border-radius: 12px 0 0 12px;
+  overflow: hidden;
+  top: 12.5% !important;
+  height: 75% !important;
+}
+
+.person-detail {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-card {
+  margin-bottom: 16px;
+  border-radius: 8px;
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #303133;
+  }
+
+  :deep(.el-card__header) {
+    padding: 12px 16px;
+    border-bottom: 1px solid #ebeef5;
+  }
+
+  :deep(.el-card__body) {
+    padding: 16px;
+  }
+}
+
+.basic-info {
+  .person-header {
+    text-align: center;
+    margin-bottom: 16px;
+
+    .person-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: #303133;
+      margin-bottom: 4px;
+    }
+
+    .person-code {
+      color: #909399;
+      font-size: 14px;
+    }
+  }
+
+  .contact-section {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #606266;
+      font-size: 14px;
+
+      .el-icon {
+        color: #c0c4cc;
+        font-size: 16px;
+      }
+    }
+  }
+
+  .tag-section {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .org-section {
+    .org-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 12px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .el-icon {
+        color: #c0c4cc;
+        font-size: 16px;
+        margin-top: 2px;
+      }
+
+      .org-content {
+        flex: 1;
+
+        .org-label {
+          font-size: 12px;
+          color: #909399;
+          margin-bottom: 2px;
+        }
+
+        .org-value {
+          font-size: 14px;
+          color: #606266;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+}
+
+.parttime-posts {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  .post-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .selector-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0.5;
+
+      .selector-label {
+        min-width: 35px;
+        color: #606266;
+        font-size: 14px;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+.drawer-footer {
+  margin-top: auto;
+  padding: 16px 0;
+  border-top: 1px solid #ebeef5;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
 }
 </style>

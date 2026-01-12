@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.bid.contract.mapper.BidMapper">
+
+    <!-- 检查投标编号是否存在 -->
+    <select id="countByBidCode" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_bid
+        WHERE bid_code = #{bidCode}
+        <if test="excludeBidId != null">
+            AND bid_id != #{excludeBidId}
+        </if>
+    </select>
+
+    <!-- 分页查询投标列表 -->
+    <select id="selectBidList" resultType="jh.exp.bid.contract.entity.res.BidListRes">
+        SELECT
+            b.bid_id AS bidId,
+            b.tender_id AS tenderId,
+            t.tender_name AS tenderName,
+            b.supplier_id AS supplierId,
+            s.supplier_name AS supplierName,
+            b.bid_code AS bidCode,
+            b.bid_name AS bidName,
+            b.bid_total_amount AS bidTotalAmount,
+            b.currency AS currency,
+            b.bid_submit_time AS bidSubmitTime,
+            b.bid_status AS bidStatus,
+            b.win_flag AS winFlag,
+            b.win_notice_no AS winNoticeNo,
+            p.project_name AS projectName,
+            u.user_name AS createdByName,
+            b.created_time AS createdTime
+        FROM exp_bid b
+        LEFT JOIN exp_tender t ON b.tender_id = t.tender_id
+        LEFT JOIN exp_supplier s ON b.supplier_id = s.supplier_id
+        LEFT JOIN exp_project p ON b.project_id = p.project_id
+        LEFT JOIN exp_user u ON b.created_by = u.user_id
+        <where>
+            <if test="req.tenderId != null">
+                AND b.tender_id = #{req.tenderId}
+            </if>
+            <if test="req.supplierId != null">
+                AND b.supplier_id = #{req.supplierId}
+            </if>
+            <if test="req.bidCode != null and req.bidCode != ''">
+                AND b.bid_code LIKE CONCAT('%', #{req.bidCode}, '%')
+            </if>
+            <if test="req.bidName != null and req.bidName != ''">
+                AND b.bid_name LIKE CONCAT('%', #{req.bidName}, '%')
+            </if>
+            <if test="req.bidStatus != null and req.bidStatus != ''">
+                AND b.bid_status = #{req.bidStatus}
+            </if>
+            <if test="req.winFlag != null">
+                AND b.win_flag = #{req.winFlag}
+            </if>
+            <if test="req.projectId != null">
+                AND b.project_id = #{req.projectId}
+            </if>
+            <if test="req.bidSubmitTimeStart != null">
+                AND b.bid_submit_time >= #{req.bidSubmitTimeStart}
+            </if>
+            <if test="req.bidSubmitTimeEnd != null">
+                AND b.bid_submit_time <![CDATA[<=]]> #{req.bidSubmitTimeEnd}
+            </if>
+            <if test="req.createdBy != null">
+                AND b.created_by = #{req.createdBy}
+            </if>
+            <if test="req.createdTimeStart != null">
+                AND b.created_time >= #{req.createdTimeStart}
+            </if>
+            <if test="req.createdTimeEnd != null">
+                AND b.created_time <![CDATA[<=]]> #{req.createdTimeEnd}
+            </if>
+        </where>
+        ORDER BY b.created_time DESC
+    </select>
+
+    <!-- 根据投标ID查询投标详情 -->
+    <select id="selectBidDetailById" resultType="jh.exp.bid.contract.entity.res.BidDetailRes">
+        SELECT
+            b.bid_id AS bidId,
+            b.tender_id AS tenderId,
+            t.tender_name AS tenderName,
+            b.supplier_id AS supplierId,
+            s.supplier_name AS supplierName,
+            b.bid_code AS bidCode,
+            b.bid_name AS bidName,
+            b.bid_total_amount AS bidTotalAmount,
+            b.currency AS currency,
+            b.bid_submit_time AS bidSubmitTime,
+            b.bid_status AS bidStatus,
+            b.win_flag AS winFlag,
+            b.win_notice_no AS winNoticeNo,
+            b.contract_id AS contractId,
+            b.project_id AS projectId,
+            p.project_name AS projectName,
+            b.created_by AS createdBy,
+            u.user_name AS createdByName,
+            b.created_dept_id AS createdDeptId,
+            d.dept_name AS createdDeptName,
+            b.created_post_id AS createdPostId,
+            po.post_name AS createdPostName,
+            b.created_time AS createdTime,
+            b.updated_time AS updatedTime,
+            b.remark AS remark
+        FROM exp_bid b
+        LEFT JOIN exp_tender t ON b.tender_id = t.tender_id
+        LEFT JOIN exp_supplier s ON b.supplier_id = s.supplier_id
+        LEFT JOIN exp_project p ON b.project_id = p.project_id
+        LEFT JOIN exp_user u ON b.created_by = u.user_id
+        LEFT JOIN exp_dept d ON b.created_dept_id = d.dept_id
+        LEFT JOIN exp_post po ON b.created_post_id = po.post_id
+        WHERE b.bid_id = #{bidId}
+    </select>
+
+    <!-- 根据招标ID查询投标列表 -->
+    <select id="selectBidsByTenderId" resultType="jh.exp.bid.contract.entity.res.BidListRes">
+        SELECT
+            b.bid_id AS bidId,
+            b.tender_id AS tenderId,
+            t.tender_name AS tenderName,
+            b.supplier_id AS supplierId,
+            s.supplier_name AS supplierName,
+            b.bid_code AS bidCode,
+            b.bid_name AS bidName,
+            b.bid_total_amount AS bidTotalAmount,
+            b.currency AS currency,
+            b.bid_submit_time AS bidSubmitTime,
+            b.bid_status AS bidStatus,
+            b.win_flag AS winFlag,
+            b.win_notice_no AS winNoticeNo,
+            p.project_name AS projectName,
+            u.user_name AS createdByName,
+            b.created_time AS createdTime
+        FROM exp_bid b
+        LEFT JOIN exp_tender t ON b.tender_id = t.tender_id
+        LEFT JOIN exp_supplier s ON b.supplier_id = s.supplier_id
+        LEFT JOIN exp_project p ON b.project_id = p.project_id
+        LEFT JOIN exp_user u ON b.created_by = u.user_id
+        WHERE b.tender_id = #{tenderId}
+        ORDER BY b.created_time DESC
+    </select>
+
+    <!-- 批量更新投标状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE exp_bid
+        SET bid_status = #{bidStatus}, updated_time = NOW()
+        WHERE bid_id IN
+        <foreach item="bidId" collection="bidIds" open="(" separator="," close=")">
+            #{bidId}
+        </foreach>
+    </update>
+
+    <!-- 根据招标ID和投标单位检查是否存在投标记录 -->
+    <select id="countByTenderAndSupplier" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_bid
+        WHERE tender_id = #{tenderId}
+        AND supplier_id = #{supplierId}
+        <if test="excludeBidId != null">
+            AND bid_id != #{excludeBidId}
+        </if>
+    </select>
+
+</mapper>

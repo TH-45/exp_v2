@@ -1,20 +1,10 @@
-package jh.exp.bid.contract.service;
+package jh.exp.bid.contract.service.bus;
 
 import jh.exp.bid.contract.entity.req.*;
 import jh.exp.bid.contract.entity.res.TenderDetailRes;
 import jh.exp.bid.contract.entity.res.TenderListRes;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
-
-import java.util.List;
-
-import jh.exp.bid.contract.entity.req.*;
-import jh.exp.bid.contract.entity.res.TenderDetailRes;
-import jh.exp.bid.contract.entity.res.TenderListRes;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
-
-import java.util.List;
 
 /**
  * 招标服务接口

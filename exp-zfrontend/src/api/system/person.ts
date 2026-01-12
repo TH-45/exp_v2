@@ -34,6 +34,16 @@ export interface ExpPersonVO {
   roleName?: string;
   roleIds?: string;      // 角色ID，逗号分隔
   roleNames?: string;    // 角色名称，逗号分隔
+
+  // 兼职岗位字段
+  partTimeOrgId1?: number;    // 兼职组织1 ID
+  partTimeOrgName1?: string;  // 兼职组织1 名称
+  partTimePostId1?: number;   // 兼职岗位1 ID
+  partTimePostName1?: string; // 兼职岗位1 名称
+  partTimeOrgId2?: number;    // 兼职组织2 ID
+  partTimeOrgName2?: string;  // 兼职组织2 名称
+  partTimePostId2?: number;   // 兼职岗位2 ID
+  partTimePostName2?: string; // 兼职岗位2 名称
 }
 
 export interface PageResult<T> {
@@ -144,6 +154,21 @@ export function resetPassword(personIds: number[] | number, newPassword: string)
   return request.post<void, void>(`${BASE}/resetPassword`, {
     personIds: ids,
     newPassword,
+  });
+}
+
+// 兼职岗位相关接口
+export interface PartTimePost {
+  orgId: number;
+  orgName: string;
+  postId: number;
+  postName: string;
+}
+
+export function updatePersonPartTimePosts(personId: number, partTimePosts: PartTimePost[]) {
+  return request.put<ExpPersonVO, ExpPersonVO>(`${BASE}/parttime-posts`, {
+    personId,
+    partTimePosts,
   });
 }
 

@@ -1,9 +1,9 @@
-package jh.exp.bid.contract.controller;
+package jh.exp.bid.contract.controller.bus;
 
 import jh.exp.bid.contract.entity.req.*;
 import jh.exp.bid.contract.entity.res.TenderDetailRes;
 import jh.exp.bid.contract.entity.res.TenderListRes;
-import jh.exp.bid.contract.service.TenderService;
+import jh.exp.bid.contract.service.bus.TenderService;
 import jh.exp.common.annotation.RequiresPermissions;
 import jh.exp.common.api.ApiResponse;
 import jh.exp.common.req.SimplePageReq;
@@ -11,8 +11,6 @@ import jh.exp.common.res.SimplePageRes;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 /**
  * 招标管理控制器

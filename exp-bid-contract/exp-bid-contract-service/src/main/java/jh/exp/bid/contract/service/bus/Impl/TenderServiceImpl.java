@@ -1,4 +1,4 @@
-package jh.exp.bid.contract.service.Impl;
+package jh.exp.bid.contract.service.bus.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -12,7 +12,7 @@ import jh.exp.bid.contract.entity.req.*;
 import jh.exp.bid.contract.entity.res.TenderDetailRes;
 import jh.exp.bid.contract.entity.res.TenderListRes;
 import jh.exp.bid.contract.mapper.TenderMapper;
-import jh.exp.bid.contract.service.TenderService;
+import jh.exp.bid.contract.service.bus.TenderService;
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.req.SimplePageReq;
@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 招标服务实现类
