@@ -871,23 +871,25 @@ const resetRules: FormRules = {
 async function linkPerson() {
   if (!selectedRows.value.length || selectedRows.value.length > 1) return;
   const account = selectedRows.value[0];
-  if (account.status !== 'INIT') return;
+  if (!account || account.status !== 'INIT') return;
 
   linking.value = true;
   try {
-    // 这里假设后端会自动处理人员关联逻辑，或者从当前用户获取人员ID
-    // 如果需要personId，可以从store或其他地方获取当前登录用户的人员ID
-    await linkPersonApi({
+    // 生成新的账号名称
+    const newAccountName = generateAccountName();
+
+    // 调用关联人员接口
+    const updatedAccount = await linkPersonApi({
       accountId: account.accountId,
-      personId: 0, // 临时值，后端应该处理这个逻辑
+      personId: account.personId || 0, // 从列表查询接口返回的personId
+      accountName: newAccountName,
     });
+
     ElMessage.success('关联人员成功');
 
-    // 刷新当前数据项
+    // 直接使用接口返回的数据更新表格中的对应项
     const index = tableData.value.findIndex(item => item.accountId === account.accountId);
     if (index !== -1) {
-      // 重新获取该账号的详细信息
-      const updatedAccount = await getAccountDetail(account.accountId);
       tableData.value[index] = updatedAccount;
     }
   } catch (error) {

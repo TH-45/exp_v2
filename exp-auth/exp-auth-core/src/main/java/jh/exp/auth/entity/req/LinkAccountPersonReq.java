@@ -20,4 +20,10 @@ public class LinkAccountPersonReq {
      */
     @NotNull(message = "人员ID不能为空")
     private Long personId;
+
+    /**
+     * 账号名称
+     */
+    @NotNull(message = "账号名称不能为空")
+    private String accountName;
 }

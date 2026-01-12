@@ -280,11 +280,11 @@ public class AccountServiceImpl implements AccountService {
         // 更新账号信息：关联人员，更新个人信息（不包括组织和岗位）
         Account updateAccount = new Account();
         updateAccount.setAccountId(req.getAccountId());
-        updateAccount.setPersonId(req.getPersonId());
-        updateAccount.setAccountDisplay(person.getPersonName()); // 显示名称使用人员姓名
-        updateAccount.setMobile(person.getMobile()); // 更新手机号
-        updateAccount.setEmail(person.getEmail()); // 更新邮箱
+        updateAccount.setAccountName(req.getAccountName()); // 更新账号名称
+        updateAccount.setCreatedBy(account.getCreatedBy());// 保持创建人
+        updateAccount.setStatus(AuthConstant.ENABLED);
         updateAccount.setUpdatedTime(LocalDateTime.now());
+        updateAccount.setCreatedTime(account.getCreatedTime());
 
         accountMapper.updateById(updateAccount);
 

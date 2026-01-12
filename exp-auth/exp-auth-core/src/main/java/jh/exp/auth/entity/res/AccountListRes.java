@@ -41,6 +41,11 @@ public class AccountListRes {
     private String email;
 
     /**
+     * 人员ID
+     */
+    private Long personId;
+
+    /**
      * 员工编号
      */
     private String personCode;

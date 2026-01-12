@@ -7,7 +7,7 @@
     <!-- 分页查询账号列表（多表联查） -->
     <select id="selectAccountList" resultType="jh.exp.auth.entity.res.AccountListRes">
         SELECT a.account_id, a.account_name, a.account_display, a.mobile, a.email, a.status, a.last_login_time, a.created_time,
-               p.person_code, p.person_name,
+               a.person_id, p.person_code, p.person_name,
                o.org_code, o.org_name,
                pos.post_code, pos.post_name,
                creator.account_display as created_name
