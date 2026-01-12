@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.service.bus.AccountService;
 import jh.exp.auth.constant.AuthConstant;
 import jh.exp.auth.entity.Account;
+import jh.exp.auth.entity.Person;
 import jh.exp.auth.entity.res.AccountDetailRes;
 import jh.exp.auth.entity.res.AccountListRes;
 import jh.exp.auth.entity.res.AccountRoleRes;
@@ -141,7 +142,7 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException("账号不存在");
         }
 
-        // TODO: 检查账号是否有相关联的业务数据，如果有则不允许删除
+
 
         accountMapper.deleteById(accountId);
     }
@@ -249,5 +250,45 @@ public class AccountServiceImpl implements AccountService {
             return java.util.Collections.emptyList();
         }
         return accountMapper.selectRolesByAccountIds(accountIds);
+    }
+
+    @Override
+    @Transactional
+    public AccountDetailRes linkAccountToPerson(LinkAccountPersonReq req) {
+        // 检查账号是否存在
+        Account account = accountMapper.selectById(req.getAccountId());
+        if (account == null) {
+            throw new RuntimeException("账号不存在");
+        }
+
+        // 检查人员是否存在
+        Person person = personMapper.selectById(req.getPersonId());
+        if (person == null) {
+            throw new RuntimeException("人员不存在");
+        }
+
+        // 检查账号是否已经被关联到其他人员
+        if (account.getPersonId() != null && !account.getPersonId().equals(req.getPersonId())) {
+            throw new RuntimeException("该账号已被关联到其他人员");
+        }
+
+        // 检查人员是否已经被关联到其他账号
+        if (person.getAccountId() != null && !person.getAccountId().equals(req.getAccountId())) {
+            throw new RuntimeException("该人员已被关联到其他账号");
+        }
+
+        // 更新账号信息：关联人员，更新个人信息（不包括组织和岗位）
+        Account updateAccount = new Account();
+        updateAccount.setAccountId(req.getAccountId());
+        updateAccount.setPersonId(req.getPersonId());
+        updateAccount.setAccountDisplay(person.getPersonName()); // 显示名称使用人员姓名
+        updateAccount.setMobile(person.getMobile()); // 更新手机号
+        updateAccount.setEmail(person.getEmail()); // 更新邮箱
+        updateAccount.setUpdatedTime(LocalDateTime.now());
+
+        accountMapper.updateById(updateAccount);
+
+        // 返回更新后的账号详情信息
+        return getAccountById(req.getAccountId());
     }
 }

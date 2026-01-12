@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.entity.Account;
 import jh.exp.auth.service.bus.AccountService;
 import jh.exp.auth.service.bus.PersonService;
 import jh.exp.auth.constant.AuthConstant;
@@ -22,6 +23,7 @@ import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.util.RandomInitialPasswordUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -143,6 +145,25 @@ public class PersonServiceImpl implements PersonService {
         person.setCreatedBy(Long.valueOf(currentUser.getUserId()));
 
         personMapper.insert(person);
+        Account account = Account.builder()
+                .accountName(RandomInitialPasswordUtil.getExpRandomId())          // 登录名 = 工号
+                .accountDisplay(req.getPersonName())
+                .passwordHash("")
+                .mobile(req.getMobile())
+                .email(req.getEmail())
+                .personId(person.getPersonId())
+                .orgId(req.getOrgId())
+                .postId(req.getPostId())
+                .status("INIT")
+                .needChangePwd(true)
+                .createdBy(Long.valueOf(currentUser.getUserId()))
+                .createdTime(null)
+                .updatedTime(null)
+                .build();
+
+        accountMapper.insert(account);
+
+
 
         // 返回创建后的详情信息
         return getPersonById(person.getPersonId());

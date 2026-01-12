@@ -148,4 +148,8 @@ export function getAccountRoles(accountIds: number[]) {
   return request.post<{ accountId: number; roleId: number; roleName: string }[], { accountId: number; roleId: number; roleName: string }[]>('/exp/auth/account/roles', { accountIds });
 }
 
+export function linkPerson(params: { accountId: number; personId: number }) {
+  return request.post<AccountVO, AccountVO>('/exp/auth/account/linkPerson', params);
+}
+
 

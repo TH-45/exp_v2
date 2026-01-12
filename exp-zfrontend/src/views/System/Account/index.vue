@@ -9,6 +9,15 @@
               新增账号
             </el-button>
             <el-button
+                type="success"
+                size="small"
+                @click="linkPerson"
+                :disabled="!canLinkPerson || !selectedRows.length || selectedRows.length > 1 || selectedRows[0]?.status !== 'INIT' || linking"
+                :loading="linking"
+            >
+              关联人员
+            </el-button>
+            <el-button
               size="small"
               @click="batchToggleStatus"
               :disabled="!selectedRows.length || !canManage"
@@ -30,6 +39,7 @@
             >
               删除
             </el-button>
+
 
             <el-button size="small" :disabled="true">导入</el-button>
             <el-button size="small" :disabled="true">导出</el-button>
@@ -240,6 +250,7 @@
           <el-button type="primary" :loading="resetting" @click="submitResetPwd">确认</el-button>
         </template>
       </el-dialog>
+
     </el-card>
   </el-config-provider>
 </template>
@@ -262,6 +273,7 @@ import {
   resetUserPassword,
   getAccountDetail,
   getAccountRoles,
+  linkPerson as linkPersonApi,
   type AccountVO,
 } from '@/api/system/account';
 import type { ExpPersonVO } from '@/api/system/person';
@@ -270,6 +282,7 @@ import type { OrgNode, PostVO } from '@/api/system/post';
 const loading = ref(false);
 const saving = ref(false);
 const resetting = ref(false);
+const linking = ref(false);
 const tableRef = ref();
 
 const query = reactive({
@@ -296,6 +309,7 @@ const selectedRows = ref<AccountVO[]>([]);
 const canManage = computed(() => hasPermission('system:user:view')); // 账号管理使用查看权限即可操作
 const canDelete = computed(() => hasPermission('system:user:view')); // 账号管理使用查看权限即可操作
 const canReset = computed(() => hasPermission('system:user:view')); // 账号管理使用查看权限即可操作
+const canLinkPerson = computed(() => hasPermission('system:user:view')); // 关联人员使用查看权限即可操作
 
 function statusTagType(status?: string) {
   if (status === 'ENABLED') return 'success';
@@ -476,6 +490,7 @@ type EditFormModel = {
   postId?: number;     // 主岗位ID
   mobile?: string;     // 手机号（只读，由人员选择器带出）
   email?: string;      // 邮箱（只读，由人员选择器带出）
+  roleIds?: string[];  // 角色ID列表
   remark?: string;
 };
 
@@ -712,11 +727,11 @@ async function submitForm() {
   try {
     if (editDialog.isEdit) {
       await updateUser({
-        accountId: form.accountId,
+        accountId: form.accountId!,
         accountDisplay: form.personName, // 使用personName作为accountDisplay
-        personId: form.personId,
-        orgId: form.orgId,
-        postId: form.postId,
+        personId: form.personId!,
+        orgId: form.orgId!,
+        postId: form.postId!,
         mobile: form.mobile,
         email: form.email,
         remark: form.remark,
@@ -828,7 +843,7 @@ async function batchToggleStatus() {
 // 重置密码
 const resetDialog = reactive({
   visible: false,
-  targetIds: [] as string[],
+  targetIds: [] as number[],
   targetCount: 0,
 });
 
@@ -851,6 +866,36 @@ const resetRules: FormRules = {
     },
   ],
 };
+
+// 关联人员
+async function linkPerson() {
+  if (!selectedRows.value.length || selectedRows.value.length > 1) return;
+  const account = selectedRows.value[0];
+  if (account.status !== 'INIT') return;
+
+  linking.value = true;
+  try {
+    // 这里假设后端会自动处理人员关联逻辑，或者从当前用户获取人员ID
+    // 如果需要personId，可以从store或其他地方获取当前登录用户的人员ID
+    await linkPersonApi({
+      accountId: account.accountId,
+      personId: 0, // 临时值，后端应该处理这个逻辑
+    });
+    ElMessage.success('关联人员成功');
+
+    // 刷新当前数据项
+    const index = tableData.value.findIndex(item => item.accountId === account.accountId);
+    if (index !== -1) {
+      // 重新获取该账号的详细信息
+      const updatedAccount = await getAccountDetail(account.accountId);
+      tableData.value[index] = updatedAccount;
+    }
+  } catch (error) {
+    ElMessage.error('关联人员失败');
+  } finally {
+    linking.value = false;
+  }
+}
 
 function openResetPwdDialog(rows?: AccountVO[]) {
   const targets = rows && rows.length ? rows : selectedRows.value;
@@ -910,6 +955,7 @@ async function submitResetPwd() {
   margin-bottom: 12px;
   color: #666;
 }
+
 
 .dialog-form.two-col {
   display: grid;

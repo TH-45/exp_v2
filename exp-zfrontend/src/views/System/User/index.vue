@@ -221,12 +221,7 @@
           <el-input v-model="form.personCode" disabled />
         </el-form-item>
         <el-form-item label="姓名" prop="personName">
-          <PersonSelector
-            v-model="selectedPerson"
-            placeholder="请选择人员"
-            @change="handlePersonChange"
-            style="width: 100%"
-          />
+          <el-input v-model="form.personName" placeholder="请输入姓名" />
         </el-form-item>
         <el-form-item label="性别" prop="gender">
           <el-select v-model="form.gender" placeholder="请选择性别" clearable>
@@ -336,7 +331,6 @@ import {
 } from '@/api/system/person';
 import { hasPermission } from '@/utils/permission';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
-import PersonSelector from '@/components/Selector/PersonSelector.vue';
 import { queryOrgPosts, type OrgNode, type PostVO } from '@/api/system/post';
 
 
@@ -396,7 +390,7 @@ const form = reactive<ExpPersonVO>({
   personId: 0,
   personCode: '',
   personName: '',
-  gender: 'OTHER',
+  gender: undefined,
   mobile: '',
   email: '',
   idCardNo: '',
@@ -415,7 +409,6 @@ const form = reactive<ExpPersonVO>({
 
 // 选择器数据
 const selectedOrg = ref<OrgNode>();
-const selectedPerson = ref<ExpPersonVO>();
 const postOptions = ref<PostVO[]>([]);
 
 const rules: FormRules = {
@@ -568,40 +561,6 @@ function handleRowClick(row: ExpPersonVO) {
   tableRef.value?.toggleRowSelection(row);
 }
 
-// 人员选择处理
-async function handlePersonChange(person: ExpPersonVO | undefined) {
-  if (person) {
-    // 自动填充人员信息
-    Object.assign(form, {
-      personId: person.personId,
-      personCode: person.personCode,
-      personName: person.personName,
-      gender: person.gender,
-      mobile: person.mobile,
-      email: person.email,
-      orgName: person.orgName,
-      roleIds: person.roleIds,
-      roleNames: person.roleNames,
-    });
-
-    // 设置组织选择器
-    if (person.orgId) {
-      selectedOrg.value = {
-        orgId: person.orgId,
-        orgName: person.orgName || '',
-        orgCode: '',
-        children: []
-      };
-      form.orgId = person.orgId;
-
-      // 获取岗位列表
-      await fetchPostOptions(person.orgId);
-    }
-  } else {
-    // 清空选择
-    selectedPerson.value = undefined;
-  }
-}
 
 // 组织选择处理
 async function handleOrgChange(org: OrgNode | undefined) {
@@ -654,7 +613,7 @@ function resetFormModel() {
   form.personId = 0;
   form.personCode = generatePersonCode();
   form.personName = '';
-  form.gender = 'OTHER'; // 性别默认OTHER
+  form.gender = undefined;
   form.mobile = '';
   form.email = '';
   form.idCardNo = '';
@@ -673,7 +632,6 @@ function resetFormModel() {
 
   // 重置选择器数据
   selectedOrg.value = undefined;
-  selectedPerson.value = undefined;
   postOptions.value = [];
 }
 

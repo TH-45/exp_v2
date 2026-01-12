@@ -65,4 +65,9 @@ public interface AccountService {
      * 获取账号角色信息
      */
     List<AccountRoleRes> getAccountRoles(List<Long> accountIds);
+
+    /**
+     * 关联账号与人员
+     */
+    AccountDetailRes linkAccountToPerson(LinkAccountPersonReq req);
 }

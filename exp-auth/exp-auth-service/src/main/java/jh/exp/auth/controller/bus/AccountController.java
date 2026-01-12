@@ -127,4 +127,15 @@ public class AccountController {
         List<AccountRoleRes> result = accountService.getAccountRoles(accountIds);
         return ApiResponse.success(result);
     }
+
+    /**
+     * 关联账号与人员
+     */
+    @PostMapping("/linkPerson")
+    public ApiResponse<AccountDetailRes> linkPerson(@RequestBody @Valid LinkAccountPersonReq req) {
+        AccountDetailRes result = accountService.linkAccountToPerson(req);
+        return ApiResponse.success(result);
+    }
+
+
 }
