@@ -253,7 +253,7 @@ public class PersonServiceImpl implements PersonService {
         String accountStatus="";
         if(AuthConstant.LEAVE.equals(status)||AuthConstant.DISABLED.equals(status)){
             accountStatus=AuthConstant.DISABLED;
-        }if(AuthConstant.ONJOB.equals(status)){
+        }else if(AuthConstant.ONJOB.equals(status)){
             accountStatus=AuthConstant.ENABLED;
         }else{
             accountStatus=AuthConstant.ENABLED;
