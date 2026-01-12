@@ -14,7 +14,7 @@ public class AuthConstant {
      */
     public static final String ENABLED="ENABLED";
     /**
-     * 禁用
+     * 禁用/停用
      */
     public static final String DISABLED="DISABLED";
     /**

@@ -35,7 +35,7 @@
                     批量设为离职
                   </el-dropdown-item>
                   <el-dropdown-item command="DISABLED">
-                    批量设为停用
+                    批量设为禁用
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -177,7 +177,7 @@
                 <el-dropdown-menu>
                   <el-dropdown-item command="ONJOB">在职</el-dropdown-item>
                   <el-dropdown-item command="LEAVE">离职</el-dropdown-item>
-                  <el-dropdown-item command="DISABLED">停用</el-dropdown-item>
+                  <el-dropdown-item command="DISABLED">禁用</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -792,12 +792,6 @@ async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
   if (!canManage.value || row.status === newStatus) return;
 
   try {
-    // 检查状态变更规则
-    if (row.status === 'LEAVE' && newStatus === 'ONJOB') {
-      ElMessage.warning('离职人员不能直接设为在职状态');
-      return;
-    }
-
     await changePersonStatus(row.personId, newStatus);
     ElMessage.success('状态已更新');
     fetchList();

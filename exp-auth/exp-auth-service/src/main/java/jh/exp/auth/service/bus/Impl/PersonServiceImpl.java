@@ -243,14 +243,23 @@ public class PersonServiceImpl implements PersonService {
 
 
         // 更新状态
+        String status = req.getStatus();
         UpdateWrapper<Person> updateWrapper = new UpdateWrapper<>();
         updateWrapper.eq("person_id", req.getPersonId())
-                .set("status", req.getStatus())
+                .set("status", status)
                 .set("updated_time", LocalDateTime.now());
 
         personMapper.update(null, updateWrapper);
 
-        accountService.updateAccountStatus(new AccountStatusReq(req.getPersonId(),req.getStatus()));
+        if(AuthConstant.LEAVE.equals(status)||AuthConstant.DISABLED.equals(status)){
+            status=AuthConstant.DISABLED;
+        }if(AuthConstant.ONJOB.equals(status)){
+            status=AuthConstant.ENABLED;
+        }else{
+            status=AuthConstant.ENABLED;
+        }
+
+        accountService.updateAccountStatus(new AccountStatusReq(req.getPersonId(),status));
 
         // 返回更新后的详情信息
         return getPersonById(req.getPersonId());
