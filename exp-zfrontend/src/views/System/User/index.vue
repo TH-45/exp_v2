@@ -14,14 +14,7 @@
             >
               新增人员信息
             </el-button>
-            <el-button
-              type="danger"
-              size="small"
-              @click="handleBatchDelete"
-              :disabled="!selectedRows.length || !canDelete"
-            >
-              删除
-            </el-button>
+
             <el-dropdown
               @command="handleBatchStatusChange"
               :disabled="!selectedRows.length || !canManage"
@@ -47,6 +40,14 @@
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
+            <el-button
+                type="danger"
+                size="small"
+                @click="handleBatchDelete"
+                :disabled="!selectedRows.length || !canDelete"
+            >
+              删除
+            </el-button>
             <el-button size="small" :disabled="true">导入</el-button>
             <el-button size="small" :disabled="true">导出</el-button>
           </div>

@@ -133,21 +133,26 @@ const displayText = computed(() => {
   return props.modelValue ? `${props.modelValue.personName}(${props.modelValue.personCode})` : '';
 });
 
-// 总是显示表格，不需要搜索条件
-const showTable = computed(() => {
-  return dialogVisible.value;
-});
 
 
 // 打开弹窗
 function openDialog() {
   dialogVisible.value = true;
   selectedPerson.value = props.modelValue;
-  // 不自动查询，等待用户输入搜索条件
+  tableData.value = [];
+  total.value = 0;
 }
 
 // 搜索
 function handleSearch() {
+  const hasName = !!searchForm.personName?.trim();
+  const hasCode = !!searchForm.personCode?.trim();
+
+  // 两个条件都没有 → 不查询
+  if (!hasName && !hasCode) {
+    selectedPerson.value = undefined;
+    return;
+  }
   query.pageNum = 1;
   fetchPersonList();
 }
@@ -159,7 +164,7 @@ function handleReset() {
   query.pageNum = 1;
   selectedPerson.value = undefined;
   // 重新查询所有人员
-  fetchPersonList();
+  // fetchPersonList();
 }
 
 // 获取人员列表
@@ -179,7 +184,6 @@ async function fetchPersonList() {
   } catch (e) {
     tableData.value = [];
     total.value = 0;
-    ElMessage.error('获取人员列表失败');
   } finally {
     loading.value = false;
   }
@@ -192,13 +196,18 @@ function handleRowClick(row: ExpPersonVO) {
   tableRef.value?.setCurrentRow(row);
 }
 
+function canQuery() {
+  return !!searchForm.personName?.trim() || !!searchForm.personCode?.trim();
+}
 // 分页
 function handleCurrentChange(page: number) {
+  if (!canQuery()) return;
   query.pageNum = page;
   fetchPersonList();
 }
 
 function handleSizeChange(size: number) {
+  if (!canQuery()) return;
   query.pageSize = size;
   query.pageNum = 1;
   fetchPersonList();

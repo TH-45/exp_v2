@@ -1,8 +1,10 @@
 package jh.exp.auth.service.bus.Impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.service.bus.AccountService;
 import jh.exp.auth.service.bus.PersonService;
 import jh.exp.auth.constant.AuthConstant;
 
@@ -38,6 +40,7 @@ public class PersonServiceImpl implements PersonService {
     private final OrgUnitMapper orgUnitMapper;
     private final PositionMapper positionMapper;
     private final AccountMapper accountMapper;
+    private final AccountService accountService;
     /**
      * 分页查询人员列表
      */
@@ -49,26 +52,29 @@ public class PersonServiceImpl implements PersonService {
 
         IPage<PersonInfoRes> personInfoIPage = personMapper.selectPositionPage(page, personReq.getQueryParam());
         List<PersonInfoRes> personInfoList = personInfoIPage.getRecords();
-        List<Long> accounts = personInfoList.stream().map(PersonInfoRes::getAccountId).toList();
-        List<AccountRoleRes> accountRoleRes = accountMapper.selectRolesByAccountIds(accounts);
+        if(CollUtil.isNotEmpty(personInfoList)){
+            List<Long> accounts = personInfoList.stream().map(PersonInfoRes::getAccountId).toList();
+            List<AccountRoleRes> accountRoleRes = accountMapper.selectRolesByAccountIds(accounts);
 
-        Map<Long, String> roleIdsMap = accountRoleRes.stream()
-                        .collect(Collectors.groupingBy(AccountRoleRes::getAccountId, Collectors.mapping(
-                                        r -> String.valueOf(r.getRoleId()),
-                                        Collectors.joining(","))));
+            Map<Long, String> roleIdsMap = accountRoleRes.stream()
+                    .collect(Collectors.groupingBy(AccountRoleRes::getAccountId, Collectors.mapping(
+                            r -> String.valueOf(r.getRoleId()),
+                            Collectors.joining(","))));
 
-        Map<Long, String> roleNamesMap = accountRoleRes.stream()
-                        .collect(Collectors.groupingBy(AccountRoleRes::getAccountId,
-                                Collectors.mapping(
-                                        AccountRoleRes::getRoleName,
-                                        Collectors.joining(","))));
+            Map<Long, String> roleNamesMap = accountRoleRes.stream()
+                    .collect(Collectors.groupingBy(AccountRoleRes::getAccountId,
+                            Collectors.mapping(
+                                    AccountRoleRes::getRoleName,
+                                    Collectors.joining(","))));
 
 
-        personInfoList.forEach(person -> {
-            Long accountId = person.getAccountId();
-            person.setRoleIds(roleIdsMap.getOrDefault(accountId, ""));
-            person.setRoleNames(roleNamesMap.getOrDefault(accountId, ""));
-        });
+            personInfoList.forEach(person -> {
+                Long accountId = person.getAccountId();
+                person.setRoleIds(roleIdsMap.getOrDefault(accountId, ""));
+                person.setRoleNames(roleNamesMap.getOrDefault(accountId, ""));
+            });
+        }
+
         res.setTotal(personInfoIPage.getTotal());
         res.setPage(personInfoIPage.getCurrent());
         res.setSize(personInfoIPage.getSize());
@@ -235,10 +241,6 @@ public class PersonServiceImpl implements PersonService {
             throw new RuntimeException("人员不存在");
         }
 
-        // 业务规则校验
-        if ("ENABLED".equals(req.getStatus()) && "LEAVE".equals(person.getStatus())) {
-            throw new IllegalArgumentException("该人员已经离职不能启用，请检查！");
-        }
 
         // 更新状态
         UpdateWrapper<Person> updateWrapper = new UpdateWrapper<>();
@@ -247,6 +249,8 @@ public class PersonServiceImpl implements PersonService {
                 .set("updated_time", LocalDateTime.now());
 
         personMapper.update(null, updateWrapper);
+
+        accountService.updateAccountStatus(new AccountStatusReq(req.getPersonId(),req.getStatus()));
 
         // 返回更新后的详情信息
         return getPersonById(req.getPersonId());

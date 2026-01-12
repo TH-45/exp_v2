@@ -33,4 +33,9 @@ public class AccountStatusReq {
      * 操作备注
      */
     private String remark;
+
+    public AccountStatusReq(Long accountId, String status) {
+        this.accountId = accountId;
+        this.status = status;
+    }
 }
