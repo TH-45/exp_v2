@@ -250,13 +250,13 @@ public class PersonServiceImpl implements PersonService {
 
         personMapper.update(null, updateWrapper);
 
-        String accountStatus="";
+
         if(AuthConstant.LEAVE.equals(status)||AuthConstant.DISABLED.equals(status)){
-            accountStatus=AuthConstant.DISABLED;
+            status=AuthConstant.DISABLED;
         }else if(AuthConstant.ONJOB.equals(status)){
-            accountStatus=AuthConstant.ENABLED;
+            status=AuthConstant.ENABLED;
         }else{
-            accountStatus=AuthConstant.ENABLED;
+            status=AuthConstant.ENABLED;
         }
 
         accountService.updateAccountStatus(new AccountStatusReq(req.getPersonId(),status));
