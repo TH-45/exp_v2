@@ -20,6 +20,7 @@
       title="选择人员"
       width="800px"
       destroy-on-close
+      draggable
     >
       <!-- 搜索区 -->
       <div class="search-bar">

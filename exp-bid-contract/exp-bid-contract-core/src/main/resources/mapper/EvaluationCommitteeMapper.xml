@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.bid.contract.mapper.EvaluationCommitteeMapper">
+
+    <!-- 检查委员会编号是否存在 -->
+    <select id="countByCommitteeCode" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_bid_evaluation_committee
+        WHERE committee_code = #{committeeCode}
+        <if test="excludeCommitteeId != null">
+            AND committee_id != #{excludeCommitteeId}
+        </if>
+    </select>
+
+    <!-- 分页查询评标委员会列表 -->
+    <select id="selectCommitteeList" resultType="jh.exp.bid.contract.entity.res.EvaluationCommitteeListRes">
+        SELECT
+            c.committee_id AS committeeId,
+            c.tender_id AS tenderId,
+            t.tender_name AS tenderName,
+            c.committee_code AS committeeCode,
+            c.committee_name AS committeeName,
+            c.evaluation_method AS evaluationMethod,
+            c.evaluation_location AS evaluationLocation,
+            c.evaluation_start_time AS evaluationStartTime,
+            c.evaluation_end_time AS evaluationEndTime,
+            c.status AS status,
+            d.user_name AS evaluationDirectorName,
+            s.user_name AS supervisorName,
+            u.user_name AS createdByName,
+            c.created_time AS createdTime
+        FROM exp_bid_evaluation_committee c
+        LEFT JOIN exp_tender t ON c.tender_id = t.tender_id
+        LEFT JOIN exp_user d ON c.evaluation_director_id = d.user_id
+        LEFT JOIN exp_user s ON c.supervisor_id = s.user_id
+        LEFT JOIN exp_user u ON c.created_by = u.user_id
+        <where>
+            <if test="req.tenderId != null">
+                AND c.tender_id = #{req.tenderId}
+            </if>
+            <if test="req.committeeCode != null and req.committeeCode != ''">
+                AND c.committee_code LIKE CONCAT('%', #{req.committeeCode}, '%')
+            </if>
+            <if test="req.committeeName != null and req.committeeName != ''">
+                AND c.committee_name LIKE CONCAT('%', #{req.committeeName}, '%')
+            </if>
+            <if test="req.evaluationMethod != null and req.evaluationMethod != ''">
+                AND c.evaluation_method = #{req.evaluationMethod}
+            </if>
+            <if test="req.status != null and req.status != ''">
+                AND c.status = #{req.status}
+            </if>
+            <if test="req.evaluationDirectorId != null">
+                AND c.evaluation_director_id = #{req.evaluationDirectorId}
+            </if>
+            <if test="req.evaluationStartTimeStart != null">
+                AND c.evaluation_start_time >= #{req.evaluationStartTimeStart}
+            </if>
+            <if test="req.evaluationStartTimeEnd != null">
+                AND c.evaluation_start_time <![CDATA[<=]]> #{req.evaluationStartTimeEnd}
+            </if>
+            <if test="req.createdBy != null">
+                AND c.created_by = #{req.createdBy}
+            </if>
+            <if test="req.createdTimeStart != null">
+                AND c.created_time >= #{req.createdTimeStart}
+            </if>
+            <if test="req.createdTimeEnd != null">
+                AND c.created_time <![CDATA[<=]]> #{req.createdTimeEnd}
+            </if>
+        </where>
+        ORDER BY c.created_time DESC
+    </select>
+
+    <!-- 根据委员会ID查询评标委员会详情 -->
+    <select id="selectCommitteeDetailById" resultType="jh.exp.bid.contract.entity.res.EvaluationCommitteeListRes">
+        SELECT
+            c.committee_id AS committeeId,
+            c.tender_id AS tenderId,
+            t.tender_name AS tenderName,
+            c.committee_code AS committeeCode,
+            c.committee_name AS committeeName,
+            c.evaluation_method AS evaluationMethod,
+            c.evaluation_location AS evaluationLocation,
+            c.evaluation_start_time AS evaluationStartTime,
+            c.evaluation_end_time AS evaluationEndTime,
+            c.status AS status,
+            d.user_name AS evaluationDirectorName,
+            s.user_name AS supervisorName,
+            u.user_name AS createdByName,
+            c.created_time AS createdTime
+        FROM exp_bid_evaluation_committee c
+        LEFT JOIN exp_tender t ON c.tender_id = t.tender_id
+        LEFT JOIN exp_user d ON c.evaluation_director_id = d.user_id
+        LEFT JOIN exp_user s ON c.supervisor_id = s.user_id
+        LEFT JOIN exp_user u ON c.created_by = u.user_id
+        WHERE c.committee_id = #{committeeId}
+    </select>
+
+    <!-- 根据招标ID查询评标委员会列表 -->
+    <select id="selectCommitteesByTenderId" resultType="jh.exp.bid.contract.entity.res.EvaluationCommitteeListRes">
+        SELECT
+            c.committee_id AS committeeId,
+            c.tender_id AS tenderId,
+            t.tender_name AS tenderName,
+            c.committee_code AS committeeCode,
+            c.committee_name AS committeeName,
+            c.evaluation_method AS evaluationMethod,
+            c.evaluation_location AS evaluationLocation,
+            c.evaluation_start_time AS evaluationStartTime,
+            c.evaluation_end_time AS evaluationEndTime,
+            c.status AS status,
+            d.user_name AS evaluationDirectorName,
+            s.user_name AS supervisorName,
+            u.user_name AS createdByName,
+            c.created_time AS createdTime
+        FROM exp_bid_evaluation_committee c
+        LEFT JOIN exp_tender t ON c.tender_id = t.tender_id
+        LEFT JOIN exp_user d ON c.evaluation_director_id = d.user_id
+        LEFT JOIN exp_user s ON c.supervisor_id = s.user_id
+        LEFT JOIN exp_user u ON c.created_by = u.user_id
+        WHERE c.tender_id = #{tenderId}
+        ORDER BY c.created_time DESC
+    </select>
+
+    <!-- 批量更新委员会状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE exp_bid_evaluation_committee
+        SET status = #{status}, updated_time = NOW()
+        WHERE committee_id IN
+        <foreach item="committeeId" collection="committeeIds" open="(" separator="," close=")">
+            #{committeeId}
+        </foreach>
+    </update>
+
+</mapper>

@@ -20,6 +20,7 @@
       title="选择组织"
       width="600px"
       destroy-on-close
+      draggable
     >
       <!-- 搜索区 -->
       <div class="search-bar">
