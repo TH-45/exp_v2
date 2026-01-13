@@ -1275,18 +1275,15 @@ async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
   }
 
   .org-section {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    grid-template-columns: 1fr 1fr; // 左右两列
-    flex-wrap: wrap;
-
     .org-item {
-      flex: 1;
-      min-width: 0px;
       display: flex;
       align-items: flex-start;
       gap: 8px;
+      margin-bottom: 12px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
 
       .el-icon {
         color: #c0c4cc;
