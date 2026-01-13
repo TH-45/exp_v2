@@ -936,6 +936,43 @@ function getStatusText(status?: string) {
   return status === 'ONJOB' ? '在职' : status === 'DISABLED' ? '禁用' : status === 'LEAVE' ? '离职' : '未知';
 }
 
+// --- 开发期测试填充：后期不用时，可注释调用处关闭 ---
+function generateMockMobile() {
+  const prefixes = ['130', '131', '132', '133', '135', '136', '137', '138', '139', '150', '151', '152', '157', '158', '159', '170', '178', '182', '183', '184', '187', '188', '189', '198', '199'];
+  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const tail = Math.floor(Math.random() * 10_000_000).toString().padStart(7, '0');
+  return `${prefix}${tail}`;
+}
+
+function generateMockIdCard() {
+  // 固定行政区代码 + 随机生日 + 顺序码 + 校验位
+  const areaCode = '110101'; // 北京市东城区
+  const start = new Date(1980, 0, 1).getTime();
+  const end = new Date(2000, 11, 31).getTime();
+  const birthTime = start + Math.random() * (end - start);
+  const birth = new Date(birthTime);
+  const y = birth.getFullYear();
+  const m = String(birth.getMonth() + 1).padStart(2, '0');
+  const d = String(birth.getDate()).padStart(2, '0');
+  const birthStr = `${y}${m}${d}`;
+  const seq = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  const base17 = `${areaCode}${birthStr}${seq}`;
+
+  const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+  const checks = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+  const sum = base17.split('').reduce((acc, cur, idx) => acc + Number(cur) * weights[idx], 0);
+  const checkCode = checks[sum % 11];
+
+  return `${base17}${checkCode}`;
+}
+
+function fillDevMockFields() {
+  // 测试阶段自动填充，后期不需要时注释掉本函数调用
+  form.mobile = generateMockMobile();
+  form.idCardNo = generateMockIdCard();
+}
+// --- 开发期测试填充结束 ---
+
 function formatDate(dateStr?: string) {
   if (!dateStr) return '';
   try {
@@ -969,6 +1006,8 @@ function resetFormModel() {
   // 重置选择器数据
   selectedOrg.value = undefined;
   postOptions.value = [];
+
+  fillDevMockFields(); // 测试期自动填充手机号/身份证，后期可注释
 }
 
 function handleAdd() {
@@ -1236,15 +1275,18 @@ async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
   }
 
   .org-section {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    grid-template-columns: 1fr 1fr; // 左右两列
+    flex-wrap: wrap;
+
     .org-item {
+      flex: 1;
+      min-width: 0px;
       display: flex;
       align-items: flex-start;
       gap: 8px;
-      margin-bottom: 12px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
 
       .el-icon {
         color: #c0c4cc;
