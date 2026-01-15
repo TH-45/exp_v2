@@ -52,4 +52,6 @@ public class AuthConstant {
         }
         throw new IllegalArgumentException("该值不在规范中：" + str);
     }
+
+
 }
