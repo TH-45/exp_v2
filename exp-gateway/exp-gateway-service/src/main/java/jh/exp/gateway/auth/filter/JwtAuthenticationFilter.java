@@ -75,6 +75,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        log.debug("JWT 鉴权开始");
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
 
@@ -98,7 +99,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         JwtPayload finalPayload = payload;
-        return tokenBlacklistService.isBlacklisted(payload.tokenId())
+        Mono<Void> voidMono = tokenBlacklistService.isBlacklisted(payload.tokenId())
                 .flatMap(isBlack -> {
                     if (Boolean.TRUE.equals(isBlack)) {
                         log.warn("Token 已在黑名单中，被拒绝，tokenId={}，path={}", finalPayload.tokenId(), path);
@@ -117,6 +118,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     log.info("JWT 鉴权通过，userId={}，path={}", finalPayload.userId(), path);
                     return chain.filter(exchange.mutate().request(mutated).build());
                 });
+        return voidMono;
     }
 
     @SuppressWarnings("null")

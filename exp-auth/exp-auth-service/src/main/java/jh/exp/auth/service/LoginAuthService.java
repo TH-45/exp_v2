@@ -3,6 +3,7 @@ package jh.exp.auth.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import jh.exp.auth.mapper.AccountMapper;
 import jh.exp.auth.entity.Account;
+import jh.exp.auth.entity.res.AccountRoleRes;
 import jh.exp.common.auth.dto.LoginRequest;
 import jh.exp.common.auth.dto.LoginUserInfo;
 
@@ -15,6 +16,8 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 提供账号密码校验的核心逻辑，由网关或其他服务通过内部接口调用。
@@ -65,10 +68,18 @@ public class LoginAuthService {
         account.setLastLoginTime(LocalDateTime.now());
         accountMapper.updateById(account);
 
+        List<AccountRoleRes> roleRes = accountMapper.selectRolesByAccountIds(
+                Collections.singletonList(account.getAccountId()));
+        List<String> roleCodes = roleRes.stream()
+                .map(AccountRoleRes::getRoleCode)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .collect(Collectors.toList());
+
         LoginUserInfo info = new LoginUserInfo();
         info.setUserId(String.valueOf(account.getAccountId()));
         info.setUsername(account.getAccountDisplay() != null ? account.getAccountDisplay() : account.getAccountName());
-        info.setRoles(Collections.singletonList("ADMIN"));
+        info.setRoles(roleCodes);
         info.setPermissions(Collections.singletonList("system:user:view"));
 
         log.info("用户登录成功，username={}，accountId={}", username, account.getAccountId());

@@ -10,17 +10,17 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.entity.middle.RoleMenuRel;
+import jh.exp.auth.mapper.middle.RoleMenuRelMapper;
 import jh.exp.auth.service.bus.MenuService;
 import jh.exp.auth.entity.ExpMenu;
 import jh.exp.auth.entity.Role;
-import jh.exp.auth.entity.middle.ExpRoleMenuRel;
 import jh.exp.auth.entity.node.MenuNode;
 import jh.exp.auth.entity.req.*;
 import jh.exp.auth.entity.res.*;
 import jh.exp.auth.mapper.MenuMapper;
 import jh.exp.auth.mapper.RoleMapper;
 
-import jh.exp.auth.mapper.middle.ExpRoleMenuRelMapper;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.exception.BizException;
 import jh.exp.common.req.SimplePageReq;
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 public class MenuServiceImpl implements MenuService {
 
     private final MenuMapper menuMapper;
-    private final ExpRoleMenuRelMapper expRoleMenuRelMapper;
+    private final RoleMenuRelMapper roleMenuRelMapper;
     private final RoleMapper roleMapper;
 
     /**
@@ -206,7 +206,7 @@ public class MenuServiceImpl implements MenuService {
         }
 
         // 检查是否有角色关联此菜单
-        Long roleCount = expRoleMenuRelMapper.selectCount(new QueryWrapper<ExpRoleMenuRel>()
+        Long roleCount = roleMenuRelMapper.selectCount(new QueryWrapper<RoleMenuRel>()
                 .eq("menu_id", menuId));
         if (roleCount > 0) {
             throw new BizException("该菜单已被角色使用，不能删除");
@@ -288,9 +288,9 @@ public class MenuServiceImpl implements MenuService {
         roleQw.in("role_code", roles);
         List<Long> roleIds = roleMapper.selectList(roleQw).stream().map(Role::getRoleId).toList();
 
-        QueryWrapper<ExpRoleMenuRel> middleQw = new QueryWrapper<>();
+        QueryWrapper<RoleMenuRel> middleQw = new QueryWrapper<>();
         middleQw.in("role_id", roleIds);
-        List<Long> menuIds = expRoleMenuRelMapper.selectList(middleQw).stream().map(ExpRoleMenuRel::getMenuId).toList();
+        List<Long> menuIds = roleMenuRelMapper.selectList(middleQw).stream().map(RoleMenuRel::getMenuId).toList();
 
         QueryWrapper<ExpMenu> menuQw = new QueryWrapper<>();
         menuQw.in("menu_id", menuIds);
@@ -377,7 +377,7 @@ public class MenuServiceImpl implements MenuService {
         }
 
         // 检查是否有角色关联此菜单
-        Long roleCount = expRoleMenuRelMapper.selectCount(new QueryWrapper<ExpRoleMenuRel>()
+        Long roleCount = roleMenuRelMapper.selectCount(new QueryWrapper<RoleMenuRel>()
                 .eq("menu_id", menuId));
         if (roleCount > 0) {
             throw new BizException("该菜单已被角色使用，不能删除");

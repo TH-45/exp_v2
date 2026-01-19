@@ -3,12 +3,14 @@ package jh.exp.auth.service;
 import jh.exp.auth.mapper.AccountMapper;
 
 import jh.exp.auth.entity.Account;
+import jh.exp.auth.entity.res.AccountRoleRes;
 import jh.exp.common.auth.dto.ProfileResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 提供内部 profile 查询能力，供网关等内部服务调用。
@@ -40,16 +42,24 @@ public class ProfileService {
             throw new IllegalStateException("账号已被禁用或锁定");
         }
 
-        return getResult(account);
+        return getResult(account, accountMapper);
     }
 
-    private static ProfileResult getResult(Account account) {
+    private static ProfileResult getResult(Account account, AccountMapper accountMapper) {
+        List<AccountRoleRes> roleRes = accountMapper.selectRolesByAccountIds(
+                java.util.Collections.singletonList(account.getAccountId()));
+        List<String> roleCodes = roleRes.stream()
+                .map(AccountRoleRes::getRoleCode)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .collect(Collectors.toList());
+
         ProfileResult result = new ProfileResult();
         result.setUserId(String.valueOf(account.getAccountId()));
         result.setUsername(account.getAccountDisplay() != null ? account.getAccountDisplay() : account.getAccountName());
         result.setDeptId(account.getOrgId() == null ? null : String.valueOf(account.getOrgId()));
         result.setDeptName(null);
-        result.setRoles(List.of("ADMIN"));
+        result.setRoles(roleCodes);
         result.setPermissions(List.of("system:user:view", "system:user:edit"));
         result.setMenus(List.of("dashboard", "system:user", "bidding:project", "contracts:list"));
         return result;

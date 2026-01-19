@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "exp_role_menu_rel")
 @TableName("exp_role_menu_rel")
-public class ExpRoleMenuRel {
+public class RoleMenuRel {
     // 主键ID（自增）
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
