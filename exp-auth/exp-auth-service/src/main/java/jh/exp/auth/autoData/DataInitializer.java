@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 /**
  * 数据初始化器：在应用启动时自动创建测试数据
  * 如果数据库中没有数据，则自动插入测试账号
- *
+ * 
  * 注意：如果使用 data.sql 方式初始化数据，可以禁用此类
  */
 @Component
@@ -20,7 +20,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private AccountMapper accountMapper;
-
+    
     @Autowired
     private PasswordEncoder passwordEncoder;
 

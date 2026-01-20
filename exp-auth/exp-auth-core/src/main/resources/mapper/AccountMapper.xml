@@ -81,73 +81,16 @@
 
     <!-- 根据账号id列表查角色信息（多表联查） -->
     <select id="selectRolesByAccountIds" resultType="jh.exp.auth.entity.res.AccountRoleRes">
-        SELECT DISTINCT
-               pset.account_id as accountId,
-               r.role_id as roleId,
-               r.role_name as roleName,
-               r.role_code as roleCode
-        FROM (
-            SELECT a.account_id as account_id, 'ACCOUNT' as principal_type, a.account_id as principal_id
-            FROM exp_account a
-            WHERE a.account_id IN
-            <foreach item="accountId" collection="accountIds" open="(" separator="," close=")">
-                #{accountId}
-            </foreach>
-            UNION ALL
-            SELECT a.account_id, 'PERSON', p.person_id
-            FROM exp_account a
-            INNER JOIN exp_person p ON a.person_id = p.person_id
-            WHERE a.account_id IN
-            <foreach item="accountId" collection="accountIds" open="(" separator="," close=")">
-                #{accountId}
-            </foreach>
-            UNION ALL
-            SELECT a.account_id, 'POST', a.post_id
-            FROM exp_account a
-            WHERE a.post_id IS NOT NULL
-              AND a.account_id IN
-            <foreach item="accountId" collection="accountIds" open="(" separator="," close=")">
-                #{accountId}
-            </foreach>
-            UNION ALL
-            SELECT a.account_id, 'ORG', a.org_id
-            FROM exp_account a
-            WHERE a.org_id IS NOT NULL
-              AND a.account_id IN
-            <foreach item="accountId" collection="accountIds" open="(" separator="," close=")">
-                #{accountId}
-            </foreach>
-            UNION ALL
-            SELECT a.account_id, 'POST', pop.post_id
-            FROM exp_account a
-            INNER JOIN exp_person p ON a.person_id = p.person_id
-            INNER JOIN exp_person_org_post_rel pop ON pop.person_id = p.person_id
-            WHERE pop.post_id IS NOT NULL
-              AND (pop.status = 'ON' OR pop.status IS NULL)
-              AND a.account_id IN
-            <foreach item="accountId" collection="accountIds" open="(" separator="," close=")">
-                #{accountId}
-            </foreach>
-            UNION ALL
-            SELECT a.account_id, 'ORG', pop.org_id
-            FROM exp_account a
-            INNER JOIN exp_person p ON a.person_id = p.person_id
-            INNER JOIN exp_person_org_post_rel pop ON pop.person_id = p.person_id
-            WHERE pop.org_id IS NOT NULL
-              AND (pop.status = 'ON' OR pop.status IS NULL)
-              AND a.account_id IN
-            <foreach item="accountId" collection="accountIds" open="(" separator="," close=")">
-                #{accountId}
-            </foreach>
-        ) pset
-        INNER JOIN exp_role_assign ra
-            ON ra.principal_type = pset.principal_type
-           AND ra.principal_id = pset.principal_id
-           AND ra.status = 'ENABLED'
-           AND (ra.start_time IS NULL OR ra.start_time <= NOW())
-           AND (ra.end_time IS NULL OR ra.end_time >= NOW())
-        INNER JOIN exp_role r ON r.role_id = ra.role_id
-        ORDER BY pset.account_id, r.sort_no
+        SELECT ra.principal_id as accountId, r.role_id as roleId, r.role_name as roleName
+        FROM exp_role_assign ra
+        INNER JOIN exp_role r ON ra.role_id = r.role_id
+        WHERE ra.principal_type = 'ACCOUNT'
+          AND ra.status = 'ENABLED'
+          AND ra.principal_id IN
+          <foreach item="accountId" collection="accountIds" open="(" separator="," close=")">
+            #{accountId}
+          </foreach>
+        ORDER BY ra.principal_id, r.sort_no
     </select>
 
 </mapper>

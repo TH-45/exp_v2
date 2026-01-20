@@ -5,8 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.entity.Account;
-import jh.exp.auth.entity.middle.PersonOrgPostRel;
-import jh.exp.auth.mapper.middle.PersonOrgPostRelMapper;
 import jh.exp.auth.service.bus.AccountService;
 import jh.exp.auth.service.bus.PersonService;
 import jh.exp.auth.constant.AuthConstant;
@@ -31,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -46,9 +43,6 @@ public class PersonServiceImpl implements PersonService {
     private final PositionMapper positionMapper;
     private final AccountMapper accountMapper;
     private final AccountService accountService;
-    private final PersonOrgPostRelMapper personOrgPostRelMapper;
-
-
     /**
      * 分页查询人员列表
      */
@@ -129,7 +123,6 @@ public class PersonServiceImpl implements PersonService {
             throw new RuntimeException("人员工号已存在");
         }
 
-
         Person person = new Person();
         person.setPersonCode(req.getPersonCode());
         person.setPersonName(req.getPersonName());
@@ -143,7 +136,7 @@ public class PersonServiceImpl implements PersonService {
         person.setAccountId(req.getAccountId());
         person.setEntryDate(req.getEntryDate());
         person.setIsExternal(req.getIsExternal());
-        person.setStatus(AuthConstant.ONJOB); // 新建人员默认为在职状态
+        person.setStatus("ONJOB"); // 新建人员默认为在职状态
         person.setRemark(req.getRemark());
         person.setCreatedTime(LocalDateTime.now());
         person.setUpdatedTime(LocalDateTime.now());
@@ -151,46 +144,26 @@ public class PersonServiceImpl implements PersonService {
         CurrentUser currentUser = CurrentUserHolder.get();
         person.setCreatedBy(Long.valueOf(currentUser.getUserId()));
 
-        try{
-            // 保存人员信息
-            personMapper.insert(person);
-            Account account = Account.builder()
-                    .accountName(RandomInitialPasswordUtil.getExpRandomId())          // 登录名 = 工号
-                    .accountDisplay(req.getPersonName())
-                    .passwordHash("")
-                    .mobile(req.getMobile())
-                    .email(req.getEmail())
-                    .personId(person.getPersonId())
-                    .orgId(req.getOrgId())
-                    .postId(req.getPostId())
-                    .status(AuthConstant.INIT)
-                    .needChangePwd(true)
-                    .createdBy(Long.valueOf(currentUser.getUserId()))
-                    .createdTime(null)
-                    .updatedTime(null)
-                    .build();
+        personMapper.insert(person);
+        Account account = Account.builder()
+                .accountName(RandomInitialPasswordUtil.getExpRandomId())          // 登录名 = 工号
+                .accountDisplay(req.getPersonName())
+                .passwordHash("")
+                .mobile(req.getMobile())
+                .email(req.getEmail())
+                .personId(person.getPersonId())
+                .orgId(req.getOrgId())
+                .postId(req.getPostId())
+                .status("INIT")
+                .needChangePwd(true)
+                .createdBy(Long.valueOf(currentUser.getUserId()))
+                .createdTime(null)
+                .updatedTime(null)
+                .build();
 
-            //设置组织关联信息 主组织和岗位
-            PersonOrgPostRel personOrgPostRel =PersonOrgPostRel.builder()
-                    .personId(person.getPersonId())
-                    .orgId(req.getOrgId())
-                    .postId(req.getPostId())
-                    //默认角色
-                    .roleId(AuthConstant.DEFAULT_ROLE)
-                    .isPrimary(1)
-                    //默认是一年
-                    .startDate(LocalDate.now())
-                    .endDate(LocalDate.now().plusYears(1))
-                    .status(AuthConstant.STATUS_TBD)
-                    .build();
+        accountMapper.insert(account);
 
-            personOrgPostRelMapper.insert(personOrgPostRel);
 
-            //设置默认账号
-            accountMapper.insert(account);
-        }catch (Exception e){
-            throw new RuntimeException("创建人员失败"+e.getMessage());
-        }
 
         // 返回创建后的详情信息
         return getPersonById(person.getPersonId());
