@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -253,7 +254,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public List<AccountRoleRes> getAccountRoles(List<Long> accountIds) {
         if (CollectionUtils.isEmpty(accountIds)) {
-            return java.util.Collections.emptyList();
+            return Collections.emptyList();
         }
         return accountMapper.selectRolesByAccountIds(accountIds);
     }

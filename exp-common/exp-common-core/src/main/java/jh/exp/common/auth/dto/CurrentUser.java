@@ -23,7 +23,7 @@ public class CurrentUser implements Serializable {
     /**
      * 用户唯一标识，一般为账号 ID 或人员 ID。
      */
-    private String userId;
+    private Long userId;
 
     /**
      * 用户展示名，例如真实姓名或账号名。
@@ -57,11 +57,11 @@ public class CurrentUser implements Serializable {
     private String dataScope;
 
     public CurrentUser(Long userId, Set<String> permissions) {
-        this.userId = userId.toString();
+        this.userId = userId;
         this.permissions = permissions == null ? Collections.emptyList() : List.copyOf(permissions);
     }
 
-    public String getUserId() {
+    public Long getUserId() {
         return userId;
     }
 

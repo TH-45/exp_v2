@@ -18,10 +18,10 @@ public interface SysDictTypeService extends IService<SysDictType> {
      */
     void updateDictType(SysDictType dictType);
 
-    /**
-     * 删除字典类型（逻辑校验）
-     */
-    void deleteDictType(Long id);
+//    /**
+//     * 删除字典类型（逻辑校验）
+//     */
+//    void deleteDictType(Long id);
 
     /**
      * 根据编码查询

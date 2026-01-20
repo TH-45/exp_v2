@@ -110,10 +110,10 @@
                 </el-button>
                 <el-button
                     size="small"
-                    disabled
-                    title="新版本API暂不支持"
+                    :disabled="selectedRows.length !== 1"
+                    @click="openBindDialog"
                 >
-                  关联岗位
+                  关联人员
                 </el-button>
                 <el-button
                     size="small"
@@ -144,7 +144,7 @@
                     v-model="query.postCode"
                     placeholder="请输入岗位编码"
                     clearable
-                    style="width: 180px"
+                    style="width: 160px"
                   />
                 </el-form-item>
                 <el-form-item label="岗位名称">
@@ -152,7 +152,15 @@
                     v-model="query.postName"
                     placeholder="请输入岗位名称"
                     clearable
-                    style="width: 180px"
+                    style="width: 160px"
+                  />
+                </el-form-item>
+                <el-form-item label="类型">
+                  <el-input
+                    v-model="query.postType"
+                    placeholder="请输入类型"
+                    clearable
+                    style="width: 140px"
                   />
                 </el-form-item>
                 <el-form-item label="状态">
@@ -493,24 +501,19 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, computed, onBeforeUnmount, nextTick } from 'vue';
+import { onMounted, reactive, ref, computed, onBeforeUnmount,nextTick } from 'vue';
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Plus, Edit, Delete, Search } from '@element-plus/icons-vue';
 import {
   fetchOrgTree,
   queryOrgPosts,
   createPost,
   updatePost,
-  bindPostsToOrg,
-  changeOrgPostStatus,
-  setOrgPrimaryPost,
-  unbindOrgPosts,
   queryPostDict,
   createOrg,
   deleteOrg,
   type OrgNode,
   type PostVO,
-  type PostStatus,
-  type RelStatus,
+  type PostStatus, changePostStatus,
 } from '@/api/system/post';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
@@ -547,6 +550,7 @@ const query = reactive({
   postCode: '',
   postName: '',
   postStatus: undefined as PostStatus | undefined,
+  postType: '',
   pageNum: 1,
   pageSize: 10,
 });
@@ -555,6 +559,7 @@ const tableData = ref<PostVO[]>([]);
 const tableLoading = ref(false);
 const total = ref(0);
 const selectedRows = ref<PostVO[]>([]);
+const tableRef = ref();
 
 const postDialog = reactive({
   visible: false,
@@ -639,10 +644,6 @@ const parentOrgDialog = reactive({
 const canCreate = computed(() => hasPermission('system:post:create'));
 const canUpdate = computed(() => hasPermission('system:post:update'));
 const canOrgStatus = computed(() => hasPermission('system:orgPost:status'));
-const canSetPrimary = computed(() => hasPermission('system:orgPost:setPrimary'));
-const canUnbind = computed(() => hasPermission('system:orgPost:unbind'));
-const canBind = computed(() => hasPermission('system:orgPost:bind'));
-
 
 onMounted(() => {
   loadOrgTree();
@@ -762,6 +763,28 @@ async function loadOrgTree() {
     const res = await fetchOrgTree();
     // 由于请求拦截器已经处理了响应，直接使用返回的数据
     orgTree.value = (res && Array.isArray(res) && res.length ? res : []) as OrgNode[];
+    // ✅ 自动选中第一个根节点（如果存在）
+    if (orgTree.value.length > 0) {
+      const firstRoot = orgTree.value[0];
+      if (firstRoot) {
+        handleTreeClick(firstRoot);
+
+        const orgId = firstRoot.orgId;
+        const hasChildren = Array.isArray(firstRoot.children) && firstRoot.children.length > 0;
+
+        nextTick(() => {
+          treeRef.value?.setCurrentKey(orgId);
+          if (hasChildren) {
+            treeRef.value?.store.nodesMap[orgId]?.expand();
+          }
+        });
+      }
+    } else {
+      // 如果没有组织，清空右侧
+      currentOrg.value = null;
+      tableData.value = [];
+      total.value = 0;
+    }
   } catch (e) {
     console.error('加载组织树失败:', e);
     orgTree.value = [];
@@ -795,11 +818,23 @@ async function fetchTable() {
     // 构造查询参数
     const searchQuery = {
       orgId: currentOrg.value.orgId,
-      includeChildren: true
+      includeChildren: true,
+      postCode: query.postCode,
+      postName: query.postName,
+      postStatus: query.postStatus,
+      postType: query.postType,
+      pageNum: query.pageNum,
+      pageSize: query.pageSize,
     };
 
     const res = await queryOrgPosts(searchQuery);
     let list = (res && Array.isArray(res)) ? res : [];
+
+    // 🔧 统一字段
+    list = list.map(item => ({
+      ...item,
+      postStatus: item.postStatus ?? (item as any).status,
+    }));
 
     // 应用前端筛选（根据岗位状态）
     tableData.value = list.filter(item => {
@@ -829,6 +864,7 @@ function handleSearch() {
 function handleReset() {
   query.postCode = '';
   query.postName = '';
+  query.postType = '';
   query.postStatus = undefined;
   query.pageNum = 1;
   fetchTable();
@@ -1426,8 +1462,8 @@ function formatDateTime(row: any, column: any, cellValue: string) {
     .search-row {
       display: flex;
       align-items: flex-end;
-      gap: 16px;
-      flex-wrap: wrap;
+      gap: 12px;
+      flex-wrap: nowrap;
 
       :deep(.el-form-item) {
         margin-bottom: 0;

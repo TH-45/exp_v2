@@ -135,4 +135,16 @@ public class RolesController {
         }
     }
 
+    /**
+     * 根据账号查角色信息
+     * @param accountId 账号id
+     * return
+     */
+    @GetMapping("/getRoleByAccount")
+    public ApiResponse<List<RoleListRes>> getRoleByAccount(@RequestParam String accountId) {
+        List<RoleListRes> result = roleService.getRoleByAccount(accountId);
+
+
+    }
+
 }

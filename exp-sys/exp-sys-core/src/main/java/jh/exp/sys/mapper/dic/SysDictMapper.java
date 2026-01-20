@@ -10,5 +10,6 @@ import org.apache.ibatis.annotations.Mapper;
  * 所有字典项的 CRUD 操作统一在此完成
  */
 @Mapper
-public interface SysDictItemMapper extends BaseMapper<SysDictItem> {
+public interface SysDictMapper extends BaseMapper<SysDictItem> {
+
 }

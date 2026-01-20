@@ -48,13 +48,6 @@ public class SysDictType implements Serializable {
     private String dictName;
 
     /**
-     * 所属业务模块（SYS / HR / FIN / OMS 等）
-     */
-    @Column(name = "biz_module", length = 50)
-    @TableField("biz_module")
-    private String bizModule;
-
-    /**
      * 字典类型描述
      */
     @Column(name = "description", length = 255)
@@ -69,15 +62,6 @@ public class SysDictType implements Serializable {
     @Column(name = "status", length = 20)
     @TableField("status")
     private String status;
-
-    /**
-     * 是否系统内置
-     * 1：是（系统预置，不允许删除）
-     * 0：否
-     */
-    @Column(name = "is_system")
-    @TableField("is_system")
-    private Integer isSystem;
 
     /**
      * 创建人用户ID

@@ -29,19 +29,19 @@ public class SysDictTypeServiceImpl extends ServiceImpl<SysDictTypeMapper, SysDi
         updateById(dictType);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void deleteDictType(Long id) {
-        SysDictType type = getById(id);
-        if (type == null) {
-            return;
-        }
-        // 系统内置字典不允许删除
-        if (Integer.valueOf(1).equals(type.getIsSystem())) {
-            throw new RuntimeException("系统内置字典不允许删除");
-        }
-        removeById(id);
-    }
+//    @Override
+//    @Transactional(rollbackFor = Exception.class)
+//    public void deleteDictType(Long id) {
+//        SysDictType type = getById(id);
+//        if (type == null) {
+//            return;
+//        }
+//        // 系统内置字典不允许删除
+//        if (Integer.valueOf(1).equals(type.getIsSystem())) {
+//            throw new RuntimeException("系统内置字典不允许删除");
+//        }
+//        removeById(id);
+//    }
 
     @Override
     public SysDictType getByDictCode(String dictCode) {

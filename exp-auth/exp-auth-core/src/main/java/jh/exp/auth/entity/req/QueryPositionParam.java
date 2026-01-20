@@ -24,14 +24,14 @@ public class QueryPositionParam {
      */
     private String postType;
 
-    /**
-     * 岗位级别
-     */
-    private String postLevel;
-
-    /**
-     * 岗位类别
-     */
-    private String postCategory;
+//    /**
+//     * 岗位级别
+//     */
+//    private String postLevel;
+//
+//    /**
+//     * 岗位类别
+//     */
+//    private String postCategory;
 
 }

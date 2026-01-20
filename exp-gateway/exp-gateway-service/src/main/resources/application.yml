@@ -43,18 +43,29 @@ spring:
             # 外部统一以 /exp/auth/** 访问；下游 exp-auth 服务实际暴露的是 /**（例如 /roles/menus）
             # 因此需要去掉前两段前缀：/exp/auth
             - StripPrefix=2
+
+        - id: sys-service
+          uri: lb://exp-sys
+          predicates:
+            - Path=/exp/sys/**
+          filters:
+            - StripPrefix=2
+
         - id: bidding-service
           uri: lb://exp-bid-contract-service
           predicates:
             - Path=/exp/bidding/**
+
         - id: contracts-service
           uri: lb://exp-bid-contract-service
           predicates:
             - Path=/exp/contracts/**
+
         - id: project-service
           uri: lb://exp-project-service
           predicates:
             - Path=/exp/project/**
+
         - id: corp-service
           uri: lb://exp-corp-service
           predicates:

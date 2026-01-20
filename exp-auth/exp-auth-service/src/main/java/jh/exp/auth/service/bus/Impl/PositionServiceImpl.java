@@ -52,6 +52,7 @@ public class PositionServiceImpl implements PositionService {
                 .eq(StringUtils.hasText(queryParam.getPostCode()), "post_code", queryParam.getPostCode())
                 .like(StringUtils.hasText(queryParam.getPostName()), "post_name", queryParam.getPostName())
                 .eq(StringUtils.hasText(queryParam.getStatus()), "status", queryParam.getStatus())
+                .eq(StringUtils.hasText(queryParam.getPostType()), "post_type", queryParam.getPostType())
                 .orderBy(true, sort.equals("ASC"), "sort_no, create_time");
 
         IPage<Position> positionPage = positionMapper.selectPage(page, positionQueryWrapper);

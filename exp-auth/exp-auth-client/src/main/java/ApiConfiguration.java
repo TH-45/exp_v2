@@ -1,4 +1,5 @@
 import cn.hutool.json.JSONUtil;
+import jh.exp.auth.api.RoleService;
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.constant.ServiceContext;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,11 @@ public class ApiConfiguration {
     @Bean
     PersonService personService() {
         return httpServiceProxyFactory.createClient(PersonService.class);
+    }
+
+    @Bean
+    RoleService roleService() {
+        return httpServiceProxyFactory.createClient(RoleService.class);
     }
 
 

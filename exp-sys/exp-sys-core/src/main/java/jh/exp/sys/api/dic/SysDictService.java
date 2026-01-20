@@ -1,12 +1,13 @@
-package jh.exp.sys.servcie.dic;
+package jh.exp.sys.api.dic;
 
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import jh.exp.sys.entity.dic.SysDictItem;
 
 import java.util.List;
 
-public interface SysDictItemService extends IService<SysDictItem> {
+public interface SysDictService {
 
     /**
      * 新增字典项
@@ -32,4 +33,7 @@ public interface SysDictItemService extends IService<SysDictItem> {
      * 查询启用的字典项
      */
     List<SysDictItem> listEnabledByDictCode(String dictCode);
+
+    SysDictItem getDicItem(String dictCode);
+
 }

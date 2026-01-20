@@ -5,9 +5,11 @@ import jh.exp.auth.entity.res.RoleDetailRes;
 import jh.exp.auth.entity.res.RoleListRes;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.service.annotation.HttpExchange;
 
 import java.util.List;
-
+@HttpExchange("/roles")
 public interface RoleService {
 
     /**
@@ -18,6 +20,7 @@ public interface RoleService {
     /**
      * 根据ID查询角色详情
      */
+    @PostMapping("/detail")
     RoleDetailRes getRoleById(Long roleId);
 
     /**

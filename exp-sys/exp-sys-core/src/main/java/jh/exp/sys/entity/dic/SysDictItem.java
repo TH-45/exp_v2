@@ -33,9 +33,9 @@ public class SysDictItem implements Serializable {
     /**
      * 所属字典类型编码
      */
-    @Column(name = "dict_code", nullable = false, length = 100)
-    @TableField("dict_code")
-    private String dictCode;
+    @Column(name = "dict_Type_code", nullable = false, length = 100)
+    @TableField("dict_Type_code")
+    private String dictTypeCode;
 
     /**
      * 字典项编码（程序内部使用）
@@ -46,7 +46,6 @@ public class SysDictItem implements Serializable {
 
     /**
      * 字典项值（业务表真实存储的值）
-     * ⚠ 上线后不允许修改
      */
     @Column(name = "item_value", nullable = false, length = 100)
     @TableField("item_value")
@@ -58,14 +57,6 @@ public class SysDictItem implements Serializable {
     @Column(name = "item_label", nullable = false, length = 100)
     @TableField("item_label")
     private String itemLabel;
-
-    /**
-     * 父级字典项ID
-     * 0 表示根节点（用于树形字典）
-     */
-    @Column(name = "parent_id")
-    @TableField("parent_id")
-    private Long parentId;
 
     /**
      * 排序号
@@ -83,22 +74,6 @@ public class SysDictItem implements Serializable {
     @TableField("status")
     private String status;
 
-    /**
-     * 是否默认项
-     * 1：是
-     * 0：否
-     */
-    @Column(name = "is_default")
-    @TableField("is_default")
-    private Integer isDefault;
-
-    /**
-     * 租户ID
-     * 0 表示平台级字典
-     */
-    @Column(name = "tenant_id")
-    @TableField("tenant_id")
-    private Long tenantId;
 
     /**
      * 备注说明

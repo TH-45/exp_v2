@@ -68,5 +68,6 @@ public interface AccountService {
     /**
      * 获取账号角色信息
      */
+    @PostExchange("/roles")
     List<AccountRoleRes> getAccountRoles(List<Long> accountIds);
 }

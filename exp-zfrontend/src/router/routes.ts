@@ -77,6 +77,16 @@ const routes: RouteRecordRaw[] = [
           perms: ['system:menu:view'],
         },
       },
+      {
+        path: 'system/dict',
+        name: 'SystemDict',
+        component: () => import('@/views/System/Dict/index.vue'),
+        meta: {
+          title: '字典管理',
+          icon: 'Collection',
+          perms: ['system:dict:view'],
+        },
+      },
 
       // 招投标管理
       {
