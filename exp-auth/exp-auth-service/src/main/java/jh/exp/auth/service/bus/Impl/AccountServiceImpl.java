@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
+import jh.exp.auth.entity.res.PersonDetailRes;
 import jh.exp.auth.service.bus.AccountService;
 import jh.exp.auth.constant.AuthConstant;
 import jh.exp.auth.entity.Account;
@@ -16,6 +17,7 @@ import jh.exp.auth.entity.req.*;
 import jh.exp.auth.mapper.AccountMapper;
 import jh.exp.auth.mapper.PersonMapper;
 
+import jh.exp.auth.service.bus.PersonService;
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.req.SimplePageReq;
@@ -35,6 +37,8 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
 
     private final PersonMapper personMapper;
+
+//    private final PersonService personService;
 
     @Override
     public SimplePageRes<AccountListRes> queryAccountList(SimplePageReq<QueryAccountParam> req) {
@@ -79,6 +83,8 @@ public class AccountServiceImpl implements AccountService {
         if (checkAccountNameExists(req.getAccountName(), null)) {
             throw new RuntimeException("账号名称已存在");
         }
+//        PersonDetailRes person = personService.getPersonById(req.getPersonId());
+
 
         Account account = new Account();
         account.setAccountName(req.getAccountName());

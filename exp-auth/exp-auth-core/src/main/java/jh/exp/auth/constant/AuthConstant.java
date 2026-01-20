@@ -3,6 +3,25 @@ package jh.exp.auth.constant;
 import java.lang.reflect.Field;
 
 public class AuthConstant {
+    /**
+     * 人员-组织-岗位状态 - 在任
+     */
+    public static final String STATUS_ON = "ON";
+
+    /**
+     * 人员-组织-岗位状态 - 已结束
+     */
+    public static final String STATUS_OFF = "OFF";
+
+    /**
+     * 人员-组织-岗位状态 - 待定
+     */
+    public static final String STATUS_TBD = "tbd";
+
+    /**
+     * 默认角色
+     */
+    public static final Long DEFAULT_ROLE = 1L;
 
     /**
      * 初始账号密码 123456
@@ -25,6 +44,11 @@ public class AuthConstant {
      * 在职
      */
     public static final String ONJOB="ONJOB";
+
+    /**
+     * 人员初始状态
+     */
+    public static final String INIT="INIT";
 
     /**
      * 超级管理员

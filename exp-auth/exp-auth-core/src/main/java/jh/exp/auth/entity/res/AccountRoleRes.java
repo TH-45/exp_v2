@@ -26,4 +26,9 @@ public class AccountRoleRes {
      * 角色名称
      */
     private String roleName;
+
+    /**
+     * 角色编码
+     */
+    private String roleCode;
 }
