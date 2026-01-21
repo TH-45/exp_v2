@@ -27,13 +27,18 @@ public interface SysDictService {
     /**
      * 根据字典类型编码查询字典项
      */
-    List<SysDictItem> listByDictCode(String dictCode);
+    List<SysDictItem> listByDictTypeCode(String dictTypeCode);
 
     /**
      * 查询启用的字典项
      */
-    List<SysDictItem> listEnabledByDictCode(String dictCode);
+    List<SysDictItem> listEnabledByItemCode(String itemCode);
 
+    /**
+     * 根据字典项编码查询字典项
+     * @param dictCode 字典项编码
+     * @return
+     */
     SysDictItem getDicItem(String dictCode);
 
 }

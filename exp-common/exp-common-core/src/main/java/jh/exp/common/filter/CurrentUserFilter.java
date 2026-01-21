@@ -76,7 +76,7 @@ public class CurrentUserFilter extends OncePerRequestFilter {
         }
 
         CurrentUser currentUser = new CurrentUser();
-        currentUser.setUserId(userId);
+        currentUser.setUserId(Long.valueOf(userId));
         currentUser.setUsername(userName);
         currentUser.setDeptId(request.getHeader(ServiceContext.DEPT_ID_HEADER));
         currentUser.setDeptName(request.getHeader(ServiceContext.DEPT_NAME_HEADER));

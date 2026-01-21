@@ -4,6 +4,9 @@ package jh.exp.sys.mapper.dic;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import jh.exp.sys.entity.dic.SysDictItem;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * 字典项 Mapper
@@ -12,4 +15,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SysDictMapper extends BaseMapper<SysDictItem> {
 
+    List<SysDictItem> listByDictCode(@Param("dictTypeCode") String dictTypeCode);
 }

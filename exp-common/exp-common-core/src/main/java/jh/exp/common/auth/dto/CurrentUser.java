@@ -65,7 +65,7 @@ public class CurrentUser implements Serializable {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 

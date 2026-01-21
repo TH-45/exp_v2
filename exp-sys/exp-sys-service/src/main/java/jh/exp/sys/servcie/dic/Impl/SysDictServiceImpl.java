@@ -60,8 +60,6 @@ public class SysDictServiceImpl implements SysDictService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteDictItem(Long id) {
         CurrentUser currentUser = CurrentUserHolder.get();
-
-        //Todo 角色校验，账号查角色
         List<AccountRoleRes> accountRoles = accountService.getAccountRoles(List.of(currentUser.getUserId()));
         List<String> roleCodes = accountRoles.stream().map(AccountRoleRes::getRoleCode).toList();
         if (!roleCodes.contains(AuthConstant.ADMIN)) {
@@ -69,29 +67,28 @@ public class SysDictServiceImpl implements SysDictService {
         }
         removeById(id);
     }
-//
-//    @Override
-//    public List<SysDictItem> listByDictCode(String dictCode) {
-//        return lambdaQuery()
-//                .eq(SysDictItem::getDictCode, dictCode)
-//                .orderByAsc(SysDictItem::getSortNo)
-//                .list();
-//    }
-//
-//    @Override
-//    public List<SysDictItem> listEnabledByDictCode(String dictCode) {
-//        return lambdaQuery()
-//                .eq(SysDictItem::getDictCode, dictCode)
-//                .eq(SysDictItem::getStatus, "ENABLED")
-//                .orderByAsc(SysDictItem::getSortNo)
-//                .list();
-//    }
+
+    @Override
+    public List<SysDictItem> listByDictTypeCode(String dictTypeCode) {
+        if (dictTypeCode == null) {
+            return null;
+        }
+        return sysDictMapper.listByDictCode(dictTypeCode);
+    }
+
+    @Override
+    public List<SysDictItem> listEnabledByItemCode(String itemCode) {
+        QueryWrapper<SysDictItem> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("item_code", itemCode);
+        queryWrapper.eq("status", CommonConstant.ENABLED_STATUS_STR);
+        return sysDictMapper.selectList(queryWrapper);
+    }
 
     @Override
     public SysDictItem getDicItem(String itemCode) {
         QueryWrapper<SysDictItem> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("item_code", itemCode);
-        queryWrapper.eq("status", CommonConstant.ENABLED_STATUS);
+        queryWrapper.eq("status", CommonConstant.ENABLED_STATUS_STR);
         return sysDictMapper.selectOne(queryWrapper);
 
     }
