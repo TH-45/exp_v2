@@ -3,8 +3,8 @@ package jh.exp.bid.contract.service.service.bus;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationCommitteeReq;
 import jh.exp.bid.contract.core.entity.req.QueryEvaluationCommitteeReq;
 import jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 
 import java.util.List;
 

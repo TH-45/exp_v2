@@ -7,16 +7,17 @@ import jh.exp.auth.clinet.api.AccountService;
 import jh.exp.auth.clinet.api.PersonService;
 
 
+import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.entity.ExpBid;
 import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.BidDetailRes;
 import jh.exp.bid.contract.core.entity.res.BidListRes;
 import jh.exp.bid.contract.core.mapper.BidMapper;
 import jh.exp.bid.contract.service.service.bus.BidService;
-import jh.exp.common.auth.CurrentUserHolder;
-import jh.exp.common.auth.dto.CurrentUser;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.core.auth.CurrentUserHolder;
+import jh.exp.common.core.auth.dto.CurrentUser;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

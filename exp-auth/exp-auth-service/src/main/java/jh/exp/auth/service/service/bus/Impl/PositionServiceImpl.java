@@ -20,11 +20,11 @@ import jh.exp.auth.service.service.bus.PositionService;
 import jh.exp.auth.core.mapper.OrgPostRelMapper;
 import jh.exp.auth.core.mapper.PositionMapper;
 
-import jh.exp.common.auth.CurrentUserHolder;
-import jh.exp.common.auth.dto.CurrentUser;
-import jh.exp.common.constant.CommonConstant;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.core.auth.CurrentUserHolder;
+import jh.exp.common.core.auth.dto.CurrentUser;
+import jh.exp.common.core.constant.CommonConstant;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

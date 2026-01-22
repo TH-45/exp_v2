@@ -2,8 +2,8 @@ package jh.exp.auth.clinet;
 
 import cn.hutool.json.JSONUtil;
 import jh.exp.auth.clinet.api.RoleService;
-import jh.exp.common.auth.CurrentUserHolder;
-import jh.exp.common.constant.ServiceContext;
+import jh.exp.common.core.auth.CurrentUserHolder;
+import jh.exp.common.core.constant.ServiceContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;

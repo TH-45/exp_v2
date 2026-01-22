@@ -28,10 +28,10 @@ import jh.exp.auth.entity.node.MenuNode;
 import jh.exp.auth.core.mapper.MenuMapper;
 import jh.exp.auth.core.mapper.RoleMapper;
 
-import jh.exp.common.auth.dto.CurrentUser;
-import jh.exp.common.exception.BizException;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.core.auth.dto.CurrentUser;
+import jh.exp.common.core.exception.BizException;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;

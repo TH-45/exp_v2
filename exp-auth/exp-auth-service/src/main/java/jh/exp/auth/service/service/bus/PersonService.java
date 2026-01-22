@@ -6,8 +6,8 @@ package jh.exp.auth.service.service.bus;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.auth.core.entity.res.PersonInfoRes;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 
 public interface PersonService {
     /**

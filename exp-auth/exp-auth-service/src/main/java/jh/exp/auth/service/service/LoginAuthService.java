@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import jh.exp.auth.core.entity.Account;
 import jh.exp.auth.core.mapper.AccountMapper;
 
-import jh.exp.common.auth.dto.LoginRequest;
-import jh.exp.common.auth.dto.LoginUserInfo;
+import jh.exp.common.core.auth.dto.LoginRequest;
+import jh.exp.common.core.auth.dto.LoginUserInfo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

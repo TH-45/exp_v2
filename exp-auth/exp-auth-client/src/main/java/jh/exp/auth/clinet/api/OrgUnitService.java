@@ -5,8 +5,8 @@ import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.OrgUnitDetailRes;
 import jh.exp.auth.core.entity.res.OrgUnitListRes;
 import jh.exp.auth.core.entity.res.OrgUnitTreeRes;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 
 import java.util.List;
 

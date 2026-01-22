@@ -3,8 +3,8 @@ package jh.exp.bid.contract.service.controller.bus;
 import jh.exp.bid.contract.core.entity.ExpBidEvaluationMember;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationMemberReq;
 import jh.exp.bid.contract.service.service.bus.EvaluationMemberService;
-import jh.exp.common.annotation.RequiresPermissions;
-import jh.exp.common.api.ApiResponse;
+import jh.exp.common.core.annotation.RequiresPermissions;
+import jh.exp.common.core.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

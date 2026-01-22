@@ -4,7 +4,7 @@ import jh.exp.auth.core.entity.Account;
 import jh.exp.auth.core.mapper.AccountMapper;
 
 
-import jh.exp.common.auth.dto.ProfileResult;
+import jh.exp.common.core.auth.dto.ProfileResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;

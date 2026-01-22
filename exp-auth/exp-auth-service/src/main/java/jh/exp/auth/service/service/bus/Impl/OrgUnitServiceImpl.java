@@ -17,11 +17,11 @@ import jh.exp.auth.service.service.bus.OrgUnitService;
 
 import jh.exp.auth.core.mapper.OrgUnitMapper;
 
-import jh.exp.common.auth.CurrentUserHolder;
-import jh.exp.common.auth.dto.CurrentUser;
-import jh.exp.common.exception.BizException;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.core.auth.CurrentUserHolder;
+import jh.exp.common.core.auth.dto.CurrentUser;
+import jh.exp.common.core.exception.BizException;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;

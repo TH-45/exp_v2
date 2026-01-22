@@ -1,8 +1,8 @@
 package jh.exp.common.auth.client;
 
-import jh.exp.common.auth.dto.LoginRequest;
-import jh.exp.common.auth.dto.LoginUserInfo;
-import jh.exp.common.auth.dto.ProfileResult;
+import jh.exp.common.core.auth.dto.LoginRequest;
+import jh.exp.common.core.auth.dto.LoginUserInfo;
+import jh.exp.common.core.auth.dto.ProfileResult;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

@@ -31,7 +31,7 @@
     </appender>
 
     <!-- 休眠监控：超过一定时间没有业务日志输出时打印醒目提示 -->
-    <appender name="IDLE_MONITOR" class="jh.exp.common.logging.IdleMonitorAppender">
+    <appender name="IDLE_MONITOR" class="jh.exp.common.core.logging.IdleMonitorAppender">
         <!-- 使用 LOG_FILE 作为服务标识，例如 auth / bid-contract / project 等 -->
         <serviceName>${LOG_FILE}</serviceName>
         <!-- 判定休眠的阈值（秒），默认 120，可按需调整 -->

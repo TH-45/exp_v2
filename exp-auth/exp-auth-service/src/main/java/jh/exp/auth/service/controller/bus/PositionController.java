@@ -8,9 +8,9 @@ import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.PositionDetailRes;
 import jh.exp.auth.core.entity.res.PositionListRes;
 import jh.exp.auth.service.service.bus.PositionService;
-import jh.exp.common.api.ApiResponse;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.core.api.ApiResponse;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

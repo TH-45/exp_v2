@@ -27,11 +27,11 @@ import jh.exp.auth.core.mapper.OrgUnitMapper;
 import jh.exp.auth.core.mapper.PersonMapper;
 import jh.exp.auth.core.mapper.PositionMapper;
 
-import jh.exp.common.auth.CurrentUserHolder;
-import jh.exp.common.auth.dto.CurrentUser;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
-import jh.exp.common.util.RandomInitialPasswordUtil;
+import jh.exp.common.core.auth.CurrentUserHolder;
+import jh.exp.common.core.auth.dto.CurrentUser;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
+import jh.exp.common.core.util.RandomInitialPasswordUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

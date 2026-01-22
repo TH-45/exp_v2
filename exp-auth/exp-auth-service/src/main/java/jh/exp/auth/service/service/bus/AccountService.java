@@ -8,8 +8,8 @@ import jh.exp.auth.core.entity.res.AccountRoleRes;
 
 
 
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 
 import java.util.List;
 

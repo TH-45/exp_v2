@@ -5,8 +5,8 @@ import jh.exp.auth.core.entity.Position;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.PositionDetailRes;
 import jh.exp.auth.core.entity.res.PositionListRes;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

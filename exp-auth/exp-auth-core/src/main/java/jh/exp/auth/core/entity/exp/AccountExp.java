@@ -3,7 +3,7 @@ package jh.exp.auth.entity.exp;
 
 
 import jh.exp.auth.core.entity.Account;
-import jh.exp.common.ext.ExtEntity;
+import jh.exp.common.core.ext.ExtEntity;
 
 import java.io.Serializable;
 

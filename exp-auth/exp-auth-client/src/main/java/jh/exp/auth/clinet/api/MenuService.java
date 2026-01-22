@@ -6,9 +6,9 @@ import jh.exp.auth.core.entity.res.MenuDetailRes;
 import jh.exp.auth.core.entity.res.MenuListRes;
 import jh.exp.auth.core.entity.res.MenuTreeRes;
 import jh.exp.auth.core.entity.res.MenusRes;
-import jh.exp.common.auth.dto.CurrentUser;
-import jh.exp.common.req.SimplePageReq;
-import jh.exp.common.res.SimplePageRes;
+import jh.exp.common.core.auth.dto.CurrentUser;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 
 import java.util.List;
 

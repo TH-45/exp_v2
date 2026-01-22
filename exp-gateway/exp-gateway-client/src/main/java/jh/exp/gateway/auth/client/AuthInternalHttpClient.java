@@ -1,8 +1,8 @@
 package jh.exp.gateway.auth.client;
 
-import jh.exp.common.auth.dto.LoginRequest;
-import jh.exp.common.auth.dto.LoginUserInfo;
-import jh.exp.common.auth.dto.ProfileResult;
+import jh.exp.common.core.auth.dto.LoginRequest;
+import jh.exp.common.core.auth.dto.LoginUserInfo;
+import jh.exp.common.core.auth.dto.ProfileResult;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
