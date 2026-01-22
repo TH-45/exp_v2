@@ -532,7 +532,6 @@ const treeFilter = ref('');
 const treeLoading = ref(false);
 const currentOrg = ref<OrgNode | null>(null);
 const currentTreeOrg = ref<OrgNode | null>(null); // 左侧树选中的组织
-const originalTableData = ref<PostVO[]>([]); // 原始表格数据，用于前端筛选
 const isTreeExpanded = ref(false); // 组织树是否展开
 const isEditMode = ref(false); // 编辑模式
 const splitRef = ref<HTMLElement>();
@@ -579,7 +578,7 @@ const postForm = reactive<PostVO>({
       sortNo: 0,
       postDesc: '',
       remark: '',
-      isSystem: 0,
+      isSystem: 0
 });
 const postRules: FormRules = {
   postCode: [{ required: true, message: '请输入岗位编码', trigger: 'blur' }],
@@ -830,26 +829,16 @@ async function fetchTable() {
     };
 
     const res = await queryOrgPosts(searchQuery);
-    let list = (res && Array.isArray(res)) ? res : [];
+    total.value = res.total;
 
-    // 🔧 统一字段
-    list = list.map(item => ({
+    tableData.value = res.list.map(item => ({
       ...item,
-      postStatus: item.postStatus ?? (item as any).status,
+      postStatus: item.status
     }));
 
-    // 应用前端筛选（根据岗位状态）
-    tableData.value = list.filter(item => {
-      if (!query.postStatus) return true;
-      return item.postStatus === query.postStatus;
-    });
 
-    // 保存原始数据
-    originalTableData.value = list;
-    total.value = tableData.value.length;
   } catch (e) {
     console.error('加载岗位列表失败:', e);
-    originalTableData.value = [];
     tableData.value = [];
     total.value = 0;
   } finally {

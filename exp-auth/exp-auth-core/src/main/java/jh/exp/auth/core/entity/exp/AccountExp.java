@@ -1,4 +1,4 @@
-package jh.exp.auth.entity.exp;
+package jh.exp.auth.core.entity.exp;
 
 
 

@@ -5,7 +5,7 @@
 <mapper namespace="jh.exp.auth.core.mapper.AccountMapper">
 
     <!-- 分页查询账号列表（多表联查） -->
-    <select id="selectAccountList" resultType="jh.exp.auth.entity.res.AccountListRes">
+    <select id="selectAccountList" resultType="jh.exp.auth.core.entity.res.AccountListRes">
         SELECT a.account_id, a.account_name, a.account_display, a.mobile, a.email, a.status, a.last_login_time, a.created_time,
                a.person_id, p.person_code, p.person_name,
                o.org_code, o.org_name,
@@ -52,7 +52,7 @@
     </select>
 
     <!-- 根据账号ID查询账号详情信息（多表联查） -->
-    <select id="selectAccountDetailById" resultType="jh.exp.auth.entity.res.AccountDetailRes">
+    <select id="selectAccountDetailById" resultType="jh.exp.auth.core.entity.res.AccountDetailRes">
         SELECT a.account_id, a.account_name, a.account_display, a.mobile, a.email,
                a.person_id, p.person_code, p.person_name,
                a.org_id, o.org_code, o.org_name,
@@ -80,7 +80,7 @@
     </select>
 
     <!-- 根据账号id列表查角色信息（多表联查） -->
-    <select id="selectRolesByAccountIds" resultType="jh.exp.auth.entity.res.AccountRoleRes">
+    <select id="selectRolesByAccountIds" resultType="jh.exp.auth.core.entity.res.AccountRoleRes">
         SELECT ra.principal_id as accountId, r.role_id as roleId, r.role_name as roleName
         FROM exp_role_assign ra
         INNER JOIN exp_role r ON ra.role_id = r.role_id

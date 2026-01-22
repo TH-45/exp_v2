@@ -5,7 +5,7 @@
 <mapper namespace="jh.exp.auth.core.mapper.MenuMapper">
 
     <!-- 分页查询菜单列表 -->
-    <select id="selectMenuList" resultType="jh.exp.auth.entity.res.MenuListRes">
+    <select id="selectMenuList" resultType="jh.exp.auth.core.entity.res.MenuListRes">
         SELECT m.menu_id, m.parent_menu_id, m.menu_code, m.menu_name, m.menu_type,
                m.route_path, m.component, m.icon, m.visible, m.status, m.sort_no, m.remark
         FROM exp_menu m
@@ -27,7 +27,7 @@
     </select>
 
     <!-- 根据菜单ID查询菜单详情信息 -->
-    <select id="selectMenuDetailById" resultType="jh.exp.auth.entity.res.MenuDetailRes">
+    <select id="selectMenuDetailById" resultType="jh.exp.auth.core.entity.res.MenuDetailRes">
         SELECT m.menu_id, m.parent_menu_id, m.menu_code, m.menu_name, m.menu_type,
                m.route_path, m.component, m.icon, m.visible, m.status, m.sort_no, m.remark
         FROM exp_menu m
@@ -45,7 +45,7 @@
     </select>
 
     <!-- 根据菜单ID列表批量查询菜单详情 -->
-    <select id="selectMenuDetailByIds" resultType="jh.exp.auth.entity.res.MenuDetailRes">
+    <select id="selectMenuDetailByIds" resultType="jh.exp.auth.core.entity.res.MenuDetailRes">
         SELECT m.menu_id, m.parent_menu_id, m.menu_code, m.menu_name, m.menu_type,
                m.route_path, m.component, m.icon, m.visible, m.status, m.sort_no, m.remark
         FROM exp_menu m

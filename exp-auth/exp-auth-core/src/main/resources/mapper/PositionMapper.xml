@@ -39,12 +39,12 @@
     </sql>
 
     <!-- 不分页 -->
-    <select id="selectPositionListByOrg" resultType="jh.exp.auth.entity.res.PositionListRes">
+    <select id="selectPositionListByOrg" resultType="jh.exp.auth.core.entity.res.PositionListRes">
         <include refid="selectPositionByOrgSql"/>
     </select>
 
     <!-- 分页 -->
-    <select id="selectPositionPageByOrg" resultType="jh.exp.auth.entity.res.PositionListRes">
+    <select id="selectPositionPageByOrg" resultType="jh.exp.auth.core.entity.res.PositionListRes">
         <include refid="selectPositionByOrgSql"/>
     </select>
 

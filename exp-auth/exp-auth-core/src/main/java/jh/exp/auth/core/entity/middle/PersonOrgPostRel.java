@@ -1,4 +1,4 @@
-package jh.exp.auth.entity.middle;
+package jh.exp.auth.core.entity.middle;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;

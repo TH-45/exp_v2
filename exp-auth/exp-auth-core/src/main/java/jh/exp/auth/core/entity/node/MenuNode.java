@@ -1,4 +1,4 @@
-package jh.exp.auth.entity.node;
+package jh.exp.auth.core.entity.node;
 
 import java.util.List;
 

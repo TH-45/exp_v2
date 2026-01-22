@@ -1,6 +1,6 @@
 package jh.exp.auth.core.entity.res;
 
-import jh.exp.auth.entity.node.MenuNode;
+import jh.exp.auth.core.entity.node.MenuNode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

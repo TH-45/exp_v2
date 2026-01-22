@@ -17,15 +17,21 @@ export interface PostVO {
   postType?: string;
   postLevel?: string;
   postCategory?: string;
-  postStatus: PostStatus;
+  status: PostStatus;
+  defaultRoleName?: string;
   defaultDataScope?: string;
   isSystem?: number;
   sortNo?: number;
   postDesc?: string;
   remark?: string;
-
-
   createdTime?: string;
+}
+
+export interface PageResult<T> {
+  list: T[];
+  total: number;
+  page: number;
+  size: number;
 }
 
 export interface OrgPostQuery {
@@ -38,12 +44,7 @@ export interface OrgPostQuery {
   pageSize: number;
 }
 
-export interface PageResult<T> {
-  list?: T[];
-  rows?: T[];
-  records?: T[];
-  total?: number;
-}
+
 
 const BASE_POST = '/exp/auth/position';
 const BASE_ORG_POST = '/exp/auth/orgunit';
@@ -55,7 +56,7 @@ export function fetchOrgTree(params?: { orgCode?: string; orgName?: string }) {
 
 // 查询某组织的岗位列表（关联信息）
 export function queryOrgPosts(params: { pageNum: number; pageSize: number; queryParam: { orgId: number; includeChildren?: boolean; status?: string }; }) {
-  return request.post<PostVO[], PostVO[]>(
+  return request.post<PageResult<PostVO>,PageResult<PostVO>>(
     `${BASE_POST}/queryByOrg`,
     params,
   );

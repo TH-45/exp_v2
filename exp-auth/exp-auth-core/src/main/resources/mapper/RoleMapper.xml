@@ -5,7 +5,7 @@
 <mapper namespace="jh.exp.auth.core.mapper.RoleMapper">
 
     <!-- 分页查询角色列表 -->
-    <select id="selectRoleList" resultType="jh.exp.auth.entity.res.RoleListRes">
+    <select id="selectRoleList" resultType="jh.exp.auth.core.entity.res.RoleListRes">
         SELECT r.role_id, r.role_code, r.role_name, r.role_type, r.status,
                r.data_scope_type, r.is_system, r.sort_no, r.created_time, r.remark,
                creator.account_display as created_name
@@ -29,7 +29,7 @@
     </select>
 
     <!-- 根据角色ID查询角色详情信息（多表联查） -->
-    <select id="selectRoleDetailById" resultType="jh.exp.auth.entity.res.RoleDetailRes">
+    <select id="selectRoleDetailById" resultType="jh.exp.auth.core.entity.res.RoleDetailRes">
         SELECT r.role_id, r.role_code, r.role_name, r.role_type, r.status,
                r.data_scope_type, r.data_scope_detail, r.is_system, r.sort_no,
                r.created_time, r.updated_time, r.remark,
@@ -50,7 +50,7 @@
     </select>
 
     <!-- 根据角色ID列表批量查询角色详情 -->
-    <select id="selectRoleDetailByIds" resultType="jh.exp.auth.entity.res.RoleDetailRes">
+    <select id="selectRoleDetailByIds" resultType="jh.exp.auth.core.entity.res.RoleDetailRes">
         SELECT r.role_id, r.role_code, r.role_name, r.role_type, r.status,
                r.data_scope_type, r.data_scope_detail, r.is_system, r.sort_no,
                r.created_time, r.updated_time, r.remark,

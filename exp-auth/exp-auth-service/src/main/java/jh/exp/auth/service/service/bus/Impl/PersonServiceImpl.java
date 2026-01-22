@@ -11,7 +11,7 @@ import jh.exp.auth.core.entity.res.AccountRoleRes;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.auth.core.entity.res.PersonInfoRes;
 
-import jh.exp.auth.entity.middle.PersonOrgPostRel;
+import jh.exp.auth.core.entity.middle.PersonOrgPostRel;
 import jh.exp.auth.core.mapper.middle.PersonOrgPostRelMapper;
 import jh.exp.auth.service.service.bus.AccountService;
 import jh.exp.auth.service.service.bus.PersonService;
