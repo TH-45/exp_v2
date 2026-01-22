@@ -1,4 +1,4 @@
-package jh.exp.auth.entity.req;
+package jh.exp.auth.core.entity.req;
 
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;

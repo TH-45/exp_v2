@@ -1,10 +1,14 @@
-package jh.exp.auth.controller.bus;
+package jh.exp.auth.service.controller.bus;
 
-import jh.exp.auth.entity.req.*;
-import jh.exp.auth.entity.res.MenuDetailRes;
-import jh.exp.auth.entity.res.MenuListRes;
-import jh.exp.auth.entity.res.MenuTreeRes;
-import jh.exp.auth.service.bus.MenuService;
+
+
+
+
+import jh.exp.auth.core.entity.req.*;
+import jh.exp.auth.core.entity.res.MenuDetailRes;
+import jh.exp.auth.core.entity.res.MenuListRes;
+import jh.exp.auth.core.entity.res.MenuTreeRes;
+import jh.exp.auth.service.service.bus.MenuService;
 import jh.exp.common.api.ApiResponse;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;

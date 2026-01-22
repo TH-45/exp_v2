@@ -1,4 +1,4 @@
-package jh.exp.auth.entity.res;
+package jh.exp.auth.core.entity.res;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

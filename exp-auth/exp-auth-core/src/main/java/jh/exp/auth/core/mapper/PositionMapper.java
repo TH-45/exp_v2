@@ -2,8 +2,9 @@ package jh.exp.auth.core.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import jh.exp.auth.entity.Position;
-import jh.exp.auth.entity.res.PositionListRes;
+import jh.exp.auth.core.entity.Position;
+
+import jh.exp.auth.core.entity.res.PositionListRes;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;

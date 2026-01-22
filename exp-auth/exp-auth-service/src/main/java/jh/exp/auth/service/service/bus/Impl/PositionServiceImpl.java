@@ -1,17 +1,22 @@
-package jh.exp.auth.service.bus.Impl;
+package jh.exp.auth.service.service.bus.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import jh.exp.auth.entity.OrgUnit;
+
+import jh.exp.auth.core.entity.OrgUnit;
+import jh.exp.auth.core.entity.Position;
+import jh.exp.auth.core.entity.req.*;
+import jh.exp.auth.core.entity.res.PositionDetailRes;
+import jh.exp.auth.core.entity.res.PositionListRes;
 import jh.exp.auth.core.mapper.OrgUnitMapper;
-import jh.exp.auth.service.bus.PositionService;
-import jh.exp.auth.entity.OrgPostRel;
-import jh.exp.auth.entity.Position;
-import jh.exp.auth.entity.req.*;
-import jh.exp.auth.entity.res.PositionDetailRes;
-import jh.exp.auth.entity.res.PositionListRes;
+import jh.exp.auth.service.service.bus.PositionService;
+
+
+
+
+
 import jh.exp.auth.core.mapper.OrgPostRelMapper;
 import jh.exp.auth.core.mapper.PositionMapper;
 

@@ -1,15 +1,20 @@
-package jh.exp.auth.service.bus.Impl;
+package jh.exp.auth.service.service.bus.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import jh.exp.auth.service.bus.OrgUnitService;
-import jh.exp.auth.entity.OrgUnit;
-import jh.exp.auth.entity.res.OrgUnitDetailRes;
-import jh.exp.auth.entity.res.OrgUnitListRes;
-import jh.exp.auth.entity.res.OrgUnitTreeRes;
-import jh.exp.auth.entity.req.*;
+import jh.exp.auth.core.entity.OrgUnit;
+import jh.exp.auth.core.entity.req.*;
+import jh.exp.auth.core.entity.res.OrgUnitDetailRes;
+import jh.exp.auth.core.entity.res.OrgUnitListRes;
+import jh.exp.auth.core.entity.res.OrgUnitTreeRes;
+import jh.exp.auth.service.service.bus.OrgUnitService;
+
+
+
+
+
 import jh.exp.auth.core.mapper.OrgUnitMapper;
 
 import jh.exp.common.auth.CurrentUserHolder;

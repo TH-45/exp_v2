@@ -1,11 +1,10 @@
-package jh.exp.auth.controller;
+package jh.exp.auth.service.controller;
 
-import jh.exp.auth.service.LoginAuthService;
+import jh.exp.auth.service.service.LoginAuthService;
 import jh.exp.common.auth.dto.LoginRequest;
 import jh.exp.common.auth.dto.LoginUserInfo;
 import jh.exp.common.auth.dto.ProfileResult;
-import jh.exp.auth.service.LoginAuthService;
-import jh.exp.auth.service.ProfileService;
+import jh.exp.auth.service.service.ProfileService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -1,8 +1,11 @@
-package jh.exp.auth.service.bus;
+package jh.exp.auth.service.service.bus;
 
-import jh.exp.auth.entity.req.*;
-import jh.exp.auth.entity.res.RoleDetailRes;
-import jh.exp.auth.entity.res.RoleListRes;
+
+
+
+import jh.exp.auth.core.entity.req.*;
+import jh.exp.auth.core.entity.res.RoleDetailRes;
+import jh.exp.auth.core.entity.res.RoleListRes;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
 

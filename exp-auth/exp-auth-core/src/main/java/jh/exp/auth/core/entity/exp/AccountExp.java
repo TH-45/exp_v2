@@ -1,8 +1,8 @@
 package jh.exp.auth.entity.exp;
 
 
-import jakarta.persistence.Column;
-import jh.exp.auth.entity.Account;
+
+import jh.exp.auth.core.entity.Account;
 import jh.exp.common.ext.ExtEntity;
 
 import java.io.Serializable;

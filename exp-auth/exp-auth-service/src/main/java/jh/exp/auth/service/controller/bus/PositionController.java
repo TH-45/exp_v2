@@ -1,11 +1,13 @@
-package jh.exp.auth.controller.bus;
+package jh.exp.auth.service.controller.bus;
 
 import jakarta.validation.Valid;
-import jh.exp.auth.entity.Position;
-import jh.exp.auth.entity.req.*;
-import jh.exp.auth.entity.res.PositionDetailRes;
-import jh.exp.auth.entity.res.PositionListRes;
-import jh.exp.auth.service.bus.PositionService;
+
+
+import jh.exp.auth.core.entity.Position;
+import jh.exp.auth.core.entity.req.*;
+import jh.exp.auth.core.entity.res.PositionDetailRes;
+import jh.exp.auth.core.entity.res.PositionListRes;
+import jh.exp.auth.service.service.bus.PositionService;
 import jh.exp.common.api.ApiResponse;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;

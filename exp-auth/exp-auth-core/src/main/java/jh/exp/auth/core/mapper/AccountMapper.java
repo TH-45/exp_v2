@@ -3,10 +3,12 @@ package jh.exp.auth.core.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import jh.exp.auth.entity.Account;
-import jh.exp.auth.entity.res.AccountDetailRes;
-import jh.exp.auth.entity.res.AccountListRes;
-import jh.exp.auth.entity.res.AccountRoleRes;
+
+import jh.exp.auth.core.entity.Account;
+
+import jh.exp.auth.core.entity.res.AccountDetailRes;
+import jh.exp.auth.core.entity.res.AccountListRes;
+import jh.exp.auth.core.entity.res.AccountRoleRes;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -33,9 +35,9 @@ public interface AccountMapper extends BaseMapper<Account> {
      * @return 账号列表（分页结果会自动填充到page对象中）
      */
     IPage<AccountListRes> selectAccountList(IPage<AccountListRes> page,
-                                           @Param("accountName") String accountName,
-                                           @Param("personName") String personName,
-                                           @Param("mobile") String mobile);
+                                            @Param("accountName") String accountName,
+                                            @Param("personName") String personName,
+                                            @Param("mobile") String mobile);
 
     /**
      * 根据账号ID查询账号详情信息（多表联查）

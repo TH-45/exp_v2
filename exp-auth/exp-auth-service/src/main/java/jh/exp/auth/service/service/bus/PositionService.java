@@ -1,9 +1,13 @@
-package jh.exp.auth.service.bus;
+package jh.exp.auth.service.service.bus;
 
-import jh.exp.auth.entity.Position;
-import jh.exp.auth.entity.req.*;
-import jh.exp.auth.entity.res.PositionDetailRes;
-import jh.exp.auth.entity.res.PositionListRes;
+
+
+
+
+import jh.exp.auth.core.entity.Position;
+import jh.exp.auth.core.entity.req.*;
+import jh.exp.auth.core.entity.res.PositionDetailRes;
+import jh.exp.auth.core.entity.res.PositionListRes;
 import jh.exp.common.req.SimplePageReq;
 import jh.exp.common.res.SimplePageRes;
 import org.springframework.stereotype.Service;

@@ -3,7 +3,7 @@ package jh.exp.bid.contract.service.bus.Impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.clinet.api.PersonService;
-import jh.exp.auth.entity.res.PersonDetailRes;
+
 import jh.exp.bid.contract.entity.ExpAttachment;
 import jh.exp.bid.contract.entity.req.CreateAttachmentReq;
 import jh.exp.bid.contract.entity.req.QueryAttachmentReq;

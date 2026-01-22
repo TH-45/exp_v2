@@ -2,9 +2,11 @@ package jh.exp.auth.core.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import jh.exp.auth.entity.OrgUnit;
-import jh.exp.auth.entity.res.OrgUnitDetailRes;
-import jh.exp.auth.entity.res.OrgUnitListRes;
+import jh.exp.auth.core.entity.OrgUnit;
+import jh.exp.auth.core.entity.res.OrgUnitDetailRes;
+import jh.exp.auth.core.entity.res.OrgUnitListRes;
+
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,8 +19,8 @@ public interface OrgUnitMapper extends BaseMapper<OrgUnit> {
      * 分页查询组织列表
      */
     IPage<OrgUnitListRes> selectOrgUnitList(IPage<OrgUnitListRes> page,
-                                           @Param("orgCode") String orgCode,
-                                           @Param("orgName") String orgName);
+                                            @Param("orgCode") String orgCode,
+                                            @Param("orgName") String orgName);
 
     /**
      * 根据组织ID查询组织详情信息（多表联查）

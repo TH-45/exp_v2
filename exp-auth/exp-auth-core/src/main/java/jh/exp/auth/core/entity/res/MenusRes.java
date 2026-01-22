@@ -1,4 +1,4 @@
-package jh.exp.auth.entity.res;
+package jh.exp.auth.core.entity.res;
 
 import jh.exp.auth.entity.node.MenuNode;
 import lombok.AllArgsConstructor;

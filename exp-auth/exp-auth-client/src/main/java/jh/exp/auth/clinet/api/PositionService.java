@@ -1,6 +1,7 @@
 package jh.exp.auth.clinet.api;
 
-import jh.exp.auth.entity.Position;
+
+import jh.exp.auth.core.entity.Position;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.PositionDetailRes;
 import jh.exp.auth.core.entity.res.PositionListRes;

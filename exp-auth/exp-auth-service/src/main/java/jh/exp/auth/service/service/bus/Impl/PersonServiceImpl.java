@@ -1,21 +1,27 @@
-package jh.exp.auth.service.bus.Impl;
+package jh.exp.auth.service.service.bus.Impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import jh.exp.auth.entity.Account;
+import jh.exp.auth.core.entity.Account;
+import jh.exp.auth.core.entity.Person;
+import jh.exp.auth.core.entity.req.*;
+import jh.exp.auth.core.entity.res.AccountRoleRes;
+import jh.exp.auth.core.entity.res.PersonDetailRes;
+import jh.exp.auth.core.entity.res.PersonInfoRes;
+
 import jh.exp.auth.entity.middle.PersonOrgPostRel;
 import jh.exp.auth.core.mapper.middle.PersonOrgPostRelMapper;
-import jh.exp.auth.service.bus.AccountService;
-import jh.exp.auth.service.bus.PersonService;
+import jh.exp.auth.service.service.bus.AccountService;
+import jh.exp.auth.service.service.bus.PersonService;
 import jh.exp.auth.core.constant.AuthConstant;
 
-import jh.exp.auth.entity.Person;
-import jh.exp.auth.entity.req.*;
-import jh.exp.auth.entity.res.AccountRoleRes;
-import jh.exp.auth.entity.res.PersonDetailRes;
-import jh.exp.auth.entity.res.PersonInfoRes;
+
+
+
+
+
 import jh.exp.auth.core.mapper.AccountMapper;
 import jh.exp.auth.core.mapper.OrgUnitMapper;
 import jh.exp.auth.core.mapper.PersonMapper;

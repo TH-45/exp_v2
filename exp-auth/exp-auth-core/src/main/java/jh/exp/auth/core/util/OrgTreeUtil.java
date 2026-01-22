@@ -2,7 +2,8 @@ package jh.exp.auth.core.util;
 
 
 import jh.exp.auth.core.entity.OrgUnit;
-import jh.exp.auth.entity.res.OrgUnitTreeRes;
+
+import jh.exp.auth.core.entity.res.OrgUnitTreeRes;
 import org.springframework.beans.BeanUtils;
 
 import java.util.List;

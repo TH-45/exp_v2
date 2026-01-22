@@ -1,8 +1,6 @@
-package jh.exp.auth.entity.exp;
+package jh.exp.auth.core.entity.exp;
 
-
-
-import jh.exp.auth.entity.Person;
+import jh.exp.auth.core.entity.Person;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

@@ -1,7 +1,7 @@
 package jh.exp.bid.contract.service.bus.Impl;
 
 import jh.exp.auth.clinet.api.PersonService;
-import jh.exp.auth.entity.res.PersonDetailRes;
+
 import jh.exp.bid.contract.entity.ExpBidAwardResult;
 import jh.exp.bid.contract.entity.req.CreateAwardResultReq;
 import jh.exp.bid.contract.mapper.AwardResultMapper;

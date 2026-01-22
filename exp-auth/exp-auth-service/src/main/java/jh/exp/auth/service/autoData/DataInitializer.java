@@ -1,7 +1,7 @@
-package jh.exp.auth.autoData;
+package jh.exp.auth.service.autoData;
 
 import jh.exp.auth.core.mapper.AccountMapper;
-import jh.exp.auth.entity.Account;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;

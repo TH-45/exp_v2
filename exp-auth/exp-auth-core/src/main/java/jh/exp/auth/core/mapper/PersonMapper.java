@@ -4,10 +4,13 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
-import jh.exp.auth.entity.Person;
-import jh.exp.auth.entity.req.QueryPersonReq;
-import jh.exp.auth.entity.res.PersonDetailRes;
-import jh.exp.auth.entity.res.PersonInfoRes;
+import jh.exp.auth.core.entity.Person;
+import jh.exp.auth.core.entity.req.QueryPersonReq;
+import jh.exp.auth.core.entity.res.PersonDetailRes;
+import jh.exp.auth.core.entity.res.PersonInfoRes;
+
+
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
