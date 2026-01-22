@@ -98,8 +98,9 @@ public class PositionController {
      * 根据组织ID查询岗位
      */
     @PostMapping("/queryByOrg")
-    public ApiResponse<List<PositionListRes>> queryByOrg(@RequestBody @Valid QueryPositionByOrgReq req) {
-        List<PositionListRes> result = positionService.queryPositionsByOrgId(req);
+    public ApiResponse<SimplePageRes<PositionListRes>> queryByOrg(@RequestBody @Valid SimplePageReq<QueryPositionByOrgReq> req) {
+        req.pageDefault();
+        SimplePageRes<PositionListRes> result = positionService.queryPositionsByOrgId(req);
         return ApiResponse.success(result);
     }
 

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="jh.exp.auth.mapper.OrgUnitMapper">
+<mapper namespace="jh.exp.auth.core.mapper.OrgUnitMapper">
 
     <!-- 分页查询组织列表 -->
     <select id="selectOrgUnitList" resultType="jh.exp.auth.entity.res.OrgUnitListRes">
@@ -81,7 +81,21 @@
                org_level, manager_person_id, contact_phone, address, status,
                sort_no, created_by, created_time, updated_time, remark
         FROM exp_org_unit
-        WHERE org_path LIKE CONCAT(#{orgPath}, '/%')
+        <where>
+            <!--null：不查任何（防误用） -->
+            <if test="orgPath == null">
+                1 = 0
+            </if>
+            <!-- 根路径 "/" 查所有-->
+            <if test="orgPath != null and orgPath == ''">
+                org_path IS NULL OR org_path LIKE '/%'
+            </if>
+
+            <!-- 普通子树查询 -->
+            <if test="orgPath != null and orgPath != '' and orgPath != '/'">
+                org_path LIKE CONCAT(#{orgPath}, '/%')
+            </if>
+        </where>
         ORDER BY org_path ASC, sort_no ASC
     </select>
 

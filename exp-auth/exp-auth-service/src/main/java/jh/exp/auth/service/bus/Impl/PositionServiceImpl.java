@@ -4,14 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.entity.OrgUnit;
+import jh.exp.auth.core.mapper.OrgUnitMapper;
 import jh.exp.auth.service.bus.PositionService;
 import jh.exp.auth.entity.OrgPostRel;
 import jh.exp.auth.entity.Position;
 import jh.exp.auth.entity.req.*;
 import jh.exp.auth.entity.res.PositionDetailRes;
 import jh.exp.auth.entity.res.PositionListRes;
-import jh.exp.auth.mapper.OrgPostRelMapper;
-import jh.exp.auth.mapper.PositionMapper;
+import jh.exp.auth.core.mapper.OrgPostRelMapper;
+import jh.exp.auth.core.mapper.PositionMapper;
 
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
@@ -25,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,9 @@ public class PositionServiceImpl implements PositionService {
 
     @Autowired
     private OrgPostRelMapper orgPostRelMapper;
+
+    @Autowired
+    private  OrgUnitMapper orgUnitMapper;
 
     @Override
     public SimplePageRes<Position> queryPosition(SimplePageReq<QueryPositionParam> positionReq) {
@@ -188,41 +192,21 @@ public class PositionServiceImpl implements PositionService {
     }
 
     @Override
-    public List<PositionListRes> queryPositionsByOrgId(QueryPositionByOrgReq req) {
-        // 查询指定组织下的岗位关联关系
-        QueryWrapper<OrgPostRel> relWrapper = new QueryWrapper<>();
-        relWrapper.eq("org_id", req.getOrgId())
-                 .eq(StringUtils.hasText(req.getStatus()), "status", req.getStatus())
-                 .orderBy(true, true, "sort_no");
+    public SimplePageRes<PositionListRes> queryPositionsByOrgId(SimplePageReq<QueryPositionByOrgReq> req) {
+        QueryPositionByOrgReq queryParam = req.getQueryParam();
+        Page<PositionListRes> page = new Page<>(req.getPageNum(), req.getPageSize());
 
-        List<OrgPostRel> relations = orgPostRelMapper.selectList(relWrapper);
-
-        if (relations.isEmpty()) {
-            return new ArrayList<>();
+        OrgUnit orgUnit = orgUnitMapper.selectById(queryParam.getOrgId());
+        if(orgUnit==null){
+            throw new RuntimeException("组织不存在");
         }
-
-        // 获取岗位IDs
-        List<Long> postIds = relations.stream()
-                .map(OrgPostRel::getPostId)
-                .collect(Collectors.toList());
-
-        // 查询岗位信息
-        QueryWrapper<Position> positionWrapper = new QueryWrapper<>();
-        positionWrapper.in("post_id", postIds)
-                      .orderBy(true, true, "sort_no");
-
-        List<Position> positions = positionMapper.selectList(positionWrapper);
-
-        // 转换为响应对象
-        return positions.stream().map(position -> {
-            PositionListRes res = new PositionListRes();
-            BeanUtils.copyProperties(position, res);
-            // 设置创建时间格式
-            if (position.getCreatedTime() != null) {
-                res.setCreatedTime(position.getCreatedTime().toString());
-            }
-            return res;
-        }).collect(Collectors.toList());
+        //是根节点
+        if(orgUnit.getOrgLevel()==1) {
+            //查询所有岗位
+            queryParam.setOrgId(null);
+        }
+        IPage<PositionListRes> iPage = positionMapper.selectPositionPageByOrg(page, queryParam.getOrgId(), queryParam.getStatus());
+        return new SimplePageRes<>(iPage.getTotal(), iPage.getCurrent(), iPage.getSize(), iPage.getRecords());
     }
 
     @Override

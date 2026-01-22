@@ -1,9 +1,8 @@
 package jh.exp.sys.servcie.dic.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import jh.exp.auth.api.AccountService;
-import jh.exp.auth.api.RoleService;
-import jh.exp.auth.constant.AuthConstant;
+import jh.exp.auth.clinet.api.AccountService;
+import jh.exp.auth.core.constant.AuthConstant;
 import jh.exp.auth.entity.res.AccountRoleRes;
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;

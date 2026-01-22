@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="jh.exp.auth.mapper.MenuMapper">
+<mapper namespace="jh.exp.auth.core.mapper.MenuMapper">
 
     <!-- 分页查询菜单列表 -->
     <select id="selectMenuList" resultType="jh.exp.auth.entity.res.MenuListRes">

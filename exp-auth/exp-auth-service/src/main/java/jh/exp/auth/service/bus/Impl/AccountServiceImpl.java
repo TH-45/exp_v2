@@ -5,19 +5,17 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
-import jh.exp.auth.entity.res.PersonDetailRes;
 import jh.exp.auth.service.bus.AccountService;
-import jh.exp.auth.constant.AuthConstant;
+import jh.exp.auth.core.constant.AuthConstant;
 import jh.exp.auth.entity.Account;
 import jh.exp.auth.entity.Person;
 import jh.exp.auth.entity.res.AccountDetailRes;
 import jh.exp.auth.entity.res.AccountListRes;
 import jh.exp.auth.entity.res.AccountRoleRes;
 import jh.exp.auth.entity.req.*;
-import jh.exp.auth.mapper.AccountMapper;
-import jh.exp.auth.mapper.PersonMapper;
+import jh.exp.auth.core.mapper.AccountMapper;
+import jh.exp.auth.core.mapper.PersonMapper;
 
-import jh.exp.auth.service.bus.PersonService;
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
 import jh.exp.common.req.SimplePageReq;

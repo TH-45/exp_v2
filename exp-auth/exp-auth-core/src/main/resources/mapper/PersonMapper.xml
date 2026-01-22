@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="jh.exp.auth.mapper.PersonMapper">
+<mapper namespace="jh.exp.auth.core.mapper.PersonMapper">
 
     <!-- 分页查询人员列表（多表联查） -->
     <select id="selectPositionPage" resultType="jh.exp.auth.entity.res.PersonInfoRes">

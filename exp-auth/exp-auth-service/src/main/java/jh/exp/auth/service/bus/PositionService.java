@@ -38,7 +38,7 @@ public interface PositionService {
     void batchUpdatePositionStatus(BatchPositionStatusReq req);
 
     //根据组织ID查询岗位
-    List<PositionListRes> queryPositionsByOrgId(QueryPositionByOrgReq req);
+    SimplePageRes<PositionListRes> queryPositionsByOrgId(SimplePageReq<QueryPositionByOrgReq> req);
 
     //检查岗位编码是否存在
     boolean checkPostCodeExists(String postCode, Long excludePostId);

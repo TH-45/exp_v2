@@ -39,7 +39,8 @@ export interface PageResult<T> {
 export interface DictTypeQuery {
   page: number;
   pageSize: number;
-  keyword?: string;
+  dictCode?: string;
+  dictName?: string;
   status?: DictStatus;
 }
 

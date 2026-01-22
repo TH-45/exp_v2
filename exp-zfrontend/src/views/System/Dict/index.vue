@@ -31,12 +31,20 @@
         <el-tab-pane label="字典类型管理" name="type">
           <!-- 查询区 -->
           <el-form :inline="true" :model="typeQuery" class="search-bar" @submit.prevent>
-            <el-form-item label="关键词">
+            <el-form-item label="字典编码">
               <el-input
-                v-model="typeQuery.keyword"
-                placeholder="字典名称/编码"
+                v-model="typeQuery.dictCode"
+                placeholder="如：USER_STATUS"
                 clearable
-                style="width: 240px"
+                style="width: 200px"
+              />
+            </el-form-item>
+            <el-form-item label="字典名称">
+              <el-input
+                v-model="typeQuery.dictName"
+                placeholder="如：用户状态"
+                clearable
+                style="width: 200px"
               />
             </el-form-item>
             <el-form-item label="状态">
@@ -56,7 +64,14 @@
           </el-form>
 
           <!-- 列表区 -->
-          <el-table v-loading="typeLoading" :data="typeTableData" row-key="id" border style="width: 100%">
+            <el-table
+              v-loading="typeLoading"
+              :data="typeTableData"
+              row-key="id"
+              border
+              style="width: 100%"
+              @row-dblclick="enterItemByRow"
+            >
             <el-table-column prop="dictCode" label="字典编码" min-width="160" />
             <el-table-column prop="dictName" label="字典名称" min-width="160" />
             <el-table-column prop="description" label="描述" min-width="220" />
@@ -76,6 +91,15 @@
                   :disabled="!canTypeUpdate"
                 >
                   编辑
+                </el-button>
+                <el-button
+                  link
+                  type="primary"
+                  size="small"
+                  @click="enterItemByRow(row)"
+                  :disabled="!canItemView"
+                >
+                  设置字典项
                 </el-button>
                 <el-button
                   link
@@ -153,7 +177,7 @@
           </el-dialog>
         </el-tab-pane>
 
-        <el-tab-pane label="字典项管理" name="item">
+        <el-tab-pane label="字典项管理" name="item" disabled>
           <!-- 查询区 -->
           <el-form :inline="true" :model="itemQuery" class="search-bar" @submit.prevent>
             <el-form-item label="字典类型">
@@ -346,7 +370,8 @@ const saving = ref(false);
 const typeQuery = reactive({
   page: 1,
   pageSize: 10,
-  keyword: '',
+  dictCode: '',
+  dictName: '',
   status: undefined as DictStatus | undefined,
 });
 
@@ -412,6 +437,7 @@ const canTypeCreate = computed(() => hasPermission('system:dict:type:create'));
 const canTypeUpdate = computed(() => hasPermission('system:dict:type:update'));
 const canTypeDelete = computed(() => hasPermission('system:dict:type:delete'));
 const canTypeStatus = computed(() => hasPermission('system:dict:type:status'));
+const canItemView = computed(() => hasPermission('system:dict:view'));
 const canItemCreate = computed(() => hasPermission('system:dict:item:create'));
 const canItemUpdate = computed(() => hasPermission('system:dict:item:update'));
 const canItemDelete = computed(() => hasPermission('system:dict:item:delete'));
@@ -469,6 +495,9 @@ const mockItems: Record<string, DictItem[]> = {
   ],
 };
 
+// 仅允许通过“设置字典项”或双击类型进入字典项 Tab
+const allowEnterItem = ref(false);
+
 onMounted(() => {
   fetchTypeList();
   fetchTypeOptions();
@@ -478,12 +507,21 @@ watch(
   activeTab,
   (next) => {
     if (next === 'item') {
+      allowEnterItem.value = false;
       if (!typeOptions.value.length) fetchTypeOptions();
       if (itemQuery.dictCode) fetchItemList();
     }
   },
   { immediate: false },
 );
+
+// function handleTabBeforeLeave(nextName: string | number) {
+//   if (nextName === 'item' && !allowEnterItem.value) {
+//     ElMessage.warning('请通过“设置字典项”或双击字典类型进入');
+//     return false;
+//   }
+//   return true;
+// }
 
 function statusText(status?: DictStatus) {
   return status === 'DISABLED' ? '停用' : '启用';
@@ -515,7 +553,8 @@ async function fetchTypeList() {
     const res = await listDictTypes({
       page: typeQuery.page,
       pageSize: typeQuery.pageSize,
-      keyword: typeQuery.keyword || undefined,
+      dictCode: typeQuery.dictCode || undefined,
+      dictName: typeQuery.dictName || undefined,
       status: typeQuery.status,
     });
     const { list, total } = normalizePage(res);
@@ -523,11 +562,13 @@ async function fetchTypeList() {
     typeTotal.value = total;
   } catch {
     // 无后端时的兜底数据
-    const kw = typeQuery.keyword.trim();
+    const code = typeQuery.dictCode.trim();
+    const name = typeQuery.dictName.trim();
     const filtered = mockTypes.filter((x) => {
       if (typeQuery.status && x.status !== typeQuery.status) return false;
-      if (!kw) return true;
-      return x.dictName.includes(kw) || x.dictCode.includes(kw);
+      if (code && !x.dictCode.includes(code)) return false;
+      if (name && !x.dictName.includes(name)) return false;
+      return true;
     });
     typeTableData.value = filtered;
     typeTotal.value = filtered.length;
@@ -575,13 +616,15 @@ async function fetchItemList() {
 }
 
 function handleTypeSearch() {
-  typeQuery.keyword = typeQuery.keyword.trim();
+  typeQuery.dictCode = typeQuery.dictCode.trim();
+  typeQuery.dictName = typeQuery.dictName.trim();
   typeQuery.page = 1;
   fetchTypeList();
 }
 
 function handleTypeReset() {
-  typeQuery.keyword = '';
+  typeQuery.dictCode = '';
+  typeQuery.dictName = '';
   typeQuery.status = undefined;
   typeQuery.page = 1;
   fetchTypeList();
@@ -665,6 +708,17 @@ function openTypeEdit(row: DictType) {
   typeDialog.isEdit = true;
   Object.assign(typeForm, row);
   typeDialog.visible = true;
+}
+
+function enterItemByRow(row?: DictType) {
+  if (!row?.dictCode) return;
+  itemQuery.dictCode = row.dictCode;
+  itemQuery.keyword = '';
+  itemQuery.status = undefined;
+  itemQuery.page = 1;
+  allowEnterItem.value = true;
+  activeTab.value = 'item';
+  fetchItemList();
 }
 
 function openItemCreate() {

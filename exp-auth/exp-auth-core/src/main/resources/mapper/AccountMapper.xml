@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="jh.exp.auth.mapper.AccountMapper">
+<mapper namespace="jh.exp.auth.core.mapper.AccountMapper">
 
     <!-- 分页查询账号列表（多表联查） -->
     <select id="selectAccountList" resultType="jh.exp.auth.entity.res.AccountListRes">

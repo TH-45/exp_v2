@@ -10,7 +10,7 @@ import jh.exp.auth.entity.res.OrgUnitDetailRes;
 import jh.exp.auth.entity.res.OrgUnitListRes;
 import jh.exp.auth.entity.res.OrgUnitTreeRes;
 import jh.exp.auth.entity.req.*;
-import jh.exp.auth.mapper.OrgUnitMapper;
+import jh.exp.auth.core.mapper.OrgUnitMapper;
 
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
@@ -25,7 +25,8 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import jh.exp.auth.core.util.OrgTreeUtil;
 
 /**
  * 组织服务实现类
@@ -77,7 +78,7 @@ public class OrgUnitServiceImpl implements OrgUnitService {
                 .orderByAsc(OrgUnit::getSortNo)
                 .orderByAsc(OrgUnit::getCreatedTime));
 
-        return buildOrgTree(allOrgs, null);
+        return OrgTreeUtil.buildOrgTree(allOrgs, null);
     }
 
     /**
@@ -309,43 +310,7 @@ public class OrgUnitServiceImpl implements OrgUnitService {
         return orgUnitMapper.countByOrgCode(orgCode, excludeOrgId) > 0;
     }
 
-    /**
-     * 构建组织树
-     */
-    private List<OrgUnitTreeRes> buildOrgTree(List<OrgUnit> allOrgs, Long parentId) {
-        return allOrgs.stream()
-                .filter(org -> {
-                    Long orgParentId = org.getParentOrgId();
-                    // 处理根节点：parentId为null或0的情况
-                    if (parentId == null) {
-                        return orgParentId == null || orgParentId == 0;
-                    } else if (parentId == 0) {
-                        return orgParentId == null || orgParentId.equals(0L);
-                    } else {
-                        return parentId.equals(orgParentId);
-                    }
-                })
-                .map(org -> {
-                    OrgUnitTreeRes node = new OrgUnitTreeRes();
-                    BeanUtils.copyProperties(org, node);
-                    List<OrgUnitTreeRes> children = buildOrgTree(allOrgs, org.getOrgId());
-                    node.setChildren(children);
-                    node.setHasChildren(!children.isEmpty());
-                    return node;
-                })
-                .sorted((a, b) -> {
-                    // 按排序号排序，如果排序号相同则按组织ID排序
-                    if (a.getSortNo() != null && b.getSortNo() != null) {
-                        int sortCompare = a.getSortNo().compareTo(b.getSortNo());
-                        if (sortCompare != 0) {
-                            return sortCompare;
-                        }
-                    }
-                    // 如果排序号相同或为null，按组织ID排序
-                    return a.getOrgId().compareTo(b.getOrgId());
-                })
-                .collect(Collectors.toList());
-    }
+
 
     /**
      * 更新组织路径和层级

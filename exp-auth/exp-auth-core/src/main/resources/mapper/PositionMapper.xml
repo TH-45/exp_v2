@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.auth.core.mapper.PositionMapper">
+
+    <sql id="selectPositionByOrgSql">
+        SELECT
+        -- ===== 岗位信息 exp_post =====
+        p.post_id       AS postId,
+        p.post_code     AS postCode,
+        p.post_name     AS postName,
+        p.post_type     AS postType,
+        p.post_level    AS postLevel,
+        p.post_category AS postCategory,
+        p.status        AS status,
+        p.is_system     AS isSystem,
+        p.sort_no       AS sortNo,
+        DATE_FORMAT(p.created_time, '%Y-%m-%d %H:%i:%s') AS createdTime,
+
+        -- ===== 默认角色 exp_role =====
+        r.role_name     AS defaultRoleName
+        FROM exp_org_post_rel opr
+        INNER JOIN exp_post p ON opr.post_id = p.post_id
+        LEFT JOIN exp_role r ON p.default_role_id = r.role_id
+        <where>
+            <!-- 如果 orgId 不为空，则按 orgId 过滤 -->
+            <if test="orgId != null">
+                opr.org_id = #{orgId}
+            </if>
+
+            <!-- status 条件 -->
+            <if test="status != null and status != ''">
+                opr.status = #{status}
+            </if>
+        </where>
+
+        ORDER BY opr.sort_no ASC, p.sort_no ASC
+    </sql>
+
+    <!-- 不分页 -->
+    <select id="selectPositionListByOrg" resultType="jh.exp.auth.entity.res.PositionListRes">
+        <include refid="selectPositionByOrgSql"/>
+    </select>
+
+    <!-- 分页 -->
+    <select id="selectPositionPageByOrg" resultType="jh.exp.auth.entity.res.PositionListRes">
+        <include refid="selectPositionByOrgSql"/>
+    </select>
+
+</mapper>

@@ -1,7 +1,7 @@
 package jh.exp.auth.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import jh.exp.auth.mapper.AccountMapper;
+import jh.exp.auth.core.mapper.AccountMapper;
 import jh.exp.auth.entity.Account;
 import jh.exp.common.auth.dto.LoginRequest;
 import jh.exp.common.auth.dto.LoginUserInfo;

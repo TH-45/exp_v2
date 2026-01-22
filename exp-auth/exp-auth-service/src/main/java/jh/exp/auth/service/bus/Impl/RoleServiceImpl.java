@@ -8,7 +8,7 @@ import jh.exp.auth.entity.Role;
 import jh.exp.auth.entity.req.*;
 import jh.exp.auth.entity.res.RoleDetailRes;
 import jh.exp.auth.entity.res.RoleListRes;
-import jh.exp.auth.mapper.RoleMapper;
+import jh.exp.auth.core.mapper.RoleMapper;
 import jh.exp.auth.service.bus.RoleService;
 import jh.exp.common.auth.CurrentUserHolder;
 import jh.exp.common.auth.dto.CurrentUser;
@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;

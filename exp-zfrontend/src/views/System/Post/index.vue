@@ -798,6 +798,8 @@ function handleTreeClick(node: OrgNode) {
   currentOrg.value = node;
   query.orgId = node.orgId;
   query.pageNum = 1;
+  query.pageSize = 10;
+  query.postStatus= undefined;
   selectedRows.value = [];
   fetchTable();
 }
@@ -816,15 +818,15 @@ async function fetchTable() {
   tableLoading.value = true;
   try {
     // 构造查询参数
-    const searchQuery = {
+    const queryParam = {
       orgId: currentOrg.value.orgId,
       includeChildren: true,
-      postCode: query.postCode,
-      postName: query.postName,
-      postStatus: query.postStatus,
-      postType: query.postType,
+      status: query.postStatus,
+    }
+    const searchQuery = {
       pageNum: query.pageNum,
       pageSize: query.pageSize,
+      queryParam
     };
 
     const res = await queryOrgPosts(searchQuery);

@@ -54,7 +54,7 @@ export function fetchOrgTree(params?: { orgCode?: string; orgName?: string }) {
 }
 
 // 查询某组织的岗位列表（关联信息）
-export function queryOrgPosts(params: { orgId: number; includeChildren?: boolean }) {
+export function queryOrgPosts(params: { pageNum: number; pageSize: number; queryParam: { orgId: number; includeChildren?: boolean; status?: string }; }) {
   return request.post<PostVO[], PostVO[]>(
     `${BASE_POST}/queryByOrg`,
     params,
