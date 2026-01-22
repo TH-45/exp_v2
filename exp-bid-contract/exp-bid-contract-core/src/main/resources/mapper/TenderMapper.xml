@@ -2,10 +2,10 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="jh.exp.bid.contract.mapper.TenderMapper">
+<mapper namespace="jh.exp.bid.contract.core.mapper.TenderMapper">
 
     <!-- 分页查询招标列表（多表联查） -->
-    <select id="selectTenderList" resultType="jh.exp.bid.contract.entity.res.TenderListRes">
+    <select id="selectTenderList" resultType="jh.exp.bid.contract.core.entity.res.TenderListRes">
         SELECT t.tender_id, t.tender_code, t.tender_name, t.tender_type, t.tender_mode,
                t.budget_amount, t.currency, t.bid_start_time, t.bid_end_time, t.status,
                t.created_time,
@@ -58,7 +58,7 @@
     </select>
 
     <!-- 根据招标ID查询招标详情信息（多表联查） -->
-    <select id="selectTenderDetailById" resultType="jh.exp.bid.contract.entity.res.TenderDetailRes">
+    <select id="selectTenderDetailById" resultType="jh.exp.bid.contract.core.entity.res.TenderDetailRes">
         SELECT t.tender_id, t.tender_code, t.tender_name, t.tender_type, t.tender_mode,
                t.purchaser_id, t.budget_amount, t.currency, t.tender_brief, t.publish_time,
                t.bid_start_time, t.bid_end_time, t.open_time, t.open_address, t.status,
@@ -91,7 +91,7 @@
     </select>
 
     <!-- 根据项目ID查询该项目的负责人信息 -->
-    <select id="selectProjectManagerByProjectId" resultType="jh.exp.bid.contract.entity.res.TenderDetailRes">
+    <select id="selectProjectManagerByProjectId" resultType="jh.exp.bid.contract.core.entity.res.TenderDetailRes">
         SELECT pr.project_id, pr.project_name, pr.manager_person_id as project_manager_id,
                p.person_name as project_manager_name, pr.org_id,
                org.manager_person_id as org_manager_id,

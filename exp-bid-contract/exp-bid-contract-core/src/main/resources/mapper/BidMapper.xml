@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="jh.exp.bid.contract.mapper.BidMapper">
+<mapper namespace="jh.exp.bid.contract.core.mapper.BidMapper">
 
     <!-- 检查投标编号是否存在 -->
     <select id="countByBidCode" resultType="int">
@@ -13,7 +13,7 @@
     </select>
 
     <!-- 分页查询投标列表 -->
-    <select id="selectBidList" resultType="jh.exp.bid.contract.entity.res.BidListRes">
+    <select id="selectBidList" resultType="jh.exp.bid.contract.core.entity.res.BidListRes">
         SELECT
             b.bid_id AS bidId,
             b.tender_id AS tenderId,
@@ -78,7 +78,7 @@
     </select>
 
     <!-- 根据投标ID查询投标详情 -->
-    <select id="selectBidDetailById" resultType="jh.exp.bid.contract.entity.res.BidDetailRes">
+    <select id="selectBidDetailById" resultType="jh.exp.bid.contract.core.entity.res.BidDetailRes">
         SELECT
             b.bid_id AS bidId,
             b.tender_id AS tenderId,
@@ -116,7 +116,7 @@
     </select>
 
     <!-- 根据招标ID查询投标列表 -->
-    <select id="selectBidsByTenderId" resultType="jh.exp.bid.contract.entity.res.BidListRes">
+    <select id="selectBidsByTenderId" resultType="jh.exp.bid.contract.core.entity.res.BidListRes">
         SELECT
             b.bid_id AS bidId,
             b.tender_id AS tenderId,

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="jh.exp.bid.contract.mapper.EvaluationCommitteeMapper">
+<mapper namespace="jh.exp.bid.contract.core.mapper.EvaluationCommitteeMapper">
 
     <!-- 检查委员会编号是否存在 -->
     <select id="countByCommitteeCode" resultType="int">
@@ -13,7 +13,7 @@
     </select>
 
     <!-- 分页查询评标委员会列表 -->
-    <select id="selectCommitteeList" resultType="jh.exp.bid.contract.entity.res.EvaluationCommitteeListRes">
+    <select id="selectCommitteeList" resultType="jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes">
         SELECT
             c.committee_id AS committeeId,
             c.tender_id AS tenderId,
@@ -73,7 +73,7 @@
     </select>
 
     <!-- 根据委员会ID查询评标委员会详情 -->
-    <select id="selectCommitteeDetailById" resultType="jh.exp.bid.contract.entity.res.EvaluationCommitteeListRes">
+    <select id="selectCommitteeDetailById" resultType="jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes">
         SELECT
             c.committee_id AS committeeId,
             c.tender_id AS tenderId,
@@ -98,7 +98,7 @@
     </select>
 
     <!-- 根据招标ID查询评标委员会列表 -->
-    <select id="selectCommitteesByTenderId" resultType="jh.exp.bid.contract.entity.res.EvaluationCommitteeListRes">
+    <select id="selectCommitteesByTenderId" resultType="jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes">
         SELECT
             c.committee_id AS committeeId,
             c.tender_id AS tenderId,
