@@ -205,12 +205,28 @@ public class PositionServiceImpl implements PositionService {
         if(orgUnit==null){
             throw new RuntimeException("组织不存在");
         }
-        //是根节点
-        if(orgUnit.getOrgLevel()==1) {
-            //查询所有岗位
-            queryParam.setOrgId(null);
+
+        IPage<PositionListRes> iPage=null;
+        Boolean includeChildren = queryParam.getIncludeChildren();
+
+        //是根组织
+        if (orgUnit.getOrgLevel() == 1) {
+            if(includeChildren){
+                //传空查所有
+                iPage = positionMapper.selectPositionPageByOrg(page, null, queryParam.getStatus());
+            }else{
+                return new SimplePageRes<>(); // 直接返回空结果
+            }
+
+        }else{
+            if(includeChildren){
+                iPage= positionMapper.selectPositionPageByOrgAndChildren(page, queryParam.getOrgId(), queryParam.getStatus());
+            }else{
+                iPage= positionMapper.selectPositionPageByOrg(page, queryParam.getOrgId(), queryParam.getStatus());
+            }
         }
-        IPage<PositionListRes> iPage = positionMapper.selectPositionPageByOrg(page, queryParam.getOrgId(), queryParam.getStatus());
+
+
         return new SimplePageRes<>(iPage.getTotal(), iPage.getCurrent(), iPage.getSize(), iPage.getRecords());
     }
 

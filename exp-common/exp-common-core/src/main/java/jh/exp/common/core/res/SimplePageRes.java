@@ -15,4 +15,8 @@ public  class SimplePageRes<T> {
     private Long size;
     private List<T> list;
 
+    public SimplePageRes(List<T> list) {
+        this.list = list;
+    }
+
 }

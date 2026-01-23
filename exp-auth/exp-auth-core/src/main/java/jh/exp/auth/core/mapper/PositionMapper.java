@@ -21,6 +21,8 @@ public interface PositionMapper extends BaseMapper<Position> {
     // 分页（MyBatis-Plus 自动识别）
     IPage<PositionListRes> selectPositionPageByOrg(Page<?> page, @Param("orgId") Long orgId, @Param("status") String status);
 
+    //查询目标组织的下的所有岗位，包过目标组织 (非根组织)
+    List<PositionListRes> selectPositionListByOrgAndChildren(@Param("orgId") Long orgId, @Param("status") String status);
 
-
+    IPage<PositionListRes> selectPositionPageByOrgAndChildren(Page<?> page, @Param("orgId") Long orgId, @Param("status") String status);
 }

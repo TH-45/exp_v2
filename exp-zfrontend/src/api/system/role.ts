@@ -18,10 +18,9 @@ export interface RoleVO {
 
 export interface PageResult<T> {
   /** 文档约定字段 */
-  records?: T[];
   total?: number;
   page?: number;
-  pageSize?: number;
+  size?: number;
   /** 兼容后端常见字段 */
   list?: T[];
   rows?: T[];
@@ -38,8 +37,8 @@ export interface RoleListQuery {
 
 const BASE = '/exp/system/role';
 
-export function listRoles(params: RoleListQuery) {
-  return request.get<PageResult<RoleVO>, PageResult<RoleVO>>(`${BASE}/list`, { params });
+export function listRoles(data: Partial<>) {
+  return request.post<PageResult<RoleVO>, PageResult<RoleVO>>(`${BASE}/list`, data);
 }
 
 export function getRoleDetail(roleId: string) {

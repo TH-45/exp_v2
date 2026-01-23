@@ -97,7 +97,7 @@ public class PositionController {
     }
 
     /**
-     * 根据组织ID查询岗位
+     * 根据组织ID查询岗位（兼容条件查询）
      */
     @PostMapping("/queryByOrg")
     public ApiResponse<SimplePageRes<PositionListRes>> queryByOrg(@RequestBody @Valid SimplePageReq<QueryPositionByOrgReq> req) {
@@ -124,4 +124,5 @@ public class PositionController {
         List<PositionListRes> result = positionService.getAllEnabledPositions();
         return ApiResponse.success(result);
     }
+
 }

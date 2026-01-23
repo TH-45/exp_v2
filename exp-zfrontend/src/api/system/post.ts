@@ -39,7 +39,7 @@ export interface OrgPostQuery {
   postCode?: string;
   postName?: string;
   relStatus?: 'ALL' | RelStatus;
-  postStatus?: PostStatus;
+  status?: PostStatus;
   pageNum: number;
   pageSize: number;
 }
@@ -55,7 +55,15 @@ export function fetchOrgTree(params?: { orgCode?: string; orgName?: string }) {
 }
 
 // 查询某组织的岗位列表（关联信息）
-export function queryOrgPosts(params: { pageNum: number; pageSize: number; queryParam: { orgId: number; includeChildren?: boolean; status?: string }; }) {
+export function queryOrgPosts(params: {
+  pageNum: number;
+  pageSize: number;
+  queryParam: {
+    orgId: number;
+    includeChildren?: boolean;
+    status?: PostStatus;
+  };
+}) {
   return request.post<PageResult<PostVO>,PageResult<PostVO>>(
     `${BASE_POST}/queryByOrg`,
     params,

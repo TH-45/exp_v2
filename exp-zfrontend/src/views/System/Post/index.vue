@@ -164,7 +164,7 @@
                   />
                 </el-form-item>
                 <el-form-item label="状态">
-                  <el-select v-model="query.postStatus" clearable style="width: 100px">
+                  <el-select v-model="query.status" clearable style="width: 100px">
                     <el-option label="启用" value="ENABLED" />
                     <el-option label="停用" value="DISABLED" />
                   </el-select>
@@ -201,8 +201,8 @@
               <el-table-column prop="postType" label="类型" min-width="70" />
               <el-table-column label="状态" min-width="70">
                 <template #default="{ row }">
-                  <el-tag :type="row.postStatus === 'ENABLED' ? 'success' : 'info'">
-                    {{ row.postStatus === 'ENABLED' ? '启用' : '停用' }}
+                  <el-tag :type="row.status === 'ENABLED' ? 'success' : 'info'">
+                    {{ row.status === 'ENABLED' ? '启用' : '停用' }}
                   </el-tag>
                 </template>
               </el-table-column>
@@ -272,8 +272,8 @@
           <el-form-item label="岗位名称" prop="postName">
             <el-input v-model="postForm.postName" />
           </el-form-item>
-          <el-form-item label="状态" prop="postStatus">
-            <el-select v-model="postForm.postStatus" style="width: 200px">
+          <el-form-item label="状态" prop="status">
+            <el-select v-model="postForm.status" style="width: 200px">
               <el-option label="启用" value="ENABLED" />
               <el-option label="停用" value="DISABLED" />
             </el-select>
@@ -343,8 +343,8 @@
           <el-table-column prop="postName" label="岗位名称" min-width="140" />
           <el-table-column label="状态" min-width="100">
             <template #default="{ row }">
-              <el-tag :type="row.postStatus === 'ENABLED' ? 'success' : 'info'">
-                {{ row.postStatus === 'ENABLED' ? '启用' : '停用' }}
+              <el-tag :type="row.status === 'ENABLED' ? 'success' : 'info'">
+                {{ row.status === 'ENABLED' ? '启用' : '停用' }}
               </el-tag>
             </template>
           </el-table-column>
@@ -501,7 +501,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, computed, onBeforeUnmount,nextTick } from 'vue';
+import { onMounted, reactive, ref, computed, onBeforeUnmount, nextTick } from 'vue';
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Plus, Edit, Delete, Search } from '@element-plus/icons-vue';
 import {
   fetchOrgTree,
@@ -513,7 +513,8 @@ import {
   deleteOrg,
   type OrgNode,
   type PostVO,
-  type PostStatus, changePostStatus,
+  type PostStatus,
+  changePostStatus,
 } from '@/api/system/post';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
@@ -548,7 +549,7 @@ const query = reactive({
   orgId: 0,
   postCode: '',
   postName: '',
-  postStatus: undefined as PostStatus | undefined,
+  status: undefined as PostStatus | undefined,
   postType: '',
   pageNum: 1,
   pageSize: 10,
@@ -570,20 +571,20 @@ const postForm = reactive<PostVO>({
   postId: 0,
   postCode: '',
   postName: '',
-  postStatus: 'ENABLED',
+  status: 'ENABLED',
   defaultDataScope: '',
   postType: '',
   postLevel: '',
   postCategory: '',
-      sortNo: 0,
-      postDesc: '',
-      remark: '',
-      isSystem: 0
+  sortNo: 0,
+  postDesc: '',
+  remark: '',
+  isSystem: 0,
 });
 const postRules: FormRules = {
   postCode: [{ required: true, message: '请输入岗位编码', trigger: 'blur' }],
   postName: [{ required: true, message: '请输入岗位名称', trigger: 'blur' }],
-  postStatus: [{ required: true, message: '请选择状态', trigger: 'change' }],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 };
 
 const bindDialog = reactive({
@@ -798,7 +799,7 @@ function handleTreeClick(node: OrgNode) {
   query.orgId = node.orgId;
   query.pageNum = 1;
   query.pageSize = 10;
-  query.postStatus= undefined;
+  query.status = undefined;
   selectedRows.value = [];
   fetchTable();
 }
@@ -820,7 +821,7 @@ async function fetchTable() {
     const queryParam = {
       orgId: currentOrg.value.orgId,
       includeChildren: true,
-      status: query.postStatus,
+      status: query.status,
     }
     const searchQuery = {
       pageNum: query.pageNum,
@@ -831,10 +832,7 @@ async function fetchTable() {
     const res = await queryOrgPosts(searchQuery);
     total.value = res.total;
 
-    tableData.value = res.list.map(item => ({
-      ...item,
-      postStatus: item.status
-    }));
+    tableData.value = res.list;
 
 
   } catch (e) {
@@ -856,7 +854,7 @@ function handleReset() {
   query.postCode = '';
   query.postName = '';
   query.postType = '';
-  query.postStatus = undefined;
+  query.status = undefined;
   query.pageNum = 1;
   fetchTable();
 }
@@ -881,7 +879,7 @@ function openPostForm(isEdit: boolean, row?: PostVO) {
       postId: 0,
       postCode: '',
       postName: '',
-      postStatus: 'ENABLED',
+      status: 'ENABLED',
       defaultDataScope: '',
       postType: '',
       postLevel: '',
@@ -901,11 +899,12 @@ async function submitPostForm() {
   if (!valid) return;
   postSaving.value = true;
   try {
+    const payload = { ...postForm };
     if (postDialog.isEdit) {
-      await updatePost(postForm);
+      await updatePost(payload);
       ElMessage.success('编辑成功');
     } else {
-      await createPost(postForm);
+      await createPost(payload);
       ElMessage.success('新增成功');
     }
     postDialog.visible = false;
@@ -918,7 +917,7 @@ async function submitPostForm() {
 }
 
 function rowToggleStatus(row: PostVO) {
-  const next: PostStatus = row.postStatus === 'ENABLED' ? 'DISABLED' : 'ENABLED';
+  const next: PostStatus = row.status === 'ENABLED' ? 'DISABLED' : 'ENABLED';
   changePostStatus([row.postId], next)
     .then(() => {
       ElMessage.success('状态已更新');
@@ -931,7 +930,7 @@ function rowToggleStatus(row: PostVO) {
 
 function batchToggleRelStatus() {
   if (!selectedRows.value.length) return;
-  const hasDisabled = selectedRows.value.some((r) => r.postStatus !== 'ENABLED');
+  const hasDisabled = selectedRows.value.some((r) => r.status !== 'ENABLED');
   const target: PostStatus = hasDisabled ? 'ENABLED' : 'DISABLED';
   const ids = selectedRows.value.map((r) => r.postId);
   changePostStatus(ids, target)

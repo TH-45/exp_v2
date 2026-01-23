@@ -79,8 +79,8 @@
         <el-table-column prop="postLevel" label="岗位级别" min-width="100" />
         <el-table-column label="状态" min-width="80">
           <template #default="{ row }">
-            <el-tag :type="getStatusTagType(row.postStatus)">
-              {{ getStatusText(row.postStatus) }}
+            <el-tag :type="getStatusTagType(row.status)">
+              {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>

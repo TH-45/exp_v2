@@ -772,12 +772,12 @@ async function fetchPostOptions(orgId: number) {
     const posts = res || [];
     // 添加“待定”选项，但要去重
     const hasPending = posts.some(post => post.postName === '待定');
-    const options = hasPending ? posts : [{ postId: -1, postName: '待定', postCode: 'PENDING', postStatus: 'ENABLED' as const }, ...posts];
+    const options = hasPending ? posts : [{ postId: -1, postName: '待定', postCode: 'PENDING', status: 'ENABLED' as const }, ...posts];
 
     postOptions.value = options;
   } catch (e) {
     console.error('获取岗位列表失败:', e);
-    postOptions.value = [{ postId: -1, postName: '待定', postCode: 'PENDING', postStatus: 'ENABLED' }];
+    postOptions.value = [{ postId: -1, postName: '待定', postCode: 'PENDING', status: 'ENABLED' }];
   }
 }
 
@@ -857,7 +857,7 @@ async function loadPartTimePosts(index: 1 | 2, orgId: number) {
     const posts = res || [];
     // 添加"待定"选项
     const hasPending = posts.some(post => post.postName === '待定');
-    const options = hasPending ? posts : [{ postId: -1, postName: '待定', postCode: 'PENDING', postStatus: 'ENABLED' as const }, ...posts];
+    const options = hasPending ? posts : [{ postId: -1, postName: '待定', postCode: 'PENDING', status: 'ENABLED' as const }, ...posts];
 
     if (index === 1) {
       partTimePosts1.value = options;
@@ -867,9 +867,9 @@ async function loadPartTimePosts(index: 1 | 2, orgId: number) {
   } catch (e) {
     console.error('获取兼职岗位列表失败:', e);
     if (index === 1) {
-      partTimePosts1.value = [{ postId: -1, postName: '待定', postCode: 'PENDING', postStatus: 'ENABLED' }];
+      partTimePosts1.value = [{ postId: -1, postName: '待定', postCode: 'PENDING', status: 'ENABLED' }];
     } else {
-      partTimePosts2.value = [{ postId: -1, postName: '待定', postCode: 'PENDING', postStatus: 'ENABLED' }];
+      partTimePosts2.value = [{ postId: -1, postName: '待定', postCode: 'PENDING', status: 'ENABLED' }];
     }
   }
 }

@@ -4,8 +4,8 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="jh.exp.auth.core.mapper.PositionMapper">
 
-    <sql id="selectPositionByOrgSql">
-        SELECT
+    <!-- 公共字段  PositionListRes 对象 -->
+    <sql id="PositionListRes">
         -- ===== 岗位信息 exp_post =====
         p.post_id       AS postId,
         p.post_code     AS postCode,
@@ -20,18 +20,24 @@
 
         -- ===== 默认角色 exp_role =====
         r.role_name     AS defaultRoleName
+    </sql>
+
+
+    <sql id="selectPositionByOrgSql">
+        SELECT
+        <include refid="PositionListRes"/>
         FROM exp_org_post_rel opr
         INNER JOIN exp_post p ON opr.post_id = p.post_id
         LEFT JOIN exp_role r ON p.default_role_id = r.role_id
         <where>
             <!-- 如果 orgId 不为空，则按 orgId 过滤 -->
             <if test="orgId != null">
-                opr.org_id = #{orgId}
+                AND opr.org_id = #{orgId}
             </if>
 
             <!-- status 条件 -->
             <if test="status != null and status != ''">
-                opr.status = #{status}
+                AND opr.status = #{status}
             </if>
         </where>
 
@@ -47,5 +53,34 @@
     <select id="selectPositionPageByOrg" resultType="jh.exp.auth.core.entity.res.PositionListRes">
         <include refid="selectPositionByOrgSql"/>
     </select>
+
+    <sql id="selectPositionByOrgChildAndSql">
+        SELECT
+        <include refid="PositionListRes"/>
+        FROM exp_org_post_rel opr
+        INNER JOIN exp_post p ON opr.post_id = p.post_id
+        LEFT JOIN exp_role r ON p.default_role_id = r.role_id
+        <where>
+            <if test="orgId != null">
+                AND opr.org_id IN (SELECT u2.org_id
+                                FROM exp_org_unit u1
+                                JOIN exp_org_unit u2 ON u2.org_path LIKE CONCAT(u1.org_path, '%')
+                                WHERE u1.org_id = #{orgId})
+            </if>
+            <if test="status != null and status != ''">
+                AND opr.status = #{status}
+            </if>
+        </where>
+
+    </sql>
+
+    <select id="selectPositionListByOrgAndChildren" resultType="jh.exp.auth.core.entity.res.PositionListRes">
+        <include refid="selectPositionByOrgChildAndSql"/>
+    </select>
+    <select id="selectPositionPageByOrgAndChildren" resultType="jh.exp.auth.core.entity.res.PositionListRes">
+        <include refid="selectPositionByOrgChildAndSql"/>
+    </select>
+
+
 
 </mapper>

@@ -586,7 +586,7 @@ function handlePersonChange(person: ExpPersonVO | undefined) {
       postType: '',
       postLevel: '',
       postCategory: '',
-      postStatus: 'ENABLED' as const,
+      status: 'ENABLED' as const,
       isSystem: 0,
       sortNo: 0,
     };
@@ -703,7 +703,7 @@ async function handleEdit(row: AccountVO) {
         defaultDataScope: '',
         isSystem: 0,
         sortNo: 0,
-        postStatus: 'ENABLED' as const, // 添加postStatus字段
+        status: 'ENABLED' as const,
       };
     }
 
