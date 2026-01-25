@@ -208,7 +208,7 @@
       title="人员详细信息"
       direction="rtl"
       size="420px"
-      :close-on-click-modal="false"
+      :close-on-click-modal="true"
       destroy-on-close
       custom-class="person-detail-drawer"
     >

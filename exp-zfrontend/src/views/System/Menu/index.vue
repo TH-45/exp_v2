@@ -22,6 +22,7 @@
               :props="treeProps"
               highlight-current
               :filter-node-method="treeFilterMethod"
+              :default-expanded-keys="expandedKeys"
               @node-click="handleTreeClick"
               v-loading="treeLoading"
             >
@@ -41,7 +42,7 @@
         <div class="right-pane">
           <el-card class="list-card">
             <template #header>
-              <div class="header">
+              <div class="right-header">
                 <div class="title">菜单管理</div>
                 <div class="actions">
                   <el-button type="primary" size="small" @click="openCreateRoot" :disabled="!canCreate">
@@ -54,10 +55,11 @@
                   <el-button size="small" :disabled="true">导出</el-button>
                 </div>
               </div>
-              <div class="sub-title" v-if="currentNode">
-                当前父节点：{{ currentNode.menuName }}（{{ typeText(currentNode.menuType) }}）
+              <div class="org-label" v-if="currentNode">
+                当前位置：{{ currentNode.menuName }}（{{ typeText(currentNode.menuType) }}）
               </div>
-              <div class="sub-title" v-else>当前父节点：根节点</div>
+              <div class="org-label" v-else>当前位置：根节点</div>
+              <div class="header-divider"></div>
             </template>
 
             <!-- 查询区 -->
@@ -275,6 +277,7 @@ const treeFilter = ref('');
 const treeLoading = ref(false);
 const menuTree = ref<MenuItem[]>([]);
 const currentNode = ref<MenuItem | null>(null);
+const expandedKeys = ref<string[]>([]); // 记录需要展开的节点 ID
 
 const query = reactive({
   pageNum: 1,
@@ -390,7 +393,30 @@ async function loadTree() {
   treeLoading.value = true;
   try {
     const res = await queryMenuTree();
-    menuTree.value = (Array.isArray(res) && res.length ? res : []) as MenuItem[];
+    const data = (Array.isArray(res) && res.length ? res : []) as MenuItem[];
+    menuTree.value = data;
+    // --- 新增：自动选中逻辑 ---
+    if (data.length > 0) {
+      const firstNode = data[0]!;
+      const firstId = firstNode.menuId;
+
+      // 1. 设置当前选中高亮状态 (nextTick 确保 DOM 已渲染)
+      setTimeout(() => {
+        treeRef.value?.setCurrentKey(firstId);
+      }, 0);
+
+      // 2. 展开该节点
+      expandedKeys.value = [firstId];
+
+      // 3. 模拟点击，触发右侧列表加载
+      handleTreeClick(firstNode);
+    } else {
+      // 如果没数据，默认走原有逻辑
+      currentNode.value = null;
+      query.parentMenuId = undefined;
+      fetchList();
+    }
+
   } catch {
     menuTree.value = [];
   } finally {
@@ -407,6 +433,10 @@ function handleTreeClick(node: MenuItem) {
   query.parentMenuId = node.menuId;
   query.pageNum = 1;
   fetchList();
+  // 如果你希望点击时也确保它在展开列表中
+  if (!expandedKeys.value.includes(node.menuId)) {
+    expandedKeys.value.push(node.menuId);
+  }
 }
 
 function handleSearch() {
@@ -672,7 +702,7 @@ function genId() {
 .menu-page {
   .split-area {
     display: flex;
-    gap: 12px;
+    gap: 5px;
     height: calc(100vh - 120px);
     align-items: stretch;
   }
@@ -729,6 +759,7 @@ function genId() {
     height: 100%;
     display: flex;
     flex-direction: column;
+
   }
 
   .list-card :deep(.el-card__body) {
@@ -736,34 +767,51 @@ function genId() {
     display: flex;
     flex-direction: column;
     overflow: auto;
+    padding-top: 8px;
   }
 
-  .header {
+
+  .list-card :deep(.el-card__header) {
+    border-bottom: none; /* 隐藏原生边框 */
+    padding-bottom: 0;
+  }
+
+  .right-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    flex-wrap: nowrap;
   }
 
   .title {
     font-weight: 600;
+    flex: 0 0 auto;
   }
 
   .actions {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    white-space: nowrap;
   }
 
-  .sub-title {
+  .org-label {
     margin-top: 6px;
     color: #666;
     font-size: 12px;
   }
 
+  .header-divider {
+    margin-top: 6px;
+    height: 1px;
+    background: #ebeef5;
+  }
+
   .search-bar {
-    margin-bottom: -5px;
+    margin-top: 6px;   // 新增或调小
+    //margin-bottom: 12px; // 恢复为正值更稳
   }
 
   .pagination {
