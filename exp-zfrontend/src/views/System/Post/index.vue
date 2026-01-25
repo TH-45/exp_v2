@@ -98,10 +98,6 @@
           <el-card>
             <div class="right-header">
               <div class="title">岗位管理</div>
-              <div class="org-label" v-if="currentOrg">
-                当前组织：{{ currentOrg.orgName }}
-              </div>
-              <div class="header-divider"></div>
               <!-- 顶部按钮栏 -->
               <div class="actions">
                 <el-button
@@ -129,8 +125,11 @@
                 <el-button size="small" :disabled="true">导入</el-button>
                 <el-button size="small" :disabled="true">导出</el-button>
               </div>
-
             </div>
+            <div class="org-label" v-if="currentOrg">
+              当前组织：{{ currentOrg.orgName }}
+            </div>
+            <div class="header-divider"></div>
 
 
             <!-- 查询栏 -->
@@ -1447,7 +1446,6 @@ function formatDateTime(_row: unknown, _column: unknown, cellValue: string) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
     gap: 12px;
   }
 
@@ -1456,20 +1454,26 @@ function formatDateTime(_row: unknown, _column: unknown, cellValue: string) {
   }
 
   .org-label {
+    margin-top: 6px;
     color: #666;
     font-size: 12px;
+  }
+
+  .header-divider {
+    margin-top: 6px;
+    height: 1px;
+    background: #ebeef5;
   }
 
   .actions {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 5px;
-    margin-top: 10px;
-    margin-right: 10px;
+    flex-wrap: wrap;
   }
 
   .search-bar {
+    margin-top: 15px;
     margin-bottom: 12px;
 
     .search-row {

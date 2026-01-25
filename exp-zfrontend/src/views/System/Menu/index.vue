@@ -62,31 +62,31 @@
 
             <!-- 查询区 -->
             <el-form :inline="true" :model="query" class="search-bar" @submit.prevent>
-              <el-form-item label="菜单编码">
+              <el-form-item label="编码">
                 <el-input
                   v-model="query.menuCode"
                   placeholder="请输入菜单编码"
                   clearable
-                  style="width: 200px"
+                  style="width: 150px"
                 />
               </el-form-item>
-              <el-form-item label="菜单名称">
+              <el-form-item label="名称">
                 <el-input
                   v-model="query.menuName"
                   placeholder="请输入菜单名称"
                   clearable
-                  style="width: 200px"
+                  style="width: 150px"
                 />
               </el-form-item>
               <el-form-item label="类型">
-                <el-select v-model="query.menuType" clearable placeholder="全部" style="width: 140px">
+                <el-select v-model="query.menuType" clearable placeholder="全部" style="width: 80px">
                   <el-option label="目录" value="CATALOG" />
                   <el-option label="菜单" value="MENU" />
                   <el-option label="按钮" value="BUTTON" />
                 </el-select>
               </el-form-item>
               <el-form-item label="状态">
-                <el-select v-model="query.status" clearable placeholder="全部" style="width: 140px">
+                <el-select v-model="query.status" clearable placeholder="全部" style="width: 80px">
                   <el-option label="启用" value="ENABLED" />
                   <el-option label="停用" value="DISABLED" />
                 </el-select>
@@ -105,8 +105,8 @@
               border
               style="width: 100%"
             >
-              <el-table-column prop="menuName" label="名称" min-width="180" />
-              <el-table-column label="类型" min-width="110">
+              <el-table-column prop="menuName" label="名称" min-width="160" />
+              <el-table-column label="类型" min-width="80">
                 <template #default="{ row }">
                   <el-tag size="small" :type="typeTagType(row.menuType)">
                     {{ typeText(row.menuType) }}
@@ -116,8 +116,8 @@
               <el-table-column prop="routePath" label="路由/路径" min-width="160" />
               <el-table-column prop="component" label="组件" min-width="200" />
               <el-table-column prop="menuCode" label="菜单编码" min-width="180" />
-              <el-table-column prop="icon" label="图标" min-width="140" />
-              <el-table-column prop="sortNo" label="排序" min-width="90" />
+<!--              <el-table-column prop="icon" label="图标" min-width="140" />-->
+<!--              <el-table-column prop="sortNo" label="排序" min-width="60" />-->
               <el-table-column label="可见" min-width="90">
                 <template #default="{ row }">
                   <el-tag size="small" :type="row.visible === 1 ? 'success' : 'info'">
@@ -132,7 +132,7 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" fixed="right" width="240">
+              <el-table-column label="操作" fixed="right" width="150">
                 <template #default="{ row }">
                   <el-button link type="primary" size="small" @click="openEdit(row)" :disabled="!canUpdate">
                     编辑
@@ -678,7 +678,7 @@ function genId() {
   }
 
   .left-pane {
-    width: 320px;
+    width: 150px;
     min-width: 260px;
     height: 100%;
   }
@@ -763,7 +763,7 @@ function genId() {
   }
 
   .search-bar {
-    margin-bottom: 12px;
+    margin-bottom: -5px;
   }
 
   .pagination {
