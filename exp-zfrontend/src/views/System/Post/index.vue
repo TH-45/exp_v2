@@ -85,12 +85,12 @@
               <ArrowLeft v-else />
             </el-icon>
           </button>
-          <button class="drag-toggle right" type="button" @click.stop="toggleRightCollapse">
-            <el-icon :size="14">
-              <ArrowLeft v-if="isRightCollapsed" />
-              <ArrowRight v-else />
-            </el-icon>
-          </button>
+<!--          <button class="drag-toggle right" type="button" @click.stop="toggleRightCollapse">-->
+<!--            <el-icon :size="14">-->
+<!--              <ArrowLeft v-if="isRightCollapsed" />-->
+<!--              <ArrowRight v-else />-->
+<!--            </el-icon>-->
+<!--          </button>-->
         </div>
 
         <!-- 右侧岗位配置 -->
@@ -98,6 +98,10 @@
           <el-card>
             <div class="right-header">
               <div class="title">岗位管理</div>
+              <div class="org-label" v-if="currentOrg">
+                当前组织：{{ currentOrg.orgName }}
+              </div>
+              <div class="header-divider"></div>
               <!-- 顶部按钮栏 -->
               <div class="actions">
                 <el-button
@@ -125,10 +129,9 @@
                 <el-button size="small" :disabled="true">导入</el-button>
                 <el-button size="small" :disabled="true">导出</el-button>
               </div>
+
             </div>
-            <div class="org-label" v-if="currentOrg">
-              当前组织：{{ currentOrg.orgName }}
-            </div>
+
 
             <!-- 查询栏 -->
             <el-form
@@ -534,8 +537,9 @@ const currentTreeOrg = ref<OrgNode | null>(null); // 左侧树选中的组织
 const isTreeExpanded = ref(false); // 组织树是否展开
 const isEditMode = ref(false); // 编辑模式
 const splitRef = ref<HTMLElement>();
-const leftWidth = ref(320);
-const lastLeftWidth = ref(320);
+const leftWidth = ref(240);
+const lastLeftWidth = ref(240);
+const editModePrevWidth = ref(240);
 const isCollapsed = ref(false);
 const isRightCollapsed = ref(false);
 const dragging = ref(false);
@@ -696,15 +700,15 @@ function toggleCollapse() {
   isCollapsed.value = true;
 }
 
-function toggleRightCollapse() {
-  if (isRightCollapsed.value) {
-    isRightCollapsed.value = false;
-    leftWidth.value = Math.max(lastLeftWidth.value, LEFT_MIN);
-    return;
-  }
-  lastLeftWidth.value = leftWidth.value || LEFT_MIN;
-  isRightCollapsed.value = true;
-}
+// function toggleRightCollapse() {
+//   if (isRightCollapsed.value) {
+//     isRightCollapsed.value = false;
+//     leftWidth.value = Math.max(lastLeftWidth.value, LEFT_MIN);
+//     return;
+//   }
+//   lastLeftWidth.value = leftWidth.value || LEFT_MIN;
+//   isRightCollapsed.value = true;
+// }
 
 function treeFilterMethod(value: string, data: OrgNode) {
   if (!value) return true;
@@ -989,7 +993,22 @@ function toggleEditMode() {
   if (!isEditMode.value) {
     // 退出编辑模式时，清除选中状态
     currentTreeOrg.value = null;
+    if (!isCollapsed.value && !isRightCollapsed.value) {
+      leftWidth.value = Math.max(editModePrevWidth.value, LEFT_MIN);
+      lastLeftWidth.value = leftWidth.value;
+    }
   }
+  if (isEditMode.value) {
+    editModePrevWidth.value = leftWidth.value;
+    const targetWidth = Math.max(lastLeftWidth.value, LEFT_MIN, 320);
+    if (isCollapsed.value || isRightCollapsed.value || leftWidth.value < targetWidth) {
+      isCollapsed.value = false;
+      isRightCollapsed.value = false;
+      leftWidth.value = targetWidth;
+      lastLeftWidth.value = targetWidth;
+    }
+  }
+
 }
 
 // 显示添加组织对话框
@@ -1043,7 +1062,8 @@ function openParentOrgSelector() {
 async function fetchParentOrgList() {
   parentOrgDialog.loading = true;
   try {
-    const res = await fetchOrgTree({ keyword: parentOrgDialog.keyword });
+    const keyword = (parentOrgDialog.keyword || '').trim();
+    const res = await fetchOrgTree(keyword ? { orgName: keyword } : undefined);
     // 将树形结构展开为列表
     parentOrgDialog.list = flattenOrgTree(res || []);
   } catch (e) {
@@ -1173,7 +1193,7 @@ async function deleteOrgAction(node: OrgNode) {
   }
 }
 
-function formatDateTime(row: any, column: any, cellValue: string) {
+function formatDateTime(_row: unknown, _column: unknown, cellValue: string) {
   if (!cellValue) return '';
   try {
     const date = new Date(cellValue);
@@ -1284,15 +1304,17 @@ function formatDateTime(row: any, column: any, cellValue: string) {
 
   .drag-toggle.left {
     left: 40%;
-    margin-top: -15px;
+    margin-top: -10px;
     transform: translate(-50%, -50%);
   }
-
-  .drag-toggle.right {
+/**
+.drag-toggle.right {
     left: 40%;
     margin-top: 15px;
     transform: translate(-50%, -50%);
   }
+ */
+
 
   .drag-toggle:hover {
     border-color: #409eff;
