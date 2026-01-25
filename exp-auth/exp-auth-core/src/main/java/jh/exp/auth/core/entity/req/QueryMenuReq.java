@@ -12,9 +12,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class QueryMenuReq {
 
+    /**
+     * 菜单编码
+     */
     private String menuCode;
+    /**
+     * 菜单名称
+     */
     private String menuName;
+    /**
+     * 菜单类型
+     */
     private String menuType;
+    /**
+     * 状态
+     */
     private String status;
 
 }

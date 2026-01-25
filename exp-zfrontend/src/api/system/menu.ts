@@ -1,70 +1,65 @@
 import request from '@/api/request';
+import { buildPageQuery, type PageQueryInput, type PageResult } from '@/api/common';
 
 /**
  * 菜单管理（System/Menu）
  * 说明：后端接口如有差异，可统一在这里调整，不影响页面层。
  */
 
-export type MenuType = 'DIR' | 'MENU' | 'BUTTON';
-export type MenuStatus = 0 | 1;
+export type MenuType = 'CATALOG' | 'DIR' | 'MENU' | 'BUTTON';
+export type MenuStatus = 'ENABLED' | 'DISABLED' | 0 | 1;
 export type VisibleStatus = 0 | 1;
 
 export interface MenuItem {
   menuId: string;
-  parentId?: string;
-  name: string;
-  type: MenuType;
-  path?: string;
+  parentMenuId?: string;
+  menuCode: string;
+  menuName: string;
+  menuType: MenuType;
+  routePath?: string;
   component?: string;
-  perms?: string;
   icon?: string;
-  sortNo?: number;
   visible?: VisibleStatus;
   status?: MenuStatus;
-  updateTime?: string;
+  sortNo?: number;
+  remark?: string;
   children?: MenuItem[];
-}
-
-export interface PageResult<T> {
-  records: T[];
-  total: number;
-  page: number;
-  pageSize: number;
+  hasChildren?: boolean;
 }
 
 export interface QueryMenuParams {
-  page: number;
-  pageSize: number;
-  parentId?: string;
-  keyword?: string;
-  type?: MenuType;
+  menuCode?: string;
+  menuName?: string;
+  menuType?: MenuType;
   status?: MenuStatus;
-  visible?: VisibleStatus;
 }
 
 export interface SaveMenuPayload {
   menuId?: string;
-  parentId?: string;
-  name: string;
-  type: MenuType;
-  path?: string;
+  parentMenuId?: string;
+  menuCode: string;
+  menuName: string;
+  menuType: MenuType;
+  routePath?: string;
   component?: string;
-  perms?: string;
   icon?: string;
   sortNo?: number;
   visible?: VisibleStatus;
-  status?: MenuStatus;
+  remark?: string;
 }
 
 // 约定路径（可按后端实际调整）
-const BASE = '/exp/system/menu';
+const BASE = '/exp/auth/menu';
 
 export function queryMenuTree() {
   return request.get<MenuItem[], MenuItem[]>(`${BASE}/tree`);
 }
 
-export function queryMenuList(params: QueryMenuParams) {
-  return request.get<PageResult<MenuItem>, PageResult<MenuItem>>(`${BASE}/list`, { params });
+export function queryMenuList(params: PageQueryInput<QueryMenuParams>) {
+  return request.post<PageResult<MenuItem>, PageResult<MenuItem>>(
+    `${BASE}/list`,
+    buildPageQuery<QueryMenuParams>(params),
+  );
 }
 
 export function createMenu(data: SaveMenuPayload) {

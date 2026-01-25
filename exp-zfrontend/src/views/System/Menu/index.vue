@@ -9,7 +9,7 @@
               <el-input
                 v-model="treeFilter"
                 size="small"
-                placeholder="搜索菜单名称/权限标识"
+                placeholder="搜索菜单名称/菜单编码"
                 clearable
                 @input="filterTree"
               />
@@ -27,9 +27,9 @@
             >
               <template #default="{ data }">
                 <span class="tree-node">
-                  <span class="node-name">{{ data.name }}</span>
-                  <el-tag size="small" class="node-type" :type="typeTagType(data.type)">
-                    {{ typeText(data.type) }}
+                  <span class="node-name">{{ data.menuName }}</span>
+                  <el-tag size="small" class="node-type" :type="typeTagType(data.menuType)">
+                    {{ typeText(data.menuType) }}
                   </el-tag>
                 </span>
               </template>
@@ -55,38 +55,40 @@
                 </div>
               </div>
               <div class="sub-title" v-if="currentNode">
-                当前父节点：{{ currentNode.name }}（{{ typeText(currentNode.type) }}）
+                当前父节点：{{ currentNode.menuName }}（{{ typeText(currentNode.menuType) }}）
               </div>
               <div class="sub-title" v-else>当前父节点：根节点</div>
             </template>
 
             <!-- 查询区 -->
             <el-form :inline="true" :model="query" class="search-bar" @submit.prevent>
-              <el-form-item label="关键词">
+              <el-form-item label="菜单编码">
                 <el-input
-                  v-model="query.keyword"
-                  placeholder="菜单名称/权限标识"
+                  v-model="query.menuCode"
+                  placeholder="请输入菜单编码"
                   clearable
-                  style="width: 220px"
+                  style="width: 200px"
+                />
+              </el-form-item>
+              <el-form-item label="菜单名称">
+                <el-input
+                  v-model="query.menuName"
+                  placeholder="请输入菜单名称"
+                  clearable
+                  style="width: 200px"
                 />
               </el-form-item>
               <el-form-item label="类型">
-                <el-select v-model="query.type" clearable placeholder="全部" style="width: 140px">
-                  <el-option label="目录" value="DIR" />
+                <el-select v-model="query.menuType" clearable placeholder="全部" style="width: 140px">
+                  <el-option label="目录" value="CATALOG" />
                   <el-option label="菜单" value="MENU" />
                   <el-option label="按钮" value="BUTTON" />
                 </el-select>
               </el-form-item>
               <el-form-item label="状态">
                 <el-select v-model="query.status" clearable placeholder="全部" style="width: 140px">
-                  <el-option label="启用" :value="1" />
-                  <el-option label="停用" :value="0" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="可见">
-                <el-select v-model="query.visible" clearable placeholder="全部" style="width: 140px">
-                  <el-option label="显示" :value="1" />
-                  <el-option label="隐藏" :value="0" />
+                  <el-option label="启用" value="ENABLED" />
+                  <el-option label="停用" value="DISABLED" />
                 </el-select>
               </el-form-item>
               <el-form-item>
@@ -103,15 +105,17 @@
               border
               style="width: 100%"
             >
-              <el-table-column prop="name" label="名称" min-width="180" />
+              <el-table-column prop="menuName" label="名称" min-width="180" />
               <el-table-column label="类型" min-width="110">
                 <template #default="{ row }">
-                  <el-tag size="small" :type="typeTagType(row.type)">{{ typeText(row.type) }}</el-tag>
+                  <el-tag size="small" :type="typeTagType(row.menuType)">
+                    {{ typeText(row.menuType) }}
+                  </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="path" label="路由/路径" min-width="160" />
+              <el-table-column prop="routePath" label="路由/路径" min-width="160" />
               <el-table-column prop="component" label="组件" min-width="200" />
-              <el-table-column prop="perms" label="权限标识" min-width="200" />
+              <el-table-column prop="menuCode" label="菜单编码" min-width="180" />
               <el-table-column prop="icon" label="图标" min-width="140" />
               <el-table-column prop="sortNo" label="排序" min-width="90" />
               <el-table-column label="可见" min-width="90">
@@ -123,12 +127,11 @@
               </el-table-column>
               <el-table-column label="状态" min-width="90">
                 <template #default="{ row }">
-                  <el-tag size="small" :type="row.status === 1 ? 'success' : 'info'">
-                    {{ row.status === 1 ? '启用' : '停用' }}
+                  <el-tag size="small" :type="statusTagType(row.status)">
+                    {{ statusText(row.status) }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="updateTime" label="更新时间" min-width="170" />
               <el-table-column label="操作" fixed="right" width="240">
                 <template #default="{ row }">
                   <el-button link type="primary" size="small" @click="openEdit(row)" :disabled="!canUpdate">
@@ -140,7 +143,7 @@
                     @click="toggleStatus(row)"
                     :disabled="!canStatus"
                   >
-                    {{ row.status === 1 ? '停用' : '启用' }}
+                    {{ isEnabledStatus(row.status) ? '停用' : '启用' }}
                   </el-button>
                   <el-button
                     link
@@ -160,7 +163,7 @@
               <el-pagination
                 background
                 layout="total, prev, pager, next, sizes"
-                :current-page="query.page"
+                :current-page="query.pageNum"
                 :page-size="query.pageSize"
                 :page-sizes="[10, 20, 50, 100]"
                 :total="total"
@@ -189,30 +192,30 @@
           <el-form-item label="父节点">
             <el-input :model-value="parentName" disabled />
           </el-form-item>
-          <el-form-item label="类型" prop="type">
-            <el-select v-model="form.type" placeholder="请选择">
-              <el-option label="目录" value="DIR" />
+          <el-form-item label="类型" prop="menuType">
+            <el-select v-model="form.menuType" placeholder="请选择">
+              <el-option label="目录" value="CATALOG" />
               <el-option label="菜单" value="MENU" />
               <el-option label="按钮" value="BUTTON" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="名称" prop="name">
-            <el-input v-model="form.name" placeholder="请输入名称" />
+          <el-form-item label="菜单名称" prop="menuName">
+            <el-input v-model="form.menuName" placeholder="请输入菜单名称" />
           </el-form-item>
           <el-form-item label="排序">
             <el-input-number v-model="form.sortNo" :min="0" :max="9999" />
           </el-form-item>
 
-          <el-form-item label="路由/路径" prop="path">
-            <el-input v-model="form.path" placeholder="如：/system/user 或 system:user" />
+          <el-form-item label="路由/路径" prop="routePath">
+            <el-input v-model="form.routePath" placeholder="如：/system/user" />
           </el-form-item>
           <el-form-item label="组件" prop="component">
             <el-input v-model="form.component" placeholder="如：views/System/User/index.vue" />
           </el-form-item>
 
-          <el-form-item label="权限标识" prop="perms">
-            <el-input v-model="form.perms" placeholder="如：system:user:view" />
+          <el-form-item label="菜单编码" prop="menuCode">
+            <el-input v-model="form.menuCode" placeholder="如：SYSTEM_USER" />
           </el-form-item>
           <el-form-item label="图标">
             <el-input v-model="form.icon" placeholder="如：UserFilled" />
@@ -224,19 +227,12 @@
               <el-option label="隐藏" :value="0" />
             </el-select>
           </el-form-item>
-          <el-form-item label="状态">
-            <el-select v-model="form.status" placeholder="请选择">
-              <el-option label="启用" :value="1" />
-              <el-option label="停用" :value="0" />
-            </el-select>
-          </el-form-item>
-
           <el-alert
             class="full-row"
             type="info"
             show-icon
             :closable="false"
-            title="提示：按钮类型（BUTTON）通常只配置名称 + 权限标识；目录/菜单可按需配置 path/component/icon。"
+            title="提示：按钮类型（BUTTON）通常只配置菜单名称 + 菜单编码；目录/菜单可按需配置路由、组件和图标。"
           />
         </el-form>
 
@@ -254,6 +250,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
+import { parsePageResult } from '@/api/common';
 import {
   queryMenuTree,
   queryMenuList,
@@ -270,7 +267,7 @@ import {
 
 const treeProps = {
   children: 'children',
-  label: 'name',
+  label: 'menuName',
 };
 
 const treeRef = ref();
@@ -280,13 +277,13 @@ const menuTree = ref<MenuItem[]>([]);
 const currentNode = ref<MenuItem | null>(null);
 
 const query = reactive({
-  page: 1,
+  pageNum: 1,
   pageSize: 10,
-  parentId: undefined as string | undefined,
-  keyword: '',
-  type: undefined as MenuType | undefined,
+  parentMenuId: undefined as string | undefined,
+  menuCode: '',
+  menuName: '',
+  menuType: undefined as MenuType | undefined,
   status: undefined as MenuStatus | undefined,
-  visible: undefined as VisibleStatus | undefined,
 });
 
 const tableLoading = ref(false);
@@ -301,25 +298,26 @@ const formRef = ref<FormInstance>();
 const saving = ref(false);
 const form = reactive<SaveMenuPayload>({
   menuId: undefined,
-  parentId: undefined,
-  name: '',
-  type: 'MENU',
-  path: '',
+  parentMenuId: undefined,
+  menuCode: '',
+  menuName: '',
+  menuType: 'MENU',
+  routePath: '',
   component: '',
-  perms: '',
   icon: '',
   sortNo: 0,
   visible: 1,
-  status: 1,
+  remark: '',
 });
 
 const rules: FormRules = {
-  name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择类型', trigger: 'change' }],
-  path: [
+  menuCode: [{ required: true, message: '请输入菜单编码', trigger: 'blur' }],
+  menuName: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
+  menuType: [{ required: true, message: '请选择类型', trigger: 'change' }],
+  routePath: [
     {
       validator: (_rule, value, callback) => {
-        if (form.type === 'BUTTON') return callback();
+        if (form.menuType === 'BUTTON') return callback();
         if (!String(value || '').trim()) return callback(new Error('请输入路由/路径'));
         callback();
       },
@@ -329,18 +327,8 @@ const rules: FormRules = {
   component: [
     {
       validator: (_rule, value, callback) => {
-        if (form.type !== 'MENU') return callback();
+        if (form.menuType !== 'MENU') return callback();
         if (!String(value || '').trim()) return callback(new Error('请输入组件路径'));
-        callback();
-      },
-      trigger: 'blur',
-    },
-  ],
-  perms: [
-    {
-      validator: (_rule, value, callback) => {
-        if (form.type !== 'BUTTON') return callback();
-        if (!String(value || '').trim()) return callback(new Error('按钮类型需填写权限标识'));
         callback();
       },
       trigger: 'blur',
@@ -355,98 +343,42 @@ const canDelete = computed(() => hasPermission('system:menu:delete'));
 const canStatus = computed(() => hasPermission('system:menu:status'));
 
 const parentName = computed(() => {
-  if (!form.parentId) return '根节点';
-  const node = findNode(menuTree.value, form.parentId);
-  return node ? `${node.name}（${typeText(node.type)}）` : form.parentId;
+  if (!form.parentMenuId) return '根节点';
+  const node = findNode(menuTree.value, form.parentMenuId);
+  return node ? `${node.menuName}（${typeText(node.menuType)}）` : form.parentMenuId;
 });
-
-const mockTree: MenuItem[] = [
-  {
-    menuId: 'system',
-    name: '系统管理',
-    type: 'DIR',
-    path: '/system',
-    icon: 'Setting',
-    sortNo: 10,
-    visible: 1,
-    status: 1,
-    updateTime: '2025-01-02 10:00:00',
-    children: [
-      {
-        menuId: 'system:user',
-        parentId: 'system',
-        name: '人员管理',
-        type: 'MENU',
-        path: '/system/user',
-        component: 'views/System/User/index.vue',
-        perms: 'system:user:view',
-        icon: 'UserFilled',
-        sortNo: 10,
-        visible: 1,
-        status: 1,
-        updateTime: '2025-01-02 10:00:00',
-        children: [
-          {
-            menuId: 'system:user:create',
-            parentId: 'system:user',
-            name: '新增',
-            type: 'BUTTON',
-            perms: 'system:user:manage',
-            sortNo: 10,
-            visible: 1,
-            status: 1,
-            updateTime: '2025-01-02 10:00:00',
-          },
-          {
-            menuId: 'system:user:delete',
-            parentId: 'system:user',
-            name: '删除',
-            type: 'BUTTON',
-            perms: 'system:user:delete',
-            sortNo: 20,
-            visible: 1,
-            status: 1,
-            updateTime: '2025-01-02 10:00:00',
-          },
-        ],
-      },
-      {
-        menuId: 'system:menu',
-        parentId: 'system',
-        name: '菜单管理',
-        type: 'MENU',
-        path: '/system/menu',
-        component: 'views/System/Menu/index.vue',
-        perms: 'system:menu:view',
-        icon: 'Menu',
-        sortNo: 20,
-        visible: 1,
-        status: 1,
-        updateTime: '2025-01-02 10:00:00',
-      },
-    ],
-  },
-];
 
 onMounted(() => {
   loadTree();
 });
 
 function typeText(t: MenuType) {
-  return t === 'DIR' ? '目录' : t === 'MENU' ? '菜单' : '按钮';
+  return t === 'CATALOG' || t === 'DIR' ? '目录' : t === 'MENU' ? '菜单' : '按钮';
 }
 
 function typeTagType(t: MenuType) {
-  return t === 'DIR' ? 'warning' : t === 'MENU' ? 'success' : 'info';
+  return t === 'CATALOG' || t === 'DIR' ? 'warning' : t === 'MENU' ? 'success' : 'info';
+}
+
+function isEnabledStatus(status?: MenuStatus) {
+  return status === 'ENABLED' || status === 1;
+}
+
+function statusText(status?: MenuStatus) {
+  return isEnabledStatus(status) ? '启用' : '停用';
+}
+
+function statusTagType(status?: MenuStatus) {
+  return isEnabledStatus(status) ? 'success' : 'info';
 }
 
 function treeFilterMethod(value: string, data: MenuItem) {
   if (!value) return true;
   const v = value.toLowerCase();
   return (
-    (data.name || '').toLowerCase().includes(v) ||
-    String(data.perms || '').toLowerCase().includes(v) ||
-    String(data.path || '').toLowerCase().includes(v)
+    (data.menuName || '').toLowerCase().includes(v) ||
+    String(data.menuCode || '').toLowerCase().includes(v) ||
+    String(data.routePath || '').toLowerCase().includes(v)
   );
 }
 
@@ -458,77 +390,88 @@ async function loadTree() {
   treeLoading.value = true;
   try {
     const res = await queryMenuTree();
-    menuTree.value = (Array.isArray(res) && res.length ? res : mockTree) as MenuItem[];
+    menuTree.value = (Array.isArray(res) && res.length ? res : []) as MenuItem[];
   } catch {
-    menuTree.value = mockTree;
+    menuTree.value = [];
   } finally {
     treeLoading.value = false;
   }
   // 默认选择根
   currentNode.value = null;
-  query.parentId = undefined;
+  query.parentMenuId = undefined;
   fetchList();
 }
 
 function handleTreeClick(node: MenuItem) {
   currentNode.value = node;
-  query.parentId = node.menuId;
-  query.page = 1;
+  query.parentMenuId = node.menuId;
+  query.pageNum = 1;
   fetchList();
 }
 
 function handleSearch() {
-  query.keyword = (query.keyword || '').trim();
-  query.page = 1;
+  query.menuCode = (query.menuCode || '').trim();
+  query.menuName = (query.menuName || '').trim();
+  query.pageNum = 1;
   fetchList();
 }
 
 function handleReset() {
-  query.keyword = '';
-  query.type = undefined;
+  query.menuCode = '';
+  query.menuName = '';
+  query.menuType = undefined;
   query.status = undefined;
-  query.visible = undefined;
-  query.page = 1;
+  query.pageNum = 1;
   fetchList();
 }
 
 function handleCurrentChange(page: number) {
-  query.page = page;
+  query.pageNum = page;
   fetchList();
 }
 
 function handleSizeChange(size: number) {
   query.pageSize = size;
-  query.page = 1;
+  query.pageNum = 1;
   fetchList();
 }
 
 async function fetchList() {
   tableLoading.value = true;
   try {
-    const res = await queryMenuList({ ...query });
-    tableData.value = Array.isArray(res?.records) ? res.records : [];
-    total.value = Number(res?.total ?? 0) || 0;
+    const res = await queryMenuList({
+      pageNum: query.pageNum,
+      pageSize: query.pageSize,
+      menuCode: query.menuCode || undefined,
+      menuName: query.menuName || undefined,
+      menuType: query.menuType,
+      status: query.status,
+    });
+    const { list, total: totalCount } = parsePageResult<MenuItem>(res);
+    const filtered = query.parentMenuId
+      ? list.filter((item) => item.parentMenuId === query.parentMenuId)
+      : list;
+    tableData.value = filtered;
+    total.value = query.parentMenuId ? filtered.length : totalCount || filtered.length;
   } catch {
     // mock fallback：取当前父节点 children，并按条件过滤 + 简单分页
-    const list = getChildrenByParent(menuTree.value, query.parentId);
+    const list = getChildrenByParent(menuTree.value, query.parentMenuId);
     const filtered = list
       .filter((x) => {
-        if (query.type && x.type !== query.type) return false;
-        if (typeof query.status === 'number' && x.status !== query.status) return false;
-        if (typeof query.visible === 'number' && x.visible !== query.visible) return false;
-        const kw = (query.keyword || '').trim().toLowerCase();
-        if (!kw) return true;
+        if (query.menuType && x.menuType !== query.menuType) return false;
+        if (query.status && x.status !== query.status) return false;
+        const code = (query.menuCode || '').trim().toLowerCase();
+        const name = (query.menuName || '').trim().toLowerCase();
+        if (!code && !name) return true;
         return (
-          (x.name || '').toLowerCase().includes(kw) ||
-          String(x.perms || '').toLowerCase().includes(kw) ||
-          String(x.path || '').toLowerCase().includes(kw)
+          (code && (x.menuCode || '').toLowerCase().includes(code)) ||
+          (name && (x.menuName || '').toLowerCase().includes(name))
         );
       })
       .sort((a, b) => Number(a.sortNo ?? 0) - Number(b.sortNo ?? 0));
 
     total.value = filtered.length;
-    const start = (query.page - 1) * query.pageSize;
+    const start = (query.pageNum - 1) * query.pageSize;
     tableData.value = filtered.slice(start, start + query.pageSize);
   } finally {
     tableLoading.value = false;
@@ -537,28 +480,28 @@ async function fetchList() {
 
 function resetFormModel() {
   form.menuId = undefined;
-  form.name = '';
-  form.type = 'MENU';
-  form.path = '';
+  form.menuCode = '';
+  form.menuName = '';
+  form.menuType = 'MENU';
+  form.routePath = '';
   form.component = '';
-  form.perms = '';
   form.icon = '';
   form.sortNo = 0;
   form.visible = 1;
-  form.status = 1;
+  form.remark = '';
 }
 
 function openCreateRoot() {
   editDialog.isEdit = false;
   resetFormModel();
-  form.parentId = undefined;
+  form.parentMenuId = undefined;
   editDialog.visible = true;
 }
 
 function openCreateChild() {
   editDialog.isEdit = false;
   resetFormModel();
-  form.parentId = currentNode.value?.menuId;
+  form.parentMenuId = currentNode.value?.menuId;
   editDialog.visible = true;
 }
 
@@ -566,16 +509,16 @@ function openEdit(row: MenuItem) {
   editDialog.isEdit = true;
   resetFormModel();
   form.menuId = row.menuId;
-  form.parentId = row.parentId;
-  form.name = row.name;
-  form.type = row.type;
-  form.path = row.path || '';
+  form.parentMenuId = row.parentMenuId;
+  form.menuCode = row.menuCode;
+  form.menuName = row.menuName;
+  form.menuType = row.menuType;
+  form.routePath = row.routePath || '';
   form.component = row.component || '';
-  form.perms = row.perms || '';
   form.icon = row.icon || '';
   form.sortNo = row.sortNo ?? 0;
   form.visible = (row.visible ?? 1) as VisibleStatus;
-  form.status = (row.status ?? 1) as MenuStatus;
+  form.remark = row.remark || '';
   editDialog.visible = true;
 }
 
@@ -608,7 +551,7 @@ async function submitForm() {
 
 function handleDelete(row: MenuItem) {
   if (!canDelete.value) return;
-  ElMessageBox.confirm(`确认删除「${row.name}」吗？（包含其子节点）`, '提示', { type: 'warning' })
+  ElMessageBox.confirm(`确认删除「${row.menuName}」吗？（包含其子节点）`, '提示', { type: 'warning' })
     .then(async () => {
       try {
         await deleteMenu(row.menuId);
@@ -626,7 +569,7 @@ function handleDelete(row: MenuItem) {
 
 function toggleStatus(row: MenuItem) {
   if (!canStatus.value) return;
-  const next: MenuStatus = row.status === 1 ? 0 : 1;
+  const next: MenuStatus = isEnabledStatus(row.status) ? 'DISABLED' : 'ENABLED';
   setMenuStatus(row.menuId, next)
     .then(async () => {
       ElMessage.success('状态已更新');
@@ -662,42 +605,41 @@ function upsertMock(list: MenuItem[], payload: SaveMenuPayload & { menuId: strin
   if (payload.menuId && findNode(list, payload.menuId)) {
     const node = findNode(list, payload.menuId);
     if (!node) return;
-    node.parentId = payload.parentId;
-    node.name = payload.name;
-    node.type = payload.type;
-    node.path = payload.path;
+    node.parentMenuId = payload.parentMenuId;
+    node.menuCode = payload.menuCode;
+    node.menuName = payload.menuName;
+    node.menuType = payload.menuType;
+    node.routePath = payload.routePath;
     node.component = payload.component;
-    node.perms = payload.perms;
     node.icon = payload.icon;
     node.sortNo = payload.sortNo;
     node.visible = payload.visible;
-    node.status = payload.status;
-    node.updateTime = new Date().toISOString();
+    node.remark = payload.remark;
     return;
   }
 
   // create
   const newNode: MenuItem = {
     menuId: payload.menuId,
-    parentId: payload.parentId,
-    name: payload.name,
-    type: payload.type,
-    path: payload.path,
+    parentMenuId: payload.parentMenuId,
+    menuCode: payload.menuCode,
+    menuName: payload.menuName,
+    menuType: payload.menuType,
+    routePath: payload.routePath,
     component: payload.component,
-    perms: payload.perms,
     icon: payload.icon,
     sortNo: payload.sortNo,
     visible: payload.visible,
-    status: payload.status,
-    updateTime: new Date().toISOString(),
-    children: payload.type === 'BUTTON' ? undefined : [],
+    status: 'ENABLED',
+    remark: payload.remark,
+    children: payload.menuType === 'BUTTON' ? undefined : [],
   };
 
-  if (!payload.parentId) {
+  if (!payload.parentMenuId) {
     list.push(newNode);
     return;
   }
-  const parent = findNode(list, payload.parentId);
+  const parent = findNode(list, payload.parentMenuId);
   if (!parent) {
     list.push(newNode);
     return;

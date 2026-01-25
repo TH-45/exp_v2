@@ -18,9 +18,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * 菜单管理控制器
- */
 @RestController
 @RequestMapping("/menu")
 @RequiredArgsConstructor

@@ -29,12 +29,20 @@
 
       <!-- 查询区 -->
       <el-form :inline="true" :model="query" class="search-bar" @submit.prevent>
-        <el-form-item label="关键词">
+        <el-form-item label="角色编码">
           <el-input
-            v-model="query.keyword"
-            placeholder="角色名称/角色编码"
+            v-model="query.roleCode"
+            placeholder="请输入角色编码"
             clearable
-            style="width: 240px"
+            style="width: 200px"
+          />
+        </el-form-item>
+        <el-form-item label="角色名称">
+          <el-input
+            v-model="query.roleName"
+            placeholder="请输入角色名称"
+            clearable
+            style="width: 200px"
           />
         </el-form-item>
         <el-form-item label="状态">
@@ -51,12 +59,14 @@
 
       <!-- 列表区 -->
       <el-table
+        ref="tableRef"
         v-loading="loading"
         :data="tableData"
         row-key="roleId"
         border
         style="width: 100%"
         @selection-change="handleSelectionChange"
+        @row-click="handleRowClick"
       >
         <el-table-column type="selection" width="50" />
         <el-table-column prop="roleCode" label="角色编码" min-width="160" />
@@ -197,11 +207,14 @@ import {
   type RoleVO,
   type RoleStatus,
 } from '@/api/system/role';
+import { parsePageResult } from '@/api/common';
 
 const loading = ref(false);
 const saving = ref(false);
 
 const query = reactive({
+  roleCode: '',
+  roleName: '',
   roleType: '',
   status: undefined as RoleStatus | undefined,
   page: 1,
@@ -211,6 +224,7 @@ const query = reactive({
 const tableData = ref<RoleVO[]>([]);
 const total = ref(0);
 const selectedRows = ref<RoleVO[]>([]);
+const tableRef = ref();
 
 const editDialog = reactive({
   visible: false,
@@ -319,13 +333,15 @@ async function fetchList() {
     const res = await listRoles({
       pageNum: query.page,
       pageSize: query.pageSize,
+      roleCode: query.roleCode || undefined,
+      roleName: query.roleName || undefined,
       roleType: query.roleType || undefined,
       status: query.status,
     });
-    const list = (res.list || []) as RoleVO[];
+    const { list, total: totalCount } = parsePageResult<RoleVO>(res);
     const mappedList = list.map((item) => normalizeRole(item as RoleCompatFields));
     tableData.value = mappedList.length ? mappedList : mockList;
-    total.value = Number(res.total ?? tableData.value.length) || 0;
+    total.value = totalCount || tableData.value.length;
   } catch (e) {
     tableData.value = mockList;
     total.value = mockList.length;
@@ -336,12 +352,16 @@ async function fetchList() {
 }
 
 function handleSearch() {
+  query.roleCode = (query.roleCode || '').trim();
+  query.roleName = (query.roleName || '').trim();
   query.roleType = (query.roleType || '').trim();
   query.page = 1;
   fetchList();
 }
 
 function handleReset() {
+  query.roleCode = '';
+  query.roleName = '';
   query.roleType = '';
   query.status = undefined;
   query.page = 1;
@@ -361,6 +381,10 @@ function handleSizeChange(size: number) {
 
 function handleSelectionChange(rows: RoleVO[]) {
   selectedRows.value = rows;
+}
+
+function handleRowClick(row: RoleVO) {
+  tableRef.value?.toggleRowSelection(row);
 }
 
 function resetFormModel() {

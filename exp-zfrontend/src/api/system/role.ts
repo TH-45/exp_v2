@@ -1,4 +1,5 @@
 import request from '@/api/request';
+import { buildPageQuery, type PageQuery, type PageQueryInput, type PageResult } from '@/api/common';
 
 export type RoleStatus = 'ENABLED' | 'DISABLED';
 
@@ -16,28 +17,22 @@ export interface RoleVO {
   canDelete?: boolean;
 }
 
-export interface PageResult<T> {
-  /** 文档约定字段 */
-  total?: number;
-  page?: number;
-  size?: number;
-  /** 兼容后端常见字段 */
-  list?: T[];
-}
-
-export interface RoleListQuery {
-  pageNum: number;
-  pageSize: number;
+export interface RoleListQueryParams {
   roleType?: string;
   roleName?: string;
   roleCode?: string;
   status?: RoleStatus;
 }
 
+export type RoleListQuery = PageQuery<RoleListQueryParams>;
+
 const BASE = '/exp/auth/roles';
 
-export function listRoles(data: Partial<RoleListQuery>) {
-  return request.post<PageResult<RoleVO>, PageResult<RoleVO>>(`${BASE}/list`, data);
+export function listRoles(data: PageQueryInput<RoleListQueryParams>) {
+  return request.post<PageResult<RoleVO>, PageResult<RoleVO>>(
+    `${BASE}/list`,
+    buildPageQuery<RoleListQueryParams>(data),
+  );
 }
 
 export function getRoleDetail(roleId: string) {

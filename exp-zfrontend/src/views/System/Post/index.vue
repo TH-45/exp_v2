@@ -7,7 +7,7 @@
           class="left-pane"
           :class="{ collapsed: isCollapsed, expand: isRightCollapsed }"
           :style="{
-            width: isCollapsed ? '0px' : isRightCollapsed ? '100%' : leftWidth + 'px',
+            width: isCollapsed ? '100px' : isRightCollapsed ? '200%' : leftWidth + 'px',
           }"
         >
           <el-card class="tree-card" body-class="tree-card-body">
@@ -19,7 +19,7 @@
                   placeholder="搜索组织名称/编码"
                   clearable
                   @input="filterTree"
-                  style="width: 280px;"
+                  style="width: 198px;"
                 />
               </div>
               <div class="tree-buttons">
@@ -125,12 +125,10 @@
                 <el-button size="small" :disabled="true">导入</el-button>
                 <el-button size="small" :disabled="true">导出</el-button>
               </div>
-<!--              <div class="org-label" v-if="currentOrg">-->
-<!--                当前组织：{{ currentOrg.orgName }}-->
-<!--              </div>-->
             </div>
-
-
+            <div class="org-label" v-if="currentOrg">
+              当前组织：{{ currentOrg.orgName }}
+            </div>
 
             <!-- 查询栏 -->
             <el-form
@@ -139,20 +137,20 @@
               @submit.prevent
             >
               <div class="search-row">
-                <el-form-item label="岗位编码">
+                <el-form-item label="编码">
                   <el-input
                     v-model="query.postCode"
                     placeholder="请输入岗位编码"
                     clearable
-                    style="width: 160px"
+                    style="width: 130px"
                   />
                 </el-form-item>
-                <el-form-item label="岗位名称">
+                <el-form-item label="名称">
                   <el-input
                     v-model="query.postName"
                     placeholder="请输入岗位名称"
                     clearable
-                    style="width: 160px"
+                    style="width: 130px"
                   />
                 </el-form-item>
                 <el-form-item label="类型">
@@ -1271,7 +1269,7 @@ function formatDateTime(row: any, column: any, cellValue: string) {
     position: absolute;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 18px;
+    width: 7px;
     height: 24px;
     border: 1px solid #dcdfe6;
     border-radius: 6px;
@@ -1285,12 +1283,14 @@ function formatDateTime(row: any, column: any, cellValue: string) {
   }
 
   .drag-toggle.left {
-    left: 35%;
+    left: 40%;
+    margin-top: -15px;
     transform: translate(-50%, -50%);
   }
 
   .drag-toggle.right {
-    left: 65%;
+    left: 40%;
+    margin-top: 15px;
     transform: translate(-50%, -50%);
   }
 
@@ -1426,6 +1426,7 @@ function formatDateTime(row: any, column: any, cellValue: string) {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 20px;
+    gap: 12px;
   }
 
   .title {
