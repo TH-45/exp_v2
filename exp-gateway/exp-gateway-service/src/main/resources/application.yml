@@ -55,21 +55,29 @@ spring:
           uri: lb://exp-bid-contract-service
           predicates:
             - Path=/exp/bidding/**
+          filters:
+            - StripPrefix=2
 
         - id: contracts-service
           uri: lb://exp-bid-contract-service
           predicates:
             - Path=/exp/contracts/**
+          filters:
+            - StripPrefix=2
 
         - id: project-service
           uri: lb://exp-project-service
           predicates:
             - Path=/exp/project/**
+          filters:
+            - StripPrefix=2
 
         - id: corp-service
           uri: lb://exp-corp-service
           predicates:
             - Path=/exp/corp/**
+          filters:
+            - StripPrefix=2
   data:
     redis:
       host: 192.168.101.128

@@ -39,8 +39,8 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="query.status" clearable placeholder="全部" style="width: 160px">
-            <el-option label="启用" :value="1" />
-            <el-option label="停用" :value="0" />
+            <el-option label="启用" value="ENABLED" />
+            <el-option label="停用" value="DISABLED" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -69,7 +69,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="remark" label="备注" min-width="220" />
-        <el-table-column prop="createTime" label="创建时间" min-width="170" />
+        <el-table-column label="创建时间" min-width="170">
+          <template #default="{ row }">
+            {{ formatDateTime(row.createTime) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" fixed="right" width="240">
           <template #default="{ row }">
             <el-button
@@ -139,8 +143,8 @@
           </el-form-item>
           <el-form-item label="状态" prop="status">
             <el-select v-model="form.status" placeholder="请选择">
-              <el-option label="启用" :value="1" />
-              <el-option label="停用" :value="0" />
+              <el-option label="启用" value="ENABLED" />
+              <el-option label="停用" value="DISABLED" />
             </el-select>
           </el-form-item>
           <el-form-item label="备注" class="full-row">
@@ -167,8 +171,12 @@
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="备注">{{ detailDrawer.data?.remark }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ detailDrawer.data?.createTime }}</el-descriptions-item>
-          <el-descriptions-item label="更新时间">{{ detailDrawer.data?.updateTime }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">
+            {{ formatDateTime(detailDrawer.data?.createTime) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="更新时间">
+            {{ formatDateTime(detailDrawer.data?.updateTime) }}
+          </el-descriptions-item>
         </el-descriptions>
       </el-drawer>
     </el-card>
@@ -194,7 +202,7 @@ const loading = ref(false);
 const saving = ref(false);
 
 const query = reactive({
-  keyword: '',
+  roleType: '',
   status: undefined as RoleStatus | undefined,
   page: 1,
   pageSize: 10,
@@ -214,7 +222,7 @@ const form = reactive<Partial<RoleVO>>({
   roleId: '',
   roleName: '',
   roleCode: '',
-  status: 1,
+  status: 'ENABLED',
   remark: '',
 });
 
@@ -239,7 +247,7 @@ const mockList: RoleVO[] = [
     roleId: 'r_admin',
     roleCode: 'ADMIN',
     roleName: '系统管理员',
-    status: 1,
+    status: 'ENABLED',
     remark: '拥有全部权限',
     createTime: '2025-01-01 10:00:00',
     updateTime: '2025-01-02 10:00:00',
@@ -248,7 +256,7 @@ const mockList: RoleVO[] = [
     roleId: 'r_user',
     roleCode: 'USER',
     roleName: '普通用户',
-    status: 1,
+    status: 'ENABLED',
     remark: '仅查看权限',
     createTime: '2025-01-01 10:00:00',
     updateTime: '2025-01-02 10:00:00',
@@ -257,7 +265,7 @@ const mockList: RoleVO[] = [
     roleId: 'r_disabled',
     roleCode: 'DISABLED',
     roleName: '停用角色',
-    status: 0,
+    status: 'ENABLED',
     remark: '示例数据',
     createTime: '2025-01-01 10:00:00',
     updateTime: '2025-01-02 10:00:00',
@@ -269,26 +277,54 @@ onMounted(() => {
 });
 
 function statusTagType(status?: RoleStatus) {
-  const s = String(status ?? '1');
-  return s === '1' ? 'success' : 'info';
+  return status === 'ENABLED' ? 'success' : 'info';
 }
 
 function statusText(status?: RoleStatus) {
-  const s = String(status ?? '1');
-  return s === '1' ? '启用' : '停用';
+  return status === 'ENABLED' ? '启用' : '停用';
+}
+
+function formatDateTime(dateTime?: string) {
+  if (!dateTime) return '-';
+  try {
+    const date = new Date(dateTime);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  } catch {
+    return '-';
+  }
+}
+
+type RoleCompatFields = RoleVO & { createdTime?: string; updatedTime?: string };
+
+function normalizeRole(role: RoleCompatFields): RoleVO {
+  // 兼容不同字段名：优先使用 createTime/updateTime
+  const createTime = role.createTime || role.createdTime;
+  const updateTime = role.updateTime || role.updatedTime;
+  return {
+    ...role,
+    status: role.status === 'ENABLED' ? 'ENABLED' : 'DISABLED',
+    createTime,
+    updateTime,
+  };
 }
 
 async function fetchList() {
   loading.value = true;
   try {
     const res = await listRoles({
-      page: query.page,
+      pageNum: query.page,
       pageSize: query.pageSize,
-      keyword: query.keyword || undefined,
+      roleType: query.roleType || undefined,
       status: query.status,
     });
-    const list = (res.records || res.list || res.rows || []) as RoleVO[];
-    tableData.value = list.length ? list : mockList;
+    const list = (res.list || []) as RoleVO[];
+    const mappedList = list.map((item) => normalizeRole(item as RoleCompatFields));
+    tableData.value = mappedList.length ? mappedList : mockList;
     total.value = Number(res.total ?? tableData.value.length) || 0;
   } catch (e) {
     tableData.value = mockList;
@@ -300,13 +336,13 @@ async function fetchList() {
 }
 
 function handleSearch() {
-  query.keyword = (query.keyword || '').trim();
+  query.roleType = (query.roleType || '').trim();
   query.page = 1;
   fetchList();
 }
 
 function handleReset() {
-  query.keyword = '';
+  query.roleType = '';
   query.status = undefined;
   query.page = 1;
   fetchList();
@@ -331,7 +367,7 @@ function resetFormModel() {
   form.roleId = '';
   form.roleName = '';
   form.roleCode = '';
-  form.status = 1;
+  form.status = 'ENABLED';
   form.remark = '';
 }
 
@@ -423,7 +459,7 @@ async function openDetail(row: RoleVO) {
   detailDrawer.data = row;
   try {
     const res = await getRoleDetail(row.roleId);
-    detailDrawer.data = res;
+    detailDrawer.data = normalizeRole(res as RoleCompatFields);
   } catch {
     // 使用列表行数据展示即可
   }

@@ -23,21 +23,20 @@ export interface PageResult<T> {
   size?: number;
   /** 兼容后端常见字段 */
   list?: T[];
-  rows?: T[];
 }
 
 export interface RoleListQuery {
-  page: number;
+  pageNum: number;
   pageSize: number;
-  keyword?: string;
+  roleType?: string;
   roleName?: string;
   roleCode?: string;
   status?: RoleStatus;
 }
 
-const BASE = '/exp/system/role';
+const BASE = '/exp/auth/roles';
 
-export function listRoles(data: Partial<>) {
+export function listRoles(data: Partial<RoleListQuery>) {
   return request.post<PageResult<RoleVO>, PageResult<RoleVO>>(`${BASE}/list`, data);
 }
 

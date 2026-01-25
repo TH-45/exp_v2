@@ -214,7 +214,7 @@ public class PositionServiceImpl implements PositionService {
             if(includeChildren){
                 //传空查所有
                 iPage = positionMapper.selectPositionPageByOrg(page, null, queryParam.getStatus());
-            }else{
+            }else{ 
                 return new SimplePageRes<>(); // 直接返回空结果
             }
 
