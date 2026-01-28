@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed, nextTick } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Search } from '@element-plus/icons-vue';
 import { fetchOrgTree, type OrgNode } from '@/api/system/post';

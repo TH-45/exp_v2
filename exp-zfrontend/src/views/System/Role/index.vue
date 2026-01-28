@@ -149,7 +149,7 @@
             <el-input v-model="form.roleName" placeholder="请输入角色名称" />
           </el-form-item>
           <el-form-item label="角色编码" prop="roleCode">
-            <el-input v-model="form.roleCode" placeholder="如：ADMIN / ROLE_ADMIN" />
+            <el-input v-model="form.roleCode" readonly class="readonly-input" />
           </el-form-item>
           <el-form-item label="状态" prop="status">
             <el-select v-model="form.status" placeholder="请选择">
@@ -401,6 +401,7 @@ function openEdit(isEdit: boolean, row?: RoleVO) {
     Object.assign(form, row);
   } else {
     resetFormModel();
+    form.roleCode = generateRoleCode();
   }
   editDialog.visible = true;
 }
@@ -411,6 +412,9 @@ async function submitForm() {
   if (!valid) return;
   saving.value = true;
   try {
+    if (!editDialog.isEdit && !String(form.roleCode || '').trim()) {
+      form.roleCode = generateRoleCode();
+    }
     if (editDialog.isEdit) {
       await updateRole(form);
       ElMessage.success('编辑成功');
@@ -488,6 +492,16 @@ async function openDetail(row: RoleVO) {
     // 使用列表行数据展示即可
   }
 }
+
+// 生成角色编码：ROL + 年月日(YYMMDD) + 3位随机数
+function generateRoleCode() {
+  const now = new Date();
+  const year = String(now.getFullYear()).slice(-2);
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const rand = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+  return `ROL${year}${month}${day}${rand}`;
+}
 </script>
 
 <style scoped lang="scss">
@@ -528,6 +542,12 @@ async function openDetail(row: RoleVO) {
 
 .dialog-form.two-col .full-row {
   grid-column: 1 / span 2;
+}
+
+.readonly-input :deep(.el-input__inner) {
+  background-color: #f5f7fa;
+  color: #606266;
+  cursor: not-allowed;
 }
 </style>
 

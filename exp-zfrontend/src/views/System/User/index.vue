@@ -399,18 +399,11 @@
             placeholder="预留字段，可按需求开启校验"
           />
         </el-form-item>
-        <el-form-item label="职务">
-          <el-input v-model="form.jobTitle" placeholder="预留字段" />
-        </el-form-item>
-        <el-form-item label="入职日期">
-          <el-date-picker
-            v-model="form.entryDate"
-            type="date"
-            placeholder="预留字段"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="人员性质" prop="isExternal">
+<!--        <el-form-item label="职务">-->
+<!--          <el-input v-model="form.jobTitle" placeholder="预留字段" />-->
+<!--        </el-form-item>-->
+
+        <el-form-item label="人员系统" prop="isExternal">
           <el-select v-model="form.isExternal" placeholder="请选择">
             <el-option :value="0" label="内部" />
             <el-option :value="1" label="外部" />
@@ -447,6 +440,14 @@
               :value="post.postId"
             />
           </el-select>
+        </el-form-item>
+        <el-form-item label="入职日期">
+          <el-date-picker
+              v-model="form.entryDate"
+              type="date"
+              placeholder="预留字段"
+              style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="备注" class="full-row">
           <el-input
@@ -492,11 +493,12 @@ import {
   updatePersonPartTimePosts,
   type ExpPersonVO,
   type PersonStatus,
-  type PartTimePost,
+
 } from '@/api/system/person';
 import { hasPermission } from '@/utils/permission';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
 import { queryOrgPosts, type OrgNode, type PostVO } from '@/api/system/post';
+import {parsePageResult, buildPageQuery, type PageQuery} from '@/api/common';
 
 
 
@@ -764,12 +766,14 @@ function handlePostChange(postId: number | undefined) {
 // 获取岗位选项列表
 async function fetchPostOptions(orgId: number) {
   try {
-    const res = await queryOrgPosts({
+    var params = {
       orgId,
       includeChildren: false, // 不包括子组织
-    });
+    };
+    const res = await queryOrgPosts(buildPageQuery(params) as Required<PageQuery<any>>);
+    const {list}=parsePageResult<PostVO>(res)
 
-    const posts = res || [];
+    const posts = list || [];
     // 添加“待定”选项，但要去重
     const hasPending = posts.some(post => post.postName === '待定');
     const options = hasPending ? posts : [{ postId: -1, postName: '待定', postCode: 'PENDING', status: 'ENABLED' as const }, ...posts];

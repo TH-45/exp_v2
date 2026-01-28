@@ -1,4 +1,5 @@
 import request from '@/api/request';
+import { buildPageQuery, type PageResult, parsePageResult } from '@/api/common';
 
 export interface OrgNode {
   orgId: number;
@@ -25,13 +26,6 @@ export interface PostVO {
   postDesc?: string;
   remark?: string;
   createdTime?: string;
-}
-
-export interface PageResult<T> {
-  list: T[];
-  total: number;
-  page: number;
-  size: number;
 }
 
 export interface OrgPostQuery {

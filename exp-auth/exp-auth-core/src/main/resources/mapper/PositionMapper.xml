@@ -80,7 +80,18 @@
     <select id="selectPositionPageByOrgAndChildren" resultType="jh.exp.auth.core.entity.res.PositionListRes">
         <include refid="selectPositionByOrgChildAndSql"/>
     </select>
-
+    <select id="selectPositionListByOrgId" resultType="jh.exp.auth.core.entity.res.PositionListRes">
+        SELECT
+        <include refid="PositionListRes"/>
+        FROM exp_org_post_rel opr
+        INNER JOIN exp_post p ON opr.post_id = p.post_id
+        LEFT JOIN exp_role r ON p.default_role_id = r.role_id
+        WHERE opr.org_id = #{orgId}
+        <if test="status != null and status != ''">
+            AND opr.status = #{status}
+        </if>
+        ORDER BY opr.sort_no ASC
+    </select>
 
 
 </mapper>

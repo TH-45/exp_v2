@@ -267,7 +267,7 @@
           class="dialog-form two-col"
         >
           <el-form-item label="岗位编码" prop="postCode">
-            <el-input v-model="postForm.postCode" />
+            <el-input v-model="postForm.postCode" readonly class="readonly-input" />
           </el-form-item>
           <el-form-item label="岗位名称" prop="postName">
             <el-input v-model="postForm.postName" />
@@ -878,7 +878,7 @@ function openPostForm(isEdit: boolean, row?: PostVO) {
   } else {
     Object.assign(postForm, {
       postId: 0,
-      postCode: '',
+      postCode: generatePostCode(),
       postName: '',
       status: 'ENABLED',
       defaultDataScope: '',
@@ -901,6 +901,9 @@ async function submitPostForm() {
   postSaving.value = true;
   try {
     const payload = { ...postForm };
+    if (!postDialog.isEdit && !String(payload.postCode || '').trim()) {
+      payload.postCode = generatePostCode();
+    }
     if (postDialog.isEdit) {
       await updatePost(payload);
       ElMessage.success('编辑成功');
@@ -1152,6 +1155,16 @@ function generateOrgCode() {
   const day = String(now.getDate()).padStart(2, '0');
   const rand = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
   return `org${year}${month}${day}${rand}`;
+}
+
+// 生成岗位编码：POS + 年月日(YYMMDD) + 3位随机数
+function generatePostCode() {
+  const now = new Date();
+  const year = String(now.getFullYear()).slice(-2);
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const rand = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+  return `POS${year}${month}${day}${rand}`;
 }
 
 // 确认删除组织

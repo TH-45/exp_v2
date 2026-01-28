@@ -2,6 +2,9 @@ package jh.exp.auth.core.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +15,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "exp_org_post_rel")
 @TableName("exp_org_post_rel")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class OrgPostRel {
 
     @Id

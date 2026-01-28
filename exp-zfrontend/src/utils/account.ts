@@ -8,11 +8,14 @@
  * @returns 生成的账号名
  */
 export function generateAccountName(): string {
-  // 获取当前时间戳的后4位
-  const timestamp = Date.now().toString().slice(-4);
-
+  // 获取当前时间戳的后6位
+  const now = new Date();
+  const year = String(now.getFullYear()).slice(-2); // 年份后2位
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const timestamp =`${year}${month}${day}`
   // 生成3位随机数
-  const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  const randomNum = Math.floor(Math.random() * 1000).toString().padStart(4, '0');
 
   // 组合账号
   return `4A${timestamp}${randomNum}`;

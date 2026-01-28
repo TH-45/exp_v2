@@ -1,6 +1,7 @@
 package jh.exp.auth.core.entity.req;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -8,6 +9,17 @@ import lombok.Data;
  */
 @Data
 public class CreatePositionReq {
+    /**
+     * 上级组织编号
+     */
+    @NotBlank(message = "上级组织编号不能为空")
+    private String orgCode;
+
+    /**
+     * 是否为外派岗位（1/0） 对应isPrimary字段（1主岗位/外派岗位）
+     */
+    @NotNull(message = "是否为外派岗位不能为空")
+    private Integer isOutsourcing;
 
     /**
      * 岗位编码

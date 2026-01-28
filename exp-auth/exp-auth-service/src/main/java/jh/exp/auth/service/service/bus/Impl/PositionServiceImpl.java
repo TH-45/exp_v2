@@ -1,16 +1,22 @@
 package jh.exp.auth.service.service.bus.Impl;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
+import jh.exp.auth.core.entity.OrgPostRel;
 import jh.exp.auth.core.entity.OrgUnit;
 import jh.exp.auth.core.entity.Position;
 import jh.exp.auth.core.entity.req.*;
+import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.auth.core.entity.res.PositionDetailRes;
 import jh.exp.auth.core.entity.res.PositionListRes;
 import jh.exp.auth.core.mapper.OrgUnitMapper;
+import jh.exp.auth.core.mapper.RoleMapper;
+import jh.exp.auth.service.service.bus.PersonService;
 import jh.exp.auth.service.service.bus.PositionService;
 
 
@@ -46,6 +52,12 @@ public class PositionServiceImpl implements PositionService {
 
     @Autowired
     private  OrgUnitMapper orgUnitMapper;
+
+    @Autowired
+    private PersonService  personService;
+
+    @Autowired
+    private RoleMapper roleMapper;
 
     @Override
     public SimplePageRes<Position> queryPosition(SimplePageReq<QueryPositionParam> positionReq) {
@@ -83,8 +95,21 @@ public class PositionServiceImpl implements PositionService {
         PositionDetailRes res = new PositionDetailRes();
         BeanUtils.copyProperties(position, res);
 
-        // TODO: 这里可以添加关联查询，比如查询角色名称、创建人姓名等
-        // 这里暂时只返回基本信息
+        Long createdBy = position.getCreatedBy();
+        if (createdBy==null||createdBy==0){
+            res.setCreatedByName("system");
+        }else{
+            String accountName = personService.getPersonById(createdBy).getAccountName();
+            res.setCreatedByName(accountName);
+        }
+
+        Long defaultRoleId = position.getDefaultRoleId();
+        if (defaultRoleId==null||defaultRoleId==0){
+            res.setDefaultRoleName("无");
+        }else{
+            String roleName = roleMapper.selectRoleDetailById(defaultRoleId).getRoleName();
+            res.setDefaultRoleName(roleName);
+        }
 
         return res;
     }
@@ -92,31 +117,77 @@ public class PositionServiceImpl implements PositionService {
     @Override
     @Transactional
     public PositionDetailRes createPosition(CreatePositionReq req) {
-        // 检查岗位编码是否重复
-        if (checkPostCodeExists(req.getPostCode(), null)) {
-            throw new RuntimeException("岗位编码已存在");
-        }
-
-        Position position = new Position();
-        BeanUtils.copyProperties(req, position);
-
-        // 设置默认值
-        position.setStatus(CommonConstant.ENABLED_STATUS_STR);
-        if (position.getSortNo() == null) {
-            position.setSortNo(0);
-        }
-        if (position.getIsSystem() == null) {
-            position.setIsSystem(0);
-        }
-
+        String postCode = req.getPostCode();
+        Integer isOutsourcing = req.getIsOutsourcing()==1?1:0;
         CurrentUser currentUser = CurrentUserHolder.get();
-        position.setCreatedBy(Long.valueOf(currentUser.getUserId()));
-        position.setCreatedTime(LocalDateTime.now());
-        position.setUpdatedTime(LocalDateTime.now());
+        //主岗位
+        if(CommonConstant.NUM_1.equals(isOutsourcing)){
+            // 检查岗位编码是否重复
+            if (checkPostCodeExists(postCode, null)) {
+                throw new RuntimeException("岗位编码已存在");
+            }
 
-        positionMapper.insert(position);
+            Position position = new Position();
+            BeanUtils.copyProperties(req, position);
 
-        return getPositionById(position.getPostId());
+            // 设置默认值
+            position.setStatus(CommonConstant.ENABLED_STATUS_STR);
+            if (position.getSortNo() == null) {
+                position.setSortNo(0);
+            }
+            if (position.getIsSystem() == null) {
+                position.setIsSystem(0);
+            }
+
+
+            position.setCreatedBy(currentUser.getUserId());
+            position.setCreatedTime(LocalDateTime.now());
+            position.setUpdatedTime(LocalDateTime.now());
+
+            positionMapper.insert(position);
+
+        }
+
+        Position pos= positionMapper.selectOne(new LambdaQueryWrapper<Position>()
+                .eq(Position::getPostCode, postCode)
+                .eq(Position::getStatus, "ENABLED")
+                .last("LIMIT 1") // 更加保险，防止查出多条报错
+        );
+        if (ObjectUtil.isEmpty(pos)){
+            throw new RuntimeException("系统异常，岗位不存在");
+        }
+
+        String orgCode = req.getOrgCode();
+        OrgUnit orgUnit = orgUnitMapper.selectOne(new LambdaQueryWrapper<OrgUnit>()
+                .eq(OrgUnit::getOrgCode, orgCode)
+                .eq(OrgUnit::getStatus, "ENABLED")
+                .last("LIMIT 1")
+        );
+        if (ObjectUtil.isEmpty(orgUnit)){
+            throw new RuntimeException("组织不存在");
+        }
+
+
+        //插入关系表 exp_org_post_rel
+        OrgPostRel orgPostRel = OrgPostRel.builder()
+                .orgId(orgUnit.getOrgId())
+                .postId(pos.getPostId())
+                .isPrimary(isOutsourcing)
+                .status(CommonConstant.ENABLED_STATUS_STR)
+                .sortNo(CommonConstant.NUM_1)
+                .createdBy(currentUser.getUserId())
+                .createdTime(LocalDateTime.now())
+                .updatedTime(LocalDateTime.now())
+                .remark(req.getRemark().isBlank()?"": req.getRemark())
+                .build();
+
+        int insert = orgPostRelMapper.insert(orgPostRel);
+        if (insert <= 0) {
+            throw new RuntimeException("添加岗位关系失败");
+        }
+
+
+        return getPositionById(pos.getPostId());
     }
 
     @Override
@@ -197,7 +268,7 @@ public class PositionServiceImpl implements PositionService {
     }
 
     @Override
-    public SimplePageRes<PositionListRes> queryPositionsByOrgId(SimplePageReq<QueryPositionByOrgReq> req) {
+    public SimplePageRes<PositionListRes> queryPositions(SimplePageReq<QueryPositionByOrgReq> req) {
         QueryPositionByOrgReq queryParam = req.getQueryParam();
         Page<PositionListRes> page = new Page<>(req.getPageNum(), req.getPageSize());
 
@@ -222,7 +293,8 @@ public class PositionServiceImpl implements PositionService {
             if(includeChildren){
                 iPage= positionMapper.selectPositionPageByOrgAndChildren(page, queryParam.getOrgId(), queryParam.getStatus());
             }else{
-                iPage= positionMapper.selectPositionPageByOrg(page, queryParam.getOrgId(), queryParam.getStatus());
+                List<PositionListRes> positionListRes = positionMapper.selectPositionListByOrg(queryParam.getOrgId(), queryParam.getStatus());
+                return new SimplePageRes<>(positionListRes);
             }
         }
 
@@ -258,4 +330,5 @@ public class PositionServiceImpl implements PositionService {
             return res;
         }).collect(Collectors.toList());
     }
+
 }

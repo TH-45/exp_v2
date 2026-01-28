@@ -217,7 +217,7 @@
           </el-form-item>
 
           <el-form-item label="菜单编码" prop="menuCode">
-            <el-input v-model="form.menuCode" placeholder="如：SYSTEM_USER" />
+            <el-input v-model="form.menuCode" readonly class="readonly-input" />
           </el-form-item>
           <el-form-item label="图标">
             <el-input v-model="form.icon" placeholder="如：UserFilled" />
@@ -525,6 +525,7 @@ function openCreateRoot() {
   editDialog.isEdit = false;
   resetFormModel();
   form.parentMenuId = undefined;
+  form.menuCode = generateMenuCode();
   editDialog.visible = true;
 }
 
@@ -532,6 +533,7 @@ function openCreateChild() {
   editDialog.isEdit = false;
   resetFormModel();
   form.parentMenuId = currentNode.value?.menuId;
+  form.menuCode = generateMenuCode();
   editDialog.visible = true;
 }
 
@@ -559,6 +561,9 @@ async function submitForm() {
   saving.value = true;
   try {
     const payload: SaveMenuPayload = { ...form };
+    if (!editDialog.isEdit && !String(payload.menuCode || '').trim()) {
+      payload.menuCode = generateMenuCode();
+    }
     if (editDialog.isEdit) {
       await updateMenu(payload);
       ElMessage.success('编辑成功');
@@ -695,6 +700,16 @@ function removeMock(list: MenuItem[], id: string) {
 
 function genId() {
   return `m_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+}
+
+// 生成菜单编码：MU + 年月日(YYMMDD) + 4位随机数
+function generateMenuCode() {
+  const now = new Date();
+  const year = String(now.getFullYear()).slice(-2);
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const rand = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+  return `MU${year}${month}${day}${rand}`;
 }
 </script>
 
@@ -833,6 +848,12 @@ function genId() {
 
   .dialog-form.two-col .full-row {
     grid-column: 1 / span 2;
+  }
+
+  .readonly-input :deep(.el-input__inner) {
+    background-color: #f5f7fa;
+    color: #606266;
+    cursor: not-allowed;
   }
 }
 </style>
