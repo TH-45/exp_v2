@@ -15,5 +15,5 @@ import java.util.List;
 @Mapper
 public interface SysDictMapper extends BaseMapper<SysDictItem> {
 
-    List<SysDictItem> listByDictCode(@Param("dictTypeCode") String dictTypeCode);
+    List<SysDictItem> listByDictCode(@Param("dictCode") String dictCode);
 }

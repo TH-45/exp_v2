@@ -31,18 +31,18 @@
         <el-tab-pane label="字典类型管理" name="type">
           <!-- 查询区 -->
           <el-form :inline="true" :model="typeQuery" class="search-bar" @submit.prevent>
-            <el-form-item label="字典编码">
+            <el-form-item label="类型编码">
               <el-input
                 v-model="typeQuery.dictCode"
-                placeholder="如：USER_STATUS"
+                placeholder="请输入类型编码"
                 clearable
                 style="width: 200px"
               />
             </el-form-item>
-            <el-form-item label="字典名称">
+            <el-form-item label="类型名称">
               <el-input
                 v-model="typeQuery.dictName"
-                placeholder="如：用户状态"
+                placeholder="请如输入类型名称"
                 clearable
                 style="width: 200px"
               />
@@ -72,7 +72,7 @@
               style="width: 100%"
               @row-dblclick="enterItemByRow"
             >
-            <el-table-column prop="dictCode" label="字典编码" min-width="160" />
+            <el-table-column prop="dictCode" label="类型编码" min-width="160" />
             <el-table-column prop="dictName" label="字典名称" min-width="160" />
             <el-table-column prop="description" label="描述" min-width="220" />
             <el-table-column label="状态" min-width="100">
@@ -150,10 +150,10 @@
               label-width="110px"
               class="dialog-form two-col"
             >
-              <el-form-item label="字典编码" prop="dictCode">
+              <el-form-item label="类型编码" prop="dictCode">
                 <el-input v-model="typeForm.dictCode" placeholder="如：USER_STATUS" />
               </el-form-item>
-              <el-form-item label="字典名称" prop="dictName">
+              <el-form-item label="类型名称" prop="dictName">
                 <el-input v-model="typeForm.dictName" placeholder="如：用户状态" />
               </el-form-item>
               <el-form-item label="状态" prop="status">
@@ -422,8 +422,8 @@ const itemForm = reactive<Partial<DictItem>>({
 });
 
 const typeRules: FormRules = {
-  dictCode: [{ required: true, message: '请输入字典编码', trigger: 'blur' }],
-  dictName: [{ required: true, message: '请输入字典名称', trigger: 'blur' }],
+  dictCode: [{ required: true, message: '请输入类型编码', trigger: 'blur' }],
+  dictName: [{ required: true, message: '请输入类型名称', trigger: 'blur' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 };
 

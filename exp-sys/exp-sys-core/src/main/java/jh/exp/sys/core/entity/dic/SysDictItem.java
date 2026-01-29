@@ -33,9 +33,9 @@ public class SysDictItem implements Serializable {
     /**
      * 所属字典类型编码
      */
-    @Column(name = "dict_type_code", nullable = false, length = 100)
-    @TableField("dict_type_code")
-    private String dictTypeCode;
+    @Column(name = "dict_code", nullable = false, length = 100)
+    @TableField("dict_code")
+    private String dictCode;
 
     /**
      * 字典项编码

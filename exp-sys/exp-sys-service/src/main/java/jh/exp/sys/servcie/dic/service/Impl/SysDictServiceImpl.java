@@ -10,9 +10,7 @@ import jh.exp.common.core.auth.dto.CurrentUser;
 import jh.exp.common.core.constant.CommonConstant;
 import jh.exp.sys.core.api.dic.SysDictService;
 import jh.exp.sys.core.entity.dic.SysDictItem;
-import jh.exp.sys.core.entity.dic.SysDictType;
 import jh.exp.sys.core.mapper.dic.SysDictMapper;
-import jh.exp.sys.core.mapper.dic.SysDictTypeMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +23,16 @@ import static com.baomidou.mybatisplus.extension.toolkit.Db.removeById;
 @RequiredArgsConstructor
 public class SysDictServiceImpl implements SysDictService {
     private final SysDictMapper sysDictMapper;
-    private final SysDictTypeMapper sysDictTypeMapper;
     private final AccountService accountService;
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createDictItem(SysDictItem item) {
-        String dictTypeCode = item.getDictTypeCode();
-        if (dictTypeCode != null) {
-            SysDictItem dictItem = getDicItem(item.getItemCode());
+        String dictCode = item.getDictCode();
+        if (dictCode != null && item.getItemCode() != null) {
+            QueryWrapper<SysDictItem> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("dict_code", dictCode);
+            queryWrapper.eq("item_code", item.getItemCode());
+            SysDictItem dictItem = sysDictMapper.selectOne(queryWrapper);
             if (dictItem != null) {
                 throw new RuntimeException("字典项编码已存在");
             }
@@ -44,14 +44,20 @@ public class SysDictServiceImpl implements SysDictService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateDictItem(SysDictItem item) {
-        SysDictItem dictItem = getDicItem(item.getItemCode());
-        if (dictItem == null) {
+        SysDictItem existing = sysDictMapper.selectById(item.getId());
+        if (existing == null) {
             throw new RuntimeException("字典项不存在");
         }
-        if(!dictItem.getId().equals(item.getId())){
-            throw new RuntimeException("字典项编码不一致,非法操作");
+        if (item.getItemCode() != null) {
+            String dictCode = item.getDictCode() != null ? item.getDictCode() : existing.getDictCode();
+            QueryWrapper<SysDictItem> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("dict_code", dictCode);
+            queryWrapper.eq("item_code", item.getItemCode());
+            SysDictItem dictItem = sysDictMapper.selectOne(queryWrapper);
+            if (dictItem != null && !dictItem.getId().equals(item.getId())) {
+                throw new RuntimeException("字典项编码不一致,非法操作");
+            }
         }
-
         //支持部分更新
         sysDictMapper.updateById(item);
     }
@@ -91,22 +97,6 @@ public class SysDictServiceImpl implements SysDictService {
         queryWrapper.eq("status", CommonConstant.ENABLED_STATUS_STR);
         return sysDictMapper.selectOne(queryWrapper);
 
-    }
-
-    /**
-     * 核查字典类型是否一致
-     * @param dicTypeCode 目标字典类型编码
-     * @param item 被核查的字典项
-     */
-    private Boolean checkDictType(String dicTypeCode, SysDictItem item) {
-        String dictTypeCode = item.getDictTypeCode();
-        QueryWrapper<SysDictType> qw = new QueryWrapper<>();
-        qw.eq("dict_code", dictTypeCode);
-        SysDictType dictType = sysDictTypeMapper.selectOne(qw);
-        if (dictType == null) {
-            return false;
-        }
-        return dicTypeCode.equals(dictType.getDictCode());
     }
 
 }

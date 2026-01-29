@@ -6,10 +6,10 @@
 
     <select id="listByDictCode" resultType="jh.exp.sys.core.entity.dic.SysDictItem"
             parameterType="java.lang.String">
-        select *
+        select i.*
         from sys_dict_item i
-        left join sys_dict_type t on i.dict_type_code = t.dict_type_code
-        where dict_type_code = #{dictTypeCode}
-        order by sort_no
+        left join sys_dict_type t on i.dict_code = t.dict_code
+        where i.dict_code = #{dictCode}
+        order by i.sort_no
     </select>
 </mapper>

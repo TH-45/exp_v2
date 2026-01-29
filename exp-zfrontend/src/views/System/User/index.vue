@@ -445,7 +445,7 @@
           <el-date-picker
               v-model="form.entryDate"
               type="date"
-              placeholder="预留字段"
+              placeholder="请选择入职日期"
               style="width: 100%"
           />
         </el-form-item>
@@ -453,7 +453,6 @@
           <el-input
             v-model="form.remark"
             type="textarea"
-            placeholder="预留字段"
           />
         </el-form-item>
       </el-form>

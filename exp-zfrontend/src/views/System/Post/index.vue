@@ -278,12 +278,12 @@
               <el-option label="停用" value="DISABLED" />
             </el-select>
           </el-form-item>
-          <el-form-item label="数据范围">
-            <el-select v-model="postForm.defaultDataScope" clearable placeholder="预留枚举">
-              <el-option label="本部门" value="DEPT" />
-              <el-option label="本部门及下级" value="DEPT_AND_SUB" />
-              <el-option label="全部" value="ALL" />
-            </el-select>
+          <el-form-item label="所属组织" prop="orgId">
+            <OrgSelector
+              v-model="selectedPostOrg"
+              placeholder="请选择所属组织"
+              @change="handlePostOrgChange"
+            />
           </el-form-item>
           <el-form-item label="岗位类型">
             <el-input v-model="postForm.postType" />
@@ -302,9 +302,6 @@
           </el-form-item>
           <el-form-item label="备注" class="full-row">
             <el-input v-model="postForm.remark" type="textarea" />
-          </el-form-item>
-          <el-form-item label="系统内置">
-            <el-input v-model="postForm.isSystem" disabled placeholder="预留字段" />
           </el-form-item>
         </el-form>
         <template #footer>
@@ -520,6 +517,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
 import PersonSelector from '@/components/Selector/PersonSelector.vue';
+import OrgSelector from '@/components/Selector/OrgSelector.vue';
 import type { ExpPersonVO } from '@/api/system/person';
 
 const treeProps = {
@@ -568,12 +566,14 @@ const postDialog = reactive({
 });
 const postFormRef = ref<FormInstance>();
 const postSaving = ref(false);
-const postForm = reactive<PostVO>({
+const postForm = reactive<PostVO & { orgId?: number; orgName?: string }>({
   postId: 0,
   postCode: '',
   postName: '',
   status: 'ENABLED',
   defaultDataScope: '',
+  orgId: undefined,
+  orgName: '',
   postType: '',
   postLevel: '',
   postCategory: '',
@@ -586,7 +586,10 @@ const postRules: FormRules = {
   postCode: [{ required: true, message: '请输入岗位编码', trigger: 'blur' }],
   postName: [{ required: true, message: '请输入岗位名称', trigger: 'blur' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+  orgId: [{ required: true, message: '请选择所属组织', trigger: 'change' }],
 };
+
+const selectedPostOrg = ref<OrgNode>();
 
 const bindDialog = reactive({
   visible: false,
@@ -875,6 +878,17 @@ function openPostForm(isEdit: boolean, row?: PostVO) {
   postDialog.isEdit = isEdit;
   if (isEdit && row) {
     Object.assign(postForm, row);
+    if ((row as PostVO & { orgId?: number; orgName?: string })?.orgId) {
+      selectedPostOrg.value = {
+        orgId: (row as PostVO & { orgId?: number }).orgId!,
+        orgName: (row as PostVO & { orgName?: string }).orgName || '',
+        orgCode: '',
+      };
+    } else {
+      selectedPostOrg.value = currentOrg.value || undefined;
+      postForm.orgId = selectedPostOrg.value?.orgId;
+      postForm.orgName = selectedPostOrg.value?.orgName || '';
+    }
   } else {
     Object.assign(postForm, {
       postId: 0,
@@ -882,6 +896,8 @@ function openPostForm(isEdit: boolean, row?: PostVO) {
       postName: '',
       status: 'ENABLED',
       defaultDataScope: '',
+      orgId: currentOrg.value?.orgId,
+      orgName: currentOrg.value?.orgName || '',
       postType: '',
       postLevel: '',
       postCategory: '',
@@ -890,8 +906,14 @@ function openPostForm(isEdit: boolean, row?: PostVO) {
       remark: '',
       isSystem: 0,
     });
+    selectedPostOrg.value = currentOrg.value || undefined;
   }
   postDialog.visible = true;
+}
+
+function handlePostOrgChange(org?: OrgNode) {
+  postForm.orgId = org?.orgId;
+  postForm.orgName = org?.orgName || '';
 }
 
 async function submitPostForm() {
