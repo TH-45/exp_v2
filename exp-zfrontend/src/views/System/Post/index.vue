@@ -258,6 +258,7 @@
         :title="postDialog.isEdit ? '编辑岗位' : '新增岗位'"
         width="760px"
         destroy-on-close
+        draggable
       >
         <el-form
           ref="postFormRef"
@@ -266,6 +267,7 @@
           label-width="120px"
           class="dialog-form two-col"
           @submit.prevent="submitPostForm"
+
         >
           <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="岗位编码" prop="postCode">
@@ -287,14 +289,35 @@
               @change="handlePostOrgChange"
             />
           </el-form-item>
-          <el-form-item label="岗位类型">
-            <el-input v-model="postForm.postType" />
+          <el-form-item label="岗位类型" prop="postType">
+            <el-select v-model="postForm.postType" placeholder="请选择岗位类型" style="width: 200px">
+              <el-option
+                v-for="opt in postTypeOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
           </el-form-item>
-          <el-form-item label="岗位级别">
-            <el-input v-model="postForm.postLevel" />
+          <el-form-item label="岗位级别" prop="postLevel">
+            <el-select v-model="postForm.postLevel" placeholder="请选择岗位级别" style="width: 200px">
+              <el-option
+                v-for="opt in postLevelOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
           </el-form-item>
-          <el-form-item label="岗位分类">
-            <el-input v-model="postForm.postCategory" />
+          <el-form-item label="岗位分类" prop="postCategory">
+            <el-select v-model="postForm.postCategory" placeholder="请选择岗位分类" style="width: 200px">
+              <el-option
+                v-for="opt in postCategoryOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
           </el-form-item>
           <el-form-item label="排序">
             <el-input-number v-model="postForm.sortNo" :min="0" :max="9999" />
@@ -527,6 +550,7 @@ import {
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
+import { listDictOptions, type DictOption } from '@/api/system/dict';
 import PersonSelector from '@/components/Selector/PersonSelector.vue';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
 import type { ExpPersonVO } from '@/api/system/person';
@@ -598,9 +622,15 @@ const postRules: FormRules = {
   postName: [{ required: true, message: '请输入岗位名称', trigger: 'blur' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
   orgId: [{ required: true, message: '请选择所属组织', trigger: 'change' }],
+  postType: [{ required: true, message: '请选择岗位类型', trigger: 'change' }],
+  postLevel: [{ required: true, message: '请选择岗位级别', trigger: 'change' }],
+  postCategory: [{ required: true, message: '请选择岗位分类', trigger: 'change' }],
 };
 
 const selectedPostOrg = ref<OrgNode>();
+const postTypeOptions = ref<DictOption[]>([]);
+const postLevelOptions = ref<DictOption[]>([]);
+const postCategoryOptions = ref<DictOption[]>([]);
 
 const bindDialog = reactive({
   visible: false,
@@ -662,6 +692,10 @@ const canOrgStatus = computed(() => hasPermission('system:orgPost:status'));
 
 onMounted(() => {
   loadOrgTree();
+});
+
+onMounted(() => {
+  fetchPostDictOptions();
 });
 
 onMounted(() => {
@@ -806,6 +840,29 @@ async function loadOrgTree() {
   } finally {
     treeLoading.value = false;
   }
+}
+
+async function fetchPostDictOptions() {
+  try {
+    const [typeRes, levelRes, categoryRes] = await Promise.all([
+      listDictOptions('post_type'),
+      listDictOptions('post_level'),
+      listDictOptions('post_category'),
+    ]);
+    postTypeOptions.value = normalizeDictOptions(typeRes);
+    postLevelOptions.value = normalizeDictOptions(levelRes);
+    postCategoryOptions.value = normalizeDictOptions(categoryRes);
+  } catch (e) {
+    console.error('加载岗位字典选项失败:', e);
+    postTypeOptions.value = [];
+    postLevelOptions.value = [];
+    postCategoryOptions.value = [];
+  }
+}
+
+function normalizeDictOptions(res: DictOption[] | { data?: DictOption[] }) {
+  if (Array.isArray(res)) return res;
+  return Array.isArray(res?.data) ? res.data : [];
 }
 
 function handleTreeClick(node: OrgNode) {

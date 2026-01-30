@@ -57,8 +57,8 @@ public class SysDictApiServiceImpl implements SysDictApiService {
             wrapper.eq(SysDictType::getStatus, queryParam.getStatus());
         }
         Page<SysDictType> result = sysDictTypeService.page(mpPage, wrapper);
-        SimplePageRes<SysDictType> pageResult = toPageRes(result, req);
-        return ok(pageResult);
+        SimplePageRes<SysDictType> pageResult = SimplePageRes.toPageRes(result, req);
+        return ApiResponse.success(pageResult);
     }
 
     @Override
@@ -67,14 +67,14 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         if (req.getId() != null) {
             dictType = sysDictTypeService.getById(req.getId());
             if (dictType != null) {
-                return ok(dictType);
+                return ApiResponse.success(dictType);
             }
         }
         dictType = sysDictTypeService.getByDictCode(req.getDictCode());
         if (dictType == null) {
             throw new RuntimeException("字典类型不存在");
         }
-        return ok(dictType);
+        return ApiResponse.success(dictType);
     }
 
     @Override
@@ -85,7 +85,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         dictType.setStatus(req.getStatus());
         dictType.setDescription(req.getDescription());
         sysDictTypeService.createDictType(dictType);
-        return ok(Collections.emptyMap());
+        return ApiResponse.success(Collections.emptyMap());
     }
 
     @Override
@@ -105,7 +105,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
             dictType.setDescription(req.getDescription());
         }
         sysDictTypeService.updateDictType(dictType);
-        return ok(Collections.emptyMap());
+        return ApiResponse.success(Collections.emptyMap());
     }
 
     @Override
@@ -113,7 +113,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         List<Long> ids = normalizeIds(req);
         List<SysDictType> types = sysDictTypeService.listByIds(ids);
         if (CollectionUtils.isEmpty(types)) {
-            return ok(Collections.emptyMap());
+            return ApiResponse.success(Collections.emptyMap());
         }
         for (SysDictType type : types) {
             // 删除前校验：该类型下存在字典项时禁止删除
@@ -124,7 +124,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
             }
         }
         sysDictTypeService.removeByIds(ids);
-        return ok(Collections.emptyMap());
+        return ApiResponse.success(Collections.emptyMap());
     }
 
     @Override
@@ -133,7 +133,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         update.setId(req.getId());
         update.setStatus(req.getStatus());
         sysDictTypeService.updateById(update);
-        return ok(Collections.emptyMap());
+        return ApiResponse.success(Collections.emptyMap());
     }
 
     @Override
@@ -141,7 +141,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         sysDictTypeService.update(Wrappers.lambdaUpdate(SysDictType.class)
                 .in(SysDictType::getId, req.getIds())
                 .set(SysDictType::getStatus, req.getStatus()));
-        return ok(Collections.emptyMap());
+        return ApiResponse.success(Collections.emptyMap());
     }
 
     @Override
@@ -162,8 +162,8 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         }
         wrapper.orderByAsc(SysDictItem::getSortNo);
         Page<SysDictItem> result = sysDictMapper.selectPage(mpPage, wrapper);
-        SimplePageRes<SysDictItem> pageResult = toPageRes(result, req);
-        return ok(pageResult);
+        SimplePageRes<SysDictItem> pageResult = SimplePageRes.toPageRes(result, req);
+        return ApiResponse.success(pageResult);
     }
 
     @Override
@@ -172,7 +172,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         if (item == null) {
             throw new RuntimeException("字典项不存在");
         }
-        return ok(item);
+        return ApiResponse.success(item);
     }
 
     @Override
@@ -190,7 +190,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         item.setCreatedTime(LocalDateTime.now());
         item.setUpdatedTime(LocalDateTime.now());
         sysDictService.createDictItem(item);
-        return ok(Collections.emptyMap());
+        return ApiResponse.success(Collections.emptyMap());
     }
 
     @Override
@@ -229,7 +229,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         }
         item.setUpdatedTime(LocalDateTime.now());
         sysDictService.updateDictItem(item);
-        return ok(Collections.emptyMap());
+        return ApiResponse.success(Collections.emptyMap());
     }
 
     @Override
@@ -238,7 +238,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         for (Long id : ids) {
             sysDictService.deleteDictItem(id);
         }
-        return ok(Collections.emptyMap());
+        return ApiResponse.success(Collections.emptyMap());
     }
 
     @Override
@@ -247,7 +247,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         update.setId(req.getId());
         update.setStatus(req.getStatus());
         sysDictMapper.updateById(update);
-        return ok(Collections.emptyMap());
+        return ApiResponse.success(Collections.emptyMap());
     }
 
     @Override
@@ -255,7 +255,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         sysDictMapper.update(null, Wrappers.lambdaUpdate(SysDictItem.class)
                 .in(SysDictItem::getId, req.getIds())
                 .set(SysDictItem::getStatus, req.getStatus()));
-        return ok(Collections.emptyMap());
+        return ApiResponse.success(Collections.emptyMap());
     }
 
     @Override
@@ -268,7 +268,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         for (SysDictItem item : items) {
             options.add(new DictOptionRes(item.getItemValue(), item.getItemLabel()));
         }
-        return ok(options);
+        return ApiResponse.success(options);
     }
 
     @Override
@@ -276,7 +276,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         List<SysDictItem> items = sysDictMapper.selectList(Wrappers.lambdaQuery(SysDictItem.class)
                 .eq(SysDictItem::getDictCode, dictCode)
                 .orderByAsc(SysDictItem::getSortNo));
-        return ok(items);
+        return ApiResponse.success(items);
     }
 
     private void ensureDictTypeExists(String dictCode) {
@@ -311,16 +311,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         return req.getIds() == null ? Collections.emptyList() : req.getIds();
     }
 
-    private <T> ApiResponse<T> ok(T data) {
-        return new ApiResponse<>(true, CommonConstant.SUCCESS_CODE_STR, "ok", data);
-    }
+    
 
-    private <T> SimplePageRes<T> toPageRes(Page<T> result, SimplePageReq<?> pageReq) {
-        SimplePageRes<T> pageResult = new SimplePageRes<>();
-        pageResult.setList(result.getRecords());
-        pageResult.setTotal(result.getTotal());
-        pageResult.setPage((long) pageReq.getPageNum());
-        pageResult.setSize((long) pageReq.getPageSize());
-        return pageResult;
-    }
+
 }

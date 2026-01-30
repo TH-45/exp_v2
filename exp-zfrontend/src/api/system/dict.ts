@@ -54,6 +54,11 @@ export interface DictItemQuery {
 
 const BASE = '/exp/sys/dict';
 
+export interface DictOption {
+  value: string;
+  label: string;
+}
+
 export function listDictTypes(params: DictTypeQuery) {
   return request.post<PageResult<DictType>, PageResult<DictType>>(`${BASE}/type/list`, {
     pageNum: params.page,
@@ -124,4 +129,13 @@ export function deleteDictItem(idOrIds: number | number[]) {
 
 export function setDictItemStatus(id: number, status: DictStatus) {
   return request.post<void, void>(`${BASE}/item/status`, { id, status });
+}
+
+export function listDictOptions(dictCode: string) {
+  return request.get<DictOption[], DictOption[] | { code?: number; message?: string; data?: DictOption[] }>(
+    `${BASE}/item/options`,
+    {
+      params: { dictCode },
+    },
+  );
 }

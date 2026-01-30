@@ -59,7 +59,7 @@ public class ApiResponse<T> {
     }
 
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(true, "0", "操作成功", data);
+        return new ApiResponse<>(true, "0000", "操作成功", data);
     }
 
     public static <T> ApiResponse<T> success(String message, T data) {
