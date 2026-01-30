@@ -222,7 +222,14 @@
           </el-form>
 
           <!-- 列表区 -->
-          <el-table v-loading="itemLoading" :data="itemTableData" row-key="id" border style="width: 100%">
+          <el-table
+            v-loading="itemLoading"
+            :data="itemTableData"
+            row-key="id"
+            border
+            style="width: 100%"
+            @row-dblclick="handleItemRowDblClick"
+          >
             <el-table-column prop="itemCode" label="字典项编码" min-width="160" />
             <el-table-column prop="itemValue" label="字典项值" min-width="140" />
             <el-table-column prop="itemLabel" label="字典项名称" min-width="160" />
@@ -286,6 +293,7 @@
             :title="itemDialog.isEdit ? '编辑字典项' : '新增字典项'"
             width="760px"
             destroy-on-close
+            draggable
           >
             <el-form
               ref="itemFormRef"
@@ -297,7 +305,7 @@
               <el-form-item label="字典类型">
                 <el-input :model-value="selectedTypeLabel" disabled />
               </el-form-item>
-              <el-form-item label="字典项编码">
+              <el-form-item label="字典项编码" prop="itemCode">
                 <el-input v-model="itemForm.itemCode" placeholder="可选" />
               </el-form-item>
               <el-form-item label="字典项值" prop="itemValue">
@@ -428,6 +436,7 @@ const typeRules: FormRules = {
 };
 
 const itemRules: FormRules = {
+  itemCode: [{ required: true, message: '请输入字典项编码', trigger: 'blur' }],
   itemValue: [{ required: true, message: '请输入字典项值', trigger: 'blur' }],
   itemLabel: [{ required: true, message: '请输入字典项名称', trigger: 'blur' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
@@ -500,7 +509,7 @@ const allowEnterItem = ref(false);
 
 onMounted(() => {
   fetchTypeList();
-  fetchTypeOptions();
+  // fetchTypeOptions();
 });
 
 watch(
@@ -729,6 +738,8 @@ function openItemCreate() {
   itemDialog.isEdit = false;
   resetItemForm();
   itemForm.dictCode = itemQuery.dictCode;
+  const sortValues = itemTableData.value.map((item) => Number(item.sortNo ?? 0));
+  itemForm.sortNo = sortValues.length ? Math.max(...sortValues) + 1 : 0;
   itemDialog.visible = true;
 }
 
@@ -736,6 +747,11 @@ function openItemEdit(row: DictItem) {
   itemDialog.isEdit = true;
   Object.assign(itemForm, row);
   itemDialog.visible = true;
+}
+
+function handleItemRowDblClick(row: DictItem) {
+  if (!canItemUpdate.value) return;
+  openItemEdit(row);
 }
 
 async function submitTypeForm() {

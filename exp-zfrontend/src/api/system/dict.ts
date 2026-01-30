@@ -55,7 +55,15 @@ export interface DictItemQuery {
 const BASE = '/exp/sys/dict';
 
 export function listDictTypes(params: DictTypeQuery) {
-  return request.get<PageResult<DictType>, PageResult<DictType>>(`${BASE}/type/list`, { params });
+  return request.post<PageResult<DictType>, PageResult<DictType>>(`${BASE}/type/list`, {
+    pageNum: params.page,
+    pageSize: params.pageSize,
+    queryParam: {
+      dictCode: params.dictCode,
+      dictName: params.dictName,
+      status: params.status,
+    },
+  });
 }
 
 export function getDictTypeDetail(params: { id?: number; dictCode?: string }) {
@@ -83,7 +91,15 @@ export function setDictTypeStatus(id: number, status: DictStatus) {
 }
 
 export function listDictItems(params: DictItemQuery) {
-  return request.get<PageResult<DictItem>, PageResult<DictItem>>(`${BASE}/item/list`, { params });
+  return request.post<PageResult<DictItem>, PageResult<DictItem>>(`${BASE}/item/list`, {
+    pageNum: params.page,
+    pageSize: params.pageSize,
+    queryParam: {
+      dictCode: params.dictCode,
+      keyword: params.keyword,
+      status: params.status,
+    },
+  });
 }
 
 export function getDictItemDetail(params: { id: number }) {

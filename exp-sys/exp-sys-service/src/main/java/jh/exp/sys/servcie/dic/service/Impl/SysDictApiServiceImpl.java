@@ -4,20 +4,20 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.common.core.api.ApiResponse;
-import jh.exp.common.core.api.PageResult;
 import jh.exp.common.core.constant.CommonConstant;
 import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.sys.core.api.dic.SysDictService;
 import jh.exp.sys.core.entity.dic.SysDictItem;
 import jh.exp.sys.core.entity.dic.SysDictType;
 import jh.exp.sys.core.mapper.dic.SysDictMapper;
 import jh.exp.sys.core.req.dic.BatchStatusReq;
 import jh.exp.sys.core.req.dic.DictItemCreateReq;
-import jh.exp.sys.core.req.dic.DictItemListReq;
+import jh.exp.sys.core.req.dic.DictItemQueryReq;
 import jh.exp.sys.core.req.dic.DictItemUpdateReq;
 import jh.exp.sys.core.req.dic.DictTypeCreateReq;
 import jh.exp.sys.core.req.dic.DictTypeDetailReq;
-import jh.exp.sys.core.req.dic.DictTypeListReq;
+import jh.exp.sys.core.req.dic.DictTypeQueryReq;
 import jh.exp.sys.core.req.dic.DictTypeUpdateReq;
 import jh.exp.sys.core.req.dic.IdsReq;
 import jh.exp.sys.core.req.dic.StatusReq;
@@ -42,21 +42,21 @@ public class SysDictApiServiceImpl implements SysDictApiService {
     private final SysDictMapper sysDictMapper;
 
     @Override
-    public ApiResponse<PageResult<SysDictType>> listDictType(DictTypeListReq req) {
-        SimplePageReq<?> pageReq = buildPageReq(req.getPage(), req.getPageSize());
-        Page<SysDictType> mpPage = new Page<>(pageReq.getPageNum(), pageReq.getPageSize());
+    public ApiResponse<SimplePageRes<SysDictType>> listDictType(SimplePageReq<DictTypeQueryReq> req) {
+        DictTypeQueryReq queryParam = req.getQueryParam();
+        Page<SysDictType> mpPage = new Page<>(req.getPageNum(), req.getPageSize());
         LambdaQueryWrapper<SysDictType> wrapper = Wrappers.lambdaQuery();
-        if (StringUtils.hasText(req.getDictCode())) {
-            wrapper.like(SysDictType::getDictCode, req.getDictCode());
+        if (queryParam != null && StringUtils.hasText(queryParam.getDictCode())) {
+            wrapper.like(SysDictType::getDictCode, queryParam.getDictCode());
         }
-        if (StringUtils.hasText(req.getDictName())) {
-            wrapper.like(SysDictType::getDictName, req.getDictName());
+        if (queryParam != null && StringUtils.hasText(queryParam.getDictName())) {
+            wrapper.like(SysDictType::getDictName, queryParam.getDictName());
         }
-        if (StringUtils.hasText(req.getStatus())) {
-            wrapper.eq(SysDictType::getStatus, req.getStatus());
+        if (queryParam != null && StringUtils.hasText(queryParam.getStatus())) {
+            wrapper.eq(SysDictType::getStatus, queryParam.getStatus());
         }
         Page<SysDictType> result = sysDictTypeService.page(mpPage, wrapper);
-        PageResult<SysDictType> pageResult = toPageResult(result, pageReq);
+        SimplePageRes<SysDictType> pageResult = toPageRes(result, req);
         return ok(pageResult);
     }
 
@@ -144,24 +144,24 @@ public class SysDictApiServiceImpl implements SysDictApiService {
     }
 
     @Override
-    public ApiResponse<PageResult<SysDictItem>> listDictItem(DictItemListReq req) {
-        SimplePageReq<?> pageReq = buildPageReq(req.getPage(), req.getPageSize());
-        Page<SysDictItem> mpPage = new Page<>(pageReq.getPageNum(), pageReq.getPageSize());
+    public ApiResponse<SimplePageRes<SysDictItem>> listDictItem(SimplePageReq<DictItemQueryReq> req) {
+        DictItemQueryReq query = req.getQueryParam();
+        Page<SysDictItem> mpPage = new Page<>(req.getPageNum(), req.getPageSize());
         LambdaQueryWrapper<SysDictItem> wrapper = Wrappers.lambdaQuery();
-        wrapper.eq(SysDictItem::getDictCode, req.getDictCode());
-        if (StringUtils.hasText(req.getStatus())) {
-            wrapper.eq(SysDictItem::getStatus, req.getStatus());
+        wrapper.eq(SysDictItem::getDictCode, query.getDictCode());
+        if (StringUtils.hasText(query.getStatus())) {
+            wrapper.eq(SysDictItem::getStatus, query.getStatus());
         }
-        if (StringUtils.hasText(req.getKeyword())) {
-            wrapper.and(w -> w.like(SysDictItem::getItemLabel, req.getKeyword())
+        if (StringUtils.hasText(query.getKeyword())) {
+            wrapper.and(w -> w.like(SysDictItem::getItemLabel, query.getKeyword())
                     .or()
-                    .like(SysDictItem::getItemValue, req.getKeyword())
+                    .like(SysDictItem::getItemValue, query.getKeyword())
                     .or()
-                    .like(SysDictItem::getItemCode, req.getKeyword()));
+                    .like(SysDictItem::getItemCode, query.getKeyword()));
         }
         wrapper.orderByAsc(SysDictItem::getSortNo);
         Page<SysDictItem> result = sysDictMapper.selectPage(mpPage, wrapper);
-        PageResult<SysDictItem> pageResult = toPageResult(result, pageReq);
+        SimplePageRes<SysDictItem> pageResult = toPageRes(result, req);
         return ok(pageResult);
     }
 
@@ -275,14 +275,6 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         return ok(items);
     }
 
-    private SimplePageReq<?> buildPageReq(Integer page, Integer pageSize) {
-        SimplePageReq<?> pageReq = new SimplePageReq<>();
-        pageReq.setPageNum(page == null ? 1 : page);
-        pageReq.setPageSize(pageSize == null ? 10 : pageSize);
-        pageReq.pageDefault();
-        return pageReq;
-    }
-
     private void ensureDictTypeExists(String dictCode) {
         if (sysDictTypeService.getByDictCode(dictCode) == null) {
             throw new RuntimeException("dictCode 不存在：" + dictCode);
@@ -319,12 +311,12 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         return new ApiResponse<>(true, CommonConstant.SUCCESS_CODE_STR, "ok", data);
     }
 
-    private <T> PageResult<T> toPageResult(Page<T> result, SimplePageReq<?> pageReq) {
-        PageResult<T> pageResult = new PageResult<>();
-        pageResult.setRecords(result.getRecords());
+    private <T> SimplePageRes<T> toPageRes(Page<T> result, SimplePageReq<?> pageReq) {
+        SimplePageRes<T> pageResult = new SimplePageRes<>();
+        pageResult.setList(result.getRecords());
         pageResult.setTotal(result.getTotal());
-        pageResult.setPage(pageReq.getPageNum());
-        pageResult.setPageSize(pageReq.getPageSize());
+        pageResult.setPage((long) pageReq.getPageNum());
+        pageResult.setSize((long) pageReq.getPageSize());
         return pageResult;
     }
 }

@@ -1,6 +1,7 @@
 package jh.exp.auth.clinet;
 
 import cn.hutool.json.JSONUtil;
+import jh.exp.auth.clinet.api.AccountService;
 import jh.exp.auth.clinet.api.RoleService;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.constant.ServiceContext;
@@ -36,5 +37,9 @@ public class ApiConfiguration {
         return httpServiceProxyFactory.createClient(RoleService.class);
     }
 
+    @Bean
+    AccountService accountService() {
+        return httpServiceProxyFactory.createClient(AccountService.class);
+    }
 
 }

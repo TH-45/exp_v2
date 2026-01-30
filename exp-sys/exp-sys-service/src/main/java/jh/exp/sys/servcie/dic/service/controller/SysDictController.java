@@ -1,16 +1,17 @@
 package jh.exp.sys.servcie.dic.service.controller;
 
 import jh.exp.common.core.api.ApiResponse;
-import jh.exp.common.core.api.PageResult;
+import jh.exp.common.core.req.SimplePageReq;
+import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.sys.core.entity.dic.SysDictItem;
 import jh.exp.sys.core.entity.dic.SysDictType;
 import jh.exp.sys.core.req.dic.BatchStatusReq;
 import jh.exp.sys.core.req.dic.DictItemCreateReq;
-import jh.exp.sys.core.req.dic.DictItemListReq;
+import jh.exp.sys.core.req.dic.DictItemQueryReq;
 import jh.exp.sys.core.req.dic.DictItemUpdateReq;
 import jh.exp.sys.core.req.dic.DictTypeCreateReq;
 import jh.exp.sys.core.req.dic.DictTypeDetailReq;
-import jh.exp.sys.core.req.dic.DictTypeListReq;
+import jh.exp.sys.core.req.dic.DictTypeQueryReq;
 import jh.exp.sys.core.req.dic.DictTypeUpdateReq;
 import jh.exp.sys.core.req.dic.IdsReq;
 import jh.exp.sys.core.req.dic.StatusReq;
@@ -27,15 +28,16 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/exp/sys/dict")
+@RequestMapping("/dict")
 @RequiredArgsConstructor
 @Validated
 public class SysDictController {
 
     private final SysDictApiService sysDictApiService;
 
-    @GetMapping("/type/list")
-    public ApiResponse<PageResult<SysDictType>> listDictType(@Valid DictTypeListReq req) {
+    @PostMapping("/type/list")
+    public ApiResponse<SimplePageRes<SysDictType>> listDictType(@Valid @RequestBody SimplePageReq<DictTypeQueryReq> req) {
+        req.pageDefault();
         return sysDictApiService.listDictType(req);
     }
 
@@ -69,8 +71,12 @@ public class SysDictController {
         return sysDictApiService.updateDictTypeStatusBatch(req);
     }
 
-    @GetMapping("/item/list")
-    public ApiResponse<PageResult<SysDictItem>> listDictItem(@Valid DictItemListReq req) {
+    @PostMapping("/item/list")
+    public ApiResponse<SimplePageRes<SysDictItem>> listDictItem(@Valid @RequestBody SimplePageReq<DictItemQueryReq> req) {
+        req.pageDefault();
+        if (req.getQueryParam() == null) {
+            throw new RuntimeException("queryParam 不能为空");
+        }
         return sysDictApiService.listDictItem(req);
     }
 
