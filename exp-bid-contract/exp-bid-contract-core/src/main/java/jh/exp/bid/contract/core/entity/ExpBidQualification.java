@@ -22,7 +22,7 @@ import java.time.LocalDate;
 public class ExpBidQualification {
     // 主键ID
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @TableId(type = IdType.AUTO)
     @Column(name = "id")
     private Long id;

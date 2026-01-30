@@ -36,16 +36,19 @@ public class CreatePositionReq {
     /**
      * 岗位类型
      */
+    @NotBlank(message = "岗位类型不能为空")
     private String postType;
 
     /**
      * 岗位级别
      */
+    @NotBlank(message = "岗位级别不能为空")
     private String postLevel;
 
     /**
      * 岗位类别
      */
+    @NotBlank(message = "岗位类别不能为空")
     private String postCategory;
 
     /**

@@ -17,6 +17,8 @@
         p.is_system     AS isSystem,
         p.sort_no       AS sortNo,
         DATE_FORMAT(p.created_time, '%Y-%m-%d %H:%i:%s') AS createdTime,
+        p.default_role_id AS defaultRoleId,
+        opr.is_primary  AS isOutsourcing,
 
         -- ===== 默认角色 exp_role =====
         r.role_name     AS defaultRoleName

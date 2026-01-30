@@ -49,6 +49,16 @@ public class PositionListRes {
     private String defaultRoleName;
 
     /**
+     * 默认角色ID
+     */
+    private Long defaultRoleId;
+
+    /**
+     * 是否为外派岗位（0外派/1主岗位）
+     */
+    private Integer isOutsourcing;
+
+    /**
      * 是否系统内置
      */
     private Integer isSystem;

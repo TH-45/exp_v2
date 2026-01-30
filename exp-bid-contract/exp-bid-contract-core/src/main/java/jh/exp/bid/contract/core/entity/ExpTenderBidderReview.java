@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 public class ExpTenderBidderReview {
     // 主键ID
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @TableId(type = IdType.AUTO)
     @Column(name = "review_id")
     private Long reviewId;

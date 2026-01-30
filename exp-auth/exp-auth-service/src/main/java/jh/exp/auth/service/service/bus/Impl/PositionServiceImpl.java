@@ -209,6 +209,31 @@ public class PositionServiceImpl implements PositionService {
 
         positionMapper.updateById(position);
 
+        String orgCode = req.getOrgCode();
+        Integer isOutsourcing = req.getIsOutsourcing();
+        if (StringUtils.hasText(orgCode) && isOutsourcing != null) {
+            OrgUnit orgUnit = orgUnitMapper.selectOne(new LambdaQueryWrapper<OrgUnit>()
+                    .eq(OrgUnit::getOrgCode, orgCode)
+                    .eq(OrgUnit::getStatus, "ENABLED")
+                    .last("LIMIT 1")
+            );
+            if (ObjectUtil.isEmpty(orgUnit)) {
+                throw new RuntimeException("组织不存在");
+            }
+            // 是否外派：0外派/1主岗位
+            Integer primaryFlag = isOutsourcing == 1 ? 1 : 0;
+            UpdateWrapper<OrgPostRel> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("org_id", orgUnit.getOrgId())
+                    .eq("post_id", req.getPostId());
+            OrgPostRel relUpdate = new OrgPostRel();
+            relUpdate.setIsPrimary(primaryFlag);
+            relUpdate.setUpdatedTime(LocalDateTime.now());
+            int updated = orgPostRelMapper.update(relUpdate, updateWrapper);
+            if (updated <= 0) {
+                throw new RuntimeException("岗位关系不存在");
+            }
+        }
+
         return getPositionById(req.getPostId());
     }
 

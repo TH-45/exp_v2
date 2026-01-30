@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 public class ExpRoleMenuRel {
     // 主键ID（自增）
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @TableId(type = IdType.AUTO)
     @Column(name = "id")
     private Long id;

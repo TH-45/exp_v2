@@ -13,7 +13,7 @@ import jakarta.persistence.*;
 public class Permission {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "perm_id")
     private Long permId;
 

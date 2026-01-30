@@ -1,5 +1,5 @@
 import request from '@/api/request';
-import { buildPageQuery, type PageResult, parsePageResult } from '@/api/common';
+import { type PageResult } from '@/api/common';
 
 export interface OrgNode {
   orgId: number;
@@ -19,13 +19,18 @@ export interface PostVO {
   postLevel?: string;
   postCategory?: string;
   status: PostStatus;
+  defaultRoleId?: number;
   defaultRoleName?: string;
   defaultDataScope?: string;
   isSystem?: number;
+  isOutsourcing?: number;
   sortNo?: number;
   postDesc?: string;
   remark?: string;
   createdTime?: string;
+  orgId?: number;
+  orgName?: string;
+  orgCode?: string;
 }
 
 export interface OrgPostQuery {

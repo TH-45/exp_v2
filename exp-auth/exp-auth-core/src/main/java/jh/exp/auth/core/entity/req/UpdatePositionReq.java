@@ -29,6 +29,16 @@ public class UpdatePositionReq {
     private String postName;
 
     /**
+     * 上级组织编号
+     */
+    private String orgCode;
+
+    /**
+     * 是否为外派岗位（0外派/1主岗位）
+     */
+    private Integer isOutsourcing;
+
+    /**
      * 岗位类型
      */
     private String postType;

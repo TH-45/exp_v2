@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class RolePermissionRel {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     private Long id;
 

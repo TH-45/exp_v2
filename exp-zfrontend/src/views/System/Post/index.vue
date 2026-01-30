@@ -199,6 +199,8 @@
               <el-table-column prop="postCode" label="岗位编码" min-width="140" />
               <el-table-column prop="postName" label="岗位名称" min-width="140" />
               <el-table-column prop="postType" label="类型" min-width="70" />
+              <el-table-column prop="postLevel" label="岗位级别" min-width="100" />
+              <el-table-column prop="defaultRoleName" label="默认角色" min-width="120" />
               <el-table-column label="状态" min-width="70">
                 <template #default="{ row }">
                   <el-tag :type="row.status === 'ENABLED' ? 'success' : 'info'">
@@ -318,6 +320,23 @@
                 :value="opt.value"
               />
             </el-select>
+          </el-form-item>
+          <el-form-item label="是否外派" prop="isOutsourcing">
+            <el-select v-model="postForm.isOutsourcing" placeholder="请选择是否外派" style="width: 200px">
+              <el-option
+                v-for="opt in outsourcingOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="默认角色">
+            <RoleSelector
+              v-model="selectedDefaultRole"
+              placeholder="请选择默认角色"
+              @change="handleDefaultRoleChange"
+            />
           </el-form-item>
           <el-form-item label="排序">
             <el-input-number v-model="postForm.sortNo" :min="0" :max="9999" />
@@ -553,6 +572,8 @@ import { hasPermission } from '@/utils/permission';
 import { listDictOptions, type DictOption } from '@/api/system/dict';
 import PersonSelector from '@/components/Selector/PersonSelector.vue';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
+import RoleSelector from '@/components/Selector/RoleSelector.vue';
+import type { RoleVO } from '@/api/system/role';
 import type { ExpPersonVO } from '@/api/system/person';
 
 const treeProps = {
@@ -601,17 +622,21 @@ const postDialog = reactive({
 });
 const postFormRef = ref<FormInstance>();
 const postSaving = ref(false);
-const postForm = reactive<PostVO & { orgId?: number; orgName?: string }>({
+const postForm = reactive<PostVO>({
   postId: 0,
   postCode: '',
   postName: '',
   status: 'ENABLED',
   defaultDataScope: '',
+  defaultRoleId: undefined,
+  defaultRoleName: '',
   orgId: undefined,
   orgName: '',
+  orgCode: '',
   postType: '',
   postLevel: '',
   postCategory: '',
+  isOutsourcing: 1,
   sortNo: 0,
   postDesc: '',
   remark: '',
@@ -625,9 +650,16 @@ const postRules: FormRules = {
   postType: [{ required: true, message: '请选择岗位类型', trigger: 'change' }],
   postLevel: [{ required: true, message: '请选择岗位级别', trigger: 'change' }],
   postCategory: [{ required: true, message: '请选择岗位分类', trigger: 'change' }],
+  isOutsourcing: [{ required: true, message: '请选择是否外派', trigger: 'change' }],
 };
 
 const selectedPostOrg = ref<OrgNode>();
+const selectedDefaultRole = ref<RoleVO>();
+// 是否外派：是=0，否=1（主岗位）
+const outsourcingOptions = [
+  { label: '是', value: 0 },
+  { label: '否', value: 1 },
+];
 const postTypeOptions = ref<DictOption[]>([]);
 const postLevelOptions = ref<DictOption[]>([]);
 const postCategoryOptions = ref<DictOption[]>([]);
@@ -946,16 +978,32 @@ function openPostForm(isEdit: boolean, row?: PostVO) {
   postDialog.isEdit = isEdit;
   if (isEdit && row) {
     Object.assign(postForm, row);
-    if ((row as PostVO & { orgId?: number; orgName?: string })?.orgId) {
+    const resolvedOrg = row.orgId ? {
+      orgId: row.orgId,
+      orgName: row.orgName || '',
+      orgCode: row.orgCode || currentOrg.value?.orgCode || '',
+    } : currentOrg.value;
+    if (resolvedOrg) {
       selectedPostOrg.value = {
-        orgId: (row as PostVO & { orgId?: number }).orgId!,
-        orgName: (row as PostVO & { orgName?: string }).orgName || '',
-        orgCode: '',
+        orgId: resolvedOrg.orgId,
+        orgName: resolvedOrg.orgName || '',
+        orgCode: resolvedOrg.orgCode || '',
+      };
+      postForm.orgId = resolvedOrg.orgId;
+      postForm.orgName = resolvedOrg.orgName || '';
+      postForm.orgCode = resolvedOrg.orgCode || '';
+    }
+    postForm.isOutsourcing = row.isOutsourcing ?? 1;
+    if (row.defaultRoleId != null) {
+      selectedDefaultRole.value = {
+        roleId: String(row.defaultRoleId),
+        roleName: row.defaultRoleName || '',
+        roleCode: '',
       };
     } else {
-      selectedPostOrg.value = currentOrg.value || undefined;
-      postForm.orgId = selectedPostOrg.value?.orgId;
-      postForm.orgName = selectedPostOrg.value?.orgName || '';
+      selectedDefaultRole.value = undefined;
+      postForm.defaultRoleId = undefined;
+      postForm.defaultRoleName = '';
     }
   } else {
     Object.assign(postForm, {
@@ -964,17 +1012,22 @@ function openPostForm(isEdit: boolean, row?: PostVO) {
       postName: '',
       status: 'ENABLED',
       defaultDataScope: '',
+      defaultRoleId: undefined,
+      defaultRoleName: '',
       orgId: currentOrg.value?.orgId,
       orgName: currentOrg.value?.orgName || '',
+      orgCode: currentOrg.value?.orgCode || '',
       postType: '',
       postLevel: '',
       postCategory: '',
+      isOutsourcing: 1,
       sortNo: 0,
       postDesc: '',
       remark: '',
       isSystem: 0,
     });
     selectedPostOrg.value = currentOrg.value || undefined;
+    selectedDefaultRole.value = undefined;
   }
   postDialog.visible = true;
 }
@@ -982,6 +1035,14 @@ function openPostForm(isEdit: boolean, row?: PostVO) {
 function handlePostOrgChange(org?: OrgNode) {
   postForm.orgId = org?.orgId;
   postForm.orgName = org?.orgName || '';
+  postForm.orgCode = org?.orgCode || '';
+}
+
+function handleDefaultRoleChange(role?: RoleVO) {
+  selectedDefaultRole.value = role;
+  const roleId = role?.roleId ? Number(role.roleId) : undefined;
+  postForm.defaultRoleId = Number.isNaN(roleId) ? undefined : roleId;
+  postForm.defaultRoleName = role?.roleName || '';
 }
 
 async function submitPostForm() {

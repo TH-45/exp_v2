@@ -33,7 +33,7 @@ public class Account {
      * 主键ID
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @TableId(type = IdType.AUTO)
     @Column(name = "account_id")
     private Long accountId;
