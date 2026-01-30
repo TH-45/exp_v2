@@ -265,7 +265,9 @@
           :rules="postRules"
           label-width="120px"
           class="dialog-form two-col"
+          @submit.prevent="submitPostForm"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="岗位编码" prop="postCode">
             <el-input v-model="postForm.postCode" readonly class="readonly-input" />
           </el-form-item>
@@ -298,10 +300,10 @@
             <el-input-number v-model="postForm.sortNo" :min="0" :max="9999" />
           </el-form-item>
           <el-form-item label="职责说明" class="full-row">
-            <el-input v-model="postForm.postDesc" type="textarea" />
+            <el-input v-model="postForm.postDesc" type="textarea" @keydown.enter.stop />
           </el-form-item>
           <el-form-item label="备注" class="full-row">
-            <el-input v-model="postForm.remark" type="textarea" />
+            <el-input v-model="postForm.remark" type="textarea" @keydown.enter.stop />
           </el-form-item>
         </el-form>
         <template #footer>
@@ -319,6 +321,8 @@
         width="720px"
         destroy-on-close
       >
+        <form @submit.prevent="submitBind">
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
         <div class="bind-search">
           <el-input
             v-model="bindDialog.keyword"
@@ -358,6 +362,7 @@
             @size-change="(s:number)=>changeBindPage(1, s)"
           />
         </div>
+        </form>
         <template #footer>
           <el-button @click="bindDialog.visible = false">取消</el-button>
           <el-button
@@ -384,7 +389,9 @@
           :rules="orgRules"
           label-width="100px"
           class="dialog-form two-col"
+          @submit.prevent="submitOrgForm"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="组织编码" prop="orgCode">
             <el-input v-model="orgForm.orgCode" readonly class="readonly-input" />
           </el-form-item>
@@ -433,6 +440,7 @@
               type="textarea"
               :rows="3"
               placeholder="请输入备注"
+              @keydown.enter.stop
             />
           </el-form-item>
         </el-form>
@@ -451,6 +459,8 @@
         width="900px"
         destroy-on-close
       >
+        <form @submit.prevent="confirmParentOrgSelect">
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
         <div class="parent-org-search">
           <el-input
             v-model="parentOrgDialog.keyword"
@@ -481,6 +491,7 @@
             </template>
           </el-table-column>
         </el-table>
+        </form>
         <template #footer>
           <el-button @click="parentOrgDialog.visible = false">取消</el-button>
           <el-button
@@ -834,9 +845,9 @@ async function fetchTable() {
     };
 
     const res = await queryOrgPosts(searchQuery);
-    total.value = res.total;
+    total.value = res.total ?? 0;
 
-    tableData.value = res.list;
+    tableData.value = res.list ?? [];
 
 
   } catch (e) {

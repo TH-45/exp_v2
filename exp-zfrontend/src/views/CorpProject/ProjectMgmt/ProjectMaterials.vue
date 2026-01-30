@@ -233,7 +233,9 @@
           :rules="materialRules"
           label-width="120px"
           class="material-form"
+          @submit.prevent="saveMaterial"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-row :gutter="16">
             <el-col :span="12">
               <el-form-item label="物料名称" prop="name">
@@ -313,7 +315,8 @@
 
       <!-- 入库弹窗 -->
       <el-dialog v-model="stockDialog.visible" title="物料入库" width="400px">
-        <el-form :model="stockForm" label-width="100px">
+        <el-form :model="stockForm" label-width="100px" @submit.prevent="confirmStockUpdate">
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="入库数量" required>
             <el-input-number
               v-model="stockForm.quantity"
@@ -329,6 +332,7 @@
               type="textarea"
               :rows="2"
               placeholder="入库备注（可选）"
+              @keydown.enter.stop
             />
           </el-form-item>
         </el-form>
@@ -342,7 +346,8 @@
 
       <!-- 出库弹窗 -->
       <el-dialog v-model="usageDialog.visible" title="物料出库" width="400px">
-        <el-form :model="usageForm" label-width="100px">
+        <el-form :model="usageForm" label-width="100px" @submit.prevent="confirmMaterialUsage">
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="出库数量" required>
             <el-input-number
               v-model="usageForm.quantity"
@@ -358,6 +363,7 @@
               type="textarea"
               :rows="2"
               placeholder="出库备注（可选）"
+              @keydown.enter.stop
             />
           </el-form-item>
         </el-form>

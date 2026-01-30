@@ -166,7 +166,9 @@
           :rules="rules"
           label-width="100px"
           class="dialog-form two-col"
+          @submit.prevent="submitForm"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="账号名" prop="accountName">
             <el-input
               v-model="form.accountName"
@@ -232,7 +234,14 @@
       <!-- 重置密码弹窗 -->
       <el-dialog v-model="resetDialog.visible" title="重置密码" width="460px" destroy-on-close draggable>
         <div class="reset-tip">将重置 {{ resetDialog.targetCount }} 个账号的密码，请确认。</div>
-        <el-form ref="resetFormRef" :model="resetForm" :rules="resetRules" label-width="100px">
+        <el-form
+          ref="resetFormRef"
+          :model="resetForm"
+          :rules="resetRules"
+          label-width="100px"
+          @submit.prevent="submitResetPwd"
+        >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="新密码" prop="password">
             <el-input v-model="resetForm.password" type="password" show-password placeholder="请输入新密码" />
           </el-form-item>

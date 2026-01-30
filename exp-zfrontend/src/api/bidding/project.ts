@@ -19,18 +19,19 @@ export interface BiddingProjectVO {
 }
 
 export interface PageResult<T> {
-  records: T[];
+  list: T[];
   total: number;
-  page: number;
-  pageSize: number;
+  pageNum: number;
+  size: number;
 }
 
 export interface QueryBiddingProjectParams {
-  page: number;
-  pageSize: number;
+  pageNum: number;
+  size: number;
   keyword?: string;
   status?: BiddingProjectStatus;
   year?: number;
+  sort?: string;
 }
 
 // 约定路径（与 docs/public/接口约定.md 的示例保持一致）

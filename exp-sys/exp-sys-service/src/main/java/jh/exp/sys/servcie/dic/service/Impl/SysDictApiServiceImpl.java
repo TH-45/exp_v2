@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -186,6 +187,8 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         item.setSortNo(req.getSortNo());
         item.setStatus(req.getStatus());
         item.setRemark(req.getRemark());
+        item.setCreatedTime(LocalDateTime.now());
+        item.setUpdatedTime(LocalDateTime.now());
         sysDictService.createDictItem(item);
         return ok(Collections.emptyMap());
     }
@@ -224,6 +227,7 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         if (req.getRemark() != null) {
             item.setRemark(req.getRemark());
         }
+        item.setUpdatedTime(LocalDateTime.now());
         sysDictService.updateDictItem(item);
         return ok(Collections.emptyMap());
     }

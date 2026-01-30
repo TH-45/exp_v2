@@ -80,7 +80,7 @@
                 <el-tag :type="statusTagType(row.status)">{{ statusText(row.status) }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="updatedTime" label="更新时间" min-width="170" />
+            <el-table-column prop="updatedTime" label="更新时间" min-width="170" :formatter="formatDateTime" />
             <el-table-column label="操作" fixed="right" width="240">
               <template #default="{ row }">
                 <el-button
@@ -149,7 +149,9 @@
               :rules="typeRules"
               label-width="110px"
               class="dialog-form two-col"
+              @submit.prevent="submitTypeForm"
             >
+              <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
               <el-form-item label="类型编码" prop="dictCode">
                 <el-input v-model="typeForm.dictCode" placeholder="如：USER_STATUS" />
               </el-form-item>
@@ -240,7 +242,7 @@
               </template>
             </el-table-column>
             <el-table-column prop="remark" label="备注" min-width="200" />
-            <el-table-column prop="updatedTime" label="更新时间" min-width="170" />
+            <el-table-column prop="updatedTime" label="更新时间" min-width="170" :formatter="formatDateTime" />
             <el-table-column label="操作" fixed="right" width="240">
               <template #default="{ row }">
                 <el-button
@@ -301,7 +303,9 @@
               :rules="itemRules"
               label-width="110px"
               class="dialog-form two-col"
+              @submit.prevent="submitItemForm"
             >
+              <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
               <el-form-item label="字典类型">
                 <el-input :model-value="selectedTypeLabel" disabled />
               </el-form-item>
@@ -328,7 +332,7 @@
                 </el-select>
               </el-form-item>
               <el-form-item label="备注" class="full-row">
-                <el-input v-model="itemForm.remark" type="textarea" :rows="3" placeholder="可选" />
+                <el-input v-model="itemForm.remark" type="textarea" :rows="3" placeholder="可选" @keydown.enter.stop />
               </el-form-item>
             </el-form>
             <template #footer>
@@ -538,6 +542,21 @@ function statusText(status?: DictStatus) {
 
 function statusTagType(status?: DictStatus) {
   return status === 'DISABLED' ? 'info' : 'success';
+}
+
+function formatDateTime(row: DictType | DictItem, column: any, cellValue: string) {
+  if (!cellValue) return '';
+  try {
+    const date = new Date(cellValue);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  } catch (e) {
+    return cellValue;
+  }
 }
 
 function normalizePage<T>(res?: PageResult<T>) {

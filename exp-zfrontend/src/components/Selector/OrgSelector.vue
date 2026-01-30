@@ -22,6 +22,8 @@
       destroy-on-close
       draggable
     >
+      <form @submit.prevent="handleConfirm">
+        <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
       <!-- 搜索区 -->
       <div class="search-bar">
         <el-input
@@ -61,6 +63,7 @@
           </template>
         </el-tree>
       </div>
+      </form>
 
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>

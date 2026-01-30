@@ -69,8 +69,8 @@
         <el-pagination
           background
           layout="total, prev, pager, next, sizes"
-          :current-page="query.page"
-          :page-size="query.pageSize"
+          :current-page="query.pageNum"
+          :page-size="query.size"
           :page-sizes="[10, 20, 50, 100]"
           :total="total"
           @current-change="handleCurrentChange"
@@ -80,7 +80,8 @@
 
       <!-- 上传弹窗（示例占位，后续接 /exp/files/upload） -->
       <el-dialog v-model="uploadDialog.visible" title="上传附件" width="620px" destroy-on-close>
-        <el-form :model="uploadForm" label-width="110px">
+        <el-form :model="uploadForm" label-width="110px" @submit.prevent>
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="项目ID">
             <el-input v-model="uploadForm.projectId" placeholder="占位：后续替换为项目选择" />
           </el-form-item>
@@ -156,8 +157,9 @@ const query = reactive({
   projectKeyword: '',
   bizType: undefined as AttachmentBizType | undefined,
   keyword: '',
-  page: 1,
-  pageSize: 10,
+  pageNum: 1,
+  size: 10,
+  sort: undefined as string | undefined,
 });
 
 const tableData = ref<AttachmentVO[]>([]);
@@ -177,7 +179,7 @@ async function fetchList() {
   loading.value = true;
   try {
     const res = await queryBiddingAttachmentList({ ...query });
-    const records = (res as any)?.records ?? [];
+    const records = (res as any)?.list ?? [];
     tableData.value = Array.isArray(records) && records.length ? records : mockList;
     total.value = Number((res as any)?.total ?? tableData.value.length) || 0;
   } catch (e) {
@@ -196,7 +198,7 @@ onMounted(() => {
 function handleSearch() {
   query.projectKeyword = (query.projectKeyword || '').trim();
   query.keyword = (query.keyword || '').trim();
-  query.page = 1;
+  query.pageNum = 1;
   fetchList();
 }
 
@@ -204,18 +206,18 @@ function handleReset() {
   query.projectKeyword = '';
   query.bizType = undefined;
   query.keyword = '';
-  query.page = 1;
+  query.pageNum = 1;
   fetchList();
 }
 
 function handleCurrentChange(page: number) {
-  query.page = page;
+  query.pageNum = page;
   fetchList();
 }
 
 function handleSizeChange(size: number) {
-  query.pageSize = size;
-  query.page = 1;
+  query.size = size;
+  query.pageNum = 1;
   fetchList();
 }
 

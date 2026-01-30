@@ -73,7 +73,8 @@
       </div>
 
       <el-dialog v-model="uploadDialog.visible" title="上传附件" width="620px" destroy-on-close>
-        <el-form :model="uploadForm" label-width="110px">
+        <el-form :model="uploadForm" label-width="110px" @submit.prevent>
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="合同ID">
             <el-input v-model="uploadForm.contractId" placeholder="占位：后续替换为合同选择" />
           </el-form-item>

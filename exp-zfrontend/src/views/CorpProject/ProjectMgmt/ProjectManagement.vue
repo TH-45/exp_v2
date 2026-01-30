@@ -184,7 +184,9 @@
           :rules="rules"
           label-width="120px"
           class="dialog-form"
+          @submit.prevent="submitForm"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-row :gutter="16">
             <el-col :span="12">
               <el-form-item label="项目名称" prop="name">
@@ -300,6 +302,7 @@
               type="textarea"
               :rows="3"
               placeholder="请输入项目描述（可选）"
+              @keydown.enter.stop
             />
           </el-form-item>
         </el-form>

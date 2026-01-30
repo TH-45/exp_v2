@@ -70,7 +70,15 @@
       </div>
 
       <el-dialog v-model="editDialog.visible" :title="editDialog.isEdit ? '编辑变更' : '新增变更'" width="860px" destroy-on-close>
-        <el-form ref="formRef" :model="form" :rules="rules" label-width="110px" class="dialog-form two-col">
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-width="110px"
+          class="dialog-form two-col"
+          @submit.prevent="submitForm"
+        >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="变更单号" prop="changeCode">
             <el-input v-model="form.changeCode" placeholder="请输入变更单号" />
           </el-form-item>
@@ -90,7 +98,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="变更原因" class="full-row" prop="reason">
-            <el-input v-model="form.reason" type="textarea" :rows="3" placeholder="请输入变更原因" />
+            <el-input v-model="form.reason" type="textarea" :rows="3" placeholder="请输入变更原因" @keydown.enter.stop />
           </el-form-item>
         </el-form>
         <template #footer>

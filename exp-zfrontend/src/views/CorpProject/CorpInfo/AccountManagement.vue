@@ -163,7 +163,9 @@
           :rules="rules"
           label-width="100px"
           class="dialog-form two-col"
+          @submit.prevent="submitForm"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="账号名" prop="username">
             <el-input
               v-model="form.username"
@@ -233,7 +235,8 @@
       <!-- 重置密码弹窗 -->
       <el-dialog v-model="passwordDialog.visible" title="重置密码" width="400px">
         <div class="password-form">
-          <el-form :model="passwordForm" label-width="80px">
+          <el-form :model="passwordForm" label-width="80px" @submit.prevent="confirmResetPassword">
+            <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
             <el-form-item label="新密码" required>
               <el-input
                 v-model="passwordForm.newPassword"

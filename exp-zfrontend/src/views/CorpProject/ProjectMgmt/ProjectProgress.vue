@@ -203,7 +203,9 @@
           :rules="milestoneRules"
           label-width="120px"
           class="milestone-form"
+          @submit.prevent="saveMilestone"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-row :gutter="16">
             <el-col :span="12">
               <el-form-item label="里程碑名称" prop="name">
@@ -230,6 +232,7 @@
               type="textarea"
               :rows="3"
               placeholder="请输入里程碑详细描述（可选）"
+              @keydown.enter.stop
             />
           </el-form-item>
 
@@ -281,7 +284,8 @@
 
       <!-- 更新进度弹窗 -->
       <el-dialog v-model="progressDialog.visible" title="更新进度" width="500px">
-        <el-form :model="progressForm" label-width="100px">
+        <el-form :model="progressForm" label-width="100px" @submit.prevent="confirmProgressUpdate">
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="当前进度" required>
             <el-slider
               v-model="progressForm.progress"
@@ -321,6 +325,7 @@
               type="textarea"
               :rows="3"
               placeholder="更新说明（可选）"
+              @keydown.enter.stop
             />
           </el-form-item>
         </el-form>

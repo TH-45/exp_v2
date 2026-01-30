@@ -159,7 +159,9 @@
           :rules="rules"
           label-width="100px"
           class="dialog-form"
+          @submit.prevent="submitForm"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-row :gutter="16">
             <el-col :span="12">
               <el-form-item label="公告标题" prop="title">
@@ -182,6 +184,7 @@
               type="textarea"
               :rows="8"
               placeholder="请输入公告内容"
+              @keydown.enter.stop
             />
           </el-form-item>
 

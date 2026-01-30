@@ -70,7 +70,15 @@
 
       <!-- 新增/编辑弹窗（你统一选了弹窗模式） -->
       <el-dialog v-model="editDialog.visible" :title="editDialog.isEdit ? '编辑合同' : '新增合同'" width="900px" destroy-on-close>
-        <el-form ref="formRef" :model="form" :rules="rules" label-width="110px" class="dialog-form two-col">
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-width="110px"
+          class="dialog-form two-col"
+          @submit.prevent="submitForm"
+        >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="合同编码" prop="contractCode">
             <el-input v-model="form.contractCode" placeholder="请输入合同编码" />
           </el-form-item>
@@ -101,7 +109,7 @@
             <el-date-picker v-model="form.endDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
           </el-form-item>
           <el-form-item label="备注" class="full-row">
-            <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="可选" />
+            <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="可选" @keydown.enter.stop />
           </el-form-item>
         </el-form>
         <template #footer>

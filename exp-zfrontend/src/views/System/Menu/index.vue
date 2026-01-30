@@ -190,7 +190,9 @@
           :rules="rules"
           label-width="110px"
           class="dialog-form two-col"
+          @submit.prevent="submitForm"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="父节点">
             <el-input :model-value="parentName" disabled />
           </el-form-item>

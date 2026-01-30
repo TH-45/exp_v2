@@ -80,7 +80,15 @@
       </div>
 
       <el-dialog v-model="editDialog.visible" :title="editDialog.isEdit ? '编辑记录' : '新增记录'" width="860px" destroy-on-close>
-        <el-form ref="formRef" :model="form" :rules="rules" label-width="110px" class="dialog-form two-col">
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-width="110px"
+          class="dialog-form two-col"
+          @submit.prevent="submitForm"
+        >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="合同编码" prop="contractCode">
             <el-input v-model="form.contractCode" placeholder="请输入合同编码" />
           </el-form-item>
@@ -112,7 +120,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="备注" class="full-row">
-            <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="可选" />
+            <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="可选" @keydown.enter.stop />
           </el-form-item>
         </el-form>
         <template #footer>

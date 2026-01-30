@@ -147,7 +147,9 @@
           :rules="memberRules"
           label-width="100px"
           class="member-form"
+          @submit.prevent="saveMember"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="选择人员" prop="userId" v-if="!memberDialog.isEdit">
             <el-select
               v-model="memberForm.userId"
@@ -170,6 +172,7 @@
               type="textarea"
               :rows="3"
               placeholder="请输入该成员在项目中的职责描述"
+              @keydown.enter.stop
             />
           </el-form-item>
 

@@ -309,13 +309,15 @@
 
         <template #footer v-if="detailDialog.data?.status === 'pending'">
           <div class="dialog-footer">
-            <el-form :model="actionForm" label-width="80px">
+            <el-form :model="actionForm" label-width="80px" @submit.prevent="handleApprove">
+              <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
               <el-form-item label="审批意见">
                 <el-input
                   v-model="actionForm.comments"
                   type="textarea"
                   :rows="3"
                   placeholder="请输入审批意见（可选）"
+                  @keydown.enter.stop
                 />
               </el-form-item>
             </el-form>
@@ -340,13 +342,15 @@
       >
         <div class="batch-confirm">
           <p>确认{{ batchDialog.type === 'approve' ? '通过' : '驳回' }}选中的 {{ selectedTasks.length }} 个审批任务？</p>
-          <el-form :model="batchForm" label-width="80px">
+          <el-form :model="batchForm" label-width="80px" @submit.prevent="confirmBatchAction">
+            <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
             <el-form-item label="批量意见">
               <el-input
                 v-model="batchForm.comments"
                 type="textarea"
                 :rows="3"
                 placeholder="请输入批量审批意见（可选）"
+                @keydown.enter.stop
               />
             </el-form-item>
           </el-form>

@@ -140,7 +140,9 @@
               :rules="basicRules"
               label-width="140px"
               class="edit-form"
+              @submit.prevent="saveCorpInfo"
             >
+              <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
               <el-row :gutter="16">
                 <el-col :span="12">
                   <el-form-item label="企业名称" prop="corpName">
@@ -215,7 +217,9 @@
               :rules="contactRules"
               label-width="140px"
               class="edit-form"
+              @submit.prevent="saveCorpInfo"
             >
+              <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
               <el-row :gutter="16">
                 <el-col :span="12">
                   <el-form-item label="联系电话" prop="phone">
@@ -257,7 +261,9 @@
           :rules="partnerRules"
           label-width="100px"
           class="partner-form"
+          @submit.prevent="savePartner"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="单位名称" prop="name">
             <el-input v-model="partnerForm.name" placeholder="请输入单位名称" />
           </el-form-item>

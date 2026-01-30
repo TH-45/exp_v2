@@ -370,7 +370,9 @@
         :rules="rules"
         label-width="100px"
         class="dialog-form two-col"
+        @submit.prevent="submitForm"
       >
+        <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
         <el-form-item label="人员编码" prop="personCode">
           <el-input v-model="form.personCode" disabled />
         </el-form-item>
@@ -453,6 +455,7 @@
           <el-input
             v-model="form.remark"
             type="textarea"
+            @keydown.enter.stop
           />
         </el-form-item>
       </el-form>

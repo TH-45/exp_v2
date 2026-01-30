@@ -2,6 +2,7 @@ package jh.exp.sys.core.entity.dic;
 
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -28,8 +29,8 @@ public class SysDictType implements Serializable {
      * 主键ID
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @TableId(type = IdType.ASSIGN_ID)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @TableId(type = IdType.AUTO)
     @Column(name = "id")
     private Long id;
 

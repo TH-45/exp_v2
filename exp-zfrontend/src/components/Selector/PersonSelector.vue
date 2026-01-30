@@ -24,7 +24,8 @@
     >
       <!-- 搜索区 -->
       <div class="search-bar">
-        <el-form :inline="true" :model="searchForm" @submit.prevent>
+        <el-form :inline="true" :model="searchForm" @submit.prevent="handleConfirm">
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="人员姓名">
             <el-input
               v-model="searchForm.personName"

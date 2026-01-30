@@ -20,18 +20,19 @@ export interface AttachmentVO {
 }
 
 export interface PageResult<T> {
-  records: T[];
+  list: T[];
   total: number;
-  page: number;
-  pageSize: number;
+  pageNum: number;
+  size: number;
 }
 
 export interface QueryAttachmentParams {
-  page: number;
-  pageSize: number;
+  pageNum: number;
+  size: number;
   keyword?: string;
   projectKeyword?: string;
   bizType?: AttachmentBizType;
+  sort?: string;
 }
 
 // 说明：docs 只约定了 upload/download，这里 list 先占位，后续对齐后端即可

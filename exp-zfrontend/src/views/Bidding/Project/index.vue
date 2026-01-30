@@ -65,8 +65,8 @@
         <el-pagination
           background
           layout="total, prev, pager, next, sizes"
-          :current-page="query.page"
-          :page-size="query.pageSize"
+          :current-page="query.pageNum"
+          :page-size="query.size"
           :page-sizes="[10, 20, 50, 100]"
           :total="total"
           @current-change="handleCurrentChange"
@@ -81,7 +81,15 @@
         width="860px"
         destroy-on-close
       >
-        <el-form ref="formRef" :model="form" :rules="rules" label-width="110px" class="dialog-form two-col">
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-width="110px"
+          class="dialog-form two-col"
+          @submit.prevent="submitForm"
+        >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="项目编码" prop="projectCode">
             <el-input v-model="form.projectCode" placeholder="请输入项目编码" />
           </el-form-item>
@@ -128,7 +136,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="备注" class="full-row">
-            <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注（可选）" />
+            <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注（可选）" @keydown.enter.stop />
           </el-form-item>
         </el-form>
         <template #footer>
@@ -188,8 +196,9 @@ const query = reactive({
   keyword: '',
   status: undefined as BiddingProjectStatus | undefined,
   year: new Date().getFullYear(),
-  page: 1,
-  pageSize: 10,
+  pageNum: 1,
+  size: 10,
+  sort: undefined as string | undefined,
 });
 
 const tableData = ref<BiddingProjectVO[]>([]);
@@ -209,7 +218,7 @@ async function fetchList() {
   loading.value = true;
   try {
     const res = await queryBiddingProjectList({ ...query });
-    const records = (res as any)?.records ?? [];
+    const records = (res as any)?.list ?? [];
     tableData.value = Array.isArray(records) && records.length ? records : mockList;
     total.value = Number((res as any)?.total ?? tableData.value.length) || 0;
   } catch (e) {
@@ -237,7 +246,7 @@ watch(
 
 function handleSearch() {
   query.keyword = (query.keyword || '').trim();
-  query.page = 1;
+  query.pageNum = 1;
   fetchList();
 }
 
@@ -245,18 +254,18 @@ function handleReset() {
   query.keyword = '';
   query.status = undefined;
   query.year = new Date().getFullYear();
-  query.page = 1;
+  query.pageNum = 1;
   fetchList();
 }
 
 function handleCurrentChange(page: number) {
-  query.page = page;
+  query.pageNum = page;
   fetchList();
 }
 
 function handleSizeChange(size: number) {
-  query.pageSize = size;
-  query.page = 1;
+  query.size = size;
+  query.pageNum = 1;
   fetchList();
 }
 

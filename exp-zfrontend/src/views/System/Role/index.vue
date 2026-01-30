@@ -144,7 +144,9 @@
           :rules="rules"
           label-width="100px"
           class="dialog-form two-col"
+          @submit.prevent="submitForm"
         >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="角色名称" prop="roleName">
             <el-input v-model="form.roleName" placeholder="请输入角色名称" />
           </el-form-item>
@@ -158,7 +160,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="备注" class="full-row">
-            <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="可选" />
+            <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="可选" @keydown.enter.stop />
           </el-form-item>
         </el-form>
         <template #footer>

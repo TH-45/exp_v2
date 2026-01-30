@@ -14,19 +14,20 @@ export interface BidVO {
 }
 
 export interface PageResult<T> {
-  records: T[];
+  list: T[];
   total: number;
-  page: number;
-  pageSize: number;
+  pageNum: number;
+  size: number;
 }
 
 export interface QueryBidParams {
-  page: number;
-  pageSize: number;
+  pageNum: number;
+  size: number;
   projectId?: string;
   keyword?: string; // 项目/投标人
   bidderName?: string;
   status?: BidStatus;
+  sort?: string;
 }
 
 // 约定路径（与 docs/public/接口约定.md 的示例保持一致）

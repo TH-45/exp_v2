@@ -37,7 +37,8 @@
 
       <!-- 搜索区 -->
       <div v-else class="search-bar">
-        <el-form :inline="true" :model="searchForm" @submit.prevent>
+        <el-form :inline="true" :model="searchForm" @submit.prevent="handleConfirm">
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="岗位名称">
             <el-input
               v-model="searchForm.postName"
