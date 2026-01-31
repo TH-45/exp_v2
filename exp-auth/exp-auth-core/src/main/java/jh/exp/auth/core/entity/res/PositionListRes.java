@@ -54,7 +54,7 @@ public class PositionListRes {
     private Long defaultRoleId;
 
     /**
-     * 是否为外派岗位（0外派/1主岗位）
+     * 是否为外派岗位（1外派/0非外派）
      */
     private Integer isOutsourcing;
 

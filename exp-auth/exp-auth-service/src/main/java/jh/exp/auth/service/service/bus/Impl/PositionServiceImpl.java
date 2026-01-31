@@ -38,7 +38,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -118,10 +121,11 @@ public class PositionServiceImpl implements PositionService {
     @Transactional
     public PositionDetailRes createPosition(CreatePositionReq req) {
         String postCode = req.getPostCode();
-        Integer isOutsourcing = req.getIsOutsourcing()==1?1:0;
+        Integer isOutsourcing = (req.getIsOutsourcing() != null && req.getIsOutsourcing() == 1) ? 1 : 0;
+        Integer primaryFlag = isOutsourcing == 1 ? 0 : 1;
         CurrentUser currentUser = CurrentUserHolder.get();
         //主岗位
-        if(CommonConstant.NUM_1.equals(isOutsourcing)){
+        if(CommonConstant.NUM_1.equals(primaryFlag)){
             // 检查岗位编码是否重复
             if (checkPostCodeExists(postCode, null)) {
                 throw new RuntimeException("岗位编码已存在");
@@ -172,13 +176,13 @@ public class PositionServiceImpl implements PositionService {
         OrgPostRel orgPostRel = OrgPostRel.builder()
                 .orgId(orgUnit.getOrgId())
                 .postId(pos.getPostId())
-                .isPrimary(isOutsourcing)
+                .isPrimary(primaryFlag)
                 .status(CommonConstant.ENABLED_STATUS_STR)
                 .sortNo(CommonConstant.NUM_1)
                 .createdBy(currentUser.getUserId())
                 .createdTime(LocalDateTime.now())
                 .updatedTime(LocalDateTime.now())
-                .remark(req.getRemark().isBlank()?"": req.getRemark())
+                .remark((req.getRemark() == null || req.getRemark().isBlank()) ? "" : req.getRemark())
                 .build();
 
         int insert = orgPostRelMapper.insert(orgPostRel);
@@ -220,8 +224,8 @@ public class PositionServiceImpl implements PositionService {
             if (ObjectUtil.isEmpty(orgUnit)) {
                 throw new RuntimeException("组织不存在");
             }
-            // 是否外派：0外派/1主岗位
-            Integer primaryFlag = isOutsourcing == 1 ? 1 : 0;
+            // 是否外派：1外派/0非外派（主岗位）
+            Integer primaryFlag = isOutsourcing == 1 ? 0 : 1;
             UpdateWrapper<OrgPostRel> updateWrapper = new UpdateWrapper<>();
             updateWrapper.eq("org_id", orgUnit.getOrgId())
                     .eq("post_id", req.getPostId());
@@ -328,6 +332,66 @@ public class PositionServiceImpl implements PositionService {
     }
 
     @Override
+    @Transactional
+    public String outsourcePosition(OutsourcePositionReq req) {
+        Position position = positionMapper.selectById(req.getPostId());
+        if (position == null) {
+            throw new RuntimeException("岗位不存在");
+        }
+
+        OrgUnit currentOrg = orgUnitMapper.selectById(req.getCurrentOrgId());
+        if (currentOrg == null) {
+            throw new RuntimeException("当前组织不存在");
+        }
+
+        OrgUnit targetOrg = orgUnitMapper.selectById(req.getTargetOrgId());
+        if (targetOrg == null) {
+            throw new RuntimeException("外派组织不存在");
+        }
+
+        Integer isOutsourcing = (req.getIsOutsourcing() != null && req.getIsOutsourcing() == 1) ? 1 : 0;
+        Integer primaryFlag = isOutsourcing == 1 ? 0 : 1;
+
+        OrgPostRel existing = orgPostRelMapper.selectOne(new LambdaQueryWrapper<OrgPostRel>()
+                .eq(OrgPostRel::getOrgId, req.getTargetOrgId())
+                .eq(OrgPostRel::getPostId, req.getPostId())
+                .last("LIMIT 1")
+        );
+
+        CurrentUser currentUser = CurrentUserHolder.get();
+        LocalDateTime now = LocalDateTime.now();
+        String remark = (req.getRemark() == null || req.getRemark().isBlank()) ? "" : req.getRemark();
+
+        if (existing != null) {
+            OrgPostRel relUpdate = new OrgPostRel();
+            relUpdate.setIsPrimary(primaryFlag);
+            relUpdate.setStatus(req.getStatus());
+            relUpdate.setRemark(remark);
+            relUpdate.setUpdatedTime(now);
+            UpdateWrapper<OrgPostRel> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("org_id", req.getTargetOrgId())
+                    .eq("post_id", req.getPostId());
+            orgPostRelMapper.update(relUpdate, updateWrapper);
+        } else {
+            OrgPostRel rel = OrgPostRel.builder()
+                    .orgId(req.getTargetOrgId())
+                    .postId(req.getPostId())
+                    .isPrimary(primaryFlag)
+                    .status(req.getStatus())
+                    .sortNo(CommonConstant.NUM_1)
+                    .createdBy(currentUser.getUserId())
+                    .createdTime(now)
+                    .updatedTime(now)
+                    .remark(remark)
+                    .build();
+            orgPostRelMapper.insert(rel);
+        }
+
+        String orgFullName = buildOrgFullName(targetOrg);
+        return "成功外派到‘" + orgFullName + "’/‘" + position.getPostName() + "’";
+    }
+
+    @Override
     public boolean checkPostCodeExists(String postCode, Long excludePostId) {
         QueryWrapper<Position> wrapper = new QueryWrapper<>();
         wrapper.eq("post_code", postCode);
@@ -354,6 +418,50 @@ public class PositionServiceImpl implements PositionService {
             }
             return res;
         }).collect(Collectors.toList());
+    }
+
+    private String buildOrgFullName(OrgUnit targetOrg) {
+        String orgPath = targetOrg.getOrgPath();
+        if (!StringUtils.hasText(orgPath)) {
+            return targetOrg.getOrgName();
+        }
+        String trimmed = orgPath;
+        if (trimmed.startsWith("/")) {
+            trimmed = trimmed.substring(1);
+        }
+        if (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        if (!StringUtils.hasText(trimmed)) {
+            return targetOrg.getOrgName();
+        }
+        String[] parts = trimmed.split("/");
+        List<Long> orgIds = new ArrayList<>();
+        for (String part : parts) {
+            if (!StringUtils.hasText(part)) {
+                continue;
+            }
+            try {
+                orgIds.add(Long.valueOf(part));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        if (orgIds.isEmpty()) {
+            return targetOrg.getOrgName();
+        }
+        List<OrgUnit> orgUnits = orgUnitMapper.selectBatchIds(orgIds);
+        Map<Long, String> nameMap = new HashMap<>();
+        for (OrgUnit unit : orgUnits) {
+            nameMap.put(unit.getOrgId(), unit.getOrgName());
+        }
+        List<String> names = new ArrayList<>();
+        for (Long orgId : orgIds) {
+            String name = nameMap.get(orgId);
+            if (StringUtils.hasText(name)) {
+                names.add(name);
+            }
+        }
+        return names.isEmpty() ? targetOrg.getOrgName() : String.join("/", names);
     }
 
 }

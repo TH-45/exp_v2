@@ -133,4 +133,17 @@ public class PositionController {
         return ApiResponse.success(result);
     }
 
+    /**
+     * 外派岗位
+     */
+    @PostMapping("/outsource")
+    public ApiResponse<String> outsource(@RequestBody @Valid OutsourcePositionReq req) {
+        try {
+            String message = positionService.outsourcePosition(req);
+            return ApiResponse.success(message);
+        } catch (Exception e) {
+            return ApiResponse.fail(CommonConstant.ERROR_CODE_STR, e.getMessage());
+        }
+    }
+
 }

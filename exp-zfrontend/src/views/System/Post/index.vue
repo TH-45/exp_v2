@@ -111,9 +111,9 @@
                 <el-button
                     size="small"
                     :disabled="selectedRows.length !== 1"
-                    @click="openBindDialog"
+                    @click="openOutsourceDialog"
                 >
-                  关联人员
+                  外派岗位
                 </el-button>
                 <el-button
                     size="small"
@@ -201,6 +201,11 @@
               <el-table-column prop="postType" label="类型" min-width="70" />
               <el-table-column prop="postLevel" label="岗位级别" min-width="100" />
               <el-table-column prop="defaultRoleName" label="默认角色" min-width="120" />
+              <el-table-column label="是否外派" min-width="90">
+                <template #default="{ row }">
+                  {{ row.isOutsourcing === 1 ? '是' : '否' }}
+                </template>
+              </el-table-column>
               <el-table-column label="状态" min-width="70">
                 <template #default="{ row }">
                   <el-tag :type="row.status === 'ENABLED' ? 'success' : 'info'">
@@ -321,7 +326,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="是否外派" prop="isOutsourcing">
+          <el-form-item v-if="postDialog.isEdit" label="是否外派" prop="isOutsourcing">
             <el-select v-model="postForm.isOutsourcing" placeholder="请选择是否外派" style="width: 200px">
               <el-option
                 v-for="opt in outsourcingOptions"
@@ -356,64 +361,53 @@
         </template>
       </el-dialog>
 
-      <!-- 关联岗位弹窗 -->
+      <!-- 外派岗位弹窗 -->
       <el-dialog
-        v-model="bindDialog.visible"
-        title="关联岗位"
-        width="720px"
+        v-model="outsourceDialog.visible"
+        title="外派岗位"
+        width="760px"
         destroy-on-close
       >
-        <form @submit.prevent="submitBind">
-          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
-        <div class="bind-search">
-          <el-input
-            v-model="bindDialog.keyword"
-            placeholder="搜索岗位编码/名称"
-            clearable
-            style="width: 240px"
-            @change="fetchBindList"
-          />
-        </div>
-        <el-table
-          v-loading="bindDialog.loading"
-          :data="bindDialog.list"
-          row-key="postId"
-          height="360"
-          @selection-change="handleBindSelection"
+        <el-form
+          ref="outsourceFormRef"
+          :model="outsourceForm"
+          :rules="outsourceRules"
+          label-width="120px"
+          class="dialog-form two-col"
+          @submit.prevent="submitOutsource"
         >
-          <el-table-column type="selection" width="50" />
-          <el-table-column prop="postCode" label="岗位编码" min-width="140" />
-          <el-table-column prop="postName" label="岗位名称" min-width="140" />
-          <el-table-column label="状态" min-width="100">
-            <template #default="{ row }">
-              <el-tag :type="row.status === 'ENABLED' ? 'success' : 'info'">
-                {{ row.status === 'ENABLED' ? '启用' : '停用' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div class="pagination">
-          <el-pagination
-            background
-            layout="total, prev, pager, next, sizes"
-            :current-page="bindDialog.pageNum"
-            :page-size="bindDialog.pageSize"
-            :page-sizes="[5, 10, 20]"
-            :total="bindDialog.total"
-            @current-change="(p:number)=>changeBindPage(p, bindDialog.pageSize)"
-            @size-change="(s:number)=>changeBindPage(1, s)"
-          />
-        </div>
-        </form>
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
+          <el-form-item label="外派组织" prop="targetOrgId">
+            <OrgSelector
+              v-model="selectedOutsourceOrg"
+              placeholder="请选择外派组织"
+              @change="handleOutsourceOrgChange"
+            />
+          </el-form-item>
+          <el-form-item label="状态" prop="status">
+            <el-select v-model="outsourceForm.status" style="width: 200px">
+              <el-option label="启用" value="ENABLED" />
+              <el-option label="停用" value="DISABLED" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="岗位编号">
+            <el-input v-model="outsourceForm.postCode" readonly class="readonly-input" />
+          </el-form-item>
+          <el-form-item label="岗位名称">
+            <el-input v-model="outsourceForm.postName" readonly class="readonly-input" />
+          </el-form-item>
+          <el-form-item label="备注" class="full-row">
+            <el-input v-model="outsourceForm.remark" type="textarea" @keydown.enter.stop />
+          </el-form-item>
+        </el-form>
         <template #footer>
-          <el-button @click="bindDialog.visible = false">取消</el-button>
+          <el-button @click="outsourceDialog.visible = false">取消</el-button>
           <el-button
             type="primary"
-            :loading="bindDialog.saving"
-            :disabled="!bindDialog.selected.length"
-            @click="submitBind"
+            :loading="outsourceDialog.saving"
+            @click="submitOutsource"
           >
-            关联
+            外派
           </el-button>
         </template>
       </el-dialog>
@@ -558,13 +552,13 @@ import {
   queryOrgPosts,
   createPost,
   updatePost,
-  queryPostDict,
   createOrg,
   deleteOrg,
   type OrgNode,
   type PostVO,
   type PostStatus,
   changePostStatus,
+  outsourcePost,
 } from '@/api/system/post';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
@@ -615,6 +609,7 @@ const tableLoading = ref(false);
 const total = ref(0);
 const selectedRows = ref<PostVO[]>([]);
 const tableRef = ref();
+const pendingSelectPostId = ref<number | null>(null);
 
 const postDialog = reactive({
   visible: false,
@@ -636,7 +631,7 @@ const postForm = reactive<PostVO>({
   postType: '',
   postLevel: '',
   postCategory: '',
-  isOutsourcing: 1,
+  isOutsourcing: 0,
   sortNo: 0,
   postDesc: '',
   remark: '',
@@ -655,26 +650,35 @@ const postRules: FormRules = {
 
 const selectedPostOrg = ref<OrgNode>();
 const selectedDefaultRole = ref<RoleVO>();
-// 是否外派：是=0，否=1（主岗位）
+// 是否外派：是=1，否=0
 const outsourcingOptions = [
-  { label: '是', value: 0 },
-  { label: '否', value: 1 },
+  { label: '是', value: 1 },
+  { label: '否', value: 0 },
 ];
 const postTypeOptions = ref<DictOption[]>([]);
 const postLevelOptions = ref<DictOption[]>([]);
 const postCategoryOptions = ref<DictOption[]>([]);
 
-const bindDialog = reactive({
+const outsourceDialog = reactive({
   visible: false,
-  loading: false,
   saving: false,
-  keyword: '',
-  list: [] as PostVO[],
-  selected: [] as PostVO[],
-  pageNum: 1,
-  pageSize: 10,
-  total: 0,
 });
+
+const outsourceFormRef = ref<FormInstance>();
+const outsourceForm = reactive({
+  postId: 0,
+  postCode: '',
+  postName: '',
+  targetOrgId: undefined as number | undefined,
+  targetOrgName: '',
+  status: 'ENABLED' as PostStatus,
+  remark: '',
+});
+const outsourceRules: FormRules = {
+  targetOrgId: [{ required: true, message: '请选择外派组织', trigger: 'change' }],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+};
+const selectedOutsourceOrg = ref<OrgNode>();
 
 // 组织表单弹窗
 const orgDialog = reactive({
@@ -937,8 +941,18 @@ async function fetchTable() {
     total.value = res.total ?? 0;
 
     tableData.value = res.list ?? [];
-
-
+    if (pendingSelectPostId.value) {
+      const targetId = pendingSelectPostId.value;
+      pendingSelectPostId.value = null;
+      nextTick(() => {
+        const target = tableData.value.find((item) => item.postId === targetId);
+        if (target) {
+          tableRef.value?.clearSelection?.();
+          tableRef.value?.toggleRowSelection(target, true);
+          selectedRows.value = [target];
+        }
+      });
+    }
   } catch (e) {
     console.error('加载岗位列表失败:', e);
     tableData.value = [];
@@ -993,7 +1007,7 @@ function openPostForm(isEdit: boolean, row?: PostVO) {
       postForm.orgName = resolvedOrg.orgName || '';
       postForm.orgCode = resolvedOrg.orgCode || '';
     }
-    postForm.isOutsourcing = row.isOutsourcing ?? 1;
+    postForm.isOutsourcing = row.isOutsourcing ?? 0;
     if (row.defaultRoleId != null) {
       selectedDefaultRole.value = {
         roleId: String(row.defaultRoleId),
@@ -1020,7 +1034,7 @@ function openPostForm(isEdit: boolean, row?: PostVO) {
       postType: '',
       postLevel: '',
       postCategory: '',
-      isOutsourcing: 1,
+      isOutsourcing: 0,
       sortNo: 0,
       postDesc: '',
       remark: '',
@@ -1054,6 +1068,9 @@ async function submitPostForm() {
     const payload = { ...postForm };
     if (!postDialog.isEdit && !String(payload.postCode || '').trim()) {
       payload.postCode = generatePostCode();
+    }
+    if (!postDialog.isEdit) {
+      payload.isOutsourcing = 0;
     }
     if (postDialog.isEdit) {
       await updatePost(payload);
@@ -1099,45 +1116,111 @@ function batchToggleRelStatus() {
 }
 
 
-function openBindDialog() {
-  // 新版本API暂不支持此功能
-  ElMessage.warning('新版本API暂不支持关联岗位功能');
+function openOutsourceDialog() {
+  if (selectedRows.value.length !== 1) {
+    ElMessage.warning('请选择一个岗位');
+    return;
+  }
+  const row = selectedRows.value[0];
+  if (!row) return;
+  outsourceForm.postId = row.postId;
+  outsourceForm.postCode = row.postCode;
+  outsourceForm.postName = row.postName;
+  outsourceForm.targetOrgId = undefined;
+  outsourceForm.targetOrgName = '';
+  outsourceForm.status = row.status;
+  outsourceForm.remark = '';
+  selectedOutsourceOrg.value = undefined;
+  outsourceDialog.visible = true;
 }
 
-async function fetchBindList() {
-  bindDialog.loading = true;
+function handleOutsourceOrgChange(org?: OrgNode) {
+  outsourceForm.targetOrgId = org?.orgId;
+  outsourceForm.targetOrgName = org?.orgName || '';
+}
+
+async function submitOutsource() {
+  if (!outsourceFormRef.value) return;
+  const valid = await outsourceFormRef.value.validate();
+  if (!valid) return;
+  if (!currentOrg.value?.orgId) {
+    ElMessage.error('当前组织不存在');
+    return;
+  }
+  outsourceDialog.saving = true;
   try {
-    const res = await queryPostDict({
-      keyword: bindDialog.keyword,
-      pageNum: bindDialog.pageNum,
-      pageSize: bindDialog.pageSize,
-    });
-    let list = (res?.success && res.data?.list) ? res.data.list : [];
-    bindDialog.list = list;
-    bindDialog.total = res?.data?.total ?? list.length;
+    const payload = {
+      postId: outsourceForm.postId,
+      currentOrgId: currentOrg.value.orgId,
+      targetOrgId: outsourceForm.targetOrgId as number,
+      status: outsourceForm.status,
+      isOutsourcing: 1,
+      remark: outsourceForm.remark,
+    };
+    const resMessage = await outsourcePost(payload);
+    outsourceDialog.visible = false;
+    showOutsourceResult(
+      resMessage,
+      payload.targetOrgId,
+      outsourceForm.targetOrgName,
+      outsourceForm.postName,
+      payload.postId,
+    );
+    if (currentOrg.value) fetchTable();
   } catch (e) {
-    console.error('加载岗位字典失败:', e);
-    bindDialog.list = [];
-    bindDialog.total = 0;
+    ElMessage.error((e as any)?.message || '外派失败');
   } finally {
-    bindDialog.loading = false;
-    bindDialog.selected = [];
+    outsourceDialog.saving = false;
   }
 }
 
-function handleBindSelection(rows: PostVO[]) {
-  bindDialog.selected = rows;
+function showOutsourceResult(
+  message: unknown,
+  targetOrgId: number,
+  targetOrgName: string,
+  postName: string,
+  postId: number,
+) {
+  const linkId = `outsource-link-${Date.now()}`;
+  const linkText = `${targetOrgName || '目标组织'}/${postName || ''}`.trim();
+  const rawMessage = typeof message === 'string' && message.trim()
+    ? message.trim()
+    : `成功外派到‘${linkText}’`;
+  let html = rawMessage;
+  if (linkText) {
+    if (rawMessage.includes(linkText)) {
+      html = rawMessage.replace(
+        linkText,
+        `<a id="${linkId}" class="outsource-link" href="javascript:void(0)">${linkText}</a>`,
+      );
+    } else {
+      html = `${rawMessage} <a id="${linkId}" class="outsource-link" href="javascript:void(0)">${linkText}</a>`;
+    }
+  }
+  ElMessageBox.alert(html, '外派成功', {
+    confirmButtonText: '知道了',
+    dangerouslyUseHTMLString: true,
+  });
+  nextTick(() => {
+    const linkEl = document.getElementById(linkId);
+    if (!linkEl) return;
+    linkEl.addEventListener('click', () => {
+      jumpToOrg(targetOrgId, postId);
+    });
+  });
 }
 
-function changeBindPage(pageNum: number, pageSize: number) {
-  bindDialog.pageNum = pageNum;
-  bindDialog.pageSize = pageSize;
-  fetchBindList();
-}
-
-async function submitBind() {
-  // 新版本API暂不支持此功能
-  ElMessage.warning('新版本API暂不支持关联岗位功能');
+function jumpToOrg(orgId: number, postId?: number) {
+  const target = getAllTreeNodes(orgTree.value).find((node) => node.orgId === orgId);
+  if (!target) return;
+  if (postId) {
+    pendingSelectPostId.value = postId;
+  }
+  handleTreeClick(target);
+  nextTick(() => {
+    treeRef.value?.setCurrentKey(orgId);
+    treeRef.value?.store.nodesMap?.[orgId]?.expand?.();
+  });
 }
 
 // 切换编辑模式
@@ -1686,6 +1769,12 @@ function formatDateTime(_row: unknown, _column: unknown, cellValue: string) {
 
   .cursor-pointer {
     cursor: pointer;
+  }
+
+  .outsource-link {
+    color: #409eff;
+    cursor: pointer;
+    text-decoration: none;
   }
 
   .parent-org-search {

@@ -43,6 +43,15 @@ export interface OrgPostQuery {
   pageSize: number;
 }
 
+export interface OutsourcePostReq {
+  postId: number;
+  currentOrgId: number;
+  targetOrgId: number;
+  status: PostStatus;
+  isOutsourcing: number;
+  remark?: string;
+}
+
 
 
 const BASE_POST = '/exp/auth/position';
@@ -82,6 +91,11 @@ export function updatePost(data: Partial<PostVO>) {
 // 批量启用/停用岗位字典
 export function changePostStatus(postIds: number[], status: PostStatus) {
   return request.post<null, null>(`${BASE_POST}/batchStatus`, { postIds, status });
+}
+
+// 外派岗位
+export function outsourcePost(data: OutsourcePostReq) {
+  return request.post<string, string>(`${BASE_POST}/outsource`, data);
 }
 
 

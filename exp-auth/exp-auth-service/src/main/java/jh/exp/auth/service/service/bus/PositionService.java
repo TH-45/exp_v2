@@ -49,4 +49,7 @@ public interface PositionService {
 
     //获取所有启用的岗位
     List<PositionListRes> getAllEnabledPositions();
+
+    //外派岗位
+    String outsourcePosition(OutsourcePositionReq req);
 }

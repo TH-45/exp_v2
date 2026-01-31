@@ -16,7 +16,7 @@ public class CreatePositionReq {
     private String orgCode;
 
     /**
-     * 是否为外派岗位（1/0） 对应isPrimary字段（1主岗位/外派岗位）
+     * 是否为外派岗位（1外派/0非外派）
      */
     @NotNull(message = "是否为外派岗位不能为空")
     private Integer isOutsourcing;
