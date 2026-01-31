@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.clinet.api.PersonService;
 
 import jh.exp.auth.core.entity.res.PersonDetailRes;
-import jh.exp.bid.contract.core.entity.ExpAttachment;
+import jh.exp.bid.contract.core.entity.Attachment;
 import jh.exp.bid.contract.core.entity.req.CreateAttachmentReq;
 import jh.exp.bid.contract.core.entity.req.QueryAttachmentReq;
 import jh.exp.bid.contract.core.entity.res.AttachmentDetailRes;
@@ -84,7 +84,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             attachmentMapper.updateOldVersionsToNotLatest(req.getBusinessType(), req.getBusinessId(), req.getFileName());
         }
 
-        ExpAttachment attachment = new ExpAttachment();
+        Attachment attachment = new Attachment();
         attachment.setBusinessType(req.getBusinessType());
         attachment.setBusinessId(req.getBusinessId());
         attachment.setFileType(req.getFileType());
@@ -131,15 +131,15 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Override
     @Transactional
     public AttachmentDetailRes updateAttachment(Long attachmentId, CreateAttachmentReq req) {
-        ExpAttachment existingAttachment = attachmentMapper.selectById(attachmentId);
+        Attachment existingAttachment = attachmentMapper.selectById(attachmentId);
         if (existingAttachment == null) {
             throw new RuntimeException("附件不存在");
         }
 
         // 检查文件名和MD5是否与其他文件冲突
         if (checkFileExists(req.getFileName(), req.getFileMd5(), req.getBusinessType(), req.getBusinessId())) {
-            ExpAttachment conflictAttachment = attachmentMapper.selectOne(
-                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<ExpAttachment>()
+            Attachment conflictAttachment = attachmentMapper.selectOne(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Attachment>()
                     .eq("file_name", req.getFileName())
                     .eq("file_md5", req.getFileMd5())
                     .eq("business_type", req.getBusinessType())
@@ -151,7 +151,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             }
         }
 
-        ExpAttachment attachment = new ExpAttachment();
+        Attachment attachment = new Attachment();
         attachment.setAttachmentId(attachmentId);
         attachment.setFileType(req.getFileType());
         attachment.setFileCategory(req.getFileCategory());
@@ -172,7 +172,7 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Override
     @Transactional
     public void deleteAttachment(Long attachmentId) {
-        ExpAttachment attachment = attachmentMapper.selectById(attachmentId);
+        Attachment attachment = attachmentMapper.selectById(attachmentId);
         if (attachment == null) {
             throw new RuntimeException("附件不存在");
         }
@@ -196,7 +196,7 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Transactional
     public AttachmentDetailRes updateFileStatus(Long attachmentId, String fileStatus) {
         attachmentMapper.updateDownloadInfo(attachmentId); // 如果是下载，更新下载信息
-        ExpAttachment attachment = attachmentMapper.selectById(attachmentId);
+        Attachment attachment = attachmentMapper.selectById(attachmentId);
         if (attachment != null) {
             attachment.setFileStatus(fileStatus);
             attachment.setUpdatedTime(LocalDateTime.now());

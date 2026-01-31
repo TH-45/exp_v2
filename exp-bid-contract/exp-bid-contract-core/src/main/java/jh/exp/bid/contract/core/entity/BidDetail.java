@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "exp_bid_detail")
 @TableName("exp_bid_detail")
-public class ExpBidDetail {
+public class BidDetail {
     // 主键ID
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

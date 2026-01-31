@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.service.bus;
 
-import jh.exp.bid.contract.core.entity.ExpBidAwardResult;
+import jh.exp.bid.contract.core.entity.BidAwardResult;
 import jh.exp.bid.contract.core.entity.req.CreateAwardResultReq;
 
 /**
@@ -11,12 +11,12 @@ public interface AwardResultService {
     /**
      * 创建定标结果
      */
-    ExpBidAwardResult createAwardResult(CreateAwardResultReq req);
+    BidAwardResult createAwardResult(CreateAwardResultReq req);
 
     /**
      * 更新定标结果
      */
-    ExpBidAwardResult updateAwardResult(Long awardId, CreateAwardResultReq req);
+    BidAwardResult updateAwardResult(Long awardId, CreateAwardResultReq req);
 
     /**
      * 删除定标结果
@@ -26,17 +26,17 @@ public interface AwardResultService {
     /**
      * 根据招标ID查询定标结果
      */
-    ExpBidAwardResult getAwardResultByTenderId(Long tenderId);
+    BidAwardResult getAwardResultByTenderId(Long tenderId);
 
     /**
      * 根据投标ID查询定标结果
      */
-    ExpBidAwardResult getAwardResultByBidId(Long bidId);
+    BidAwardResult getAwardResultByBidId(Long bidId);
 
     /**
      * 更新定标状态
      */
-    ExpBidAwardResult updateAwardStatus(Long awardId, String awardStatus);
+    BidAwardResult updateAwardStatus(Long awardId, String awardStatus);
 
     /**
      * 检查招标项目是否已有定标结果

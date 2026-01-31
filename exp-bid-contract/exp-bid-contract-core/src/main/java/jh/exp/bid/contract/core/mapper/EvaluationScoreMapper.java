@@ -1,7 +1,7 @@
 package jh.exp.bid.contract.core.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationScore;
+import jh.exp.bid.contract.core.entity.BidEvaluationScore;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -12,7 +12,7 @@ import java.util.List;
  * 评标打分Mapper接口
  */
 @Mapper
-public interface EvaluationScoreMapper extends BaseMapper<ExpBidEvaluationScore> {
+public interface EvaluationScoreMapper extends BaseMapper<BidEvaluationScore> {
 
     /**
      * 根据委员会ID和投标ID查询评分记录
@@ -20,14 +20,14 @@ public interface EvaluationScoreMapper extends BaseMapper<ExpBidEvaluationScore>
      * @param bidId 投标ID
      * @return 评分记录列表
      */
-    List<ExpBidEvaluationScore> selectScoresByCommitteeAndBid(@Param("committeeId") Long committeeId, @Param("bidId") Long bidId);
+    List<BidEvaluationScore> selectScoresByCommitteeAndBid(@Param("committeeId") Long committeeId, @Param("bidId") Long bidId);
 
     /**
      * 根据委员会ID查询所有评分记录
      * @param committeeId 委员会ID
      * @return 评分记录列表
      */
-    List<ExpBidEvaluationScore> selectScoresByCommitteeId(@Param("committeeId") Long committeeId);
+    List<BidEvaluationScore> selectScoresByCommitteeId(@Param("committeeId") Long committeeId);
 
     /**
      * 计算投标的技术评分平均分

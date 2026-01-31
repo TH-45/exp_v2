@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.controller.bus;
 
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationResult;
+import jh.exp.bid.contract.core.entity.BidEvaluationResult;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationResultReq;
 import jh.exp.bid.contract.service.service.bus.EvaluationResultService;
 import jh.exp.common.core.annotation.RequiresPermissions;
@@ -25,8 +25,8 @@ public class EvaluationResultController {
      */
     @PostMapping("/generate")
     @RequiresPermissions("EVALUATION:RESULT")
-    public ApiResponse<ExpBidEvaluationResult> generate(@RequestBody CreateEvaluationResultReq req) {
-        ExpBidEvaluationResult result = resultService.generateEvaluationResult(req);
+    public ApiResponse<BidEvaluationResult> generate(@RequestBody CreateEvaluationResultReq req) {
+        BidEvaluationResult result = resultService.generateEvaluationResult(req);
         return ApiResponse.success(result);
     }
 
@@ -35,9 +35,9 @@ public class EvaluationResultController {
      */
     @PostMapping("/update")
     @RequiresPermissions("EVALUATION:RESULT")
-    public ApiResponse<ExpBidEvaluationResult> update(@RequestParam Long resultId,
+    public ApiResponse<BidEvaluationResult> update(@RequestParam Long resultId,
                                                      @RequestBody CreateEvaluationResultReq req) {
-        ExpBidEvaluationResult result = resultService.updateEvaluationResult(resultId, req);
+        BidEvaluationResult result = resultService.updateEvaluationResult(resultId, req);
         return ApiResponse.success(result);
     }
 
@@ -56,8 +56,8 @@ public class EvaluationResultController {
      */
     @GetMapping("/list")
     @RequiresPermissions("EVALUATION:VIEW")
-    public ApiResponse<List<ExpBidEvaluationResult>> list(@RequestParam Long committeeId) {
-        List<ExpBidEvaluationResult> result = resultService.getResultsByCommitteeId(committeeId);
+    public ApiResponse<List<BidEvaluationResult>> list(@RequestParam Long committeeId) {
+        List<BidEvaluationResult> result = resultService.getResultsByCommitteeId(committeeId);
         return ApiResponse.success(result);
     }
 
@@ -66,8 +66,8 @@ public class EvaluationResultController {
      */
     @GetMapping("/byBid")
     @RequiresPermissions("EVALUATION:VIEW")
-    public ApiResponse<ExpBidEvaluationResult> getByBid(@RequestParam Long bidId) {
-        ExpBidEvaluationResult result = resultService.getResultByBidId(bidId);
+    public ApiResponse<BidEvaluationResult> getByBid(@RequestParam Long bidId) {
+        BidEvaluationResult result = resultService.getResultByBidId(bidId);
         return ApiResponse.success(result);
     }
 
@@ -86,8 +86,8 @@ public class EvaluationResultController {
      */
     @GetMapping("/recommendedWinner")
     @RequiresPermissions("EVALUATION:VIEW")
-    public ApiResponse<ExpBidEvaluationResult> getRecommendedWinner(@RequestParam Long committeeId) {
-        ExpBidEvaluationResult result = resultService.getRecommendedWinner(committeeId);
+    public ApiResponse<BidEvaluationResult> getRecommendedWinner(@RequestParam Long committeeId) {
+        BidEvaluationResult result = resultService.getRecommendedWinner(committeeId);
         return ApiResponse.success(result);
     }
 }

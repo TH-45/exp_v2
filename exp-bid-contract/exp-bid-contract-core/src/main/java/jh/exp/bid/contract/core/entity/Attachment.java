@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "exp_attachment")
 @TableName("exp_attachment")
-public class ExpAttachment {
+public class Attachment {
     // 主键ID
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

@@ -2,7 +2,7 @@ package jh.exp.bid.contract.core.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationCommittee;
+import jh.exp.bid.contract.core.entity.BidEvaluationCommittee;
 import jh.exp.bid.contract.core.entity.req.QueryEvaluationCommitteeReq;
 import jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes;
 import org.apache.ibatis.annotations.Mapper;
@@ -14,7 +14,7 @@ import java.util.List;
  * 评标委员会Mapper接口
  */
 @Mapper
-public interface EvaluationCommitteeMapper extends BaseMapper<ExpBidEvaluationCommittee> {
+public interface EvaluationCommitteeMapper extends BaseMapper<BidEvaluationCommittee> {
 
     /**
      * 检查委员会编号是否存在

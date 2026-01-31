@@ -11,15 +11,15 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * 投标操作日志表，对应 exp_bid_operation_log
+ * 合同操作日志表，对应 exp_contract_operation_log
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "exp_bid_operation_log")
-@TableName("exp_bid_operation_log")
-public class ExpBidOperationLog {
+@Table(name = "exp_contract_operation_log")
+@TableName("exp_contract_operation_log")
+public class ContractOperationLog {
     // 主键ID
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -27,11 +27,11 @@ public class ExpBidOperationLog {
     @Column(name = "log_id")
     private Long logId;
 
-    // 投标ID，关联 exp_bid
-    @Column(name = "bid_id")
-    private Long bidId;
+    // 合同ID，关联 exp_contract
+    @Column(name = "contract_id")
+    private Long contractId;
 
-    // 操作类型（新增、编辑、提交、撤回、变更状态等）
+    // 操作类型（新增、编辑、提交审批、撤回、变更状态、归档等）
     @Column(name = "operation_type", length = 50)
     private String operationType;
 

@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.service.bus.Impl;
 
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationScore;
+import jh.exp.bid.contract.core.entity.BidEvaluationScore;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationScoreReq;
 import jh.exp.bid.contract.core.mapper.EvaluationScoreMapper;
 import jh.exp.bid.contract.service.service.bus.EvaluationScoreService;
@@ -23,8 +23,8 @@ public class EvaluationScoreServiceImpl implements EvaluationScoreService {
 
     @Override
     @Transactional
-    public ExpBidEvaluationScore submitScore(CreateEvaluationScoreReq req) {
-        ExpBidEvaluationScore score = new ExpBidEvaluationScore();
+    public BidEvaluationScore submitScore(CreateEvaluationScoreReq req) {
+        BidEvaluationScore score = new BidEvaluationScore();
         score.setCommitteeId(req.getCommitteeId());
         score.setBidId(req.getBidId());
         score.setExpertUserId(req.getExpertUserId());
@@ -64,8 +64,8 @@ public class EvaluationScoreServiceImpl implements EvaluationScoreService {
 
     @Override
     @Transactional
-    public ExpBidEvaluationScore updateScore(Long scoreId, CreateEvaluationScoreReq req) {
-        ExpBidEvaluationScore existingScore = scoreMapper.selectById(scoreId);
+    public BidEvaluationScore updateScore(Long scoreId, CreateEvaluationScoreReq req) {
+        BidEvaluationScore existingScore = scoreMapper.selectById(scoreId);
         if (existingScore == null) {
             throw new RuntimeException("评标打分记录不存在");
         }
@@ -96,7 +96,7 @@ public class EvaluationScoreServiceImpl implements EvaluationScoreService {
     }
 
     @Override
-    public List<ExpBidEvaluationScore> getScoresByCommitteeAndBid(Long committeeId, Long bidId) {
+    public List<BidEvaluationScore> getScoresByCommitteeAndBid(Long committeeId, Long bidId) {
         return scoreMapper.selectScoresByCommitteeAndBid(committeeId, bidId);
     }
 

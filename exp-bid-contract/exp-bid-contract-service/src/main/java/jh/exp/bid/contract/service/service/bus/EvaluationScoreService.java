@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.service.bus;
 
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationScore;
+import jh.exp.bid.contract.core.entity.BidEvaluationScore;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationScoreReq;
 
 import java.math.BigDecimal;
@@ -14,7 +14,7 @@ public interface EvaluationScoreService {
     /**
      * 提交评标打分
      */
-    ExpBidEvaluationScore submitScore(CreateEvaluationScoreReq req);
+    BidEvaluationScore submitScore(CreateEvaluationScoreReq req);
 
     /**
      * 批量提交评标打分
@@ -24,7 +24,7 @@ public interface EvaluationScoreService {
     /**
      * 更新评标打分
      */
-    ExpBidEvaluationScore updateScore(Long scoreId, CreateEvaluationScoreReq req);
+    BidEvaluationScore updateScore(Long scoreId, CreateEvaluationScoreReq req);
 
     /**
      * 删除评标打分
@@ -34,7 +34,7 @@ public interface EvaluationScoreService {
     /**
      * 根据委员会和投标查询评分记录
      */
-    List<ExpBidEvaluationScore> getScoresByCommitteeAndBid(Long committeeId, Long bidId);
+    List<BidEvaluationScore> getScoresByCommitteeAndBid(Long committeeId, Long bidId);
 
     /**
      * 计算投标的平均评分

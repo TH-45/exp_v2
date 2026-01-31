@@ -16,21 +16,25 @@
 
       <!-- 查询栏 -->
       <el-form :inline="true" :model="query" class="search-bar" @submit.prevent>
-        <el-form-item label="关键词">
-          <el-input
-            v-model="query.keyword"
-            placeholder="项目编码/名称/招标单位"
-            clearable
-            style="width: 240px"
-          />
+        <el-form-item label="项目编码">
+          <el-input v-model="query.projectCode" placeholder="请输入项目编码" clearable style="width: 180px" />
+        </el-form-item>
+        <el-form-item label="项目名称">
+          <el-input v-model="query.projectName" placeholder="请输入项目名称" clearable style="width: 200px" />
+        </el-form-item>
+        <el-form-item label="招标单位">
+          <el-input v-model="query.tenderOrg" placeholder="请输入招标单位" clearable style="width: 200px" />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="query.status" clearable style="width: 180px">
+          <el-select v-model="query.status" clearable style="width: 140px">
             <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="年度">
-          <el-input-number v-model="query.year" :min="2000" :max="2100" :controls="false" />
+          <el-select v-model="yearSelectValue" clearable style="width: 140px">
+            <el-option label="全部" :value="YEAR_ALL" />
+            <el-option v-for="y in yearOptions" :key="y" :label="String(y)" :value="y" />
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">查询</el-button>
@@ -80,6 +84,7 @@
         :title="editDialog.isEdit ? '编辑项目' : '新增项目'"
         width="860px"
         destroy-on-close
+        draggable
       >
         <el-form
           ref="formRef"
@@ -193,12 +198,26 @@ const loading = ref(false);
 const saving = ref(false);
 
 const query = reactive({
-  keyword: '',
+  projectCode: '',
+  projectName: '',
+  tenderOrg: '',
   status: undefined as BiddingProjectStatus | undefined,
   year: new Date().getFullYear(),
   pageNum: 1,
   size: 10,
   sort: undefined as string | undefined,
+});
+const YEAR_ALL = 'ALL';
+const yearOptions = Array.from({ length: 20 }).map((_, idx) => new Date().getFullYear() - idx);
+const yearSelectValue = computed({
+  get: () => query.year ?? YEAR_ALL,
+  set: (val) => {
+    if (val === YEAR_ALL || val === undefined || val === null) {
+      query.year = undefined;
+      return;
+    }
+    query.year = Number(val);
+  },
 });
 
 const tableData = ref<BiddingProjectVO[]>([]);
@@ -245,13 +264,17 @@ watch(
 );
 
 function handleSearch() {
-  query.keyword = (query.keyword || '').trim();
+  query.projectCode = (query.projectCode || '').trim();
+  query.projectName = (query.projectName || '').trim();
+  query.tenderOrg = (query.tenderOrg || '').trim();
   query.pageNum = 1;
   fetchList();
 }
 
 function handleReset() {
-  query.keyword = '';
+  query.projectCode = '';
+  query.projectName = '';
+  query.tenderOrg = '';
   query.status = undefined;
   query.year = new Date().getFullYear();
   query.pageNum = 1;

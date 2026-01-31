@@ -3,7 +3,7 @@ package jh.exp.auth.core.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
-import jh.exp.auth.core.entity.ExpMenu;
+import jh.exp.auth.core.entity.Menu;
 import jh.exp.auth.core.entity.res.MenuDetailRes;
 import jh.exp.auth.core.entity.res.MenuListRes;
 
@@ -14,7 +14,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 @Mapper
-public interface MenuMapper extends BaseMapper<ExpMenu> {
+public interface MenuMapper extends BaseMapper<Menu> {
 
     /**
      * 分页查询菜单列表

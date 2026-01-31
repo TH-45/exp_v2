@@ -8,7 +8,7 @@ import jh.exp.auth.clinet.api.PersonService;
 
 
 import jh.exp.auth.core.entity.res.PersonDetailRes;
-import jh.exp.bid.contract.core.entity.ExpBid;
+import jh.exp.bid.contract.core.entity.Bid;
 import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.BidDetailRes;
 import jh.exp.bid.contract.core.entity.res.BidListRes;
@@ -93,7 +93,7 @@ public class BidServiceImpl implements BidService {
             throw new RuntimeException("无法获取当前用户信息");
         }
 
-        ExpBid bid = new ExpBid();
+        Bid bid = new Bid();
         bid.setTenderId(req.getTenderId());
         bid.setSupplierId(req.getSupplierId());
         bid.setBidCode(req.getBidCode());
@@ -123,7 +123,7 @@ public class BidServiceImpl implements BidService {
     @Transactional
     public BidDetailRes updateBid(UpdateBidReq req) {
         // 检查投标是否存在
-        ExpBid existingBid = bidMapper.selectById(req.getBidId());
+        Bid existingBid = bidMapper.selectById(req.getBidId());
         if (existingBid == null) {
             throw new RuntimeException("投标信息不存在");
         }
@@ -133,7 +133,7 @@ public class BidServiceImpl implements BidService {
             throw new RuntimeException("投标编号已存在");
         }
 
-        ExpBid bid = new ExpBid();
+        Bid bid = new Bid();
         bid.setBidId(req.getBidId());
         bid.setBidCode(req.getBidCode());
         bid.setBidName(req.getBidName());
@@ -153,7 +153,7 @@ public class BidServiceImpl implements BidService {
     @Transactional
     public void deleteBid(Long bidId) {
         // 检查投标是否存在
-        ExpBid bid = bidMapper.selectById(bidId);
+        Bid bid = bidMapper.selectById(bidId);
         if (bid == null) {
             throw new RuntimeException("投标信息不存在");
         }
@@ -188,7 +188,7 @@ public class BidServiceImpl implements BidService {
 
         // TODO: 检查投标是否有相关联的业务数据，如果有则不允许删除
 
-        UpdateWrapper<ExpBid> updateWrapper = new UpdateWrapper<>();
+        UpdateWrapper<Bid> updateWrapper = new UpdateWrapper<>();
         updateWrapper.in("bid_id", req.getBidIds());
         bidMapper.delete(updateWrapper);
     }
@@ -197,12 +197,12 @@ public class BidServiceImpl implements BidService {
     @Transactional
     public BidDetailRes updateBidStatus(BidStatusReq req) {
         // 检查投标是否存在
-        ExpBid existingBid = bidMapper.selectById(req.getBidId());
+        Bid existingBid = bidMapper.selectById(req.getBidId());
         if (existingBid == null) {
             throw new RuntimeException("投标信息不存在");
         }
 
-        ExpBid bid = new ExpBid();
+        Bid bid = new Bid();
         bid.setBidId(req.getBidId());
         bid.setBidStatus(req.getBidStatus());
         bid.setUpdatedTime(LocalDateTime.now());
@@ -241,7 +241,7 @@ public class BidServiceImpl implements BidService {
     @Override
     public boolean checkDeletePermission(Long bidId, Long userId) {
         // 检查投标是否存在
-        ExpBid bid = bidMapper.selectById(bidId);
+        Bid bid = bidMapper.selectById(bidId);
         if (bid == null) {
             return false;
         }

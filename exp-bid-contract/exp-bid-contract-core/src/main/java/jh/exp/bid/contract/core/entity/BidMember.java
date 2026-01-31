@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "exp_bid_member")
 @TableName("exp_bid_member")
-public class ExpBidMember {
+public class BidMember {
     // 主键ID
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -44,7 +44,7 @@ public class ExpBidMember {
     private Long postId;
 
     // 在本次投标中的角色（项目经理、技术负责人等）
-    @Column(name = "role_in_bid", length = 50)
+    @Column(name = "role_in_bid", length = 100)
     private String roleInBid;
 
     // 职责说明

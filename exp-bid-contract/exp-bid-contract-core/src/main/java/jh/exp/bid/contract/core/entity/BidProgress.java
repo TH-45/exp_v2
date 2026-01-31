@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "exp_bid_progress")
 @TableName("exp_bid_progress")
-public class ExpBidProgress {
+public class BidProgress {
     // 主键ID
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -36,7 +36,7 @@ public class ExpBidProgress {
     private String stageCode;
 
     // 阶段名称（报名、编制投标文件、提交、开标、评标等）
-    @Column(name = "stage_name", length = 100)
+    @Column(name = "stage_name", length = 200)
     private String stageName;
 
     // 计划开始时间

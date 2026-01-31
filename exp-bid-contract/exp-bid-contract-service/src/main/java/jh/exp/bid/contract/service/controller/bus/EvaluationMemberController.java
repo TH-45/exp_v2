@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.controller.bus;
 
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationMember;
+import jh.exp.bid.contract.core.entity.BidEvaluationMember;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationMemberReq;
 import jh.exp.bid.contract.service.service.bus.EvaluationMemberService;
 import jh.exp.common.core.annotation.RequiresPermissions;
@@ -25,8 +25,8 @@ public class EvaluationMemberController {
      */
     @GetMapping("/list")
     @RequiresPermissions("EVALUATION:VIEW")
-    public ApiResponse<List<ExpBidEvaluationMember>> list(@RequestParam Long committeeId) {
-        List<ExpBidEvaluationMember> result = memberService.getMembersByCommitteeId(committeeId);
+    public ApiResponse<List<BidEvaluationMember>> list(@RequestParam Long committeeId) {
+        List<BidEvaluationMember> result = memberService.getMembersByCommitteeId(committeeId);
         return ApiResponse.success(result);
     }
 
@@ -35,8 +35,8 @@ public class EvaluationMemberController {
      */
     @PostMapping("/add")
     @RequiresPermissions("EVALUATION:EDIT")
-    public ApiResponse<ExpBidEvaluationMember> add(@RequestBody CreateEvaluationMemberReq req) {
-        ExpBidEvaluationMember result = memberService.addMember(req);
+    public ApiResponse<BidEvaluationMember> add(@RequestBody CreateEvaluationMemberReq req) {
+        BidEvaluationMember result = memberService.addMember(req);
         return ApiResponse.success(result);
     }
 
@@ -56,9 +56,9 @@ public class EvaluationMemberController {
      */
     @PostMapping("/update")
     @RequiresPermissions("EVALUATION:EDIT")
-    public ApiResponse<ExpBidEvaluationMember> update(@RequestParam Long memberId,
+    public ApiResponse<BidEvaluationMember> update(@RequestParam Long memberId,
                                                      @RequestBody CreateEvaluationMemberReq req) {
-        ExpBidEvaluationMember result = memberService.updateMember(memberId, req);
+        BidEvaluationMember result = memberService.updateMember(memberId, req);
         return ApiResponse.success(result);
     }
 
@@ -88,9 +88,9 @@ public class EvaluationMemberController {
      */
     @PostMapping("/presence")
     @RequiresPermissions("EVALUATION:EDIT")
-    public ApiResponse<ExpBidEvaluationMember> updatePresence(@RequestParam Long memberId,
+    public ApiResponse<BidEvaluationMember> updatePresence(@RequestParam Long memberId,
                                                              @RequestParam Integer isPresent) {
-        ExpBidEvaluationMember result = memberService.updateMemberPresence(memberId, isPresent);
+        BidEvaluationMember result = memberService.updateMemberPresence(memberId, isPresent);
         return ApiResponse.success(result);
     }
 

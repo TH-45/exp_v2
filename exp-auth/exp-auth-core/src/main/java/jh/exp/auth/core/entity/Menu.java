@@ -21,7 +21,7 @@ import java.util.List;
 @Entity
 @Table(name = "exp_menu")
 @TableName("exp_menu")
-public class ExpMenu {
+public class Menu {
     // 主键ID（自增）
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

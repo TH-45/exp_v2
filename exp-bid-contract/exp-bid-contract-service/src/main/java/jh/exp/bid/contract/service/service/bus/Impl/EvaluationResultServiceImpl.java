@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.service.bus.Impl;
 
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationResult;
+import jh.exp.bid.contract.core.entity.BidEvaluationResult;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationResultReq;
 import jh.exp.bid.contract.core.mapper.EvaluationResultMapper;
 import jh.exp.bid.contract.service.service.bus.EvaluationResultService;
@@ -22,14 +22,14 @@ public class EvaluationResultServiceImpl implements EvaluationResultService {
 
     @Override
     @Transactional
-    public ExpBidEvaluationResult generateEvaluationResult(CreateEvaluationResultReq req) {
+    public BidEvaluationResult generateEvaluationResult(CreateEvaluationResultReq req) {
         // 检查是否已存在该投标的评标结果
-        ExpBidEvaluationResult existingResult = resultMapper.selectResultByBidId(req.getBidId());
+        BidEvaluationResult existingResult = resultMapper.selectResultByBidId(req.getBidId());
         if (existingResult != null) {
             throw new RuntimeException("该投标已存在评标结果");
         }
 
-        ExpBidEvaluationResult result = new ExpBidEvaluationResult();
+        BidEvaluationResult result = new BidEvaluationResult();
         result.setCommitteeId(req.getCommitteeId());
         result.setBidId(req.getBidId());
         result.setTechnicalScore(req.getTechnicalScore());
@@ -55,8 +55,8 @@ public class EvaluationResultServiceImpl implements EvaluationResultService {
 
     @Override
     @Transactional
-    public ExpBidEvaluationResult updateEvaluationResult(Long resultId, CreateEvaluationResultReq req) {
-        ExpBidEvaluationResult existingResult = resultMapper.selectById(resultId);
+    public BidEvaluationResult updateEvaluationResult(Long resultId, CreateEvaluationResultReq req) {
+        BidEvaluationResult existingResult = resultMapper.selectById(resultId);
         if (existingResult == null) {
             throw new RuntimeException("评标结果不存在");
         }
@@ -84,12 +84,12 @@ public class EvaluationResultServiceImpl implements EvaluationResultService {
     }
 
     @Override
-    public List<ExpBidEvaluationResult> getResultsByCommitteeId(Long committeeId) {
+    public List<BidEvaluationResult> getResultsByCommitteeId(Long committeeId) {
         return resultMapper.selectResultsByCommitteeId(committeeId);
     }
 
     @Override
-    public ExpBidEvaluationResult getResultByBidId(Long bidId) {
+    public BidEvaluationResult getResultByBidId(Long bidId) {
         return resultMapper.selectResultByBidId(bidId);
     }
 
@@ -100,7 +100,7 @@ public class EvaluationResultServiceImpl implements EvaluationResultService {
     }
 
     @Override
-    public ExpBidEvaluationResult getRecommendedWinner(Long committeeId) {
+    public BidEvaluationResult getRecommendedWinner(Long committeeId) {
         return resultMapper.selectHighestScoreByCommitteeId(committeeId);
     }
 }

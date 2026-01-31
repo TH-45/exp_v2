@@ -1,7 +1,7 @@
 package jh.exp.bid.contract.core.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import jh.exp.bid.contract.core.entity.ExpBidAwardResult;
+import jh.exp.bid.contract.core.entity.BidAwardResult;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -9,21 +9,21 @@ import org.apache.ibatis.annotations.Param;
  * 定标结果Mapper接口
  */
 @Mapper
-public interface AwardResultMapper extends BaseMapper<ExpBidAwardResult> {
+public interface AwardResultMapper extends BaseMapper<BidAwardResult> {
 
     /**
      * 根据招标ID查询定标结果
      * @param tenderId 招标ID
      * @return 定标结果
      */
-    ExpBidAwardResult selectAwardResultByTenderId(@Param("tenderId") Long tenderId);
+    BidAwardResult selectAwardResultByTenderId(@Param("tenderId") Long tenderId);
 
     /**
      * 根据投标ID查询定标结果
      * @param bidId 投标ID
      * @return 定标结果
      */
-    ExpBidAwardResult selectAwardResultByBidId(@Param("bidId") Long bidId);
+    BidAwardResult selectAwardResultByBidId(@Param("bidId") Long bidId);
 
     /**
      * 检查招标项目是否已有定标结果

@@ -2,7 +2,7 @@ package jh.exp.bid.contract.core.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import jh.exp.bid.contract.core.entity.ExpAttachment;
+import jh.exp.bid.contract.core.entity.Attachment;
 import jh.exp.bid.contract.core.entity.req.QueryAttachmentReq;
 import jh.exp.bid.contract.core.entity.res.AttachmentDetailRes;
 import jh.exp.bid.contract.core.entity.res.AttachmentListRes;
@@ -15,7 +15,7 @@ import java.util.List;
  * 附件Mapper接口
  */
 @Mapper
-public interface AttachmentMapper extends BaseMapper<ExpAttachment> {
+public interface AttachmentMapper extends BaseMapper<Attachment> {
 
     /**
      * 分页查询附件列表

@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jh.exp.bid.contract.core.entity.res.BidDetailRes;
 import jh.exp.bid.contract.core.entity.res.BidListRes;
-import jh.exp.bid.contract.core.entity.ExpBid;
+import jh.exp.bid.contract.core.entity.Bid;
 import jh.exp.bid.contract.core.entity.req.QueryBidReq;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -15,7 +15,7 @@ import java.util.List;
  * 投标Mapper接口
  */
 @Mapper
-public interface BidMapper extends BaseMapper<ExpBid> {
+public interface BidMapper extends BaseMapper<Bid> {
 
     /**
      * 检查投标编号是否存在

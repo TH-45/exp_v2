@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "exp_bid")
 @TableName("exp_bid")
-public class ExpBid {
+public class Bid {
     // 主键ID
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

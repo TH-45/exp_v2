@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.controller.bus;
 
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationScore;
+import jh.exp.bid.contract.core.entity.BidEvaluationScore;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationScoreReq;
 import jh.exp.bid.contract.service.service.bus.EvaluationScoreService;
 import jh.exp.common.core.annotation.RequiresPermissions;
@@ -26,8 +26,8 @@ public class EvaluationScoreController {
      */
     @PostMapping("/submit")
     @RequiresPermissions("EVALUATION:SCORE")
-    public ApiResponse<ExpBidEvaluationScore> submit(@RequestBody CreateEvaluationScoreReq req) {
-        ExpBidEvaluationScore result = scoreService.submitScore(req);
+    public ApiResponse<BidEvaluationScore> submit(@RequestBody CreateEvaluationScoreReq req) {
+        BidEvaluationScore result = scoreService.submitScore(req);
         return ApiResponse.success(result);
     }
 
@@ -48,9 +48,9 @@ public class EvaluationScoreController {
      */
     @PostMapping("/update")
     @RequiresPermissions("EVALUATION:SCORE")
-    public ApiResponse<ExpBidEvaluationScore> update(@RequestParam Long scoreId,
+    public ApiResponse<BidEvaluationScore> update(@RequestParam Long scoreId,
                                                     @RequestBody CreateEvaluationScoreReq req) {
-        ExpBidEvaluationScore result = scoreService.updateScore(scoreId, req);
+        BidEvaluationScore result = scoreService.updateScore(scoreId, req);
         return ApiResponse.success(result);
     }
 
@@ -69,9 +69,9 @@ public class EvaluationScoreController {
      */
     @GetMapping("/list")
     @RequiresPermissions("EVALUATION:VIEW")
-    public ApiResponse<List<ExpBidEvaluationScore>> list(@RequestParam Long committeeId,
+    public ApiResponse<List<BidEvaluationScore>> list(@RequestParam Long committeeId,
                                                         @RequestParam Long bidId) {
-        List<ExpBidEvaluationScore> result = scoreService.getScoresByCommitteeAndBid(committeeId, bidId);
+        List<BidEvaluationScore> result = scoreService.getScoresByCommitteeAndBid(committeeId, bidId);
         return ApiResponse.success(result);
     }
 

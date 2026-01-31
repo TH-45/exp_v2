@@ -1,7 +1,7 @@
 package jh.exp.bid.contract.core.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationMember;
+import jh.exp.bid.contract.core.entity.BidEvaluationMember;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -11,14 +11,14 @@ import java.util.List;
  * 评标成员Mapper接口
  */
 @Mapper
-public interface EvaluationMemberMapper extends BaseMapper<ExpBidEvaluationMember> {
+public interface EvaluationMemberMapper extends BaseMapper<BidEvaluationMember> {
 
     /**
      * 根据委员会ID查询评标成员列表
      * @param committeeId 委员会ID
      * @return 评标成员列表
      */
-    List<ExpBidEvaluationMember> selectMembersByCommitteeId(@Param("committeeId") Long committeeId);
+    List<BidEvaluationMember> selectMembersByCommitteeId(@Param("committeeId") Long committeeId);
 
     /**
      * 检查专家是否已在委员会中

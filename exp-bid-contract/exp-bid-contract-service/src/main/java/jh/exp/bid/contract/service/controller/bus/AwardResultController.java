@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.controller.bus;
 
-import jh.exp.bid.contract.core.entity.ExpBidAwardResult;
+import jh.exp.bid.contract.core.entity.BidAwardResult;
 import jh.exp.bid.contract.core.entity.req.CreateAwardResultReq;
 import jh.exp.bid.contract.service.service.bus.AwardResultService;
 import jh.exp.common.core.annotation.RequiresPermissions;
@@ -23,8 +23,8 @@ public class AwardResultController {
      */
     @PostMapping("/create")
     @RequiresPermissions("AWARD:ADD")
-    public ApiResponse<ExpBidAwardResult> create(@RequestBody CreateAwardResultReq req) {
-        ExpBidAwardResult result = awardService.createAwardResult(req);
+    public ApiResponse<BidAwardResult> create(@RequestBody CreateAwardResultReq req) {
+        BidAwardResult result = awardService.createAwardResult(req);
         return ApiResponse.success(result);
     }
 
@@ -33,9 +33,9 @@ public class AwardResultController {
      */
     @PostMapping("/update")
     @RequiresPermissions("AWARD:EDIT")
-    public ApiResponse<ExpBidAwardResult> update(@RequestParam Long awardId,
+    public ApiResponse<BidAwardResult> update(@RequestParam Long awardId,
                                                 @RequestBody CreateAwardResultReq req) {
-        ExpBidAwardResult result = awardService.updateAwardResult(awardId, req);
+        BidAwardResult result = awardService.updateAwardResult(awardId, req);
         return ApiResponse.success(result);
     }
 
@@ -54,8 +54,8 @@ public class AwardResultController {
      */
     @GetMapping("/byTender")
     @RequiresPermissions("AWARD:VIEW")
-    public ApiResponse<ExpBidAwardResult> getByTender(@RequestParam Long tenderId) {
-        ExpBidAwardResult result = awardService.getAwardResultByTenderId(tenderId);
+    public ApiResponse<BidAwardResult> getByTender(@RequestParam Long tenderId) {
+        BidAwardResult result = awardService.getAwardResultByTenderId(tenderId);
         return ApiResponse.success(result);
     }
 
@@ -64,8 +64,8 @@ public class AwardResultController {
      */
     @GetMapping("/byBid")
     @RequiresPermissions("AWARD:VIEW")
-    public ApiResponse<ExpBidAwardResult> getByBid(@RequestParam Long bidId) {
-        ExpBidAwardResult result = awardService.getAwardResultByBidId(bidId);
+    public ApiResponse<BidAwardResult> getByBid(@RequestParam Long bidId) {
+        BidAwardResult result = awardService.getAwardResultByBidId(bidId);
         return ApiResponse.success(result);
     }
 
@@ -74,9 +74,9 @@ public class AwardResultController {
      */
     @PostMapping("/status")
     @RequiresPermissions("AWARD:EDIT")
-    public ApiResponse<ExpBidAwardResult> updateStatus(@RequestParam Long awardId,
+    public ApiResponse<BidAwardResult> updateStatus(@RequestParam Long awardId,
                                                       @RequestParam String awardStatus) {
-        ExpBidAwardResult result = awardService.updateAwardStatus(awardId, awardStatus);
+        BidAwardResult result = awardService.updateAwardStatus(awardId, awardStatus);
         return ApiResponse.success(result);
     }
 

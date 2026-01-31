@@ -8,7 +8,7 @@ import jh.exp.auth.clinet.api.PersonService;
 
 
 import jh.exp.auth.core.entity.res.PersonDetailRes;
-import jh.exp.bid.contract.core.entity.ExpTender;
+import jh.exp.bid.contract.core.entity.Tender;
 import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.TenderDetailRes;
 import jh.exp.bid.contract.core.entity.res.TenderListRes;
@@ -99,7 +99,7 @@ public class TenderServiceImpl implements TenderService {
             throw new RuntimeException("无法获取当前用户信息");
         }
 
-        ExpTender tender = new ExpTender();
+        Tender tender = new Tender();
         tender.setTenderCode(req.getTenderCode());
         tender.setTenderName(req.getTenderName());
         tender.setTenderType(req.getTenderType());
@@ -134,7 +134,7 @@ public class TenderServiceImpl implements TenderService {
     @Transactional
     public TenderDetailRes updateTender(UpdateTenderReq req) {
         // 检查招标是否存在
-        ExpTender existingTender = tenderMapper.selectById(req.getTenderId());
+        Tender existingTender = tenderMapper.selectById(req.getTenderId());
         if (existingTender == null) {
             throw new RuntimeException("招标信息不存在");
         }
@@ -145,7 +145,7 @@ public class TenderServiceImpl implements TenderService {
         }
 
         // 注意：projectId在更新时不允许修改，这里不设置projectId字段
-        ExpTender tender = new ExpTender();
+        Tender tender = new Tender();
         tender.setTenderId(req.getTenderId());
         tender.setTenderCode(req.getTenderCode());
         tender.setTenderName(req.getTenderName());
@@ -174,7 +174,7 @@ public class TenderServiceImpl implements TenderService {
     @Transactional
     public void deleteTender(Long tenderId) {
         // 检查招标是否存在
-        ExpTender tender = tenderMapper.selectById(tenderId);
+        Tender tender = tenderMapper.selectById(tenderId);
         if (tender == null) {
             throw new RuntimeException("招标信息不存在");
         }
@@ -209,7 +209,7 @@ public class TenderServiceImpl implements TenderService {
 
         // TODO: 检查招标是否有相关联的业务数据，如果有则不允许删除
 
-        UpdateWrapper<ExpTender> updateWrapper = new UpdateWrapper<>();
+        UpdateWrapper<Tender> updateWrapper = new UpdateWrapper<>();
         updateWrapper.in("tender_id", req.getTenderIds());
         tenderMapper.delete(updateWrapper);
     }
@@ -218,12 +218,12 @@ public class TenderServiceImpl implements TenderService {
     @Transactional
     public TenderDetailRes updateTenderStatus(TenderStatusReq req) {
         // 检查招标是否存在
-        ExpTender existingTender = tenderMapper.selectById(req.getTenderId());
+        Tender existingTender = tenderMapper.selectById(req.getTenderId());
         if (existingTender == null) {
             throw new RuntimeException("招标信息不存在");
         }
 
-        ExpTender tender = new ExpTender();
+        Tender tender = new Tender();
         tender.setTenderId(req.getTenderId());
         tender.setStatus(req.getStatus());
         tender.setUpdatedTime(LocalDateTime.now());
@@ -257,7 +257,7 @@ public class TenderServiceImpl implements TenderService {
     @Override
     public boolean checkDeletePermission(Long tenderId, Long userId) {
         // 检查招标是否存在
-        ExpTender tender = tenderMapper.selectById(tenderId);
+        Tender tender = tenderMapper.selectById(tenderId);
         if (tender == null) {
             return false;
         }

@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.clinet.api.PersonService;
 
 import jh.exp.auth.core.entity.res.PersonDetailRes;
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationCommittee;
+import jh.exp.bid.contract.core.entity.BidEvaluationCommittee;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationCommitteeReq;
 import jh.exp.bid.contract.core.entity.req.QueryEvaluationCommitteeReq;
 import jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes;
@@ -81,7 +81,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
             throw new RuntimeException("无法获取当前用户信息");
         }
 
-        ExpBidEvaluationCommittee committee = new ExpBidEvaluationCommittee();
+        BidEvaluationCommittee committee = new BidEvaluationCommittee();
         committee.setTenderId(req.getTenderId());
         committee.setCommitteeCode(req.getCommitteeCode());
         committee.setCommitteeName(req.getCommitteeName());
@@ -106,7 +106,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
     @Override
     @Transactional
     public EvaluationCommitteeListRes updateCommittee(CreateEvaluationCommitteeReq req, Long committeeId) {
-        ExpBidEvaluationCommittee existingCommittee = committeeMapper.selectById(committeeId);
+        BidEvaluationCommittee existingCommittee = committeeMapper.selectById(committeeId);
         if (existingCommittee == null) {
             throw new RuntimeException("评标委员会不存在");
         }
@@ -115,7 +115,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
             throw new RuntimeException("委员会编号已存在");
         }
 
-        ExpBidEvaluationCommittee committee = new ExpBidEvaluationCommittee();
+        BidEvaluationCommittee committee = new BidEvaluationCommittee();
         committee.setCommitteeId(committeeId);
         committee.setCommitteeCode(req.getCommitteeCode());
         committee.setCommitteeName(req.getCommitteeName());
@@ -135,7 +135,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
     @Override
     @Transactional
     public void deleteCommittee(Long committeeId) {
-        ExpBidEvaluationCommittee committee = committeeMapper.selectById(committeeId);
+        BidEvaluationCommittee committee = committeeMapper.selectById(committeeId);
         if (committee == null) {
             throw new RuntimeException("评标委员会不存在");
         }
@@ -155,7 +155,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
 
         // 检查每个委员会是否可以删除
         for (Long committeeId : committeeIds) {
-            ExpBidEvaluationCommittee committee = committeeMapper.selectById(committeeId);
+            BidEvaluationCommittee committee = committeeMapper.selectById(committeeId);
             if (committee == null) {
                 throw new RuntimeException("评标委员会不存在: " + committeeId);
             }
@@ -168,7 +168,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
     @Override
     @Transactional
     public EvaluationCommitteeListRes updateCommitteeStatus(Long committeeId, String status) {
-        ExpBidEvaluationCommittee committee = committeeMapper.selectById(committeeId);
+        BidEvaluationCommittee committee = committeeMapper.selectById(committeeId);
         if (committee == null) {
             throw new RuntimeException("评标委员会不存在");
         }

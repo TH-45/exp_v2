@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.service.bus.Impl;
 
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationMember;
+import jh.exp.bid.contract.core.entity.BidEvaluationMember;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationMemberReq;
 import jh.exp.bid.contract.core.mapper.EvaluationMemberMapper;
 import jh.exp.bid.contract.service.service.bus.EvaluationMemberService;
@@ -21,19 +21,19 @@ public class EvaluationMemberServiceImpl implements EvaluationMemberService {
     private final EvaluationMemberMapper memberMapper;
 
     @Override
-    public List<ExpBidEvaluationMember> getMembersByCommitteeId(Long committeeId) {
+    public List<BidEvaluationMember> getMembersByCommitteeId(Long committeeId) {
         return memberMapper.selectMembersByCommitteeId(committeeId);
     }
 
     @Override
     @Transactional
-    public ExpBidEvaluationMember addMember(CreateEvaluationMemberReq req) {
+    public BidEvaluationMember addMember(CreateEvaluationMemberReq req) {
         // 检查专家是否已在委员会中
         if (checkExpertInCommittee(req.getCommitteeId(), req.getExpertUserId(), null)) {
             throw new RuntimeException("该专家已在评标委员会中");
         }
 
-        ExpBidEvaluationMember member = new ExpBidEvaluationMember();
+        BidEvaluationMember member = new BidEvaluationMember();
         member.setCommitteeId(req.getCommitteeId());
         member.setExpertUserId(req.getExpertUserId());
         member.setExpertType(req.getExpertType());
@@ -65,8 +65,8 @@ public class EvaluationMemberServiceImpl implements EvaluationMemberService {
 
     @Override
     @Transactional
-    public ExpBidEvaluationMember updateMember(Long memberId, CreateEvaluationMemberReq req) {
-        ExpBidEvaluationMember existingMember = memberMapper.selectById(memberId);
+    public BidEvaluationMember updateMember(Long memberId, CreateEvaluationMemberReq req) {
+        BidEvaluationMember existingMember = memberMapper.selectById(memberId);
         if (existingMember == null) {
             throw new RuntimeException("评标成员不存在");
         }
@@ -76,7 +76,7 @@ public class EvaluationMemberServiceImpl implements EvaluationMemberService {
             throw new RuntimeException("该专家已在评标委员会中");
         }
 
-        ExpBidEvaluationMember member = new ExpBidEvaluationMember();
+        BidEvaluationMember member = new BidEvaluationMember();
         member.setMemberId(memberId);
         member.setExpertType(req.getExpertType());
         member.setCommitteeRole(req.getCommitteeRole());
@@ -95,7 +95,7 @@ public class EvaluationMemberServiceImpl implements EvaluationMemberService {
     @Override
     @Transactional
     public void removeMember(Long memberId) {
-        ExpBidEvaluationMember member = memberMapper.selectById(memberId);
+        BidEvaluationMember member = memberMapper.selectById(memberId);
         if (member == null) {
             throw new RuntimeException("评标成员不存在");
         }
@@ -111,7 +111,7 @@ public class EvaluationMemberServiceImpl implements EvaluationMemberService {
 
     @Override
     @Transactional
-    public ExpBidEvaluationMember updateMemberPresence(Long memberId, Integer isPresent) {
+    public BidEvaluationMember updateMemberPresence(Long memberId, Integer isPresent) {
         memberMapper.updatePresentStatus(memberId, isPresent);
         return memberMapper.selectById(memberId);
     }

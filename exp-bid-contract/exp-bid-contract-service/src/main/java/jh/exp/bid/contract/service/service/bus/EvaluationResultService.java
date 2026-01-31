@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.service.bus;
 
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationResult;
+import jh.exp.bid.contract.core.entity.BidEvaluationResult;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationResultReq;
 
 import java.util.List;
@@ -13,12 +13,12 @@ public interface EvaluationResultService {
     /**
      * 生成评标结果
      */
-    ExpBidEvaluationResult generateEvaluationResult(CreateEvaluationResultReq req);
+    BidEvaluationResult generateEvaluationResult(CreateEvaluationResultReq req);
 
     /**
      * 更新评标结果
      */
-    ExpBidEvaluationResult updateEvaluationResult(Long resultId, CreateEvaluationResultReq req);
+    BidEvaluationResult updateEvaluationResult(Long resultId, CreateEvaluationResultReq req);
 
     /**
      * 删除评标结果
@@ -28,12 +28,12 @@ public interface EvaluationResultService {
     /**
      * 根据委员会ID查询评标结果列表
      */
-    List<ExpBidEvaluationResult> getResultsByCommitteeId(Long committeeId);
+    List<BidEvaluationResult> getResultsByCommitteeId(Long committeeId);
 
     /**
      * 根据投标ID查询评标结果
      */
-    ExpBidEvaluationResult getResultByBidId(Long bidId);
+    BidEvaluationResult getResultByBidId(Long bidId);
 
     /**
      * 自动计算评标结果排序
@@ -43,5 +43,5 @@ public interface EvaluationResultService {
     /**
      * 获取推荐中标结果
      */
-    ExpBidEvaluationResult getRecommendedWinner(Long committeeId);
+    BidEvaluationResult getRecommendedWinner(Long committeeId);
 }

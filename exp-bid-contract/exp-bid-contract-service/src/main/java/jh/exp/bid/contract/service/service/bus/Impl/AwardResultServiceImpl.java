@@ -3,7 +3,7 @@ package jh.exp.bid.contract.service.service.bus.Impl;
 import jh.exp.auth.clinet.api.PersonService;
 
 import jh.exp.auth.core.entity.res.PersonDetailRes;
-import jh.exp.bid.contract.core.entity.ExpBidAwardResult;
+import jh.exp.bid.contract.core.entity.BidAwardResult;
 import jh.exp.bid.contract.core.entity.req.CreateAwardResultReq;
 import jh.exp.bid.contract.core.mapper.AwardResultMapper;
 import jh.exp.bid.contract.service.service.bus.AwardResultService;
@@ -27,7 +27,7 @@ public class AwardResultServiceImpl implements AwardResultService {
 
     @Override
     @Transactional
-    public ExpBidAwardResult createAwardResult(CreateAwardResultReq req) {
+    public BidAwardResult createAwardResult(CreateAwardResultReq req) {
         // 检查招标项目是否已有定标结果
         if (checkTenderHasAwardResult(req.getTenderId(), null)) {
             throw new RuntimeException("该招标项目已存在定标结果");
@@ -41,7 +41,7 @@ public class AwardResultServiceImpl implements AwardResultService {
             throw new RuntimeException("无法获取当前用户信息");
         }
 
-        ExpBidAwardResult award = new ExpBidAwardResult();
+        BidAwardResult award = new BidAwardResult();
         award.setTenderId(req.getTenderId());
         award.setWinningBidId(req.getWinningBidId());
         award.setWinningAmount(req.getWinningAmount());
@@ -72,8 +72,8 @@ public class AwardResultServiceImpl implements AwardResultService {
 
     @Override
     @Transactional
-    public ExpBidAwardResult updateAwardResult(Long awardId, CreateAwardResultReq req) {
-        ExpBidAwardResult existingAward = awardMapper.selectById(awardId);
+    public BidAwardResult updateAwardResult(Long awardId, CreateAwardResultReq req) {
+        BidAwardResult existingAward = awardMapper.selectById(awardId);
         if (existingAward == null) {
             throw new RuntimeException("定标结果不存在");
         }
@@ -100,7 +100,7 @@ public class AwardResultServiceImpl implements AwardResultService {
     @Override
     @Transactional
     public void deleteAwardResult(Long awardId) {
-        ExpBidAwardResult award = awardMapper.selectById(awardId);
+        BidAwardResult award = awardMapper.selectById(awardId);
         if (award == null) {
             throw new RuntimeException("定标结果不存在");
         }
@@ -114,18 +114,18 @@ public class AwardResultServiceImpl implements AwardResultService {
     }
 
     @Override
-    public ExpBidAwardResult getAwardResultByTenderId(Long tenderId) {
+    public BidAwardResult getAwardResultByTenderId(Long tenderId) {
         return awardMapper.selectAwardResultByTenderId(tenderId);
     }
 
     @Override
-    public ExpBidAwardResult getAwardResultByBidId(Long bidId) {
+    public BidAwardResult getAwardResultByBidId(Long bidId) {
         return awardMapper.selectAwardResultByBidId(bidId);
     }
 
     @Override
     @Transactional
-    public ExpBidAwardResult updateAwardStatus(Long awardId, String awardStatus) {
+    public BidAwardResult updateAwardStatus(Long awardId, String awardStatus) {
         awardMapper.updateAwardStatus(awardId, awardStatus);
         return awardMapper.selectById(awardId);
     }

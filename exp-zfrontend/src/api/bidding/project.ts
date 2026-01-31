@@ -28,7 +28,9 @@ export interface PageResult<T> {
 export interface QueryBiddingProjectParams {
   pageNum: number;
   size: number;
-  keyword?: string;
+  projectCode?: string;
+  projectName?: string;
+  tenderOrg?: string;
   status?: BiddingProjectStatus;
   year?: number;
   sort?: string;

@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import jh.exp.auth.core.entity.ExpMenu;
+import jh.exp.auth.core.entity.Menu;
 import jh.exp.auth.core.entity.Role;
 import jh.exp.auth.core.entity.middle.RoleMenuRel;
 import jh.exp.auth.core.entity.node.MenuNode;
@@ -89,12 +89,12 @@ public class MenuServiceImpl implements MenuService {
             req = new QueryMenuReq();
         }
 
-        List<ExpMenu> allMenus = menuMapper.selectList(new LambdaQueryWrapper<ExpMenu>()
-                .like(StringUtils.hasText(req.getMenuCode()), ExpMenu::getMenuCode, req.getMenuCode())
-                .like(StringUtils.hasText(req.getMenuName()), ExpMenu::getMenuName, req.getMenuName())
-                .eq(StringUtils.hasText(req.getMenuType()), ExpMenu::getMenuType, req.getMenuType())
-                .eq(StringUtils.hasText(req.getStatus()), ExpMenu::getStatus, req.getStatus())
-                .orderByAsc(ExpMenu::getSortNo));
+        List<Menu> allMenus = menuMapper.selectList(new LambdaQueryWrapper<Menu>()
+                .like(StringUtils.hasText(req.getMenuCode()), Menu::getMenuCode, req.getMenuCode())
+                .like(StringUtils.hasText(req.getMenuName()), Menu::getMenuName, req.getMenuName())
+                .eq(StringUtils.hasText(req.getMenuType()), Menu::getMenuType, req.getMenuType())
+                .eq(StringUtils.hasText(req.getStatus()), Menu::getStatus, req.getStatus())
+                .orderByAsc(Menu::getSortNo));
 
         return buildMenuTree(allMenus, null);
     }
@@ -124,7 +124,7 @@ public class MenuServiceImpl implements MenuService {
 
         // 检查父菜单是否存在
         if (req.getParentMenuId() != null && req.getParentMenuId() > 0) {
-            ExpMenu parentMenu = menuMapper.selectById(req.getParentMenuId());
+            Menu parentMenu = menuMapper.selectById(req.getParentMenuId());
             if (parentMenu == null) {
                 throw new BizException("父菜单不存在");
             }
@@ -135,7 +135,7 @@ public class MenuServiceImpl implements MenuService {
         }
 
         // 创建菜单实体
-        ExpMenu menu = new ExpMenu();
+        Menu menu = new Menu();
         BeanUtils.copyProperties(req, menu);
         menu.setStatus("ENABLED");
         if (menu.getVisible() == null) {
@@ -158,7 +158,7 @@ public class MenuServiceImpl implements MenuService {
     @Transactional(rollbackFor = Exception.class)
     public MenuDetailRes updateMenu(UpdateMenuReq req) {
         // 检查菜单是否存在
-        ExpMenu existingMenu = menuMapper.selectById(req.getMenuId());
+        Menu existingMenu = menuMapper.selectById(req.getMenuId());
         if (existingMenu == null) {
             throw new BizException("菜单不存在");
         }
@@ -170,7 +170,7 @@ public class MenuServiceImpl implements MenuService {
 
         // 检查父菜单是否存在
         if (req.getParentMenuId() != null && req.getParentMenuId() > 0) {
-            ExpMenu parentMenu = menuMapper.selectById(req.getParentMenuId());
+            Menu parentMenu = menuMapper.selectById(req.getParentMenuId());
             if (parentMenu == null) {
                 throw new BizException("父菜单不存在");
             }
@@ -186,7 +186,7 @@ public class MenuServiceImpl implements MenuService {
         }
 
         // 更新菜单信息
-        ExpMenu menu = new ExpMenu();
+        Menu menu = new Menu();
         BeanUtils.copyProperties(req, menu);
 
         menuMapper.updateById(menu);
@@ -200,14 +200,14 @@ public class MenuServiceImpl implements MenuService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteMenu(Long menuId) {
-        ExpMenu menu = menuMapper.selectById(menuId);
+        Menu menu = menuMapper.selectById(menuId);
         if (menu == null) {
             throw new BizException("菜单不存在");
         }
 
         // 检查是否有子菜单
-        Long childCount = menuMapper.selectCount(new LambdaQueryWrapper<ExpMenu>()
-                .eq(ExpMenu::getParentMenuId, menuId));
+        Long childCount = menuMapper.selectCount(new LambdaQueryWrapper<Menu>()
+                .eq(Menu::getParentMenuId, menuId));
         if (childCount > 0) {
             throw new BizException("该菜单下有子菜单，不能删除");
         }
@@ -239,7 +239,7 @@ public class MenuServiceImpl implements MenuService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MenuDetailRes updateMenuStatus(MenuStatusReq req) {
-        ExpMenu menu = menuMapper.selectById(req.getMenuId());
+        Menu menu = menuMapper.selectById(req.getMenuId());
         if (menu == null) {
             throw new BizException("菜单不存在");
         }
@@ -266,7 +266,7 @@ public class MenuServiceImpl implements MenuService {
             throw new BizException("无效的状态值");
         }
 
-        UpdateWrapper<ExpMenu> updateWrapper = new UpdateWrapper<>();
+        UpdateWrapper<Menu> updateWrapper = new UpdateWrapper<>();
         updateWrapper.in("menu_id", req.getMenuIds())
                     .set("status", req.getStatus());
 
@@ -299,10 +299,10 @@ public class MenuServiceImpl implements MenuService {
         middleQw.in("role_id", roleIds);
         List<Long> menuIds = roleMenuRelMapper.selectList(middleQw).stream().map(RoleMenuRel::getMenuId).toList();
 
-        QueryWrapper<ExpMenu> menuQw = new QueryWrapper<>();
+        QueryWrapper<Menu> menuQw = new QueryWrapper<>();
         menuQw.in("menu_id", menuIds);
         menuQw.orderByAsc("parent_menu_id", "sort_no");
-        List<ExpMenu> expMenus = menuMapper.selectList(menuQw);
+        List<Menu> expMenus = menuMapper.selectList(menuQw);
 
         // 拼接树形结构
         TreeNodeConfig config = new TreeNodeConfig();
@@ -332,7 +332,7 @@ public class MenuServiceImpl implements MenuService {
     /**
      * 构建菜单树
      */
-    private List<MenuTreeRes> buildMenuTree(List<ExpMenu> allMenus, Long parentId) {
+    private List<MenuTreeRes> buildMenuTree(List<Menu> allMenus, Long parentId) {
         return allMenus.stream()
                 .filter(menu -> {
                     Long menuParentId = menu.getParentMenuId();
@@ -371,14 +371,14 @@ public class MenuServiceImpl implements MenuService {
      * 内部删除菜单方法（不带事务注解，避免事务嵌套问题）
      */
     private void deleteMenuInternal(Long menuId) {
-        ExpMenu menu = menuMapper.selectById(menuId);
+        Menu menu = menuMapper.selectById(menuId);
         if (menu == null) {
             throw new BizException("菜单不存在");
         }
 
         // 检查是否有子菜单
-        Long childCount = menuMapper.selectCount(new LambdaQueryWrapper<ExpMenu>()
-                .eq(ExpMenu::getParentMenuId, menuId));
+        Long childCount = menuMapper.selectCount(new LambdaQueryWrapper<Menu>()
+                .eq(Menu::getParentMenuId, menuId));
         if (childCount > 0) {
             throw new BizException("该菜单下有子菜单，不能删除");
         }

@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.service.bus;
 
-import jh.exp.bid.contract.core.entity.ExpBidEvaluationMember;
+import jh.exp.bid.contract.core.entity.BidEvaluationMember;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationMemberReq;
 
 import java.util.List;
@@ -13,12 +13,12 @@ public interface EvaluationMemberService {
     /**
      * 根据委员会ID查询评标成员列表
      */
-    List<ExpBidEvaluationMember> getMembersByCommitteeId(Long committeeId);
+    List<BidEvaluationMember> getMembersByCommitteeId(Long committeeId);
 
     /**
      * 添加评标成员
      */
-    ExpBidEvaluationMember addMember(CreateEvaluationMemberReq req);
+    BidEvaluationMember addMember(CreateEvaluationMemberReq req);
 
     /**
      * 批量添加评标成员
@@ -28,7 +28,7 @@ public interface EvaluationMemberService {
     /**
      * 更新评标成员
      */
-    ExpBidEvaluationMember updateMember(Long memberId, CreateEvaluationMemberReq req);
+    BidEvaluationMember updateMember(Long memberId, CreateEvaluationMemberReq req);
 
     /**
      * 删除评标成员
@@ -43,7 +43,7 @@ public interface EvaluationMemberService {
     /**
      * 更新成员到场状态
      */
-    ExpBidEvaluationMember updateMemberPresence(Long memberId, Integer isPresent);
+    BidEvaluationMember updateMemberPresence(Long memberId, Integer isPresent);
 
     /**
      * 检查专家是否已在委员会中
