@@ -24,6 +24,7 @@
           <el-menu-item v-if="canRoleView" index="/system/role">角色管理</el-menu-item>
           <el-menu-item v-if="canMenuView" index="/system/menu">菜单管理</el-menu-item>
           <el-menu-item v-if="canDictView" index="/system/dict">字典管理</el-menu-item>
+          <el-menu-item v-if="canPermView" index="/system/permission">权限管理</el-menu-item>
         </el-sub-menu>
         <el-sub-menu
           v-if="canBiddingProjectView || canBiddingBidView || canBiddingEvaluationView || canBiddingAttachmentsView"
@@ -239,6 +240,8 @@ const activeMenu = computed(() => route.path || '/');
 const canRoleView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:role:view'));
 const canMenuView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:menu:view'));
 const canDictView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:dic:view'));
+const canPermView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:user:view'));
+
 const canBiddingProjectView = computed(
   () => userStore.isAdmin || userStore.permissions.includes('bidding:project:view'),
 );

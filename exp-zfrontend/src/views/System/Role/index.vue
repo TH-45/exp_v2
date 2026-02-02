@@ -106,6 +106,15 @@
             </el-button>
             <el-button
               link
+              type="primary"
+              size="small"
+              @click="openPermissionSetting(row)"
+              :disabled="!canUpdate"
+            >
+              设置权限
+            </el-button>
+            <el-button
+              link
               type="danger"
               size="small"
               @click="handleDelete(row)"
@@ -191,6 +200,72 @@
           </el-descriptions-item>
         </el-descriptions>
       </el-drawer>
+      
+      <!-- 权限设置弹窗 -->
+      <el-dialog
+        v-model="permissionDialog.visible"
+        :title="`设置权限 - ${permissionDialog.currentRole?.roleName || ''}`"
+        width="800px"
+        top="10vh"
+        draggable
+        destroy-on-close
+      >
+        <div class="permission-content">
+          <el-tabs v-model="activeTab" class="permission-tabs">
+            <el-tab-pane label="菜单权限" name="menu">
+              <el-tree
+                ref="menuTreeRef"
+                node-key="menuId"
+                :data="menuTreeData"
+                :props="menuTreeProps"
+                :default-expand-all="true"
+                show-checkbox
+                class="permission-tree"
+              >
+                <template #default="{ data }">
+                  <div class="tree-node">
+                    <span class="node-label">{{ data.menuName }}</span>
+                    <el-tag 
+                      size="small" 
+                      :type="menuTypeTagType(data.menuType)" 
+                      v-if="data.menuType !== 'MENU'"
+                    >
+                      {{ menuTypeText(data.menuType) }}
+                    </el-tag>
+                  </div>
+                </template>
+              </el-tree>
+            </el-tab-pane>
+            
+            <el-tab-pane label="功能权限" name="func">
+              <el-tree
+                ref="funcTreeRef"
+                node-key="permId"
+                :data="funcTreeData"
+                :props="funcTreeProps"
+                :default-expand-all="true"
+                show-checkbox
+                class="permission-tree"
+              >
+                <template #default="{ data }">
+                  <div class="tree-node">
+                    <span class="node-label">{{ data.permName }}</span>
+                    <el-tag size="small" type="info">
+                      {{ data.permCode }}
+                    </el-tag>
+                  </div>
+                </template>
+              </el-tree>
+            </el-tab-pane>
+          </el-tabs>
+        </div>
+        <template #footer>
+          <el-button @click="permissionDialog.visible = false">取消</el-button>
+          <el-button type="primary" :loading="savingPermissions" @click="savePermissions">
+            保存
+          </el-button>
+        </template>
+      </el-dialog>
     </el-card>
   </el-config-provider>
 </template>
@@ -206,10 +281,24 @@ import {
   createRole,
   updateRole,
   deleteRole,
+  getRolePerm,
+  saveRolePerm,
   type RoleVO,
   type RoleStatus,
+  type RolePermDTO
 } from '@/api/system/role';
 import { parsePageResult } from '@/api/common';
+import {
+  queryMenuTree,
+  type MenuItem,
+  type MenuType
+} from '@/api/system/menu';
+import {
+  queryPermissionTree,
+  type PermissionItem,
+  type PermissionType
+} from '@/api/system/permission';
+
 
 const loading = ref(false);
 const saving = ref(false);
@@ -251,6 +340,41 @@ const detailDrawer = reactive({
   visible: false,
   data: null as RoleVO | null,
 });
+
+// 权限设置弹窗
+const permissionDialog = reactive({
+  visible: false,
+  currentRole: null as RoleVO | null,
+});
+
+// 权限分配相关
+const menuTreeRef = ref();
+const funcTreeRef = ref();
+const menuTreeData = ref<MenuItem[]>([]);
+const funcTreeData = ref<PermissionItem[]>([]);
+const selectedMenuIds = ref<string[]>([]);
+const selectedFuncIds = ref<string[]>([]);
+const savingPermissions = ref(false);
+
+// 权限设置相关
+const activeTab = ref('menu');
+const menuTreeProps = {
+  children: 'children',
+  label: 'menuName',
+};
+const funcTreeProps = {
+  children: 'children',
+  label: 'permName',
+};
+
+// 菜单类型相关方法
+function menuTypeText(type: MenuType) {
+  return type === 'CATALOG' || type === 'DIR' ? '目录' : type === 'MENU' ? '菜单' : '按钮';
+}
+
+function menuTypeTagType(type: MenuType) {
+  return type === 'CATALOG' || type === 'DIR' ? 'warning' : type === 'MENU' ? 'success' : 'info';
+}
 
 // 权限点（与路由 meta.perms 保持一致）
 const canView = computed(() => hasPermission('system:role:view'));
@@ -495,6 +619,84 @@ async function openDetail(row: RoleVO) {
   }
 }
 
+// 打开权限设置弹窗
+async function openPermissionSetting(row: RoleVO) {
+  permissionDialog.currentRole = row;
+  permissionDialog.visible = true;
+  
+  try {
+    // 加载菜单树和权限树
+    const menuTreeRes = await queryMenuTree();
+    menuTreeData.value = menuTreeRes || [];
+    
+    const permTreeRes = await queryPermissionTree();
+
+    funcTreeData.value = permTreeRes || [];
+
+    // 加载当前角色的权限
+    const rolePermRes = await getRolePerm(row.roleId);
+    selectedMenuIds.value = rolePermRes.menus || [];
+    // 暂时将菜单权限设置到树中
+    menuTreeRef.value?.setCheckedKeys(selectedMenuIds.value);
+    
+    // 处理功能权限
+    if (rolePermRes.menuPerms) {
+      // 根据后端返回的权限格式处理
+      const permIdsFromBackend: string[] = [];
+      selectedFuncIds.value = permIdsFromBackend;
+    } else {
+      selectedFuncIds.value = [];
+    }
+    funcTreeRef.value?.setCheckedKeys(selectedFuncIds.value);
+  } catch (error) {
+    console.error('加载角色权限失败:', error);
+    ElMessage.error('加载角色权限失败');
+  }
+}
+
+// 保存权限设置
+async function savePermissions() {
+  if (!permissionDialog.currentRole) {
+    ElMessage.warning('请选择角色');
+    return;
+  }
+
+  try {
+    savingPermissions.value = true;
+    
+    // 获取选中的菜单权限
+    const checkedMenuIds = menuTreeRef.value?.getCheckedKeys() || [];
+    const halfCheckedMenuIds = menuTreeRef.value?.getHalfCheckedKeys() || [];
+    const allSelectedMenus = [...checkedMenuIds, ...halfCheckedMenuIds];
+    
+    // 获取选中的功能权限
+    const checkedFuncIds = funcTreeRef.value?.getCheckedKeys() || [];
+    const halfCheckedFuncIds = funcTreeRef.value?.getHalfCheckedKeys() || [];
+    const allSelectedFuncs = [...checkedFuncIds, ...halfCheckedFuncIds];
+    
+    // 准备权限数据
+    const permData: RolePermDTO = {
+      menus: allSelectedMenus,
+      menuPerms: {} // 这里根据实际需求设置菜单权限
+    };
+    
+    // 如果需要保存功能权限，可以根据实际后端API格式进行调整
+    if (allSelectedFuncs.length > 0) {
+      // 根据后端实际需要的格式处理功能权限
+      // 可能需要添加到permData的其他字段中
+    }
+    
+    await saveRolePerm(permissionDialog.currentRole.roleId, permData);
+    ElMessage.success('权限设置保存成功');
+    permissionDialog.visible = false;
+  } catch (error) {
+    console.error('保存权限失败:', error);
+    ElMessage.error('权限设置保存失败');
+  } finally {
+    savingPermissions.value = false;
+  }
+}
+
 // 生成角色编码：ROL + 年月日(YYMMDD) + 3位随机数
 function generateRoleCode() {
   const now = new Date();
@@ -551,6 +753,44 @@ function generateRoleCode() {
   color: #606266;
   cursor: not-allowed;
 }
+
+.permission-content {
+  min-height: 400px;
+}
+
+.permission-tabs {
+  :deep(.el-tabs__content) {
+    flex: 1;
+    overflow: auto;
+  }
+  
+  :deep(.el-tab-pane) {
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.permission-tree {
+  flex: 1;
+  overflow: auto;
+  margin-top: 10px;
+  
+  :deep(.el-tree-node__content) {
+    height: 36px;
+  }
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  .node-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
 </style>
-
-

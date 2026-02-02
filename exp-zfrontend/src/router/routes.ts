@@ -87,6 +87,16 @@ const routes: RouteRecordRaw[] = [
           perms: ['system:dict:view'],
         },
       },
+      {
+        path: 'system/permission',
+        name: 'SystemPermission',
+        component: () => import('@/views/System/Permission/index.vue'),
+        meta: {
+          title: '权限管理',
+          icon: 'Monitor',
+          perms: ['system:permission:view'],
+        },
+      },
 
       // 招投标管理
       {
