@@ -228,7 +228,7 @@
                 <template #default="{ data }">
                   <div class="tree-node">
                     <span class="node-label">{{ data.menuName }}</span>
-                    <!-- 【企业级应用特性】只在叶子节点显示权限等级单选框 -->
+                    <!-- 只在叶子节点显示权限等级单选框 -->
                     <el-radio-group
                       v-if="(!data.children || data.children.length=== 0)&&data.menuType!=='CATALOG'"
                       :model-value="getPermissionLevelValue(data.menuId)"
@@ -240,13 +240,13 @@
                       <el-radio :label="2" title="编辑">编辑</el-radio>
                       <el-radio :label="3" title="管理">管理</el-radio>
                     </el-radio-group>
-                    <el-tag 
-                      size="small" 
-                      :type="menuTypeTagType(data.menuType)" 
-                      v-if="data.menuType !== 'MENU'"
-                    >
-                      {{ menuTypeText(data.menuType) }}
-                    </el-tag>
+<!--                    <el-tag-->
+<!--                      size="small"-->
+<!--                      :type="menuTypeTagType(data.menuType)"-->
+<!--                      v-if="data.menuType !== 'MENU'"-->
+<!--                    >-->
+<!--                      {{ menuTypeText(data.menuType) }}-->
+<!--                    </el-tag>-->
                   </div>
                 </template>
               </el-tree>
@@ -296,7 +296,6 @@ import {
   createRole,
   updateRole,
   deleteRole,
-  getRolePerm,
   saveRolePerm,
   type RoleVO,
   type RoleStatus,
@@ -304,14 +303,13 @@ import {
 } from '@/api/system/role';
 import { parsePageResult } from '@/api/common';
 import {
-  queryMenuTree,
+  queryMenuPermissionTree,
   type MenuItem,
-  type MenuType
+
 } from '@/api/system/menu';
 import {
   queryPermissionTree,
   type PermissionItem,
-  type PermissionType
 } from '@/api/system/permission';
 
 
@@ -367,7 +365,7 @@ const menuTreeRef = ref();
 const funcTreeRef = ref();
 const menuTreeData = ref<MenuItem[]>([]);
 const funcTreeData = ref<PermissionItem[]>([]);
-const selectedMenuIds = ref<string[]>([]);
+// const selectedMenuIds = ref<string[]>([]);
 const selectedFuncIds = ref<string[]>([]);
 const savingPermissions = ref(false);
 
@@ -382,20 +380,20 @@ const funcTreeProps = {
   label: 'permName',
 };
 
-// 【企业级应用特性】权限等级相关 - 存储菜单权限等级映射
+// 权限等级相关 - 存储菜单权限等级映射
 const menuPermissionLevels = ref<Record<string, number>>({});
 
-// 【企业级应用特性】标识是否在初始化过程中
+// 标识是否在初始化过程中
 const isInitializing = ref(false);
 
-// 菜单类型相关方法
-function menuTypeText(type: MenuType) {
-  return type === 'CATALOG' || type === 'DIR' ? '目录' : type === 'MENU' ? '菜单' : '按钮';
-}
-
-function menuTypeTagType(type: MenuType) {
-  return type === 'CATALOG' || type === 'DIR' ? 'warning' : type === 'MENU' ? 'success' : 'info';
-}
+// // 菜单类型相关方法
+// function menuTypeText(type: MenuType) {
+//   return type === 'MENU' ? '菜单' : type === 'PAGE' ? '页面': '其他';
+// }
+//
+// function menuTypeTagType(type: MenuType) {
+//   return type === 'CATALOG' || type === 'DIR' ? 'warning' : type === 'MENU' ? 'success' : 'info';
+// }
 
 // 权限点（与路由 meta.perms 保持一致）
 const canView = computed(() => hasPermission('system:role:view'));
@@ -403,7 +401,7 @@ const canCreate = computed(() => hasPermission('system:role:create'));
 const canUpdate = computed(() => hasPermission('system:role:update'));
 const canDelete = computed(() => hasPermission('system:role:delete'));
 
-// 【企业级应用特性】权限等级相关方法
+// 权限等级相关方法
 function setPermissionLevel(menuId: string, level: number) {
   menuPermissionLevels.value[menuId] = level;
 }
@@ -411,12 +409,12 @@ function setPermissionLevel(menuId: string, level: number) {
 function onPermissionLevelChange(menuId: string, level: number) {
   setPermissionLevel(menuId, level);
   
-  // 【企业级应用特性】根据权限等级自动设置复选框状态
+  // 根据权限等级自动设置复选框状态
   // 当权限等级为"无"(0)时，复选框必须为未选中；否则复选框必须为选中
   menuTreeRef.value?.setChecked(menuId, level > 0, false);
 }
 
-// 【企业级应用特性】初始化菜单权限等级
+// 初始化菜单权限等级
 function initializeMenuPermissionLevels(menuItems: MenuItem[], defaultLevel = 0) {
   const traverse = (items: MenuItem[]) => {
     items.forEach(item => {
@@ -436,21 +434,21 @@ function initializeMenuPermissionLevels(menuItems: MenuItem[], defaultLevel = 0)
   traverse(menuItems);
 }
 
-// 【企业级应用特性】创建计算属性用于v-model绑定
-const getPermissionLevel = (menuId: string) => {
-  if (!(menuId in menuPermissionLevels.value)) {
-    menuPermissionLevels.value[menuId] = 1; // 默认为查看权限
-  }
-  
-  return computed({
-    get: () => menuPermissionLevels.value[menuId],
-    set: (value: number) => {
-      menuPermissionLevels.value[menuId] = value;
-    }
-  });
-};
+// 创建计算属性用于v-model绑定
+// const getPermissionLevel = (menuId: string) => {
+//   if (!(menuId in menuPermissionLevels.value)) {
+//     menuPermissionLevels.value[menuId] = 1; // 默认为查看权限
+//   }
+//
+//   return computed({
+//     get: () => menuPermissionLevels.value[menuId],
+//     set: (value: number) => {
+//       menuPermissionLevels.value[menuId] = value;
+//     }
+//   });
+// };
 
-// 【企业级应用特性】获取菜单权限级别的当前值（用于显示）
+// 获取菜单权限级别的当前值（用于显示）
 const getPermissionLevelValue = (menuId: string) => {
   if (!(menuId in menuPermissionLevels.value)) {
     menuPermissionLevels.value[menuId] = 0; // 默认为查看权限
@@ -458,7 +456,7 @@ const getPermissionLevelValue = (menuId: string) => {
   return menuPermissionLevels.value[menuId];
 };
 
-// 【企业级应用特性】根据复选框状态更新权限等级
+// 根据复选框状态更新权限等级
 function updatePermissionLevelsByCheckboxState() {
   if (!menuTreeRef.value) return;
   
@@ -524,7 +522,7 @@ function onMenuTreeCheckChange(nodeData: MenuItem, checked: boolean, indetermina
   }
 }
 
-// 【企业级应用特性】处理菜单树复选框状态变化
+// 处理菜单树复选框状态变化
 function onMenuTreeCheck(nodeData: MenuItem, checkInfo: { checked: boolean; indeterminate: boolean }) {
   // console.log('【check】用户点击复选框：', nodeData.menuName);
   // //复选框当选状态
@@ -536,7 +534,7 @@ function onMenuTreeCheck(nodeData: MenuItem, checkInfo: { checked: boolean; inde
 
 }
 
-// 【企业级应用特性】更新目录节点下的所有叶子节点权限等级
+// 更新目录节点下的所有叶子节点权限等级
 function updateLeafNodesPermissionLevel(node: MenuItem, level: number) {
   if (node.children && node.children.length > 0) {
     node.children.forEach(child => {
@@ -798,22 +796,22 @@ async function openPermissionSetting(row: RoleVO) {
     // 开始初始化
     isInitializing.value = true;
     
-    // 加载菜单树和权限树
-    const menuTreeRes = await queryMenuTree();
-    menuTreeData.value = menuTreeRes || [];
+    // 查权限并结构对应到树：PermissionTree(roleId) 返回 tree + selectedMenuIds（后端查 exp_role_menu_rel 填充）
+    const permTreeRes = await queryMenuPermissionTree(row.roleId);
+    menuTreeData.value = permTreeRes|| [];
     
-    // 【企业级应用特性】初始化菜单权限等级
+    // 初始化菜单权限等级
     initializeMenuPermissionLevels(menuTreeData.value);
     
-    const permTreeRes = await queryPermissionTree();
+    const funcTreeRes = await queryPermissionTree();
+    funcTreeData.value = funcTreeRes || [];
 
-    funcTreeData.value = permTreeRes || [];
-
-    // 加载当前角色的权限
-    const rolePermRes = await getRolePerm(row.roleId);
-    selectedMenuIds.value = rolePermRes.menus || [];
-    // 暂时将菜单权限设置到树中
-    menuTreeRef.value?.setCheckedKeys(selectedMenuIds.value);
+    // 将菜单权限对应到树勾选（key 与树节点 menuId 类型一致，后端为 number）
+    const keysToCheck = permTreeRes?.selectedMenuIds ?? [];
+    menuTreeRef.value?.setCheckedKeys(keysToCheck as string[]);
+    
+    // 加载当前角色的功能权限（menuPerms）等
+    // const rolePermRes = await getRolePerm(row.roleId);
     
     // 处理功能权限
     if (rolePermRes.menuPerms) {
@@ -825,10 +823,10 @@ async function openPermissionSetting(row: RoleVO) {
     }
     funcTreeRef.value?.setCheckedKeys(selectedFuncIds.value);
     
-    // 【企业级应用特性】初始化菜单权限等级
+    // 初始化菜单权限等级
     initializeMenuPermissionLevels(menuTreeData.value);
     
-    // 【企业级应用特性】根据复选框状态设置默认权限等级
+    // 根据复选框状态设置默认权限等级
     setTimeout(() => {
       updatePermissionLevelsByCheckboxState();
       // 结束初始化
@@ -837,11 +835,11 @@ async function openPermissionSetting(row: RoleVO) {
   } catch (error) {
     console.error('加载角色权限失败:', error);
     ElMessage.error('加载角色权限失败');
-    // 【企业级应用特性】即使加载权限失败，也要显示弹窗
+    // 即使加载权限失败，也要显示弹窗
     console.warn('使用默认权限配置显示弹窗');
   }
   
-  // 【企业级应用特性】确保弹窗始终显示，无论后端接口是否成功
+  // 确保弹窗始终显示，无论后端接口是否成功
   permissionDialog.visible = true;
 }
 
@@ -878,7 +876,7 @@ async function savePermissions() {
       menuPerms: {} // 这里根据实际需求设置菜单权限
     };
     
-    // 【企业级应用特性】准备权限等级信息（等待后端API完善）
+    // 准备权限等级信息（等待后端API完善）
     const permissionLevelData = {
       menuPermissionLevels: menuPermissionLevels.value
     };
@@ -894,7 +892,7 @@ async function savePermissions() {
       ElMessage.success('权限设置保存成功');
     } catch (saveError) {
       console.error('保存权限到服务器失败:', saveError);
-      // 【企业级应用特性】即使保存失败也提示用户，但允许弹窗关闭
+      // 即使保存失败也提示用户，但允许弹窗关闭
       ElMessage.warning('权限设置已保存到本地，同步到服务器失败');
     }
     permissionDialog.visible = false;
@@ -1009,9 +1007,7 @@ function generateRoleCode() {
 
 .permission-level-radio-group.radio-group-disabled {
   opacity: 0.5;
-}
-
-.hidden-radio {
+}.hidden-radio {
   display: none;
 }
 </style>

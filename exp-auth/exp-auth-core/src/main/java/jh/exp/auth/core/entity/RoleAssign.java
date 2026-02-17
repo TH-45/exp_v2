@@ -1,6 +1,9 @@
 package jh.exp.auth.core.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -10,6 +13,9 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "exp_role_assign")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class RoleAssign {
 
     @Id
@@ -44,84 +50,6 @@ public class RoleAssign {
     @Column(name = "remark", length = 500)
     private String remark;
 
-    public Long getId() {
-        return id;
-    }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getRoleId() {
-        return roleId;
-    }
-
-    public void setRoleId(Long roleId) {
-        this.roleId = roleId;
-    }
-
-    public String getPrincipalType() {
-        return principalType;
-    }
-
-    public void setPrincipalType(String principalType) {
-        this.principalType = principalType;
-    }
-
-    public Long getPrincipalId() {
-        return principalId;
-    }
-
-    public void setPrincipalId(Long principalId) {
-        this.principalId = principalId;
-    }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(LocalDateTime startTime) {
-        this.startTime = startTime;
-    }
-
-    public LocalDateTime getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(LocalDateTime endTime) {
-        this.endTime = endTime;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Long getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(Long createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public LocalDateTime getCreatedTime() {
-        return createdTime;
-    }
-
-    public void setCreatedTime(LocalDateTime createdTime) {
-        this.createdTime = createdTime;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
-    }
 }
 

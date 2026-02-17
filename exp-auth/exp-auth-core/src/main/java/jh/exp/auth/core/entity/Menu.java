@@ -41,7 +41,7 @@ public class Menu {
     @Column(name = "menu_name", nullable = false, length = 100)
     private String menuName;
 
-    // 类型（DIR-目录，MENU-菜单，BUTTON-按钮）
+    // 类型（MENU-菜单，PAGE-页面）
     @Column(name = "menu_type", nullable = false, length = 20)
     private String menuType;
 

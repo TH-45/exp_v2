@@ -39,7 +39,7 @@ export interface QueryBiddingProjectParams {
 // 约定路径（与 docs/public/接口约定.md 的示例保持一致）
 export function queryBiddingProjectList(params: QueryBiddingProjectParams) {
   return request.get<PageResult<BiddingProjectVO>, PageResult<BiddingProjectVO>>(
-    '/exp/bidding/project/list',
+    '/exp/bid/tender/list',
     { params },
   );
 }

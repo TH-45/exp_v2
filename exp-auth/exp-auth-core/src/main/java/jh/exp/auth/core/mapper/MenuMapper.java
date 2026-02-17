@@ -40,4 +40,5 @@ public interface MenuMapper extends BaseMapper<Menu> {
      */
     List<MenuDetailRes> selectMenuDetailByIds(@Param("menuIds") List<Long> menuIds);
 
+
 }

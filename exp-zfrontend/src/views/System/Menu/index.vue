@@ -82,9 +82,8 @@
               </el-form-item>
               <el-form-item label="类型">
                 <el-select v-model="query.menuType" clearable placeholder="全部" style="width: 80px">
-                  <el-option label="目录" value="CATALOG" />
                   <el-option label="菜单" value="MENU" />
-                  <el-option label="按钮" value="BUTTON" />
+                  <el-option label="页面" value="PAGE" />
                 </el-select>
               </el-form-item>
               <el-form-item label="状态">
@@ -118,7 +117,6 @@
               <el-table-column prop="routePath" label="路由/路径" min-width="160" />
               <el-table-column prop="component" label="组件" min-width="200" />
               <el-table-column prop="menuCode" label="菜单编码" min-width="180" />
-<!--              <el-table-column prop="icon" label="图标" min-width="140" />-->
 <!--              <el-table-column prop="sortNo" label="排序" min-width="60" />-->
               <el-table-column label="可见" min-width="90">
                 <template #default="{ row }">
@@ -182,6 +180,7 @@
         v-model="editDialog.visible"
         :title="editDialog.isEdit ? '编辑菜单' : '新增菜单'"
         width="820px"
+        draggable
         destroy-on-close
       >
         <el-form
@@ -189,7 +188,7 @@
           :model="form"
           :rules="rules"
           label-width="110px"
-          class="dialog-form two-col"
+          :class="['dialog-form', 'two-col', {'editing': editDialog.isEdit}]"
           @submit.prevent="submitForm"
         >
           <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
@@ -197,10 +196,9 @@
             <el-input :model-value="parentName" disabled />
           </el-form-item>
           <el-form-item label="类型" prop="menuType">
-            <el-select v-model="form.menuType" placeholder="请选择">
-              <el-option label="目录" value="CATALOG" />
+            <el-select v-model="form.menuType" placeholder="请选择" :disabled="editDialog.isEdit">
               <el-option label="菜单" value="MENU" />
-              <el-option label="按钮" value="BUTTON" />
+              <el-option label="页面" value="PAGE" />
             </el-select>
           </el-form-item>
 
@@ -219,10 +217,7 @@
           </el-form-item>
 
           <el-form-item label="菜单编码" prop="menuCode">
-            <el-input v-model="form.menuCode" readonly class="readonly-input" />
-          </el-form-item>
-          <el-form-item label="图标">
-            <el-input v-model="form.icon" placeholder="如：UserFilled" />
+            <el-input v-model="form.menuCode" />
           </el-form-item>
 
           <el-form-item label="可见">
@@ -231,13 +226,7 @@
               <el-option label="隐藏" :value="0" />
             </el-select>
           </el-form-item>
-          <el-alert
-            class="full-row"
-            type="info"
-            show-icon
-            :closable="false"
-            title="提示：按钮类型（BUTTON）通常只配置菜单名称 + 菜单编码；目录/菜单可按需配置路由、组件和图标。"
-          />
+
         </el-form>
 
         <template #footer>
@@ -309,7 +298,6 @@ const form = reactive<SaveMenuPayload>({
   menuType: 'MENU',
   routePath: '',
   component: '',
-  icon: '',
   sortNo: 0,
   visible: 1,
   remark: '',
@@ -322,7 +310,7 @@ const rules: FormRules = {
   routePath: [
     {
       validator: (_rule, value, callback) => {
-        if (form.menuType === 'BUTTON') return callback();
+        if (form.menuType === 'MENU') return callback();
         if (!String(value || '').trim()) return callback(new Error('请输入路由/路径'));
         callback();
       },
@@ -332,7 +320,7 @@ const rules: FormRules = {
   component: [
     {
       validator: (_rule, value, callback) => {
-        if (form.menuType !== 'MENU') return callback();
+        if (form.menuType !== 'PAGE') return callback();
         if (!String(value || '').trim()) return callback(new Error('请输入组件路径'));
         callback();
       },
@@ -358,11 +346,11 @@ onMounted(() => {
 });
 
 function typeText(t: MenuType) {
-  return t === 'CATALOG' || t === 'DIR' ? '目录' : t === 'MENU' ? '菜单' : '按钮';
+  return  t === 'MENU' ? '菜单' : t === 'PAGE' ? '页面': '未分配';
 }
 
 function typeTagType(t: MenuType) {
-  return t === 'CATALOG' || t === 'DIR' ? 'warning' : t === 'MENU' ? 'success' : 'info';
+  return t === 'MENU'  ? 'warning' : t === 'PAGE' ? 'success' : 'info';
 }
 
 function isEnabledStatus(status?: MenuStatus) {
@@ -517,7 +505,6 @@ function resetFormModel() {
   form.menuType = 'MENU';
   form.routePath = '';
   form.component = '';
-  form.icon = '';
   form.sortNo = 0;
   form.visible = 1;
   form.remark = '';
@@ -528,6 +515,7 @@ function openCreateRoot() {
   resetFormModel();
   form.parentMenuId = undefined;
   form.menuCode = generateMenuCode();
+  form.menuType='MENU';
   editDialog.visible = true;
 }
 
@@ -549,7 +537,6 @@ function openEdit(row: MenuItem) {
   form.menuType = row.menuType;
   form.routePath = row.routePath || '';
   form.component = row.component || '';
-  form.icon = row.icon || '';
   form.sortNo = row.sortNo ?? 0;
   form.visible = (row.visible ?? 1) as VisibleStatus;
   form.remark = row.remark || '';
@@ -576,9 +563,6 @@ async function submitForm() {
     editDialog.visible = false;
     await loadTree();
   } catch {
-    // mock fallback：直接写入树结构并刷新列表
-    upsertMock(menuTree.value, { ...form, menuId: form.menuId || genId() });
-    ElMessage.success('已保存（示例模式）');
     editDialog.visible = false;
     fetchList();
   } finally {
@@ -648,7 +632,6 @@ function upsertMock(list: MenuItem[], payload: SaveMenuPayload & { menuId: strin
     node.menuType = payload.menuType;
     node.routePath = payload.routePath;
     node.component = payload.component;
-    node.icon = payload.icon;
     node.sortNo = payload.sortNo;
     node.visible = payload.visible;
     node.remark = payload.remark;
@@ -664,12 +647,11 @@ function upsertMock(list: MenuItem[], payload: SaveMenuPayload & { menuId: strin
     menuType: payload.menuType,
     routePath: payload.routePath,
     component: payload.component,
-    icon: payload.icon,
     sortNo: payload.sortNo,
     visible: payload.visible,
     status: 'ENABLED',
     remark: payload.remark,
-    children: payload.menuType === 'BUTTON' ? undefined : [],
+    children: [],
   };
 
   if (!payload.parentMenuId) {

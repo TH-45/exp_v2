@@ -49,10 +49,10 @@ public class MenuTreeRes {
      */
     private String component;
 
-    /**
-     * 图标
-     */
-    private String icon;
+//    /**
+//     * 图标
+//     */
+//    private String icon;
 
     /**
      * 是否显示

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.auth.core.mapper.PermissionMapper">
+
+
+    <select id="selectPermissionsByRoleId" resultType="jh.exp.auth.core.entity.exp.PermissionExp"
+            parameterType="java.lang.Long">
+        select p.perm_id AS permId,
+               p.perm_code AS permCode,
+               p.perm_name AS permName,
+               p.perm_type AS permType,
+               p.module_code AS moduleCode,
+               p.menu_group AS menuGroup,
+               p.action_code AS actionCode,
+               p.url_path AS urlPath,
+               p.status AS status,
+               p.sort_no AS sortNo,
+               p.remark AS remark,
+               rp.role_id AS extFieldLong
+
+        from expdb.exp_permission p
+        left join expdb.exp_role_permission_rel rp on p.perm_id = rp.perm_id
+        where rp.role_id = #{roleId}
+        order by p.sort_no
+    </select>
+</mapper>

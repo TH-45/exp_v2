@@ -18,7 +18,7 @@ import java.util.List;
  * 投标管理控制器
  */
 @RestController
-@RequestMapping("/bid")
+@RequestMapping("/bidding")
 @RequiredArgsConstructor
 public class BidController {
 

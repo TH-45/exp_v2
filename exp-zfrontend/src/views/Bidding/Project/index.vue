@@ -6,7 +6,7 @@
           <div class="title">招标项目</div>
           <div class="actions">
             <el-button type="primary" size="small" @click="openEdit(false)" :disabled="!canManage">
-              新增项目
+              录入项目
             </el-button>
             <el-button size="small" :disabled="true">导入</el-button>
             <el-button size="small" :disabled="true">导出</el-button>

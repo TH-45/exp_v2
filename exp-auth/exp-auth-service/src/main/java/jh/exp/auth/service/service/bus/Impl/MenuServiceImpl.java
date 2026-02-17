@@ -12,14 +12,15 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.core.entity.Menu;
 import jh.exp.auth.core.entity.Role;
+import jh.exp.auth.core.entity.exp.PermissionExp;
 import jh.exp.auth.core.entity.middle.RoleMenuRel;
 import jh.exp.auth.core.entity.node.MenuNode;
 import jh.exp.auth.core.entity.req.*;
-import jh.exp.auth.core.entity.res.MenuDetailRes;
-import jh.exp.auth.core.entity.res.MenuListRes;
-import jh.exp.auth.core.entity.res.MenuTreeRes;
-import jh.exp.auth.core.entity.res.MenusRes;
+import jh.exp.auth.core.entity.res.*;
+import jh.exp.auth.core.mapper.PermissionMapper;
 import jh.exp.auth.core.mapper.middle.RoleMenuRelMapper;
+import jh.exp.auth.core.util.MenuTreeUtil;
+import jh.exp.auth.core.util.PermParserUtil;
 import jh.exp.auth.service.service.bus.MenuService;
 
 
@@ -40,6 +41,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -52,6 +54,7 @@ public class MenuServiceImpl implements MenuService {
     private final MenuMapper menuMapper;
     private final RoleMenuRelMapper roleMenuRelMapper;
     private final RoleMapper roleMapper;
+    private final PermissionMapper permissionMapper;
 
     /**
      * 分页查询菜单列表
@@ -96,7 +99,32 @@ public class MenuServiceImpl implements MenuService {
                 .eq(StringUtils.hasText(req.getStatus()), Menu::getStatus, req.getStatus())
                 .orderByAsc(Menu::getSortNo));
 
-        return buildMenuTree(allMenus, null);
+        return MenuTreeUtil.buildMenuTree(allMenus);
+    }
+
+    /**
+     * 查询菜单权限树：查权限并结构对应到树（返回 tree + selectedMenuIds；roleId 不为空时查 exp_role_menu_rel 填充已选菜单；perLevel 表示权限等级，可选）
+     */
+    @Override
+    public List<MenuPermissionTreeRes> queryMenuPermissionTree(Long roleId) {
+        List<Menu> allMenus = menuMapper.selectList(new LambdaQueryWrapper<Menu>()
+                .eq(Menu::getStatus, "ENABLED"));
+        if (roleId != null) {
+            List<PermissionExp> permissionExps = permissionMapper.selectPermissionsByRoleId(roleId);
+            List<String> permCodeList = permissionExps.stream().map(PermissionExp::getPermCode).toList();
+            Map<String, String> permissionMap = PermParserUtil.parseBatch(permCodeList, "auth");
+
+            List<MenuPermissionTreeRes> menuPermissionTreeRes = MenuTreeUtil.buildMenuTree(
+                    allMenus,
+                    MenuPermissionTreeRes::new,
+                    Menu::getMenuCode,
+                    permissionMap,
+                    MenuPermissionTreeRes::setPerLevel);
+
+            return menuPermissionTreeRes;
+        } else {
+            throw new BizException("角色ID不能为空");
+        }
     }
 
     /**
@@ -129,7 +157,7 @@ public class MenuServiceImpl implements MenuService {
                 throw new BizException("父菜单不存在");
             }
             // 检查父菜单必须是目录或菜单类型
-            if (!"DIR".equals(parentMenu.getMenuType()) && !"MENU".equals(parentMenu.getMenuType())) {
+            if (!"MENU".equals(parentMenu.getMenuType())) {
                 throw new BizException("父菜单必须是目录或菜单类型");
             }
         }
@@ -158,7 +186,7 @@ public class MenuServiceImpl implements MenuService {
     @Transactional(rollbackFor = Exception.class)
     public MenuDetailRes updateMenu(UpdateMenuReq req) {
         // 检查菜单是否存在
-        Menu existingMenu = menuMapper.selectById(req.getMenuId());
+            Menu existingMenu = menuMapper.selectById(req.getMenuId());
         if (existingMenu == null) {
             throw new BizException("菜单不存在");
         }
@@ -175,7 +203,7 @@ public class MenuServiceImpl implements MenuService {
                 throw new BizException("父菜单不存在");
             }
             // 检查父菜单必须是目录或菜单类型
-            if (!"DIR".equals(parentMenu.getMenuType()) && !"MENU".equals(parentMenu.getMenuType())) {
+            if ("MENU".equals(parentMenu.getMenuType())) {
                 throw new BizException("父菜单必须是目录或菜单类型");
             }
             // 防止将菜单设置为自己的子菜单
@@ -329,43 +357,43 @@ public class MenuServiceImpl implements MenuService {
         return new MenusRes(roleIds, roles, null, menus);
     }
 
-    /**
-     * 构建菜单树
-     */
-    private List<MenuTreeRes> buildMenuTree(List<Menu> allMenus, Long parentId) {
-        return allMenus.stream()
-                .filter(menu -> {
-                    Long menuParentId = menu.getParentMenuId();
-                    // 处理根节点：parentId为null或0的情况
-                    if (parentId == null) {
-                        return menuParentId == null || menuParentId == 0;
-                    } else if (parentId == 0) {
-                        return menuParentId == null || menuParentId.equals(0L);
-                    } else {
-                        return parentId.equals(menuParentId);
-                    }
-                })
-                .map(menu -> {
-                    MenuTreeRes node = new MenuTreeRes();
-                    BeanUtils.copyProperties(menu, node);
-                    List<MenuTreeRes> children = buildMenuTree(allMenus, menu.getMenuId());
-                    node.setChildren(children);
-                    node.setHasChildren(!children.isEmpty());
-                    return node;
-                })
-                .sorted((a, b) -> {
-                    // 按排序号排序，如果排序号相同则按菜单ID排序
-                    if (a.getSortNo() != null && b.getSortNo() != null) {
-                        int sortCompare = a.getSortNo().compareTo(b.getSortNo());
-                        if (sortCompare != 0) {
-                            return sortCompare;
-                        }
-                    }
-                    // 如果排序号相同或为null，按菜单ID排序
-                    return a.getMenuId().compareTo(b.getMenuId());
-                })
-                .collect(Collectors.toList());
-    }
+//    /**
+//     * 构建菜单树
+//     */
+//    private List<MenuTreeRes> buildMenuTree(List<Menu> allMenus, Long parentId) {
+//        return allMenus.stream()
+//                .filter(menu -> {
+//                    Long menuParentId = menu.getParentMenuId();
+//                    // 处理根节点：parentId为null或0的情况
+//                    if (parentId == null) {
+//                        return menuParentId == null || menuParentId == 0;
+//                    } else if (parentId == 0) {
+//                        return menuParentId == null || menuParentId.equals(0L);
+//                    } else {
+//                        return parentId.equals(menuParentId);
+//                    }
+//                })
+//                .map(menu -> {
+//                    MenuTreeRes node = new MenuTreeRes();
+//                    BeanUtils.copyProperties(menu, node);
+//                    List<MenuTreeRes> children = buildMenuTree(allMenus, menu.getMenuId());
+//                    node.setChildren(children);
+//                    node.setHasChildren(!children.isEmpty());
+//                    return node;
+//                })
+//                .sorted((a, b) -> {
+//                    // 按排序号排序，如果排序号相同则按菜单ID排序
+//                    if (a.getSortNo() != null && b.getSortNo() != null) {
+//                        int sortCompare = a.getSortNo().compareTo(b.getSortNo());
+//                        if (sortCompare != 0) {
+//                            return sortCompare;
+//                        }
+//                    }
+//                    // 如果排序号相同或为null，按菜单ID排序
+//                    return a.getMenuId().compareTo(b.getMenuId());
+//                })
+//                .collect(Collectors.toList());
+//    }
 
     /**
      * 内部删除菜单方法（不带事务注解，避免事务嵌套问题）

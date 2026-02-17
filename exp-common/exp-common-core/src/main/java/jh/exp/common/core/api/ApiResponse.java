@@ -70,6 +70,10 @@ public class ApiResponse<T> {
         return new ApiResponse<>(false, code, message, null);
     }
 
+    public static <T> ApiResponse<T> fail(String message) {
+        return new ApiResponse<>(false, "9999", message, null);
+    }
+
     public boolean isSuccess() {
         return success;
     }

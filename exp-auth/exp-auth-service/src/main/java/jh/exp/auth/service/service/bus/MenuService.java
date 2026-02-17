@@ -6,6 +6,7 @@ package jh.exp.auth.service.service.bus;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.MenuDetailRes;
 import jh.exp.auth.core.entity.res.MenuListRes;
+import jh.exp.auth.core.entity.res.MenuPermissionTreeRes;
 import jh.exp.auth.core.entity.res.MenuTreeRes;
 import jh.exp.auth.core.entity.res.MenusRes;
 
@@ -27,6 +28,11 @@ public interface MenuService {
      * 查询菜单树
      */
     List<MenuTreeRes> queryMenuTree(QueryMenuReq req);
+
+    /**
+     * 查询菜单权限树（查权限并结构对应到树：返回 tree + selectedMenuIds，roleId 不为空时查该角色已选菜单；perLevel 表示权限等级）
+     */
+    List<MenuPermissionTreeRes> queryMenuPermissionTree(Long roleId);
 
     /**
      * 根据ID查询菜单详情

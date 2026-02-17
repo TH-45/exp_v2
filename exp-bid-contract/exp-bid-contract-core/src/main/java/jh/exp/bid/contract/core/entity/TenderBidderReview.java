@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -49,7 +50,7 @@ public class TenderBidderReview {
 
     // 资格审核评分（可选）
     @Column(name = "review_score", precision = 5, scale = 2)
-    private Double reviewScore;
+    private BigDecimal reviewScore;
 
     // 审核意见说明
     @Column(name = "review_opinion", length = 1000)

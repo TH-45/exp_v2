@@ -7,6 +7,7 @@ package jh.exp.auth.service.controller.bus;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.MenuDetailRes;
 import jh.exp.auth.core.entity.res.MenuListRes;
+import jh.exp.auth.core.entity.res.MenuPermissionTreeRes;
 import jh.exp.auth.core.entity.res.MenuTreeRes;
 import jh.exp.auth.service.service.bus.MenuService;
 import jh.exp.common.core.api.ApiResponse;
@@ -44,6 +45,20 @@ public class MenuController {
             req = new QueryMenuReq();
         }
         List<MenuTreeRes> result = menuService.queryMenuTree(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 查询菜单权限树（可传 perLevel 表示要查询/过滤的权限等级）
+     */
+    @GetMapping("/permissionTree")
+    public ApiResponse<List<MenuPermissionTreeRes>> permissionTree(@RequestParam(required = false) Long roleId) {
+        List<MenuPermissionTreeRes> result = null;
+        try {
+            result = menuService.queryMenuPermissionTree(roleId);
+        } catch (Exception e) {
+            return ApiResponse.fail(e.getMessage());
+        }
         return ApiResponse.success(result);
     }
 

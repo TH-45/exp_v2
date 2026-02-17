@@ -32,7 +32,7 @@ export interface QueryBidParams {
 
 // 约定路径（与 docs/public/接口约定.md 的示例保持一致）
 export function queryBidList(params: QueryBidParams) {
-  return request.get<PageResult<BidVO>, PageResult<BidVO>>('/exp/bidding/bid/list', { params });
+  return request.get<PageResult<BidVO>, PageResult<BidVO>>('/exp/bid/bidding/list', { params });
 }
 
 

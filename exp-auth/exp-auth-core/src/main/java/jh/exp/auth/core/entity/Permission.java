@@ -2,6 +2,9 @@ package jh.exp.auth.core.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 权限资源表，对应 docs 中的：
@@ -10,129 +13,76 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "exp_permission")
 @TableName("exp_permission")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Permission {
-
+    /**
+     * 权限ID，主键，自动生成
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "perm_id")
     private Long permId;
 
+    /**
+     * 权限编码，唯一且不可为空，最大长度128
+     * 编码编写规则：MENU_XXX_XXX 表示菜单权限（MENU_）
+     */
     @Column(name = "perm_code", nullable = false, unique = true, length = 128)
     private String permCode;
 
+    /**
+     * 权限名称，不可为空，最大长度100
+     */
     @Column(name = "perm_name", nullable = false, length = 100)
     private String permName;
 
+    /**
+     * 权限类型，最大长度32
+     * 可选值：FUNC-业务能力权限，DATA-数据范围权限
+     */
     @Column(name = "perm_type", length = 32)
     private String permType;
 
+    /**
+     * 所属功能模块编码，最大长度64
+     */
     @Column(name = "module_code", length = 64)
     private String moduleCode;
 
-    @Column(name = "menu_group", length = 128)
-    private String menuGroup;
+    /**
+     * 权限分组编码，最大长度64
+     * 用于权限配置页面分组展示
+     */
+    @Column(name = "group_code", length = 64)
+    private String groupCode;
 
-    @Column(name = "action_code", length = 32)
-    private String actionCode;
+    /**
+     * 权限值，用于细粒度权限控制，最大长度32
+     */
+    @Column(name = "perm_value", length = 32)
+    private String permValue;
 
-    @Column(name = "url_path", length = 256)
-    private String urlPath;
-
+    /**
+     * 状态，最大长度32
+     * 可选值：ENABLED-启用，DISABLED-停用
+     */
     @Column(name = "status", length = 32)
     private String status;
 
+    /**
+     * 排序号
+     */
     @Column(name = "sort_no")
     private Integer sortNo;
 
+    /**
+     * 备注，最大长度500
+     */
     @Column(name = "remark", length = 500)
     private String remark;
 
-    public Long getPermId() {
-        return permId;
-    }
 
-    public void setPermId(Long permId) {
-        this.permId = permId;
-    }
-
-    public String getPermCode() {
-        return permCode;
-    }
-
-    public void setPermCode(String permCode) {
-        this.permCode = permCode;
-    }
-
-    public String getPermName() {
-        return permName;
-    }
-
-    public void setPermName(String permName) {
-        this.permName = permName;
-    }
-
-    public String getPermType() {
-        return permType;
-    }
-
-    public void setPermType(String permType) {
-        this.permType = permType;
-    }
-
-    public String getModuleCode() {
-        return moduleCode;
-    }
-
-    public void setModuleCode(String moduleCode) {
-        this.moduleCode = moduleCode;
-    }
-
-    public String getMenuGroup() {
-        return menuGroup;
-    }
-
-    public void setMenuGroup(String menuGroup) {
-        this.menuGroup = menuGroup;
-    }
-
-    public String getActionCode() {
-        return actionCode;
-    }
-
-    public void setActionCode(String actionCode) {
-        this.actionCode = actionCode;
-    }
-
-    public String getUrlPath() {
-        return urlPath;
-    }
-
-    public void setUrlPath(String urlPath) {
-        this.urlPath = urlPath;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Integer getSortNo() {
-        return sortNo;
-    }
-
-    public void setSortNo(Integer sortNo) {
-        this.sortNo = sortNo;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
-    }
 }
 
