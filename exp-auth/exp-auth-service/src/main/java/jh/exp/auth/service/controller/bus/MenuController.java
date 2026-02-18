@@ -63,6 +63,18 @@ public class MenuController {
     }
 
     /**
+     * 修改菜单权限树
+     */
+    @PostMapping("/updatePermissionTree")
+    public ApiResponse<Void> updatePermissionTree(@RequestBody @Valid UpdateMenuPermissionTreeReq req) {
+        if (req.getMenuNodes() == null) {
+            return ApiResponse.success( null);
+        }
+        menuService.updateMenuPermissionTree(req);
+        return ApiResponse.success(null);
+    }
+
+    /**
      * 根据ID查询菜单详情
      */
     @GetMapping("/detail")

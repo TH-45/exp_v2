@@ -79,4 +79,5 @@ public interface MenuService {
      */
     MenusRes getMenus(CurrentUser currentUser);
 
+    void updateMenuPermissionTree(UpdateMenuPermissionTreeReq req);
 }

@@ -4,6 +4,10 @@ import java.lang.reflect.Field;
 
 public class AuthConstant {
     /**
+     * 菜单权限类型
+     */
+    public static final String MENU = "MENU";
+    /**
      * 人员-组织-岗位状态 - 在任
      */
     public static final String STATUS_ON = "ON";

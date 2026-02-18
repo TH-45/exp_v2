@@ -10,10 +10,13 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.core.constant.AuthConstant;
 import jh.exp.auth.core.entity.Menu;
+import jh.exp.auth.core.entity.Permission;
 import jh.exp.auth.core.entity.Role;
 import jh.exp.auth.core.entity.exp.PermissionExp;
 import jh.exp.auth.core.entity.middle.RoleMenuRel;
+import jh.exp.auth.core.entity.middle.RolePermissionRel;
 import jh.exp.auth.core.entity.node.MenuNode;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.*;
@@ -29,6 +32,7 @@ import jh.exp.auth.service.service.bus.MenuService;
 import jh.exp.auth.core.mapper.MenuMapper;
 import jh.exp.auth.core.mapper.RoleMapper;
 
+import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
 import jh.exp.common.core.exception.BizException;
 import jh.exp.common.core.req.SimplePageReq;
@@ -39,6 +43,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -110,22 +115,98 @@ public class MenuServiceImpl implements MenuService {
         List<Menu> allMenus = menuMapper.selectList(new LambdaQueryWrapper<Menu>()
                 .eq(Menu::getStatus, "ENABLED"));
         if (roleId != null) {
+            // 查权限
             List<PermissionExp> permissionExps = permissionMapper.selectPermissionsByRoleId(roleId);
             List<String> permCodeList = permissionExps.stream().map(PermissionExp::getPermCode).toList();
-            Map<String, String> permissionMap = PermParserUtil.parseBatch(permCodeList, "auth");
+            Map<String, String> permissionMap = PermParserUtil.parseBatch(permCodeList, AuthConstant.MENU);
 
             List<MenuPermissionTreeRes> menuPermissionTreeRes = MenuTreeUtil.buildMenuTree(
                     allMenus,
                     MenuPermissionTreeRes::new,
                     Menu::getMenuCode,
                     permissionMap,
-                    MenuPermissionTreeRes::setPerLevel);
+                    MenuPermissionTreeRes::setPermLevel);
 
             return menuPermissionTreeRes;
         } else {
             throw new BizException("角色ID不能为空");
         }
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateMenuPermissionTree(UpdateMenuPermissionTreeReq req) {
+        // 1. 获取当前角色的权限
+        List<PermissionExp> permissionExps = permissionMapper.selectPermissionsByRoleId(req.getRoleId());
+        List<String> permCodeList = permissionExps.stream().map(PermissionExp::getPermCode).toList();
+        Map<String, String> permissionMap = PermParserUtil.parseBatch(permCodeList, AuthConstant.MENU);
+
+        // 2. 获取请求中的菜单节点
+        List<UpdateMenuPermissionTreeReq.MenuNode> menuNodes = req.getMenuNodes();
+
+
+        // 3. 构建待更新的权限列表
+        List<RolePermissionRel> permissionsToAdd = new ArrayList<>();   // 待新增的权限
+        List<String> permissionsToDelete = new ArrayList<>();       // 待删除的权限
+
+        for (UpdateMenuPermissionTreeReq.MenuNode menuNode : menuNodes) {
+            String menuCode = menuNode.getMenuCode();
+            String permLevel = menuNode.getPermLevel();
+
+            // 判断权限是否发生变化
+            if (permissionMap.containsKey(menuCode)) {
+                // 数据库中已有该权限
+                if (!permLevel.equals(permissionMap.get(menuCode))) {
+                    // 权限等级变化，需更新
+                    permissionsToDelete.add(menuCode);  // 先删除旧权限
+                    permissionsToAdd.add(buildPermission(req.getRoleId(), menuCode, permLevel)); // 再添加新权限
+                }
+            } else if(permLevel.equals("0")){
+                permissionsToDelete.add(menuCode);
+            }else {
+
+                // 数据库中无该权限，需新增
+                permissionsToAdd.add(buildPermission(req.getRoleId(), menuCode, permLevel));
+            }
+        }
+
+        // 4. 执行权限更新
+        // 删除旧权限
+        if (!permissionsToDelete.isEmpty()) {
+            permissionMapper.deletePermissionsByRoleId(req.getRoleId(), permissionsToDelete);
+        }
+
+        // 新增新权限
+        if (!permissionsToAdd.isEmpty()) {
+            permissionMapper.insertPermissionsByRoleId(permissionsToAdd);
+        }
+    }
+
+    /**
+     * 构建 PermissionExp 实体对象
+     */
+    private RolePermissionRel buildPermission(Long roleId,String menuCode, String permLevel) {
+        RolePermissionRel  rolePermissionRel = new RolePermissionRel();
+        rolePermissionRel.setRoleId(roleId);
+        rolePermissionRel.setGrantType(permLevel);
+        rolePermissionRel.setCreatedBy(CurrentUserHolder.get().getUserId());
+        rolePermissionRel.setCreatedTime(LocalDateTime.now());
+        String permCode = PermParserUtil.build(AuthConstant.MENU,menuCode, permLevel);
+
+        Permission permission = permissionMapper.selectOne(new LambdaQueryWrapper<Permission>()
+                .eq(Permission::getPermCode, permCode)
+                .eq(Permission::getStatus, AuthConstant.ENABLED)
+                .eq(Permission::getPermType, AuthConstant.MENU)
+        );
+        if (permission == null) {
+            throw new BizException("权限不存在");
+        }
+
+        rolePermissionRel.setPermId(permission.getPermId());
+        return rolePermissionRel;
+    }
+
+
 
     /**
      * 根据ID查询菜单详情
@@ -357,43 +438,7 @@ public class MenuServiceImpl implements MenuService {
         return new MenusRes(roleIds, roles, null, menus);
     }
 
-//    /**
-//     * 构建菜单树
-//     */
-//    private List<MenuTreeRes> buildMenuTree(List<Menu> allMenus, Long parentId) {
-//        return allMenus.stream()
-//                .filter(menu -> {
-//                    Long menuParentId = menu.getParentMenuId();
-//                    // 处理根节点：parentId为null或0的情况
-//                    if (parentId == null) {
-//                        return menuParentId == null || menuParentId == 0;
-//                    } else if (parentId == 0) {
-//                        return menuParentId == null || menuParentId.equals(0L);
-//                    } else {
-//                        return parentId.equals(menuParentId);
-//                    }
-//                })
-//                .map(menu -> {
-//                    MenuTreeRes node = new MenuTreeRes();
-//                    BeanUtils.copyProperties(menu, node);
-//                    List<MenuTreeRes> children = buildMenuTree(allMenus, menu.getMenuId());
-//                    node.setChildren(children);
-//                    node.setHasChildren(!children.isEmpty());
-//                    return node;
-//                })
-//                .sorted((a, b) -> {
-//                    // 按排序号排序，如果排序号相同则按菜单ID排序
-//                    if (a.getSortNo() != null && b.getSortNo() != null) {
-//                        int sortCompare = a.getSortNo().compareTo(b.getSortNo());
-//                        if (sortCompare != 0) {
-//                            return sortCompare;
-//                        }
-//                    }
-//                    // 如果排序号相同或为null，按菜单ID排序
-//                    return a.getMenuId().compareTo(b.getMenuId());
-//                })
-//                .collect(Collectors.toList());
-//    }
+
 
     /**
      * 内部删除菜单方法（不带事务注解，避免事务嵌套问题）

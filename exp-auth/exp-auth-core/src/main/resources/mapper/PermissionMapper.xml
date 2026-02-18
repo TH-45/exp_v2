@@ -18,11 +18,41 @@
                p.status AS status,
                p.sort_no AS sortNo,
                p.remark AS remark,
-               rp.role_id AS extFieldLong
+               rp.role_id AS roleId
 
         from expdb.exp_permission p
         left join expdb.exp_role_permission_rel rp on p.perm_id = rp.perm_id
         where rp.role_id = #{roleId}
         order by p.sort_no
     </select>
+    <delete id="deletePermissionsByRoleId">
+        DELETE FROM expdb.exp_role_permission_rel
+        WHERE role_id = #{roleId}
+          AND perm_id IN (
+              SELECT perm_id
+              FROM expdb.exp_permission
+              WHERE perm_code IN
+              <foreach collection="permCodes" item="permCode" open="(" separator="," close=")">
+                  #{permCode}
+              </foreach>
+          )
+    </delete>
+    <insert id="insertPermissionsByRoleId">
+        INSERT INTO expdb.exp_role_permission_rel
+        (role_id, perm_id, grant_type, created_by, created_time, remark)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.roleId},
+            #{item.permId},
+            #{item.grantType},
+            #{item.createdBy},
+            NOW(),
+            #{item.remark}
+            )
+        </foreach>
+    </insert>
+
+
+
 </mapper>

@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PermissionExp extends Permission {
     //扩展信息
-    private Long extFieldLong ;
+    private Long roleId ;
 }

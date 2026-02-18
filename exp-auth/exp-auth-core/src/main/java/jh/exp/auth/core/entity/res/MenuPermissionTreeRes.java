@@ -19,6 +19,6 @@ import java.util.List;
 public class MenuPermissionTreeRes extends MenuTreeRes {
 
     //权限等级(0无权、1查看、2编辑、3管理)
-    private String perLevel;
+    private String permLevel;
 
 }

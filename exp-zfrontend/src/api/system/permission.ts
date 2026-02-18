@@ -94,17 +94,3 @@ export function setPermissionStatus(permId: string, status: PermissionStatus) {
 export function getPermissionDetail(permId: string) {
   return request.get<PermissionItem, PermissionItem>(`${BASE}/detail`, { params: { permId } });
 }
-
-/** 更新菜单树权限请求（与后端 UpdateMenuTreePermissionReq 一致） */
-export interface UpdateMenuTreePermissionPayload {
-  roleId: string | number;
-  /** 更改的权限的等级（如 0-无权、1-查看、2-编辑、3-管理） */
-  perLevel?: string;
-  /** 选中的菜单 ID 列表 */
-  menuIds?: (string | number)[];
-}
-
-/** 更新菜单树权限（角色勾选的菜单 ID 及权限等级） */
-export function updateMenuTreePermission(data: UpdateMenuTreePermissionPayload) {
-  return request.post<void, void>(`${BASE}/update/menu/treePermission`, data);
-}

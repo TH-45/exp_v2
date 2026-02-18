@@ -11,8 +11,8 @@ export type MenuStatus = 'ENABLED' | 'DISABLED' | 0 | 1;
 export type VisibleStatus = 0 | 1;
 
 export interface MenuItem {
-  menuId: string;
-  parentMenuId?: string;
+  menuId: string | number;
+  parentMenuId?: string | number;
   menuCode: string;
   menuName: string;
   menuType: MenuType;
@@ -24,7 +24,8 @@ export interface MenuItem {
   remark?: string;
   children?: MenuItem[];
   hasChildren?: boolean;
-  perLevel?: string;
+  /** 权限等级(0无权、1查看、2编辑、3管理) */
+  permLevel?: string;
 }
 
 export interface QueryMenuParams {
@@ -55,22 +56,33 @@ export function queryMenuTree() {
   return request.get<MenuItem[], MenuItem[]>(`${BASE}/tree`);
 }
 
-/** 菜单权限树响应：查权限并结构对应到树（tree + 该角色已选菜单 ID） */
-export interface MenuPermissionTreeRes {
-  /** 菜单树，与 /tree 结构一致 */
-  tree: MenuItem[];
-  /** 当前角色已拥有的菜单权限 ID 列表，与树对应便于 setCheckedKeys */
-  selectedMenuIds: (string | number)[];
-}
 
-/** 查询菜单权限树（传 roleId 时查该角色权限并填充 selectedMenuIds；perLevel 表示权限等级） */
-export function queryMenuPermissionTree(roleId?: string, perLevel?: string) {
-  const params: { roleId?: string; perLevel?: string } = {};
+/**
+ * 查询菜单权限树
+ * - 后端当前实现要求 roleId 必传
+ * - permLevel：预留字段（OpenAPI 文档存在，但当前后端接口未实现该过滤参数）
+ */
+export function queryMenuPermissionTree(roleId?: string | number, permLevel?: string) {
+  const params: { roleId?: string | number; permLevel?: string } = {};
   if (roleId != null) params.roleId = roleId;
-  if (perLevel != null) params.perLevel = perLevel;
-  return request.get<MenuPermissionTreeRes, MenuPermissionTreeRes>(`${BASE}/permissionTree`, {
+  if (permLevel != null) params.permLevel = permLevel;
+  return request.get<MenuItem[],MenuItem[]>(`${BASE}/permissionTree`, {
     params: Object.keys(params).length ? params : undefined,
   });
+}
+
+export interface UpdateMenuPermissionTreePayload {
+  roleId: string | number;
+  menuNodes: Array<{
+    menuCode: string;
+    /** 权限等级(0无权、1查看、2编辑、3管理) */
+    permLevel: string;
+  }>;
+}
+
+/** 修改菜单权限树（增量提交：仅提交变化的叶子节点，含 1->0） */
+export function updateMenuPermissionTree(data: UpdateMenuPermissionTreePayload) {
+  return request.post<void, void>(`${BASE}/updatePermissionTree`, data);
 }
 
 export function queryMenuList(params: PageQueryInput<QueryMenuParams>) {

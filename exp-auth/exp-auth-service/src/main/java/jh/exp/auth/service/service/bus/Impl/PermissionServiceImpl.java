@@ -3,7 +3,7 @@ package jh.exp.auth.service.service.bus.Impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jh.exp.auth.core.entity.Menu;
 import jh.exp.auth.core.entity.Permission;
-import jh.exp.auth.core.entity.RolePermissionRel;
+import jh.exp.auth.core.entity.middle.RolePermissionRel;
 import jh.exp.auth.core.entity.req.UpdateMenuTreePermissionReq;
 import jh.exp.auth.core.mapper.MenuMapper;
 import jh.exp.auth.core.mapper.PermissionMapper;
