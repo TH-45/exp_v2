@@ -192,7 +192,7 @@ async function fetchPostList() {
       orgId: props.orgId,
       postCode: searchForm.postCode || undefined,
       postName: searchForm.postName || undefined,
-      relStatus: 'ENABLED' as const,
+      status: 'ENABLED' as const,
       pageNum: query.pageNum,
       pageSize: query.pageSize,
     };

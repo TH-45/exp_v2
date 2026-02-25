@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@NotNull(message = "查询岗位请求对象不能为空")
 public class QueryPositionByOrgReq {
 
     /**

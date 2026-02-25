@@ -1,5 +1,5 @@
 import request from '@/api/request';
-import { type PageResult } from '@/api/common';
+import {buildPageQuery, PageQueryInput, type PageResult} from '@/api/common';
 
 export interface OrgNode {
   orgId: number;
@@ -63,20 +63,26 @@ export function fetchOrgTree(params?: { orgCode?: string; orgName?: string }) {
 }
 
 // 查询某组织的岗位列表（关联信息）
-export function queryOrgPosts(params: {
-  pageNum: number;
-  pageSize: number;
-  queryParam: {
-    orgId: number;
-    includeChildren?: boolean;
-    status?: PostStatus;
-  };
-}) {
-  return request.post<PageResult<PostVO>,PageResult<PostVO>>(
-    `${BASE_POST}/queryByOrg`,
-    params,
+export function queryOrgPosts(
+    input: PageQueryInput<{
+      orgId: number;
+      includeChildren?: boolean;
+      status?: PostStatus;
+      postCode: String;
+      postName: String;
+
+    }>
+) {
+  const params = buildPageQuery(input, {
+    pageNum: 1,
+    pageSize: 999, // 下拉框一般查全部
+  });
+  return request.post<PageResult<PostVO>, PageResult<PostVO>>(
+      `${BASE_POST}/queryByOrg`,
+      params,
   );
 }
+
 
 // 新增岗位字典
 export function createPost(data: Partial<PostVO>) {
