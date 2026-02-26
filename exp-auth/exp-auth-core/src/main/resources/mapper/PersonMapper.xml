@@ -52,6 +52,28 @@
             AND person_id != #{excludePersonId}
         </if>
     </select>
+    <!-- 批量根据人员ID查询人员详情信息 -->
+    <select id="batchGetPersonByIds" resultType="jh.exp.auth.core.entity.res.PersonDetailRes">
+        SELECT p.person_id, p.person_code, p.person_name, p.gender, p.mobile, p.email,
+        p.id_card_no, p.job_title, p.org_id, o.org_code, o.org_name,
+        p.post_id, pos.post_code, pos.post_name, p.account_id,
+        a.account_name, a.account_display, p.status, p.entry_date, p.leave_date,
+        p.is_external, p.created_by, creator.account_display as created_name,
+        p.created_time, p.updated_time, p.remark
+        FROM exp_person p
+        LEFT JOIN exp_org_unit o ON p.org_id = o.org_id
+        LEFT JOIN exp_post pos ON p.post_id = pos.post_id
+        LEFT JOIN exp_account a ON p.account_id = a.account_id
+        LEFT JOIN exp_account creator ON p.created_by = creator.account_id
+        <where>
+            <if test="list != null and list.size() > 0">
+                AND p.person_id IN
+                <foreach item="id" collection="list" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
 
 
 </mapper>

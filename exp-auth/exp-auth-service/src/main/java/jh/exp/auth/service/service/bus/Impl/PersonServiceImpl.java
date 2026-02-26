@@ -124,6 +124,17 @@ public class PersonServiceImpl implements PersonService {
         return personDetail;
     }
 
+    @Override
+    public Map<Long, PersonDetailRes> batchGetPersonByIds(List<Long> personIds) {
+
+        List<PersonDetailRes> personDetailMap = personMapper.batchGetPersonByIds(personIds);
+        if (!CollectionUtils.isEmpty(personDetailMap)) {
+            return personDetailMap.stream().collect(Collectors.toMap(PersonDetailRes::getPersonId, person -> person));
+        }
+
+        return Map.of();
+    }
+
     /**
      * 创建人员
      */

@@ -48,3 +48,7 @@ exp:
   service:
     auth:
       url: http://exp-auth
+    corp:
+      url: http://exp-corp
+    project:
+      url: http://exp-project

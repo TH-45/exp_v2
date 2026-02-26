@@ -1,7 +1,7 @@
 package jh.exp.sys.servcie.dic.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import jh.exp.auth.clinet.api.AccountService;
+import jh.exp.auth.clinet.api.bus.AccountService;
 import jh.exp.auth.core.constant.AuthConstant;
 
 import jh.exp.auth.core.entity.res.AccountRoleRes;

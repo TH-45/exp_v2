@@ -896,8 +896,31 @@ async function fetchPostDictOptions() {
   }
 }
 
+/**
+ * 标准化字典选项数据格式
+ *
+ * 该函数用于统一处理不同格式的字典选项数据，确保返回统一的数组格式
+ *
+ * @param res - 字典选项数据，可能是数组格式或包含data属性的对象格式
+ * @returns 标准化的字典选项数组
+ *
+ * @example
+ * // 数组格式输入
+ * normalizeDictOptions([{ label: '选项1', value: '1' }])
+ * // 返回: [{ label: '选项1', value: '1' }]
+ *
+ * // 对象格式输入
+ * normalizeDictOptions({ data: [{ label: '选项1', value: '1' }] })
+ * // 返回: [{ label: '选项1', value: '1' }]
+ *
+ * // 无效格式输入
+ * normalizeDictOptions(null)
+ * // 返回: []
+ */
 function normalizeDictOptions(res: DictOption[] | { data?: DictOption[] }) {
+  // 如果输入已经是数组格式，直接返回
   if (Array.isArray(res)) return res;
+  // 如果输入是对象格式且包含data数组，则返回data数组
   return Array.isArray(res?.data) ? res.data : [];
 }
 

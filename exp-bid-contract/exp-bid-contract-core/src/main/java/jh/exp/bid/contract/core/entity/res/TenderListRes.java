@@ -31,6 +31,11 @@ public class TenderListRes {
     private String tenderName;
 
     /**
+     * 项目负责人名称
+     */
+    private String projectManagerName;
+
+    /**
      * 招标类型（工程、服务、货物等）
      */
     private String tenderType;
@@ -39,6 +44,11 @@ public class TenderListRes {
      * 招标方式（公开招标、邀请招标、竞争性谈判等）
      */
     private String tenderMode;
+
+    /**
+     * 招标人/采购方ID（映射自exp_tender.company_id）
+     */
+    private Long purchaserId;
 
     /**
      * 招标人/采购方名称
@@ -71,6 +81,11 @@ public class TenderListRes {
     private String status;
 
     /**
+     * 工程项目ID（仅供服务内远程组装使用）
+     */
+    private Long projectId;
+
+    /**
      * 工程项目名称
      */
     private String projectName;
@@ -79,6 +94,11 @@ public class TenderListRes {
      * 创建人姓名
      */
     private String createdByName;
+
+    /**
+     * 创建人ID（仅供服务内远程组装使用）
+     */
+    private Long createdBy;
 
     /**
      * 创建时间

@@ -1,6 +1,6 @@
 package jh.exp.bid.contract.service.service.bus.Impl;
 
-import jh.exp.auth.clinet.api.PersonService;
+import jh.exp.auth.clinet.api.bus.PersonService;
 
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.entity.BidAwardResult;

@@ -14,6 +14,9 @@ import jh.exp.auth.core.entity.res.PersonInfoRes;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+import java.util.Map;
+
 @Mapper
 public interface PersonMapper extends BaseMapper<Person> {
 
@@ -33,4 +36,6 @@ public interface PersonMapper extends BaseMapper<Person> {
      * @return 人员详情信息
      */
     PersonDetailRes selectPersonDetailById(@Param("personId") Long personId);
+
+    List<PersonDetailRes>batchGetPersonByIds(List<Long> personIds);
 }

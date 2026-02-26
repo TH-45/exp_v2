@@ -33,6 +33,30 @@
             <scope>compile</scope>
         </dependency>
 
+        <dependency>
+            <groupId>jh.exp.corp</groupId>
+            <artifactId>exp-corp-client</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>jh.exp.corp</groupId>
+            <artifactId>exp-corp-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>jh.exp.project</groupId>
+            <artifactId>exp-project-client</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>jh.exp.project</groupId>
+            <artifactId>exp-project-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- Spring Cloud LoadBalancer，用于服务发现和负载均衡 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

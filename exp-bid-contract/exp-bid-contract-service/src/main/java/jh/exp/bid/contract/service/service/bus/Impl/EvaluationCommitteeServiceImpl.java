@@ -2,7 +2,7 @@ package jh.exp.bid.contract.service.service.bus.Impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import jh.exp.auth.clinet.api.PersonService;
+import jh.exp.auth.clinet.api.bus.PersonService;
 
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.entity.BidEvaluationCommittee;

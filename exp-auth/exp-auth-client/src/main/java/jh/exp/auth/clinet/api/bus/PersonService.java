@@ -1,4 +1,4 @@
-package jh.exp.auth.clinet.api;
+package jh.exp.auth.clinet.api.bus;
 
 
 import jh.exp.auth.core.entity.req.*;
@@ -8,6 +8,9 @@ import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
+
+import java.util.List;
+import java.util.Map;
 
 @HttpExchange("/person")
 public interface PersonService {
@@ -24,6 +27,12 @@ public interface PersonService {
      */
     @PostExchange("/detail/{personId}")
     PersonDetailRes getPersonById(Long personId);
+
+    /**
+     * 批量查询人员详情
+     */
+    @PostExchange("/batch")
+    Map<Long , PersonDetailRes> batchGetPersonByIds(List<Long>  personIds);
 
     /**
      * 创建人员

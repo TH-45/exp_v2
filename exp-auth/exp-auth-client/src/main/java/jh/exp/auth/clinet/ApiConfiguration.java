@@ -1,8 +1,9 @@
 package jh.exp.auth.clinet;
 
 import cn.hutool.json.JSONUtil;
-import jh.exp.auth.clinet.api.AccountService;
-import jh.exp.auth.clinet.api.RoleService;
+import jh.exp.auth.clinet.api.bus.AccountService;
+import jh.exp.auth.clinet.api.bus.OrgUnitService;
+import jh.exp.auth.clinet.api.bus.RoleService;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.constant.ServiceContext;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
-import jh.exp.auth.clinet.api.PersonService;
+import jh.exp.auth.clinet.api.bus.PersonService;
 @Configuration("AuthApi")
 @AutoConfiguration
 public class ApiConfiguration {
@@ -40,6 +41,11 @@ public class ApiConfiguration {
     @Bean
     AccountService accountService() {
         return httpServiceProxyFactory.createClient(AccountService.class);
+    }
+
+    @Bean
+    OrgUnitService orgUnitService() {
+        return httpServiceProxyFactory.createClient(OrgUnitService.class);
     }
 
 }

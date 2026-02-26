@@ -143,11 +143,19 @@
             <version>${easyexcel.version}</version>
         </dependency>
 
+
+
         <!-- 工具类：Hutool -->
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
             <version>5.8.27</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.0.0-jre</version> <!-- 请使用最新稳定版 -->
         </dependency>
     </dependencies>
 

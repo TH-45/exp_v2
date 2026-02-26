@@ -3,6 +3,8 @@ package jh.exp.corp.service.service.internal.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.common.core.api.ApiResponse;
+import jh.exp.common.core.constant.CommonConstant;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.corp.core.entity.Company;
@@ -15,10 +17,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -98,6 +103,41 @@ public class CompanyInternalServiceImpl implements CompanyInternalService {
             return;
         }
         companyMapper.deleteBatchIds(req.getCompanyIds());
+    }
+
+    @Override
+    public ApiResponse<Map<String, CompanyDetailRes>> batchDetail(List<Long> companyIds) {
+
+        if (CollectionUtils.isEmpty(companyIds)) {
+            return ApiResponse.success(Collections.emptyMap());
+        }
+
+
+        List<Company> companies = companyMapper.selectList(new LambdaQueryWrapper<Company>()
+                .eq(Company::getStatus, CommonConstant.ENABLED_STATUS_STR)
+                .in(Company::getCompanyId, companyIds));
+
+        if (CollectionUtils.isEmpty(companies)) {
+            return ApiResponse.success(Collections.emptyMap());
+        }
+
+        Map<String, CompanyDetailRes> resultData = companies.stream()
+                .collect(Collectors.toMap(
+                        // 1. Key: ID 转 String
+                        company -> String.valueOf(company.getCompanyId()),
+
+                        // 2. Value: 在这里直接执行转换逻辑
+                        company -> {
+                            CompanyDetailRes res = new CompanyDetailRes();
+                            BeanUtils.copyProperties(company, res); // 核心拷贝动作
+                            return res;
+                        },
+
+                        // 3. 冲突策略
+                        (v1, v2) -> v1
+                ));
+
+        return ApiResponse.success(resultData);
     }
 
     private CompanyListRes toListRes(Company entity) {

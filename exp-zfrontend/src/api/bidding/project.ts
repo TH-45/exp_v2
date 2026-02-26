@@ -2,12 +2,10 @@ import request from '@/api/request';
 import {buildPageQuery, type PageQueryInput} from '@/api/common';
 
 export type BiddingProjectStatus =
-  | 'DRAFT'
-  | 'PUBLISHED'
-  | 'BIDDING'
-  | 'EVALUATING'
-  | 'AWARDED'
-  | 'ARCHIVED';
+  | '未开始'
+  | '进行中'
+  | '已结束'
+  | string;
 
 export interface BiddingProjectVO {
   projectId: string;
@@ -15,6 +13,7 @@ export interface BiddingProjectVO {
   projectName: string;
   tenderOrg?: string;
   ownerName?: string;
+  tenderMode?: string;
   status: BiddingProjectStatus;
   createdTime?: string;
 }
@@ -22,7 +21,7 @@ export interface BiddingProjectVO {
 export interface PageResult<T> {
   list: T[];
   total: number;
-  pageNum: number;
+  page: number;
   size: number;
 }
 

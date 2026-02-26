@@ -9,6 +9,9 @@ import jh.exp.auth.core.entity.res.PersonInfoRes;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 
+import java.util.List;
+import java.util.Map;
+
 public interface PersonService {
     /**
      * 分页查询人员列表
@@ -21,6 +24,13 @@ public interface PersonService {
      * 根据ID查询人员详情
      */
     PersonDetailRes getPersonById(Long personId);
+
+    /**
+     *  批量查询人员详情
+     * @param personIds
+     * @return
+     */
+    Map<Long , PersonDetailRes> batchGetPersonByIds(List<Long>  personIds);
 
     /**
      * 创建人员

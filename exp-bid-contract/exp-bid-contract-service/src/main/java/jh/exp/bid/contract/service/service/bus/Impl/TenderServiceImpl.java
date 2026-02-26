@@ -3,10 +3,10 @@ package jh.exp.bid.contract.service.service.bus.Impl;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import jh.exp.auth.clinet.api.AccountService;
-import jh.exp.auth.clinet.api.PersonService;
-
-
+import jh.exp.auth.clinet.api.bus.AccountService;
+import jh.exp.auth.clinet.api.bus.OrgUnitService;
+import jh.exp.auth.clinet.api.bus.PersonService;
+import jh.exp.auth.core.entity.res.OrgUnitDetailRes;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.entity.Tender;
 import jh.exp.bid.contract.core.entity.req.*;
@@ -14,45 +14,85 @@ import jh.exp.bid.contract.core.entity.res.TenderDetailRes;
 import jh.exp.bid.contract.core.entity.res.TenderListRes;
 import jh.exp.bid.contract.core.mapper.TenderMapper;
 import jh.exp.bid.contract.service.service.bus.TenderService;
+import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import jh.exp.corp.client.api.CompanyClientService;
+import jh.exp.corp.core.entity.res.CompanyDetailRes;
+import jh.exp.project.client.api.ProjectClientService;
+import jh.exp.project.core.entity.Project;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 招标服务实现类
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class TenderServiceImpl implements TenderService {
 
     private final TenderMapper tenderMapper;
     private final PersonService personService;
+    private final OrgUnitService orgUnitService;
     private final AccountService accountService;
+    private final CompanyClientService companyClientService;
+    private final ProjectClientService projectClientService;
 
     @Override
     public SimplePageRes<TenderListRes> queryTenderList(SimplePageReq<QueryTenderReq> req) {
-        // 创建分页对象
         Page<TenderListRes> page = new Page<>(req.getPageNum(), req.getPageSize());
-
         QueryTenderReq queryParam = req.getQueryParam();
-        // 如果前端没有传递查询参数，创建一个默认的空对象
         if (queryParam == null) {
             queryParam = new QueryTenderReq();
         }
 
-        // 使用MyBatis-Plus自动分页查询
         IPage<TenderListRes> result = tenderMapper.selectTenderList(page, queryParam);
+        List<TenderListRes> records = result.getRecords();
+        if (!CollectionUtils.isEmpty(records)) {
 
-        // 转换为统一的响应格式
+            List<Long> purchaserIds = records.stream().map(TenderListRes::getPurchaserId).toList();
+            Map<Long, CompanyDetailRes> companyDetailResMap = companyClientService.batchDetail(purchaserIds).getData();
+
+            List<Long> personIds = records.stream().map(TenderListRes::getCreatedBy).toList();
+            Map<Long, PersonDetailRes> personDetailResMap = personService.batchGetPersonByIds(personIds);
+
+            List<Long> projectIds = records.stream().map(TenderListRes::getProjectId).toList();
+            Map<Long, Project> projectDetailResMap = projectClientService.batchGetProjectByIds(projectIds).getData();
+
+
+            for (TenderListRes record : records) {
+                if (record.getPurchaserId() != null) {
+//                    String purchaserName = companyNameCache.computeIfAbsent(
+//                            record.getPurchaserId(),
+//                            this::getCompanyNameOrThrow
+//                    );
+                    Long purchaserId = record.getPurchaserId();
+                    record.setPurchaserName(companyDetailResMap.get(purchaserId).getCompanyName());
+                }
+
+                if (record.getCreatedBy() != null) {
+                    record.setCreatedByName(personDetailResMap.get(record.getCreatedBy()).getPersonName());
+                }
+
+                if (record.getProjectId() != null) {
+                    Long projectId = record.getProjectId();
+                    record.setProjectName(projectDetailResMap.get(projectId).getProjectName());
+                }
+            }
+        }
+
         SimplePageRes<TenderListRes> pageRes = new SimplePageRes<>();
-        pageRes.setList(result.getRecords());
+        pageRes.setList(records);
         pageRes.setTotal(result.getTotal());
         pageRes.setPage(result.getCurrent());
         pageRes.setSize(result.getSize());
@@ -65,36 +105,34 @@ public class TenderServiceImpl implements TenderService {
         if (tenderDetail == null) {
             throw new RuntimeException("招标信息不存在");
         }
+        enrichTenderDetailOrThrow(tenderDetail);
         return tenderDetail;
     }
 
     @Override
     @Transactional
     public TenderDetailRes createTender(CreateTenderReq req) {
-        // 检查招标编号是否已存在
         if (checkTenderCodeExists(req.getTenderCode(), null)) {
             throw new RuntimeException("招标编号已存在");
         }
 
-        // 根据项目ID获取项目负责人信息
-        TenderDetailRes projectInfo = getProjectManagerByProjectId(req.getProjectId());
-        if (projectInfo == null || projectInfo.getProjectId() == null) {
-            throw new RuntimeException("项目信息不存在或项目负责人未设置");
-        }
+        // 强校验公司必须存在，避免写入脏数据
+        getCompanyNameOrThrow(req.getCompanyId());
 
-        // 验证项目组织负责人是否存在
+        TenderDetailRes projectInfo = getProjectManagerByProjectId(req.getProjectId());
+        if (projectInfo.getProjectId() == null) {
+            throw new RuntimeException("项目信息不存在");
+        }
+        if (projectInfo.getProjectManagerId() == null) {
+            throw new RuntimeException("项目负责人未设置，无法创建招标");
+        }
         if (projectInfo.getOrgManagerId() == null) {
             throw new RuntimeException("项目归属组织的负责人未设置，无法创建招标");
         }
 
-        // 调用auth服务获取当前用户信息
         CurrentUser currentUser = CurrentUserHolder.get();
         Long personId = Long.valueOf(currentUser.getUserId());
-
-        // 通过认证服务查询人员详细信息，获取部门和岗位信息
-
         PersonDetailRes personDetail = personService.getPersonById(personId);
-
         if (personDetail == null) {
             throw new RuntimeException("无法获取当前用户信息");
         }
@@ -119,32 +157,28 @@ public class TenderServiceImpl implements TenderService {
         tender.setCreatedTime(LocalDateTime.now());
         tender.setUpdatedTime(LocalDateTime.now());
 
-        // 设置创建人相关信息
         tender.setCreatedBy(personId);
         tender.setCreatedDeptId(personDetail.getOrgId());
         tender.setCreatedPostId(personDetail.getPostId());
 
         tenderMapper.insert(tender);
-
-        // 返回创建后的招标详情信息
         return getTenderById(tender.getTenderId());
     }
 
     @Override
     @Transactional
     public TenderDetailRes updateTender(UpdateTenderReq req) {
-        // 检查招标是否存在
         Tender existingTender = tenderMapper.selectById(req.getTenderId());
         if (existingTender == null) {
             throw new RuntimeException("招标信息不存在");
         }
 
-        // 检查招标编号是否已存在（排除当前招标）
         if (checkTenderCodeExists(req.getTenderCode(), req.getTenderId())) {
             throw new RuntimeException("招标编号已存在");
         }
 
-        // 注意：projectId在更新时不允许修改，这里不设置projectId字段
+        getCompanyNameOrThrow(req.getCompanyId());
+
         Tender tender = new Tender();
         tender.setTenderId(req.getTenderId());
         tender.setTenderCode(req.getTenderCode());
@@ -160,32 +194,25 @@ public class TenderServiceImpl implements TenderService {
         tender.setBidEndTime(req.getBidEndTime());
         tender.setOpenTime(req.getOpenTime());
         tender.setOpenAddress(req.getOpenAddress());
-        // projectId字段不更新，保持原有值
         tender.setRemark(req.getRemark());
         tender.setUpdatedTime(LocalDateTime.now());
 
         tenderMapper.updateById(tender);
-
-        // 返回更新后的招标信息
         return getTenderById(req.getTenderId());
     }
 
     @Override
     @Transactional
     public void deleteTender(Long tenderId) {
-        // 检查招标是否存在
         Tender tender = tenderMapper.selectById(tenderId);
         if (tender == null) {
             throw new RuntimeException("招标信息不存在");
         }
 
-        // 检查当前用户是否有删除权限
         CurrentUser currentUser = CurrentUserHolder.get();
         if (!checkDeletePermission(tenderId, Long.valueOf(currentUser.getUserId()))) {
             throw new RuntimeException("无权限删除该招标信息");
         }
-
-        // TODO: 检查招标是否有相关联的业务数据，如果有则不允许删除
 
         tenderMapper.deleteById(tenderId);
     }
@@ -200,14 +227,11 @@ public class TenderServiceImpl implements TenderService {
         CurrentUser currentUser = CurrentUserHolder.get();
         Long userId = Long.valueOf(currentUser.getUserId());
 
-        // 检查每个招标的删除权限
         for (Long tenderId : req.getTenderIds()) {
             if (!checkDeletePermission(tenderId, userId)) {
                 throw new RuntimeException("无权限删除招标ID: " + tenderId);
             }
         }
-
-        // TODO: 检查招标是否有相关联的业务数据，如果有则不允许删除
 
         UpdateWrapper<Tender> updateWrapper = new UpdateWrapper<>();
         updateWrapper.in("tender_id", req.getTenderIds());
@@ -217,7 +241,6 @@ public class TenderServiceImpl implements TenderService {
     @Override
     @Transactional
     public TenderDetailRes updateTenderStatus(TenderStatusReq req) {
-        // 检查招标是否存在
         Tender existingTender = tenderMapper.selectById(req.getTenderId());
         if (existingTender == null) {
             throw new RuntimeException("招标信息不存在");
@@ -229,8 +252,6 @@ public class TenderServiceImpl implements TenderService {
         tender.setUpdatedTime(LocalDateTime.now());
 
         tenderMapper.updateById(tender);
-
-        // 返回更新后的招标信息
         return getTenderById(req.getTenderId());
     }
 
@@ -251,36 +272,151 @@ public class TenderServiceImpl implements TenderService {
 
     @Override
     public TenderDetailRes getProjectManagerByProjectId(Long projectId) {
-        return tenderMapper.selectProjectManagerByProjectId(projectId);
+        Project project = getProjectOrThrow(projectId, "getProjectManagerByProjectId");
+
+        TenderDetailRes result = new TenderDetailRes();
+        result.setProjectId(project.getProjectId());
+        result.setProjectName(project.getProjectName());
+        result.setProjectManagerId(project.getManagerPersonId());
+        result.setProjectOrgId(project.getOrgId());
+
+        if (project.getManagerPersonId() != null) {
+            PersonDetailRes projectManager = getPersonOrThrow(project.getManagerPersonId(), "project manager");
+            result.setProjectManagerName(projectManager.getPersonName());
+        }
+
+        if (project.getOrgId() != null) {
+            OrgUnitDetailRes orgDetail = getOrgUnitOrThrow(project.getOrgId(), "project org");
+            result.setProjectOrgName(orgDetail.getOrgName());
+            result.setOrgManagerId(orgDetail.getManagerPersonId());
+            if (orgDetail.getManagerPersonId() != null) {
+                PersonDetailRes orgManager = getPersonOrThrow(orgDetail.getManagerPersonId(), "org manager");
+                result.setOrgManagerName(orgManager.getPersonName());
+            }
+        }
+        return result;
     }
 
     @Override
     public boolean checkDeletePermission(Long tenderId, Long userId) {
-        // 检查招标是否存在
         Tender tender = tenderMapper.selectById(tenderId);
         if (tender == null) {
             return false;
         }
 
-        // 检查是否为招标创建者
-        if (tender.getCreatedBy().equals(userId)) {
+        if (userId != null && userId.equals(tender.getCreatedBy())) {
             return true;
         }
 
-        // 示例：通过认证服务获取账号详细信息进行权限检查
         try {
             Object accountDetail = accountService.getAccountById(userId);
             if (accountDetail != null) {
-                // 可以根据账号信息进行更复杂的权限检查
-                // 例如：检查账号状态、角色、部门等
-                // 这里暂时简化处理，实际使用时需要根据返回的具体类型进行处理
-                return true; // 账号存在且正常
+                return true;
             }
         } catch (Exception e) {
-            // 服务调用失败时的降级处理
-            // 可以记录日志，但不影响原有逻辑
+            log.warn("查询账号权限失败，tenderId={}, userId={}", tenderId, userId, e);
         }
 
         return false;
+    }
+
+    /**
+     * 按企业系统约束统一补全跨域展示字段，任一远程调用失败则整体失败。
+     */
+    private void enrichTenderDetailOrThrow(TenderDetailRes tenderDetail) {
+        if (tenderDetail.getPurchaserId() != null) {
+            tenderDetail.setPurchaserName(getCompanyNameOrThrow(tenderDetail.getPurchaserId()));
+        }
+
+        if (tenderDetail.getProjectId() != null) {
+            TenderDetailRes projectInfo = getProjectManagerByProjectId(tenderDetail.getProjectId());
+            tenderDetail.setProjectName(projectInfo.getProjectName());
+            tenderDetail.setProjectManagerId(projectInfo.getProjectManagerId());
+            tenderDetail.setProjectManagerName(projectInfo.getProjectManagerName());
+            tenderDetail.setProjectOrgId(projectInfo.getProjectOrgId());
+            tenderDetail.setProjectOrgName(projectInfo.getProjectOrgName());
+            tenderDetail.setOrgManagerId(projectInfo.getOrgManagerId());
+            tenderDetail.setOrgManagerName(projectInfo.getOrgManagerName());
+        }
+
+        if (tenderDetail.getCreatedBy() != null) {
+            PersonDetailRes creator = getPersonOrThrow(tenderDetail.getCreatedBy(), "tender creator");
+            tenderDetail.setCreatedByName(creator.getPersonName());
+            // 岗位本次不做强依赖远程查询，优先使用人员详情内已携带字段
+            tenderDetail.setCreatedPostName(creator.getPostName());
+        }
+
+        if (tenderDetail.getCreatedDeptId() != null) {
+            OrgUnitDetailRes createdDept = getOrgUnitOrThrow(tenderDetail.getCreatedDeptId(), "creator org");
+            tenderDetail.setCreatedDeptName(createdDept.getOrgName());
+        }
+    }
+
+    private String getCompanyNameOrThrow(Long companyId) {
+        try {
+            ApiResponse<CompanyDetailRes> response = companyClientService.detail(companyId);
+            if (response == null || !response.isSuccess() || response.getData() == null) {
+                log.error("调用corp公司详情失败，companyId={}, response={}", companyId, response);
+                throw new RuntimeException("查询公司信息失败");
+            }
+            return response.getData().getCompanyName();
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("调用corp公司详情异常，companyId={}", companyId, ex);
+            throw new RuntimeException("查询公司信息失败");
+        }
+    }
+
+    private PersonDetailRes getPersonOrThrow(Long personId, String scene) {
+        try {
+            PersonDetailRes person = personService.getPersonById(personId);
+            if (person == null) {
+                log.error("调用auth人员详情返回空，scene={}, personId={}", scene, personId);
+                throw new RuntimeException("查询人员信息失败");
+            }
+            return person;
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("调用auth人员详情异常，scene={}, personId={}", scene, personId, ex);
+            throw new RuntimeException("查询人员信息失败");
+        }
+    }
+
+    private String getPersonNameOrThrow(Long personId) {
+        return getPersonOrThrow(personId, "queryTenderList createdBy").getPersonName();
+    }
+
+    private OrgUnitDetailRes getOrgUnitOrThrow(Long orgId, String scene) {
+        try {
+            OrgUnitDetailRes org = orgUnitService.getOrgUnitById(orgId);
+            if (org == null) {
+                log.error("调用auth组织详情返回空，scene={}, orgId={}", scene, orgId);
+                throw new RuntimeException("查询组织信息失败");
+            }
+            return org;
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("调用auth组织详情异常，scene={}, orgId={}", scene, orgId, ex);
+            throw new RuntimeException("查询组织信息失败");
+        }
+    }
+
+    private Project getProjectOrThrow(Long projectId, String scene) {
+        try {
+            ApiResponse<Project> response = projectClientService.detail(projectId);
+            if (response == null || !response.isSuccess() || response.getData() == null) {
+                log.error("调用project详情失败，scene={}, projectId={}, response={}", scene, projectId, response);
+                throw new RuntimeException("查询项目信息失败");
+            }
+            return response.getData();
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("调用project详情异常，scene={}, projectId={}", scene, projectId, ex);
+            throw new RuntimeException("查询项目信息失败");
+        }
     }
 }

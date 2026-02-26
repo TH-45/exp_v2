@@ -1,4 +1,4 @@
-package jh.exp.auth.clinet.api;
+package jh.exp.auth.clinet.api.bus;
 
 
 import jh.exp.auth.core.entity.Position;

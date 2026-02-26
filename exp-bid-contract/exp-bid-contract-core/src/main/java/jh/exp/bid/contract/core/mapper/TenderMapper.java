@@ -41,13 +41,6 @@ public interface TenderMapper extends BaseMapper<Tender> {
     TenderDetailRes selectTenderDetailById(@Param("tenderId") Long tenderId);
 
     /**
-     * 根据项目ID查询该项目的负责人信息
-     * @param projectId 项目ID
-     * @return 项目负责人信息
-     */
-    TenderDetailRes selectProjectManagerByProjectId(@Param("projectId") Long projectId);
-
-    /**
      * 批量更新招标状态
      * @param tenderIds 招标ID列表
      * @param status 新状态

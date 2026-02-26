@@ -26,8 +26,13 @@
           <el-input v-model="query.tenderOrg" placeholder="请输入招标单位" clearable style="width: 200px" />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="query.status" clearable style="width: 140px">
+          <el-select v-model="query.status" clearable style="width: 100px">
             <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="招标方式">
+          <el-select v-model="query.tenderMode" clearable style="width: 140px">
+            <el-option v-for="t in tenderMode" :key="t.value" :label="t.label" :value="t.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="年度">
@@ -44,17 +49,18 @@
 
       <!-- 表格 -->
       <el-table v-loading="loading" :data="tableData" row-key="projectId" border style="width: 100%">
-        <el-table-column prop="projectCode" label="项目编码" min-width="140" />
+        <el-table-column prop="projectCode" label="项目编码" min-width="120" />
         <el-table-column prop="projectName" label="项目名称" min-width="200" />
         <el-table-column prop="tenderOrg" label="招标单位" min-width="180" />
         <el-table-column prop="ownerName" label="负责人" min-width="120" />
-        <el-table-column label="状态" min-width="120">
+        <el-table-column prop="tenderMode" label="招标方式" min-width="120" />
+        <el-table-column label="状态" min-width="80">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)">{{ statusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdTime" label="创建时间" min-width="170" />
-        <el-table-column label="操作" fixed="right" width="180">
+        <el-table-column label="操作" fixed="right" width="140">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openEdit(true, row)" :disabled="!canManage">
               编辑
@@ -70,7 +76,7 @@
           background
           layout="total, prev, pager, next, sizes"
           :current-page="query.pageNum"
-          :page-size="query.size"
+          :page-size="query.pageSize"
           :page-sizes="[10, 20, 50, 100]"
           :total="total"
           @current-change="handleCurrentChange"
@@ -166,18 +172,16 @@ import {
 
 import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
+import {type DictOption, listDictOptions} from "@/api/system/dict.ts";
 
 const route = useRoute();
 const router = useRouter();
 const canManage = computed(() => hasPermission('bidding:project:manage'));
 
 const statusOptions: Array<{ label: string; value: BiddingProjectStatus }> = [
-  { label: '草稿', value: 'DRAFT' },
-  { label: '已发布', value: 'PUBLISHED' },
-  { label: '投标中', value: 'BIDDING' },
-  { label: '评标中', value: 'EVALUATING' },
-  { label: '已定标', value: 'AWARDED' },
-  { label: '已归档', value: 'ARCHIVED' },
+  { label: '未开始', value: '未开始' },
+  { label: '进行中', value: '进行中' },
+  { label: '已结束', value: '已结束' },
 ];
 
 function statusText(s: BiddingProjectStatus) {
@@ -185,15 +189,12 @@ function statusText(s: BiddingProjectStatus) {
 }
 
 function statusTagType(s: BiddingProjectStatus) {
-  if (s === 'DRAFT') return 'info';
-  if (s === 'PUBLISHED') return 'success';
-  if (s === 'BIDDING') return 'warning';
-  if (s === 'EVALUATING') return 'warning';
-  if (s === 'AWARDED') return 'success';
-  if (s === 'ARCHIVED') return 'info';
+  if (s === '未开始') return 'info';
+  if (s === '进行中') return 'warning';
+  if (s === '已结束') return 'success';
   return '';
 }
-
+const tenderMode = ref<DictOption[]>([]);
 const loading = ref(false);
 const saving = ref(false);
 
@@ -202,9 +203,10 @@ const query = reactive({
   projectName: '',
   tenderOrg: '',
   status: undefined as BiddingProjectStatus | undefined,
-  year: new Date().getFullYear(),
+  year: new Date().getFullYear() as number | undefined,
+  tenderMode: '',
   pageNum: 1,
-  size: 10,
+  pageSize: 10,
   sort: undefined as string | undefined,
 });
 const YEAR_ALL = 'ALL';
@@ -229,17 +231,34 @@ const mockList: BiddingProjectVO[] = Array.from({ length: 23 }).map((_, idx) => 
   projectName: `示例招标项目 ${idx + 1}`,
   tenderOrg: idx % 2 === 0 ? '总部' : '分公司A',
   ownerName: idx % 3 === 0 ? '张三' : idx % 3 === 1 ? '李四' : '王五',
-  status: statusOptions[idx % statusOptions.length].value,
+  status: statusOptions[idx % statusOptions.length]?.value ?? '未开始',
   createdTime: '2025-01-01 10:00:00',
 }));
+
+function normalizeDateTime(value?: string) {
+  return (value || '').replace('T', ' ');
+}
+
+function mapTenderToProject(item: any): BiddingProjectVO {
+  return {
+    projectId: String(item?.tenderId ?? ''),
+    projectCode: item?.tenderCode || '',
+    projectName: item?.tenderName || '',
+    tenderOrg: item?.purchaserName || item?.tenderOrg || '',
+    ownerName: item?.createdByName || '',
+    tenderMode: item?.tenderMode || '',
+    status: (item?.status || '') as BiddingProjectStatus,
+    createdTime: normalizeDateTime(item?.createdTime),
+  };
+}
 
 async function fetchList() {
   loading.value = true;
   try {
     const res = await queryBiddingProjectList({ ...query });
     const records = (res as any)?.list ?? [];
-    tableData.value = Array.isArray(records) && records.length ? records : mockList;
-    total.value = Number((res as any)?.total ?? tableData.value.length) || 0;
+    tableData.value = Array.isArray(records) ? records.map((item: any) => mapTenderToProject(item)) : [];
+    total.value = Number((res as any)?.total ?? 0) || 0;
   } catch (e) {
     tableData.value = mockList;
     total.value = mockList.length;
@@ -250,6 +269,8 @@ async function fetchList() {
 
 onMounted(() => {
   fetchList();
+  //查询字段
+  fetchPostDictOptions();
 });
 
 watch(
@@ -287,11 +308,31 @@ function handleCurrentChange(page: number) {
 }
 
 function handleSizeChange(size: number) {
-  query.size = size;
+  query.pageSize = size;
   query.pageNum = 1;
   fetchList();
 }
-
+async function fetchPostDictOptions() {
+  try {
+    const [ty] = await Promise.all([
+      listDictOptions('tender_mode'),
+      // listDictOptions('post_level'),
+      // listDictOptions('post_category'),
+    ]);
+    tenderMode.value = normalizeDictOptions(ty);
+    // postLevelOptions.value = normalizeDictOptions(levelRes);
+    // postCategoryOptions.value = normalizeDictOptions(categoryRes);
+  } catch (e) {
+    console.error('加载字典选项失败:', e);
+    tenderMode.value = [];
+  }
+}
+function normalizeDictOptions(res: DictOption[] | { data?: DictOption[] }) {
+  // 如果输入已经是数组格式，直接返回
+  if (Array.isArray(res)) return res;
+  // 如果输入是对象格式且包含data数组，则返回data数组
+  return Array.isArray(res?.data) ? res.data : [];
+}
 // 弹窗表单
 const editDialog = reactive({
   visible: false,
@@ -304,7 +345,7 @@ const form = reactive({
   projectName: '',
   tenderOrg: '',
   ownerName: '',
-  status: 'DRAFT' as BiddingProjectStatus,
+  status: '未开始' as BiddingProjectStatus,
   budgetAmount: 0,
   tenderMethod: '' as '' | 'OPEN' | 'INVITE' | 'NEGOTIATION',
   bidDeadline: '',
@@ -333,7 +374,7 @@ function openEdit(isEdit: boolean, row?: BiddingProjectVO) {
     form.projectName = '';
     form.tenderOrg = '';
     form.ownerName = '';
-    form.status = 'DRAFT';
+    form.status = '未开始';
     form.budgetAmount = 0;
     form.tenderMethod = 'OPEN';
     form.bidDeadline = '';
@@ -360,7 +401,7 @@ function openEditById(projectId: string) {
     projectName: `示例招标项目 ${projectId}`,
     tenderOrg: '',
     ownerName: '',
-    status: 'DRAFT',
+    status: '未开始',
     createdTime: '',
   });
 }
