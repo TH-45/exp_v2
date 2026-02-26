@@ -20,7 +20,7 @@ public class RolePermissionRel {
      * 主键ID，自动生成
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 

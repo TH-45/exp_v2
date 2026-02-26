@@ -37,7 +37,7 @@ export interface QueryAttachmentParams {
 
 // 说明：docs 只约定了 upload/download，这里 list 先占位，后续对齐后端即可
 export function queryBiddingAttachmentList(params: QueryAttachmentParams) {
-  return request.get<PageResult<AttachmentVO>, PageResult<AttachmentVO>>('/exp/files/list', { params });
+  return request.post<PageResult<AttachmentVO>, PageResult<AttachmentVO>>('/exp/files/list', params);
 }
 
 export function downloadFile(fileId: string) {

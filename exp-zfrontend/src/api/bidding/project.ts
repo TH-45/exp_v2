@@ -1,4 +1,5 @@
 import request from '@/api/request';
+import {buildPageQuery, type PageQueryInput} from '@/api/common';
 
 export type BiddingProjectStatus =
   | 'DRAFT'
@@ -26,8 +27,8 @@ export interface PageResult<T> {
 }
 
 export interface QueryBiddingProjectParams {
-  pageNum: number;
-  size: number;
+  // pageNum: number;
+  // size: number;
   projectCode?: string;
   projectName?: string;
   tenderOrg?: string;
@@ -36,11 +37,10 @@ export interface QueryBiddingProjectParams {
   sort?: string;
 }
 
-// 约定路径（与 docs/public/接口约定.md 的示例保持一致）
-export function queryBiddingProjectList(params: QueryBiddingProjectParams) {
-  return request.get<PageResult<BiddingProjectVO>, PageResult<BiddingProjectVO>>(
+export function queryBiddingProjectList(data: PageQueryInput<QueryBiddingProjectParams>) {
+  return request.post<PageResult<BiddingProjectVO>, PageResult<BiddingProjectVO>>(
     '/exp/bid/tender/list',
-    { params },
+      buildPageQuery<QueryBiddingProjectParams>(data),
   );
 }
 

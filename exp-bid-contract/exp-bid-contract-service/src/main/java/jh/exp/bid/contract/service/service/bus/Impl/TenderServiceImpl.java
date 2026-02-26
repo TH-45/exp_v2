@@ -104,7 +104,7 @@ public class TenderServiceImpl implements TenderService {
         tender.setTenderName(req.getTenderName());
         tender.setTenderType(req.getTenderType());
         tender.setTenderMode(req.getTenderMode());
-        tender.setPurchaserId(req.getPurchaserId());
+        tender.setCompanyId(req.getCompanyId());
         tender.setBudgetAmount(req.getBudgetAmount());
         tender.setCurrency(req.getCurrency());
         tender.setTenderBrief(req.getTenderBrief());
@@ -151,7 +151,7 @@ public class TenderServiceImpl implements TenderService {
         tender.setTenderName(req.getTenderName());
         tender.setTenderType(req.getTenderType());
         tender.setTenderMode(req.getTenderMode());
-        tender.setPurchaserId(req.getPurchaserId());
+        tender.setCompanyId(req.getCompanyId());
         tender.setBudgetAmount(req.getBudgetAmount());
         tender.setCurrency(req.getCurrency());
         tender.setTenderBrief(req.getTenderBrief());

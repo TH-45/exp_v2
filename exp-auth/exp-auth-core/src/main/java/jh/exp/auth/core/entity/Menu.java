@@ -24,7 +24,7 @@ import java.util.List;
 public class Menu {
     // 主键ID（自增）
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
     @Column(name = "menu_id")
     private Long menuId;

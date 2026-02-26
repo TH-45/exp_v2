@@ -26,7 +26,7 @@ import java.util.Set;
 public class AuthAspect {
 
     /**
-     * 定义切点：所有带有 @RequiresLogin 或 @RequiresPermissions 注解的方法
+     * 定义切点：所有带有 @RequiresLogin 或 //@RequiresPermissions 注解的方法
      * 也可以更精确地定义 Controller 层的方法
      */
     private static final String POINTCUT_METHOD =

@@ -22,7 +22,7 @@ import java.math.BigDecimal;
 public class BidDetail {
     // 主键ID
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
     @Column(name = "detail_id")
     private Long detailId;

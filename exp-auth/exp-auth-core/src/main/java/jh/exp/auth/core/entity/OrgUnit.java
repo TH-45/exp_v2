@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 public class OrgUnit {
     // 主键ID（自增）
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
     @Column(name = "org_id")
     private Long orgId;

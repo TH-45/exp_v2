@@ -26,7 +26,7 @@ public class TenderController {
      * 分页查询招标列表
      */
     @PostMapping("/list")
-    @RequiresPermissions("TENDER:VIEW")
+    //@RequiresPermissions("TENDER:VIEW")
     public ApiResponse<SimplePageRes<TenderListRes>> list(@RequestBody SimplePageReq<QueryTenderReq> req) {
         req.pageDefault();
         SimplePageRes<TenderListRes> result = tenderService.queryTenderList(req);
@@ -37,7 +37,7 @@ public class TenderController {
      * 根据ID查询招标详情
      */
     @GetMapping("/detail")
-    @RequiresPermissions("TENDER:VIEW")
+    //@RequiresPermissions("TENDER:VIEW")
     public ApiResponse<TenderDetailRes> detail(@RequestParam Long tenderId) {
         TenderDetailRes result = tenderService.getTenderById(tenderId);
         return ApiResponse.success(result);
@@ -47,7 +47,7 @@ public class TenderController {
      * 创建招标
      */
     @PostMapping("/create")
-    @RequiresPermissions("TENDER:ADD")
+    //@RequiresPermissions("TENDER:ADD")
     public ApiResponse<TenderDetailRes> create(@RequestBody @Valid CreateTenderReq req) {
         TenderDetailRes result = tenderService.createTender(req);
         return ApiResponse.success(result);
@@ -57,7 +57,7 @@ public class TenderController {
      * 更新招标
      */
     @PostMapping("/update")
-    @RequiresPermissions("TENDER:EDIT")
+    //@RequiresPermissions("TENDER:EDIT")
     public ApiResponse<TenderDetailRes> update(@RequestBody @Valid UpdateTenderReq req) {
         TenderDetailRes result = tenderService.updateTender(req);
         return ApiResponse.success(result);
@@ -67,7 +67,7 @@ public class TenderController {
      * 删除招标
      */
     @PostMapping("/delete")
-    @RequiresPermissions("TENDER:DELETE")
+    //@RequiresPermissions("TENDER:DELETE")
     public ApiResponse<Void> delete(@RequestBody DeleteTenderReq req) {
         tenderService.deleteTender(req.getTenderId());
         return ApiResponse.success(null);
@@ -77,7 +77,7 @@ public class TenderController {
      * 批量删除招标
      */
     @PostMapping("/batchDelete")
-    @RequiresPermissions("TENDER:DELETE")
+    //@RequiresPermissions("TENDER:DELETE")
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteTenderReq req) {
         tenderService.batchDeleteTenders(req);
         return ApiResponse.success(null);
@@ -87,7 +87,7 @@ public class TenderController {
      * 更改招标状态
      */
     @PostMapping("/status")
-    @RequiresPermissions("TENDER:EDIT")
+    //@RequiresPermissions("TENDER:EDIT")
     public ApiResponse<TenderDetailRes> updateStatus(@RequestBody @Valid TenderStatusReq req) {
         TenderDetailRes result = tenderService.updateTenderStatus(req);
         return ApiResponse.success(result);
@@ -97,7 +97,7 @@ public class TenderController {
      * 批量更改招标状态
      */
     @PostMapping("/batchStatus")
-    @RequiresPermissions("TENDER:EDIT")
+    //@RequiresPermissions("TENDER:EDIT")
     public ApiResponse<Void> batchUpdateStatus(@RequestBody @Valid BatchTenderStatusReq req) {
         tenderService.batchUpdateTenderStatus(req);
         return ApiResponse.success(null);

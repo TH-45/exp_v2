@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 public class Tender {
     // 主键ID
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
     @Column(name = "tender_id")
     private Long tenderId;
@@ -45,8 +45,8 @@ public class Tender {
     private String tenderMode;
 
     // 招标人/采购方ID，关联企业信息（内部单位或外部单位）
-    @Column(name = "purchaser_id")
-    private Long purchaserId;
+    @Column(name = "company_id")
+    private Long companyId;
 
     // 招标控制价/预算金额
     @Column(name = "budget_amount", precision = 20, scale = 2)

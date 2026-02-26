@@ -1,4 +1,5 @@
 import request from '@/api/request';
+import {buildPageQuery, type PageQueryInput} from '@/api/common';
 
 export type BidStatus = 'DRAFT' | 'SUBMITTED' | 'WITHDRAWN' | 'REJECTED' | 'VALID';
 
@@ -21,8 +22,8 @@ export interface PageResult<T> {
 }
 
 export interface QueryBidParams {
-  pageNum: number;
-  size: number;
+  // pageNum: number;
+  // size: number;
   projectId?: string;
   keyword?: string; // 项目/投标人
   bidderName?: string;
@@ -30,9 +31,10 @@ export interface QueryBidParams {
   sort?: string;
 }
 
-// 约定路径（与 docs/public/接口约定.md 的示例保持一致）
-export function queryBidList(params: QueryBidParams) {
-  return request.get<PageResult<BidVO>, PageResult<BidVO>>('/exp/bid/bidding/list', { params });
+export function queryBidList(data: PageQueryInput<QueryBidParams>) {
+  return request.post<PageResult<BidVO>, PageResult<BidVO>>('/exp/bid/bidding/list',
+     buildPageQuery<QueryBidParams>(data),
+  );
 }
 
 

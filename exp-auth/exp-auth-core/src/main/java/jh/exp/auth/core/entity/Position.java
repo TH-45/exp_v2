@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 public class Position {
     // 岗位ID
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
     @Column(name = "post_id")
     private Long postId;

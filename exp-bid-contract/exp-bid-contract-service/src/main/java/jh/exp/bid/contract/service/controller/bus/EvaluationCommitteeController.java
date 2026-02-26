@@ -28,7 +28,7 @@ public class EvaluationCommitteeController {
      * 分页查询评标委员会列表
      */
     @PostMapping("/list")
-    @RequiresPermissions("EVALUATION:VIEW")
+    //@RequiresPermissions("EVALUATION:VIEW")
     public ApiResponse<SimplePageRes<EvaluationCommitteeListRes>> list(@RequestBody SimplePageReq<QueryEvaluationCommitteeReq> req) {
         req.pageDefault();
         SimplePageRes<EvaluationCommitteeListRes> result = committeeService.queryCommitteeList(req);
@@ -39,7 +39,7 @@ public class EvaluationCommitteeController {
      * 根据ID查询评标委员会详情
      */
     @GetMapping("/detail")
-    @RequiresPermissions("EVALUATION:VIEW")
+    //@RequiresPermissions("EVALUATION:VIEW")
     public ApiResponse<EvaluationCommitteeListRes> detail(@RequestParam Long committeeId) {
         EvaluationCommitteeListRes result = committeeService.getCommitteeById(committeeId);
         return ApiResponse.success(result);
@@ -49,7 +49,7 @@ public class EvaluationCommitteeController {
      * 创建评标委员会
      */
     @PostMapping("/create")
-    @RequiresPermissions("EVALUATION:ADD")
+    //@RequiresPermissions("EVALUATION:ADD")
     public ApiResponse<EvaluationCommitteeListRes> create(@RequestBody @Valid CreateEvaluationCommitteeReq req) {
         EvaluationCommitteeListRes result = committeeService.createCommittee(req);
         return ApiResponse.success(result);
@@ -59,7 +59,7 @@ public class EvaluationCommitteeController {
      * 更新评标委员会
      */
     @PostMapping("/update")
-    @RequiresPermissions("EVALUATION:EDIT")
+    //@RequiresPermissions("EVALUATION:EDIT")
     public ApiResponse<EvaluationCommitteeListRes> update(@RequestParam Long committeeId,
                                                          @RequestBody @Valid CreateEvaluationCommitteeReq req) {
         EvaluationCommitteeListRes result = committeeService.updateCommittee(req, committeeId);
@@ -70,7 +70,7 @@ public class EvaluationCommitteeController {
      * 删除评标委员会
      */
     @PostMapping("/delete")
-    @RequiresPermissions("EVALUATION:DELETE")
+    //@RequiresPermissions("EVALUATION:DELETE")
     public ApiResponse<Void> delete(@RequestParam Long committeeId) {
         committeeService.deleteCommittee(committeeId);
         return ApiResponse.success(null);
@@ -80,7 +80,7 @@ public class EvaluationCommitteeController {
      * 批量删除评标委员会
      */
     @PostMapping("/batchDelete")
-    @RequiresPermissions("EVALUATION:DELETE")
+    //@RequiresPermissions("EVALUATION:DELETE")
     public ApiResponse<Void> batchDelete(@RequestBody List<Long> committeeIds) {
         committeeService.batchDeleteCommittees(committeeIds);
         return ApiResponse.success(null);
@@ -90,7 +90,7 @@ public class EvaluationCommitteeController {
      * 更新委员会状态
      */
     @PostMapping("/status")
-    @RequiresPermissions("EVALUATION:EDIT")
+    //@RequiresPermissions("EVALUATION:EDIT")
     public ApiResponse<EvaluationCommitteeListRes> updateStatus(@RequestParam Long committeeId,
                                                                @RequestParam String status) {
         EvaluationCommitteeListRes result = committeeService.updateCommitteeStatus(committeeId, status);
@@ -101,7 +101,7 @@ public class EvaluationCommitteeController {
      * 批量更新委员会状态
      */
     @PostMapping("/batchStatus")
-    @RequiresPermissions("EVALUATION:EDIT")
+    //@RequiresPermissions("EVALUATION:EDIT")
     public ApiResponse<Void> batchUpdateStatus(@RequestBody List<Long> committeeIds,
                                               @RequestParam String status) {
         committeeService.batchUpdateCommitteeStatus(committeeIds, status);
@@ -122,7 +122,7 @@ public class EvaluationCommitteeController {
      * 根据招标ID获取评标委员会列表
      */
     @GetMapping("/byTender")
-    @RequiresPermissions("EVALUATION:VIEW")
+    //@RequiresPermissions("EVALUATION:VIEW")
     public ApiResponse<List<EvaluationCommitteeListRes>> getByTender(@RequestParam Long tenderId) {
         List<EvaluationCommitteeListRes> result = committeeService.getCommitteesByTenderId(tenderId);
         return ApiResponse.success(result);

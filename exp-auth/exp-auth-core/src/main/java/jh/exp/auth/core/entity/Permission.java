@@ -21,7 +21,7 @@ public class Permission {
      * 权限ID，主键，自动生成
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "perm_id")
     private Long permId;
 

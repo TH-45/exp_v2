@@ -9,11 +9,25 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+
+/**
+ * GET 请求示例：
+ * request.get('/users', { params: { id: 123 } })
+ *
+ * POST 请求示例：
+ * request.post('/users', { name: 'John', age: 30 })
+ *
+ * 入参说明：
+ * - GET 请求：第一个参数为 URL，第二个参数为配置对象，可通过 params 传递查询参数
+ * - POST 请求：第一个参数为 URL，第二个参数为请求体数据（通常为对象）
+ */
 const request = axios.create({
-  baseURL: '/api',
-  timeout: 10000,
+    timeout: 10000,
+    baseURL: '/api',
 });
 
+
+// 请求拦截器：添加 token
 request.interceptors.request.use(
   (config) => {
     const userStore = useUserStore();
@@ -26,6 +40,7 @@ request.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+// 响应拦截器：处理 API 返回的数据结构
 request.interceptors.response.use(
   (response) => {
     const res = response.data as ApiResponse<unknown>;

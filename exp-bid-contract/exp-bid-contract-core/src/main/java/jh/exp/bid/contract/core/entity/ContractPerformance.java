@@ -23,7 +23,7 @@ import java.time.LocalDate;
 public class ContractPerformance {
     // 主键ID
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
     @Column(name = "perf_id")
     private Long perfId;

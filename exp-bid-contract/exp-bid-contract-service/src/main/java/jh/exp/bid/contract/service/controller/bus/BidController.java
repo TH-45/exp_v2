@@ -28,7 +28,7 @@ public class BidController {
      * 分页查询投标列表
      */
     @PostMapping("/list")
-    @RequiresPermissions("BID:VIEW")
+    //@RequiresPermissions("BID:VIEW")
     public ApiResponse<SimplePageRes<BidListRes>> list(@RequestBody SimplePageReq<QueryBidReq> req) {
         req.pageDefault();
         SimplePageRes<BidListRes> result = bidService.queryBidList(req);
@@ -39,7 +39,7 @@ public class BidController {
      * 根据ID查询投标详情
      */
     @GetMapping("/detail")
-    @RequiresPermissions("BID:VIEW")
+    //@RequiresPermissions("BID:VIEW")
     public ApiResponse<BidDetailRes> detail(@RequestParam Long bidId) {
         BidDetailRes result = bidService.getBidById(bidId);
         return ApiResponse.success(result);
@@ -49,7 +49,7 @@ public class BidController {
      * 创建投标
      */
     @PostMapping("/create")
-    @RequiresPermissions("BID:ADD")
+    //@RequiresPermissions("BID:ADD")
     public ApiResponse<BidDetailRes> create(@RequestBody @Valid CreateBidReq req) {
         BidDetailRes result = bidService.createBid(req);
         return ApiResponse.success(result);
@@ -59,7 +59,7 @@ public class BidController {
      * 更新投标
      */
     @PostMapping("/update")
-    @RequiresPermissions("BID:EDIT")
+    //@RequiresPermissions("BID:EDIT")
     public ApiResponse<BidDetailRes> update(@RequestBody @Valid UpdateBidReq req) {
         BidDetailRes result = bidService.updateBid(req);
         return ApiResponse.success(result);
@@ -69,7 +69,7 @@ public class BidController {
      * 删除投标
      */
     @PostMapping("/delete")
-    @RequiresPermissions("BID:DELETE")
+    //@RequiresPermissions("BID:DELETE")
     public ApiResponse<Void> delete(@RequestBody DeleteBidReq req) {
         bidService.deleteBid(req.getBidId());
         return ApiResponse.success(null);
@@ -79,7 +79,7 @@ public class BidController {
      * 批量删除投标
      */
     @PostMapping("/batchDelete")
-    @RequiresPermissions("BID:DELETE")
+    //@RequiresPermissions("BID:DELETE")
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteBidReq req) {
         bidService.batchDeleteBids(req);
         return ApiResponse.success(null);
@@ -89,7 +89,7 @@ public class BidController {
      * 更改投标状态
      */
     @PostMapping("/status")
-    @RequiresPermissions("BID:EDIT")
+    //@RequiresPermissions("BID:EDIT")
     public ApiResponse<BidDetailRes> updateStatus(@RequestBody @Valid BidStatusReq req) {
         BidDetailRes result = bidService.updateBidStatus(req);
         return ApiResponse.success(result);
@@ -99,7 +99,7 @@ public class BidController {
      * 批量更改投标状态
      */
     @PostMapping("/batchStatus")
-    @RequiresPermissions("BID:EDIT")
+    //@RequiresPermissions("BID:EDIT")
     public ApiResponse<Void> batchUpdateStatus(@RequestBody @Valid BatchBidStatusReq req) {
         bidService.batchUpdateBidStatus(req);
         return ApiResponse.success(null);
@@ -119,7 +119,7 @@ public class BidController {
      * 根据招标ID获取投标列表
      */
     @GetMapping("/tenderBids")
-    @RequiresPermissions("BID:VIEW")
+    //@RequiresPermissions("BID:VIEW")
     public ApiResponse<List<BidListRes>> getTenderBids(@RequestParam Long tenderId) {
         List<BidListRes> result = bidService.getBidsByTenderId(tenderId);
         return ApiResponse.success(result);

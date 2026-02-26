@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 public class ContractApproval {
     // 主键ID
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
     @Column(name = "approval_id")
     private Long approvalId;

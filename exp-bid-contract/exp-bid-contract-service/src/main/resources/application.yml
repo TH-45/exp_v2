@@ -43,3 +43,8 @@ logging:
     root: info
     com.exp: debug
 
+#引入外部服务
+exp:
+  service:
+    auth:
+      url: http://exp-auth

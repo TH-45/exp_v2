@@ -40,6 +40,7 @@ router.beforeEach(async (to, _from, next) => {
     if (!userStore.isAdmin) {
       const hasPerm = requiredPerms.some((p) => userStore.permissions.includes(p));
       if (!hasPerm) {
+        console.log('无权限访问');
         return next({ path: '/403' });
       }
     }

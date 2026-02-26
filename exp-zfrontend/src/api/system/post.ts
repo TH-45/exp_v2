@@ -1,5 +1,5 @@
 import request from '@/api/request';
-import {buildPageQuery, PageQueryInput, type PageResult} from '@/api/common';
+import {buildPageQuery, type PageQueryInput, type PageResult} from '@/api/common';
 
 export interface OrgNode {
   orgId: number;

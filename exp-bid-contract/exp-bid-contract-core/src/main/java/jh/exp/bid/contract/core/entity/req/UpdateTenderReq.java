@@ -51,7 +51,7 @@ public class UpdateTenderReq {
      * 招标人/采购方ID，关联企业信息（内部单位或外部单位）
      */
     @NotNull(message = "招标人ID不能为空")
-    private Long purchaserId;
+    private Long companyId;
 
     /**
      * 招标控制价/预算金额

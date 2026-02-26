@@ -22,7 +22,7 @@ public class AwardResultController {
      * 创建定标结果
      */
     @PostMapping("/create")
-    @RequiresPermissions("AWARD:ADD")
+    //@RequiresPermissions("AWARD:ADD")
     public ApiResponse<BidAwardResult> create(@RequestBody CreateAwardResultReq req) {
         BidAwardResult result = awardService.createAwardResult(req);
         return ApiResponse.success(result);
@@ -32,7 +32,7 @@ public class AwardResultController {
      * 更新定标结果
      */
     @PostMapping("/update")
-    @RequiresPermissions("AWARD:EDIT")
+    //@RequiresPermissions("AWARD:EDIT")
     public ApiResponse<BidAwardResult> update(@RequestParam Long awardId,
                                                 @RequestBody CreateAwardResultReq req) {
         BidAwardResult result = awardService.updateAwardResult(awardId, req);
@@ -43,7 +43,7 @@ public class AwardResultController {
      * 删除定标结果
      */
     @PostMapping("/delete")
-    @RequiresPermissions("AWARD:DELETE")
+    //@RequiresPermissions("AWARD:DELETE")
     public ApiResponse<Void> delete(@RequestParam Long awardId) {
         awardService.deleteAwardResult(awardId);
         return ApiResponse.success(null);
@@ -53,7 +53,7 @@ public class AwardResultController {
      * 根据招标ID查询定标结果
      */
     @GetMapping("/byTender")
-    @RequiresPermissions("AWARD:VIEW")
+    //@RequiresPermissions("AWARD:VIEW")
     public ApiResponse<BidAwardResult> getByTender(@RequestParam Long tenderId) {
         BidAwardResult result = awardService.getAwardResultByTenderId(tenderId);
         return ApiResponse.success(result);
@@ -63,7 +63,7 @@ public class AwardResultController {
      * 根据投标ID查询定标结果
      */
     @GetMapping("/byBid")
-    @RequiresPermissions("AWARD:VIEW")
+    //@RequiresPermissions("AWARD:VIEW")
     public ApiResponse<BidAwardResult> getByBid(@RequestParam Long bidId) {
         BidAwardResult result = awardService.getAwardResultByBidId(bidId);
         return ApiResponse.success(result);
@@ -73,7 +73,7 @@ public class AwardResultController {
      * 更新定标状态
      */
     @PostMapping("/status")
-    @RequiresPermissions("AWARD:EDIT")
+    //@RequiresPermissions("AWARD:EDIT")
     public ApiResponse<BidAwardResult> updateStatus(@RequestParam Long awardId,
                                                       @RequestParam String awardStatus) {
         BidAwardResult result = awardService.updateAwardStatus(awardId, awardStatus);

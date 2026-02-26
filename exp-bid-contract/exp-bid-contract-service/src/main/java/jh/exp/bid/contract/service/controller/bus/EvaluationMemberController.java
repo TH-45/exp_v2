@@ -24,7 +24,7 @@ public class EvaluationMemberController {
      * 根据委员会ID查询评标成员列表
      */
     @GetMapping("/list")
-    @RequiresPermissions("EVALUATION:VIEW")
+    //@RequiresPermissions("EVALUATION:VIEW")
     public ApiResponse<List<BidEvaluationMember>> list(@RequestParam Long committeeId) {
         List<BidEvaluationMember> result = memberService.getMembersByCommitteeId(committeeId);
         return ApiResponse.success(result);
@@ -34,7 +34,7 @@ public class EvaluationMemberController {
      * 添加评标成员
      */
     @PostMapping("/add")
-    @RequiresPermissions("EVALUATION:EDIT")
+    //@RequiresPermissions("EVALUATION:EDIT")
     public ApiResponse<BidEvaluationMember> add(@RequestBody CreateEvaluationMemberReq req) {
         BidEvaluationMember result = memberService.addMember(req);
         return ApiResponse.success(result);
@@ -44,7 +44,7 @@ public class EvaluationMemberController {
      * 批量添加评标成员
      */
     @PostMapping("/batchAdd")
-    @RequiresPermissions("EVALUATION:EDIT")
+    //@RequiresPermissions("EVALUATION:EDIT")
     public ApiResponse<Void> batchAdd(@RequestParam Long committeeId,
                                      @RequestBody List<CreateEvaluationMemberReq> members) {
         memberService.batchAddMembers(committeeId, members);
@@ -55,7 +55,7 @@ public class EvaluationMemberController {
      * 更新评标成员
      */
     @PostMapping("/update")
-    @RequiresPermissions("EVALUATION:EDIT")
+    //@RequiresPermissions("EVALUATION:EDIT")
     public ApiResponse<BidEvaluationMember> update(@RequestParam Long memberId,
                                                      @RequestBody CreateEvaluationMemberReq req) {
         BidEvaluationMember result = memberService.updateMember(memberId, req);
@@ -66,7 +66,7 @@ public class EvaluationMemberController {
      * 删除评标成员
      */
     @PostMapping("/remove")
-    @RequiresPermissions("EVALUATION:DELETE")
+    //@RequiresPermissions("EVALUATION:DELETE")
     public ApiResponse<Void> remove(@RequestParam Long memberId) {
         memberService.removeMember(memberId);
         return ApiResponse.success(null);
@@ -76,7 +76,7 @@ public class EvaluationMemberController {
      * 批量删除评标成员
      */
     @PostMapping("/batchRemove")
-    @RequiresPermissions("EVALUATION:DELETE")
+    //@RequiresPermissions("EVALUATION:DELETE")
     public ApiResponse<Void> batchRemove(@RequestParam Long committeeId,
                                         @RequestBody List<Long> memberIds) {
         memberService.batchRemoveMembers(committeeId, memberIds);
@@ -87,7 +87,7 @@ public class EvaluationMemberController {
      * 更新成员到场状态
      */
     @PostMapping("/presence")
-    @RequiresPermissions("EVALUATION:EDIT")
+    //@RequiresPermissions("EVALUATION:EDIT")
     public ApiResponse<BidEvaluationMember> updatePresence(@RequestParam Long memberId,
                                                              @RequestParam Integer isPresent) {
         BidEvaluationMember result = memberService.updateMemberPresence(memberId, isPresent);

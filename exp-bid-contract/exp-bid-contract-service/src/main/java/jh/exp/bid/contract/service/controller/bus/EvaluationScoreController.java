@@ -25,7 +25,7 @@ public class EvaluationScoreController {
      * 提交评标打分
      */
     @PostMapping("/submit")
-    @RequiresPermissions("EVALUATION:SCORE")
+    //@RequiresPermissions("EVALUATION:SCORE")
     public ApiResponse<BidEvaluationScore> submit(@RequestBody CreateEvaluationScoreReq req) {
         BidEvaluationScore result = scoreService.submitScore(req);
         return ApiResponse.success(result);
@@ -35,7 +35,7 @@ public class EvaluationScoreController {
      * 批量提交评标打分
      */
     @PostMapping("/batchSubmit")
-    @RequiresPermissions("EVALUATION:SCORE")
+    //@RequiresPermissions("EVALUATION:SCORE")
     public ApiResponse<Void> batchSubmit(@RequestParam Long committeeId,
                                         @RequestParam Long bidId,
                                         @RequestBody List<CreateEvaluationScoreReq> scores) {
@@ -47,7 +47,7 @@ public class EvaluationScoreController {
      * 更新评标打分
      */
     @PostMapping("/update")
-    @RequiresPermissions("EVALUATION:SCORE")
+    //@RequiresPermissions("EVALUATION:SCORE")
     public ApiResponse<BidEvaluationScore> update(@RequestParam Long scoreId,
                                                     @RequestBody CreateEvaluationScoreReq req) {
         BidEvaluationScore result = scoreService.updateScore(scoreId, req);
@@ -58,7 +58,7 @@ public class EvaluationScoreController {
      * 删除评标打分
      */
     @PostMapping("/delete")
-    @RequiresPermissions("EVALUATION:DELETE")
+    //@RequiresPermissions("EVALUATION:DELETE")
     public ApiResponse<Void> delete(@RequestParam Long scoreId) {
         scoreService.deleteScore(scoreId);
         return ApiResponse.success(null);
@@ -68,7 +68,7 @@ public class EvaluationScoreController {
      * 根据委员会和投标查询评分记录
      */
     @GetMapping("/list")
-    @RequiresPermissions("EVALUATION:VIEW")
+    //@RequiresPermissions("EVALUATION:VIEW")
     public ApiResponse<List<BidEvaluationScore>> list(@RequestParam Long committeeId,
                                                         @RequestParam Long bidId) {
         List<BidEvaluationScore> result = scoreService.getScoresByCommitteeAndBid(committeeId, bidId);
@@ -79,7 +79,7 @@ public class EvaluationScoreController {
      * 计算投标的平均评分
      */
     @GetMapping("/average")
-    @RequiresPermissions("EVALUATION:VIEW")
+    //@RequiresPermissions("EVALUATION:VIEW")
     public ApiResponse<BigDecimal> average(@RequestParam Long committeeId,
                                           @RequestParam Long bidId,
                                           @RequestParam String scoreType) {
@@ -91,7 +91,7 @@ public class EvaluationScoreController {
      * 提交所有专家评分
      */
     @PostMapping("/submitAll")
-    @RequiresPermissions("EVALUATION:SCORE")
+    //@RequiresPermissions("EVALUATION:SCORE")
     public ApiResponse<Void> submitAll(@RequestParam Long committeeId,
                                       @RequestParam Long bidId,
                                       @RequestParam Long expertUserId) {

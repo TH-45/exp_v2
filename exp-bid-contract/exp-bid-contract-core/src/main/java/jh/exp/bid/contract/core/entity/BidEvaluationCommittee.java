@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 public class BidEvaluationCommittee {
     // 主键ID
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
     @Column(name = "committee_id")
     private Long committeeId;

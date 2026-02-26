@@ -29,7 +29,7 @@ public class AttachmentController {
      * 分页查询附件列表
      */
     @PostMapping("/list")
-    @RequiresPermissions("ATTACHMENT:VIEW")
+    //@RequiresPermissions("ATTACHMENT:VIEW")
     public ApiResponse<SimplePageRes<AttachmentListRes>> list(@RequestBody SimplePageReq<QueryAttachmentReq> req) {
         req.pageDefault();
         SimplePageRes<AttachmentListRes> result = attachmentService.queryAttachmentList(req);
@@ -40,7 +40,7 @@ public class AttachmentController {
      * 根据ID查询附件详情
      */
     @GetMapping("/detail")
-    @RequiresPermissions("ATTACHMENT:VIEW")
+    //@RequiresPermissions("ATTACHMENT:VIEW")
     public ApiResponse<AttachmentDetailRes> detail(@RequestParam Long attachmentId) {
         AttachmentDetailRes result = attachmentService.getAttachmentById(attachmentId);
         return ApiResponse.success(result);
@@ -50,7 +50,7 @@ public class AttachmentController {
      * 上传附件
      */
     @PostMapping("/upload")
-    @RequiresPermissions("ATTACHMENT:UPLOAD")
+    //@RequiresPermissions("ATTACHMENT:UPLOAD")
     public ApiResponse<AttachmentDetailRes> upload(@RequestBody @Valid CreateAttachmentReq req) {
         AttachmentDetailRes result = attachmentService.uploadAttachment(req);
         return ApiResponse.success(result);
@@ -60,7 +60,7 @@ public class AttachmentController {
      * 批量上传附件
      */
     @PostMapping("/batchUpload")
-    @RequiresPermissions("ATTACHMENT:UPLOAD")
+    //@RequiresPermissions("ATTACHMENT:UPLOAD")
     public ApiResponse<List<AttachmentDetailRes>> batchUpload(@RequestBody List<@Valid CreateAttachmentReq> attachments) {
         List<AttachmentDetailRes> result = attachmentService.batchUploadAttachments(attachments);
         return ApiResponse.success(result);
@@ -70,7 +70,7 @@ public class AttachmentController {
      * 更新附件信息
      */
     @PostMapping("/update")
-    @RequiresPermissions("ATTACHMENT:EDIT")
+    //@RequiresPermissions("ATTACHMENT:EDIT")
     public ApiResponse<AttachmentDetailRes> update(@RequestParam Long attachmentId,
                                                   @RequestBody @Valid CreateAttachmentReq req) {
         AttachmentDetailRes result = attachmentService.updateAttachment(attachmentId, req);
@@ -81,7 +81,7 @@ public class AttachmentController {
      * 删除附件
      */
     @PostMapping("/delete")
-    @RequiresPermissions("ATTACHMENT:DELETE")
+    //@RequiresPermissions("ATTACHMENT:DELETE")
     public ApiResponse<Void> delete(@RequestParam Long attachmentId) {
         attachmentService.deleteAttachment(attachmentId);
         return ApiResponse.success(null);
@@ -91,7 +91,7 @@ public class AttachmentController {
      * 批量删除附件
      */
     @PostMapping("/batchDelete")
-    @RequiresPermissions("ATTACHMENT:DELETE")
+    //@RequiresPermissions("ATTACHMENT:DELETE")
     public ApiResponse<Void> batchDelete(@RequestBody List<Long> attachmentIds) {
         attachmentService.batchDeleteAttachments(attachmentIds);
         return ApiResponse.success(null);
@@ -101,7 +101,7 @@ public class AttachmentController {
      * 下载附件
      */
     @GetMapping("/download")
-    @RequiresPermissions("ATTACHMENT:VIEW")
+    //@RequiresPermissions("ATTACHMENT:VIEW")
     public ApiResponse<AttachmentDetailRes> download(@RequestParam Long attachmentId) {
         AttachmentDetailRes result = attachmentService.downloadAttachment(attachmentId);
         return ApiResponse.success(result);
@@ -111,7 +111,7 @@ public class AttachmentController {
      * 根据业务查询附件列表
      */
     @GetMapping("/byBusiness")
-    @RequiresPermissions("ATTACHMENT:VIEW")
+    //@RequiresPermissions("ATTACHMENT:VIEW")
     public ApiResponse<List<AttachmentListRes>> getByBusiness(@RequestParam String businessType,
                                                              @RequestParam Long businessId) {
         List<AttachmentListRes> result = attachmentService.getAttachmentsByBusiness(businessType, businessId);
@@ -134,7 +134,7 @@ public class AttachmentController {
      * 获取业务附件统计信息
      */
     @GetMapping("/statistics")
-    @RequiresPermissions("ATTACHMENT:VIEW")
+    //@RequiresPermissions("ATTACHMENT:VIEW")
     public ApiResponse<AttachmentService.AttachmentStatistics> getStatistics(@RequestParam String businessType,
                                                                             @RequestParam Long businessId) {
         AttachmentService.AttachmentStatistics result = attachmentService.getBusinessAttachmentStatistics(businessType, businessId);
@@ -145,7 +145,7 @@ public class AttachmentController {
      * 更新文件状态
      */
     @PostMapping("/status")
-    @RequiresPermissions("ATTACHMENT:EDIT")
+    //@RequiresPermissions("ATTACHMENT:EDIT")
     public ApiResponse<AttachmentDetailRes> updateStatus(@RequestParam Long attachmentId,
                                                         @RequestParam String fileStatus) {
         AttachmentDetailRes result = attachmentService.updateFileStatus(attachmentId, fileStatus);
@@ -156,7 +156,7 @@ public class AttachmentController {
      * 批量更新文件状态
      */
     @PostMapping("/batchStatus")
-    @RequiresPermissions("ATTACHMENT:EDIT")
+    //@RequiresPermissions("ATTACHMENT:EDIT")
     public ApiResponse<Void> batchUpdateStatus(@RequestBody List<Long> attachmentIds,
                                               @RequestParam String fileStatus) {
         attachmentService.batchUpdateFileStatus(attachmentIds, fileStatus);
@@ -167,7 +167,7 @@ public class AttachmentController {
      * 清理无效附件
      */
     @PostMapping("/cleanup")
-    @RequiresPermissions("ATTACHMENT:ADMIN")
+    //@RequiresPermissions("ATTACHMENT:ADMIN")
     public ApiResponse<Void> cleanup() {
         attachmentService.cleanupInvalidAttachments();
         return ApiResponse.success(null);
