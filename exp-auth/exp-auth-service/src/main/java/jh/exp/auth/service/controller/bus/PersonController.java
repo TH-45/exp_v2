@@ -13,6 +13,10 @@ import jh.exp.common.core.res.SimplePageRes;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.service.annotation.PostExchange;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/person")
@@ -38,6 +42,17 @@ public class PersonController {
     public ApiResponse<PersonDetailRes> detail(@RequestParam Long personId) {
         PersonDetailRes result = personService.getPersonById(personId);
         return ApiResponse.success(result);
+    }
+
+    /**
+     * 批量查询人员详情
+     * @param personIds
+     * @return
+     */
+    @PostExchange("/batch")
+    Map<Long , PersonDetailRes> batchGetPersonByIds(@RequestBody List<Long> personIds){
+
+        return personService.batchGetPersonByIds(personIds);
     }
 
     /**

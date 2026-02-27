@@ -767,6 +767,7 @@ const closeAllTabs = () => {
   gap: 12px;
   border-bottom: 1px solid #ebeef5;
   margin-bottom: 8px;
+  width: 160px;
 
   .user-avatar-dropdown {
     width: 48px;

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: exp-bid-contract-service
+    name: exp-bid-contract
   jackson:
     default-property-inclusion: non_null
     time-zone: Asia/Shanghai

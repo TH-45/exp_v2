@@ -1,9 +1,9 @@
 server:
-  port: 8301
+  port: 8302
 
 spring:
   application:
-    name: exp-corp-service
+    name: exp-corp
   jackson:
     default-property-inclusion: non_null
     time-zone: Asia/Shanghai

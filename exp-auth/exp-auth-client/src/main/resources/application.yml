@@ -1,4 +1,4 @@
 exp:
   service:
     auth:
-      url: 192.168.101.128:8848
+      url: http://exp-auth

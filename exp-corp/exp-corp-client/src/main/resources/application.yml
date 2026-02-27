@@ -1,4 +1,4 @@
 exp:
   service:
     corp:
-      url: http://exp-corp-service
+      url: http://exp-corp

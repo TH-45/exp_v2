@@ -41,5 +41,5 @@ public interface ProjectClientService {
      * @return
      */
     @PostExchange("/batchGetProjectByIds")
-    ApiResponse<Map<Long,Project>> batchGetProjectByIds(List<Long> projectIds);
+    ApiResponse<Map<Long,Project>> batchGetProjectByIds(@RequestBody List<Long> projectIds);
 }

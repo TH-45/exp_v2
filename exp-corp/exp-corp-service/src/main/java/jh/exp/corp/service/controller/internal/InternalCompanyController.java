@@ -11,6 +11,9 @@ import jh.exp.corp.service.service.internal.CompanyInternalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/internal/corp/company")
 @RequiredArgsConstructor
@@ -27,6 +30,11 @@ public class InternalCompanyController {
     @GetMapping("/detail")
     public ApiResponse<CompanyDetailRes> detail(@RequestParam Long companyId) {
         return ApiResponse.success(companyInternalService.detail(companyId));
+    }
+
+    @PostMapping("/batchDetail")
+    public ApiResponse<Map<String,CompanyDetailRes>> batchDetail(@RequestBody List<Long> companyIds) {
+        return companyInternalService.batchDetail(companyIds);
     }
 
     @PostMapping("/create")

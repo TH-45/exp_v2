@@ -10,6 +10,10 @@ import jh.exp.project.core.entity.req.DeleteByIdReq;
 import jh.exp.project.service.service.internal.ProjectInternalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.service.annotation.PostExchange;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/internal/project/project")
@@ -26,6 +30,16 @@ public class InternalProjectController {
     @GetMapping("/detail")
     public ApiResponse<Project> detail(@RequestParam Long projectId) {
         return ApiResponse.success(service.detail(projectId));
+    }
+
+    /**
+     * 批量获取项目信息
+     * @param projectIds
+     * @return
+     */
+    @PostMapping("/batchGetProjectByIds")
+    public ApiResponse<Map<Long,Project>> batchGetProjectByIds(@RequestBody List<Long> projectIds){
+        return service.batchGetProjectByIds(projectIds);
     }
 
     @PostMapping("/create")

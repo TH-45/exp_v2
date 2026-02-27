@@ -51,29 +51,22 @@ spring:
           filters:
             - StripPrefix=2
 
-        - id: bid-service
-          uri: lb://exp-bid-contract-service
+        - id: bid-contract-service
+          uri: lb://exp-bid-contract
           predicates:
             - Path=/exp/bid/**
           filters:
             - StripPrefix=2
 
-        - id: contracts-service
-          uri: lb://exp-bid-contract-service
-          predicates:
-            - Path=/exp/contracts/**
-          filters:
-            - StripPrefix=2
-
         - id: project-service
-          uri: lb://exp-project-service
+          uri: lb://exp-project
           predicates:
             - Path=/exp/project/**
           filters:
             - StripPrefix=2
 
         - id: corp-service
-          uri: lb://exp-corp-service
+          uri: lb://exp-corp
           predicates:
             - Path=/exp/corp/**
           filters:

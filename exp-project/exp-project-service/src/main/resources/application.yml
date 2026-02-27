@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: exp-project-service
+    name: exp-project
   jackson:
     default-property-inclusion: non_null
     time-zone: Asia/Shanghai

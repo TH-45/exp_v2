@@ -6,6 +6,7 @@ import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.auth.core.entity.res.PersonInfoRes;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
@@ -32,7 +33,7 @@ public interface PersonService {
      * 批量查询人员详情
      */
     @PostExchange("/batch")
-    Map<Long , PersonDetailRes> batchGetPersonByIds(List<Long>  personIds);
+    Map<Long , PersonDetailRes> batchGetPersonByIds(@RequestBody  List<Long>  personIds);
 
     /**
      * 创建人员
