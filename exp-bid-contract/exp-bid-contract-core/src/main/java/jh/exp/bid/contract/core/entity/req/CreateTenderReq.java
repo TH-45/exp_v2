@@ -92,9 +92,8 @@ public class CreateTenderReq {
     private String openAddress;
 
     /**
-     * 工程项目ID，关联工程项目服务模块
+     * 工程项目ID，关联工程项目
      */
-    @NotNull(message = "项目ID不能为空")
     private Long projectId;
 
     /**

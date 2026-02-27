@@ -17,26 +17,33 @@
       <!-- 查询栏 -->
       <el-form :inline="true" :model="query" class="search-bar" @submit.prevent>
         <el-form-item label="项目编码">
-          <el-input v-model="query.projectCode" placeholder="请输入项目编码" clearable style="width: 180px" />
+          <el-input v-model="query.tenderCode" placeholder="请输入项目编码" clearable style="width: 180px" />
         </el-form-item>
         <el-form-item label="项目名称">
-          <el-input v-model="query.projectName" placeholder="请输入项目名称" clearable style="width: 200px" />
+          <el-input v-model="query.tenderName" placeholder="请输入项目名称" clearable style="width: 200px" />
         </el-form-item>
         <el-form-item label="招标单位">
-          <el-input v-model="query.tenderOrg" placeholder="请输入招标单位" clearable style="width: 200px" />
+          <el-input v-model="query.purchaserName" placeholder="请输入招标单位" clearable style="width: 200px" />
+        </el-form-item>
+        <!-- 强制换行 -->
+        <div style="flex-basis: 100%; height: 0;"></div>
+        <el-form-item label="招标方式">
+          <el-select v-model="query.tenderMode" clearable style="width: 140px">
+            <el-option v-for="t in tenderModeList" :key="t.value" :label="t.label" :value="t.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="招标类型">
+          <el-select v-model="query.tenderType" clearable style="width: 140px">
+            <el-option v-for="t in tenderTypeList" :key="t.value" :label="t.label" :value="t.value" />
+          </el-select>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="query.status" clearable style="width: 100px">
             <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="招标方式">
-          <el-select v-model="query.tenderMode" clearable style="width: 140px">
-            <el-option v-for="t in tenderMode" :key="t.value" :label="t.label" :value="t.value" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="年度">
-          <el-select v-model="yearSelectValue" clearable style="width: 140px">
+          <el-select v-model="yearSelectValue" clearable style="width: 100px">
             <el-option label="全部" :value="YEAR_ALL" />
             <el-option v-for="y in yearOptions" :key="y" :label="String(y)" :value="y" />
           </el-select>
@@ -48,12 +55,17 @@
       </el-form>
 
       <!-- 表格 -->
-      <el-table v-loading="loading" :data="tableData" row-key="projectId" border style="width: 100%">
-        <el-table-column prop="projectCode" label="项目编码" min-width="120" />
-        <el-table-column prop="projectName" label="项目名称" min-width="200" />
-        <el-table-column prop="tenderOrg" label="招标单位" min-width="180" />
+      <el-table v-loading="loading" :data="tableData" row-key="tenderId" border style="width: 100%">
+        <el-table-column prop="tenderCode" label="项目编码" min-width="120" />
+        <el-table-column prop="tenderName" label="项目名称" min-width="200" />
+        <el-table-column prop="purchaserName" label="招标单位" min-width="180" />
         <el-table-column prop="ownerName" label="负责人" min-width="120" />
-        <el-table-column prop="tenderMode" label="招标方式" min-width="120" />
+        <el-table-column label="招标方式">
+          <template #default="{ row }">
+            {{ formatTenderMode(row.tenderMode) }}
+          </template>
+        </el-table-column>
+
         <el-table-column label="状态" min-width="80">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)">{{ statusText(row.status) }}</el-tag>
@@ -101,51 +113,57 @@
           @submit.prevent="submitForm"
         >
           <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
-          <el-form-item label="项目编码" prop="projectCode">
-            <el-input v-model="form.projectCode" placeholder="请输入项目编码" />
+          <el-form-item label="项目编码" prop="tenderCode">
+            <el-input v-model="form.tenderCode" placeholder="请输入项目编码" />
           </el-form-item>
-          <el-form-item label="项目名称" prop="projectName">
-            <el-input v-model="form.projectName" placeholder="请输入项目名称" />
+          <el-form-item label="项目名称" prop="tenderName">
+            <el-input v-model="form.tenderName" placeholder="请输入项目名称" />
           </el-form-item>
-          <el-form-item label="招标单位">
-            <el-input v-model="form.tenderOrg" placeholder="请输入招标单位" />
+          <el-form-item label="招标单位" prop="company">
+            <CompanySelector v-model="form.company" />
           </el-form-item>
-          <el-form-item label="负责人">
-            <el-input v-model="form.ownerName" placeholder="请输入负责人" />
+          <el-form-item label="负责人" prop="owner">
+            <PersonSelector v-model="form.owner" />
           </el-form-item>
-          <el-form-item label="预算金额(万)">
+          <el-form-item label="关联项目" prop="relatedProject">
+            <ProjectSelector v-model="form.relatedProject" />
+          </el-form-item>
+          <el-form-item label="预算金额(万)" prop="budgetAmount">
             <el-input-number v-model="form.budgetAmount" :min="0" :max="999999999" style="width: 100%" />
           </el-form-item>
-          <el-form-item label="招标方式">
-            <el-select v-model="form.tenderMethod" clearable style="width: 100%">
-              <el-option label="公开招标" value="OPEN" />
-              <el-option label="邀请招标" value="INVITE" />
-              <el-option label="竞争性谈判" value="NEGOTIATION" />
+          <el-form-item label="招标类型" prop="tenderType">
+            <el-select v-model="form.tenderType" clearable style="width: 100%">
+              <el-option v-for="t in tenderTypeList" :key="t.value" :label="t.label" :value="t.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="投标截止时间">
+          <el-form-item label="招标方式" prop="tenderMode">
+            <el-select v-model="form.tenderMode" clearable style="width: 100%">
+              <el-option v-for="t in tenderModeList" :key="t.value" :label="t.label" :value="t.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="投标截止时间" prop="bidEndTime">
             <el-date-picker
-              v-model="form.bidDeadline"
+              v-model="form.bidEndTime"
               type="datetime"
               value-format="YYYY-MM-DD HH:mm:ss"
               placeholder="请选择投标截止时间"
               style="width: 100%"
             />
           </el-form-item>
-          <el-form-item label="开标时间">
+          <el-form-item label="开标时间" prop="openTime">
             <el-date-picker
-              v-model="form.openBidTime"
+              v-model="form.openTime"
               type="datetime"
               value-format="YYYY-MM-DD HH:mm:ss"
               placeholder="请选择开标时间"
               style="width: 100%"
             />
           </el-form-item>
-          <el-form-item label="状态" prop="status">
-            <el-select v-model="form.status" style="width: 100%">
-              <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
-            </el-select>
-          </el-form-item>
+<!--          <el-form-item label="状态" prop="status">-->
+<!--            <el-select v-model="form.status" style="width: 100%">-->
+<!--              <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />-->
+<!--            </el-select>-->
+<!--          </el-form-item>-->
           <el-form-item label="备注" class="full-row">
             <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注（可选）" @keydown.enter.stop />
           </el-form-item>
@@ -164,9 +182,15 @@ import { onMounted, reactive, ref, computed, watch } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
+import { generateProjectCode } from '@/utils/codeGenerator';
+import type { ExpPersonVO } from '@/api/system/person';
+import PersonSelector from '@/components/Selector/PersonSelector.vue';
+import CompanySelector from '@/components/Selector/CompanySelector.vue';
+import ProjectSelector from '@/components/Selector/ProjectSelector.vue'
+import type { ProjectVO } from '@/components/Selector/ProjectSelector.vue'
 import {
   queryBiddingProjectList,
-  type BiddingProjectVO,
+  type TenderVO,
   type BiddingProjectStatus,
 } from '@/api/bidding/project';
 
@@ -194,17 +218,42 @@ function statusTagType(s: BiddingProjectStatus) {
   if (s === '已结束') return 'success';
   return '';
 }
-const tenderMode = ref<DictOption[]>([]);
+/**
+ * 生成项目编码并填充
+ */
+function autoGenerateProjectCode() {
+  // 默认流水号可以从后端获取
+  // 这里先用当前页数量 + 1 作为模拟流水号
+  const lsh = tableData.value.length + 1;
+
+  const tenderModeValue = form.tenderMode || 'OPEN';
+
+  form.tenderCode = generateProjectCode(tenderModeValue, lsh);
+}
+
+/**
+ * 统一用英文值 + 字典转中文
+ * @param value
+ */
+function formatTenderMode(value?: string) {
+  if (!value) return '';
+  const found = tenderModeList.value.find(x => x.value === value);
+  return found?.label ?? value;
+}
+
+const tenderModeList = ref<DictOption[]>([]);
+const tenderTypeList = ref<DictOption[]>([]);
 const loading = ref(false);
 const saving = ref(false);
 
 const query = reactive({
-  projectCode: '',
-  projectName: '',
-  tenderOrg: '',
+  tenderCode: '',
+  tenderName: '',
+  purchaserName: '',
+  tenderType: '',
+  tenderMode: '',
   status: undefined as BiddingProjectStatus | undefined,
   year: new Date().getFullYear() as number | undefined,
-  tenderMode: '',
   pageNum: 1,
   pageSize: 10,
   sort: undefined as string | undefined,
@@ -222,55 +271,37 @@ const yearSelectValue = computed({
   },
 });
 
-const tableData = ref<BiddingProjectVO[]>([]);
+const tableData = ref<TenderVO[]>([]);
 const total = ref(0);
 
-const mockList: BiddingProjectVO[] = Array.from({ length: 23 }).map((_, idx) => ({
-  projectId: String(idx + 1),
-  projectCode: `TB-${query.year}-${String(idx + 1).padStart(3, '0')}`,
-  projectName: `示例招标项目 ${idx + 1}`,
-  tenderOrg: idx % 2 === 0 ? '总部' : '分公司A',
-  ownerName: idx % 3 === 0 ? '张三' : idx % 3 === 1 ? '李四' : '王五',
-  status: statusOptions[idx % statusOptions.length]?.value ?? '未开始',
-  createdTime: '2025-01-01 10:00:00',
-}));
 
-function normalizeDateTime(value?: string) {
+
+function normalizeDateTime (value?: string) {
   return (value || '').replace('T', ' ');
 }
 
-function mapTenderToProject(item: any): BiddingProjectVO {
-  return {
-    projectId: String(item?.tenderId ?? ''),
-    projectCode: item?.tenderCode || '',
-    projectName: item?.tenderName || '',
-    tenderOrg: item?.purchaserName || item?.tenderOrg || '',
-    ownerName: item?.createdByName || '',
-    tenderMode: item?.tenderMode || '',
-    status: (item?.status || '') as BiddingProjectStatus,
-    createdTime: normalizeDateTime(item?.createdTime),
-  };
-}
+
 
 async function fetchList() {
   loading.value = true;
   try {
     const res = await queryBiddingProjectList({ ...query });
-    const records = (res as any)?.list ?? [];
-    tableData.value = Array.isArray(records) ? records.map((item: any) => mapTenderToProject(item)) : [];
+    tableData.value = res.list ?? [];
     total.value = Number((res as any)?.total ?? 0) || 0;
   } catch (e) {
-    tableData.value = mockList;
-    total.value = mockList.length;
+    console.error('查询招标项目失败:', e);
+    tableData.value = [];
+    total.value = 0;
   } finally {
     loading.value = false;
   }
 }
 
-onMounted(() => {
-  fetchList();
-  //查询字段
-  fetchPostDictOptions();
+onMounted(async () => {
+  await Promise.all([
+    fetchPostDictOptions(),
+  ]);
+  await fetchList();
 });
 
 watch(
@@ -285,17 +316,17 @@ watch(
 );
 
 function handleSearch() {
-  query.projectCode = (query.projectCode || '').trim();
-  query.projectName = (query.projectName || '').trim();
-  query.tenderOrg = (query.tenderOrg || '').trim();
+  query.tenderCode = (query.tenderCode || '').trim();
+  query.tenderName = (query.tenderName || '').trim();
+  query.purchaserName = (query.purchaserName || '').trim();
   query.pageNum = 1;
   fetchList();
 }
 
 function handleReset() {
-  query.projectCode = '';
-  query.projectName = '';
-  query.tenderOrg = '';
+  query.tenderCode = '';
+  query.tenderName = '';
+  query.purchaserName = '';
   query.status = undefined;
   query.year = new Date().getFullYear();
   query.pageNum = 1;
@@ -314,17 +345,16 @@ function handleSizeChange(size: number) {
 }
 async function fetchPostDictOptions() {
   try {
-    const [ty] = await Promise.all([
+    const [modeRes, typeRes] = await Promise.all([
       listDictOptions('tender_mode'),
-      // listDictOptions('post_level'),
-      // listDictOptions('post_category'),
+      listDictOptions('tender_type'),
     ]);
-    tenderMode.value = normalizeDictOptions(ty);
-    // postLevelOptions.value = normalizeDictOptions(levelRes);
-    // postCategoryOptions.value = normalizeDictOptions(categoryRes);
+
+    tenderModeList.value = normalizeDictOptions(modeRes);
+    tenderTypeList.value = normalizeDictOptions(typeRes);
   } catch (e) {
-    console.error('加载字典选项失败:', e);
-    tenderMode.value = [];
+    tenderModeList.value = [];
+    tenderTypeList.value = [];
   }
 }
 function normalizeDictOptions(res: DictOption[] | { data?: DictOption[] }) {
@@ -339,81 +369,149 @@ const editDialog = reactive({
   isEdit: false,
 });
 const formRef = ref<FormInstance>();
+interface CompanyVO {
+  companyId: string;
+  companyCode: string;
+  companyName: string;
+}
+
 const form = reactive({
-  projectId: '',
-  projectCode: '',
-  projectName: '',
-  tenderOrg: '',
-  ownerName: '',
-  status: '未开始' as BiddingProjectStatus,
+  // 招标项目id
+  tenderId: '',
+  // 项目编码
+  tenderCode: '',
+  // 项目名称
+  tenderName: '',
+  // 招标类型
+  tenderType: '',
+  // 招标方式
+  tenderMode: '',
+  // 负责人
+  owner: undefined as ExpPersonVO | undefined,
+  // 招标人
+  company: undefined as CompanyVO | undefined,
+  // 预算金额
   budgetAmount: 0,
-  tenderMethod: '' as '' | 'OPEN' | 'INVITE' | 'NEGOTIATION',
-  bidDeadline: '',
-  openBidTime: '',
+  status: '未开始' as BiddingProjectStatus,
+
+  currency: 'CNY',
+  // 招标项目概要/公告摘要
+  tenderBrief:'',
+  // 招标开始时间
+  bidStartTime:'',
+  // 招标截止时间
+  bidEndTime: '',
+  // 开标时间
+  openTime: '',
+  // 开标地点
+  openAddress: '',
+  // 关联项目id
+  relatedProject: undefined as ProjectVO | undefined,
   remark: '',
 });
 
 const rules: FormRules = {
-  projectCode: [{ required: true, message: '请输入项目编码', trigger: 'blur' }],
-  projectName: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+  tenderCode: [
+    { required: true, message: '请输入项目编码', trigger: 'blur' }
+  ],
+  tenderName: [
+    { required: true, message: '请输入项目名称', trigger: 'blur' }
+  ],
+  tenderType: [
+    { required: true, message: '请选择招标类型', trigger: 'change' }
+  ],
+  tenderMode: [
+    { required: true, message: '请选择招标方式', trigger: 'change' }
+  ],
+  bidEndTime: [
+    { required: true, message: '请选择投标截止时间', trigger: 'change' }
+  ],
+  openTime: [
+    { required: true, message: '请选择开标时间', trigger: 'change' }
+  ],
+  openAddress: [
+    { required: true, message: '请输入开标地点', trigger: 'blur' }
+  ],
+   owner: [
+    { required: true, message: '请选择负责人', trigger: 'change' }
+  ],
+  company: [
+    { required: true, message: '请选择招标人', trigger: 'change' }
+  ],
+  relatedProject: [
+    { required: false, message: '请选择关联项目', trigger: 'change' }
+  ],
+  budgetAmount: [
+    { required: true, message: '请输入预算金额', trigger: 'blur' }
+  ],
+
+
 };
 
-function openEdit(isEdit: boolean, row?: BiddingProjectVO) {
+function openEdit(isEdit: boolean, row?: TenderVO) {
   editDialog.isEdit = isEdit;
+
   if (isEdit && row) {
-    form.projectId = row.projectId;
-    form.projectCode = row.projectCode;
-    form.projectName = row.projectName;
-    form.tenderOrg = row.tenderOrg || '';
-    form.ownerName = row.ownerName || '';
+    form.tenderId = row.tenderId;
+    form.tenderCode = row.tenderCode;
+    form.tenderName = row.tenderName;
+    form.tenderMode = row.tenderMode || '';
     form.status = row.status;
   } else {
-    form.projectId = '';
-    form.projectCode = '';
-    form.projectName = '';
-    form.tenderOrg = '';
-    form.ownerName = '';
+    form.tenderId = '';
+    form.tenderCode = '';
+    form.tenderName = '';
+    form.tenderType = '';
+    form.tenderMode = '';
     form.status = '未开始';
     form.budgetAmount = 0;
-    form.tenderMethod = 'OPEN';
-    form.bidDeadline = '';
-    form.openBidTime = '';
+    form.bidStartTime = '';
+    form.bidEndTime = '';
+    form.openTime = '';
+    form.openAddress = '';
     form.remark = '';
+    // 自动生成项目编码
+    autoGenerateProjectCode();
   }
+
   editDialog.visible = true;
 }
 
-function goDetail(row: BiddingProjectVO) {
-  router.push(`/bidding/project/${row.projectId}`);
+function goDetail(row: TenderVO) {
+  router.push(`/bidding/tender/${row.tenderId}`);
 }
 
 function openEditById(projectId: string) {
-  const list = tableData.value.length ? tableData.value : mockList;
-  const row = list.find((x) => String((x as any).projectId) === String(projectId));
+  const list = tableData.value;
+  const row = list.find((x) => String((x as any).tenderId) === String(projectId));
   if (row) {
     openEdit(true, row);
     return;
   }
-  openEdit(true, {
-    projectId,
-    projectCode: `TB-${query.year}-${String(projectId).padStart(3, '0')}`,
-    projectName: `示例招标项目 ${projectId}`,
-    tenderOrg: '',
-    ownerName: '',
-    status: '未开始',
-    createdTime: '',
-  });
+  if (!row) {
+    ElMessage.warning('未找到该项目');
+    return;
+  }
 }
 
 async function submitForm() {
   if (!formRef.value) return;
+
   const valid = await formRef.value.validate();
   if (!valid) return;
+
   saving.value = true;
+
   try {
-    // 暂未接后端 create/update：先做交互闭环（你后续确认接口再补）
-    ElMessage.success(editDialog.isEdit ? '已保存（示例模式）' : '已新增（示例模式）');
+    const payload = {
+      ...form,
+      ownerId: form.owner?.personId,
+      companyId: form.company?.companyId,
+      relatedProjectId: form.relatedProject?.projectId,
+    };
+
+    console.log('提交参数:', payload);
+
     editDialog.visible = false;
     fetchList();
   } finally {

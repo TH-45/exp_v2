@@ -31,6 +31,7 @@ public interface BidMapper extends BaseMapper<Bid> {
      * @param req 查询条件
      * @return 投标列表（分页结果会自动填充到page对象中）
      */
+
     IPage<BidListRes> selectBidList(IPage<BidListRes> page, @Param("req") QueryBidReq req);
 
     /**

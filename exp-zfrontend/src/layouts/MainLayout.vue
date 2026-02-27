@@ -123,10 +123,22 @@
               <el-tab-pane
                   v-for="tab in visibleTabs"
                   :key="tab.path"
-                  :label="renderLabel(tab)"
                   :name="tab.path"
                   :closable="tab.closable"
-              />
+              >
+                <template #label>
+                  <span class="tab-label">
+                    <component
+                        v-if="tab.icon"
+                        :is="tab.icon"
+                        class="tab-icon"
+                    />
+                    <span class="tab-text">
+                      {{ tab.title }}
+                    </span>
+                  </span>
+                </template>
+              </el-tab-pane>
             </el-tabs>
           </div>
 
@@ -328,6 +340,7 @@ const activeTab = computed({
 
 const iconMap = Icons as Record<string, Component>;
 
+import { markRaw } from 'vue';
 const addTab = () => {
   const path = route.path;
   // if (!path) return;
@@ -336,10 +349,11 @@ const addTab = () => {
   if (exists) return;
   const metaTitle = (route.meta?.title as string) || '';
   const iconName = (route.meta?.icon as string) || '';
+  const iconComponent = iconName ? iconMap[iconName] : undefined;
   tabs.push({
     title: metaTitle || route.name?.toString() || path,
     path,
-    icon: iconMap[iconName],
+    icon: iconComponent ? markRaw(iconComponent) : undefined,
     closable: path !== '/',
   });
 };
