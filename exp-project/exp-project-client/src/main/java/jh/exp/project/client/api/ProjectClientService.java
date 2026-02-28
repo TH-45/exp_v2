@@ -15,7 +15,7 @@ import org.springframework.web.service.annotation.PostExchange;
 import java.util.List;
 import java.util.Map;
 
-@HttpExchange("/internal/project/project")
+@HttpExchange("/project")
 public interface ProjectClientService {
     @PostExchange("/list")
     ApiResponse<SimplePageRes<Project>> list(@RequestBody SimplePageReq<Object> req);

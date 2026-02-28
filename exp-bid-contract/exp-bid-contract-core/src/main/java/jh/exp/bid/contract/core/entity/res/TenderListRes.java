@@ -1,107 +1,78 @@
 package jh.exp.bid.contract.core.entity.res;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 招标列表响应
+ * 招标列表最终响应对象
+ * 字段名已完全对齐 TenderLisDTO，确保 BeanUtils 自动映射成功
  */
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class TenderListRes {
-
-    /**
-     * 招标ID
-     */
+    // 招标项目id
     private Long tenderId;
 
-    /**
-     * 招标编号
-     */
+    // 招标项目编号
     private String tenderCode;
 
-    /**
-     * 招标项目名称
-     */
+    // 招标项目名称
     private String tenderName;
 
-    /**
-     * 项目负责人名称
-     */
-    private String projectManagerName;
-
-    /**
-     * 招标类型（工程、服务、货物等）
-     */
-    private String tenderType;
-
-    /**
-     * 招标方式（公开招标、邀请招标、竞争性谈判等）
-     */
-    private String tenderMode;
-
-    /**
-     * 招标人/采购方ID（映射自exp_tender.company_id）
-     */
+    // 招标方id
     private Long purchaserId;
 
-    /**
-     * 招标人/采购方名称
-     */
-    private String purchaserName;
+    // 招标方名称
+    private String tenderCompanyName;
 
-    /**
-     * 招标控制价/预算金额
-     */
-    private BigDecimal budgetAmount;
+    // 招标负责人id
+    private Long personId;
 
-    /**
-     * 币种
-     */
-    private String currency;
+    // 招标负责人名称
+    private String personIdName;
 
-    /**
-     * 投标开始时间
-     */
-    private LocalDateTime bidStartTime;
+    // 组织id
+    private Long orgId;
 
-    /**
-     * 投标截止时间
-     */
-    private LocalDateTime bidEndTime;
+    //组织名称
+    private String orgName;
 
-    /**
-     * 招标状态（准备、公告发布、投标中、开标中、评标中、已结束、已废标等）
-     */
+    // 招标项目状态
     private String status;
 
-    /**
-     * 工程项目ID（仅供服务内远程组装使用）
-     */
+    // 招标开标时间
+    private LocalDateTime bidOpenTime;
+
+    // 招标方式
+    private String tenderMode;
+
+    // 招标类型
+    private String tenderType;
+
+    // 招标预算金额 (原 tenderBudgetAmount，现对齐 DTO)
+    private BigDecimal budgetAmount;
+
+    // 币种
+    private String currency;
+
+    //关联项目 id
     private Long projectId;
 
-    /**
-     * 工程项目名称
-     */
+    //关联项目名称
     private String projectName;
 
-    /**
-     * 创建人姓名
-     */
-    private String createdByName;
+    // 招标开始时间
+    private LocalDateTime bidStartTime;
 
-    /**
-     * 创建人ID（仅供服务内远程组装使用）
-     */
+    // 招标截止时间
+    private LocalDateTime bidEndTime;
+
+    // 招标项目创建人id
     private Long createdBy;
 
-    /**
-     * 创建时间
-     */
+    // 招标项目创建人名称
+    private String createdByName;
+
+    // 招标项目创建时间
     private LocalDateTime createdTime;
 }

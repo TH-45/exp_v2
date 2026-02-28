@@ -3,7 +3,7 @@ package jh.exp.bid.contract.core.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jh.exp.bid.contract.core.entity.res.TenderDetailRes;
-import jh.exp.bid.contract.core.entity.res.TenderListRes;
+import jh.exp.bid.contract.core.entity.dto.TenderLisDTO;
 import jh.exp.bid.contract.core.entity.Tender;
 import jh.exp.bid.contract.core.entity.req.QueryTenderReq;
 import org.apache.ibatis.annotations.Mapper;
@@ -31,7 +31,7 @@ public interface TenderMapper extends BaseMapper<Tender> {
      * @param req 查询条件
      * @return 招标列表（分页结果会自动填充到page对象中）
      */
-    IPage<TenderListRes> selectTenderList(IPage<TenderListRes> page, @Param("req") QueryTenderReq req);
+    IPage<TenderLisDTO> selectTenderList(IPage<TenderLisDTO> page, @Param("req") QueryTenderReq req);
 
     /**
      * 根据招标ID查询招标详情信息（多表联查）

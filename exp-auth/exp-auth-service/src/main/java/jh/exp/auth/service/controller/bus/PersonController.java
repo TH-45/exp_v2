@@ -3,6 +3,7 @@ package jh.exp.auth.service.controller.bus;
 
 
 
+import jh.exp.auth.core.entity.dto.OrgIdAndPersonIdDTO;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.auth.core.entity.res.PersonInfoRes;
@@ -33,6 +34,19 @@ public class PersonController {
         req.pageDefault();
         SimplePageRes<PersonInfoRes> result = personService.queryPersonInfo(req);
         return ApiResponse.success(result);
+    }
+
+    /**
+     * 批量查询组织的部门负责人/人员信息（供内部服务调用，返回原始数据不包 ApiResponse）
+     * 对比传入 personId 与组织的 managerPersonId：一致返回部门负责人信息，不一致返回传入 id 的人员信息
+     *
+     * @param orgIdAndPersonIds 组织ID与人员ID对列表
+     * @return 组织ID -> 人员详情（每个 orgId 对应一条人员详情）
+     */
+    @PostMapping("/list/project-manager")
+    public Map<Long, PersonDetailRes> queryProjectManager(
+            @RequestBody List<OrgIdAndPersonIdDTO> orgIdAndPersonIds) {
+        return personService.queryProjectManager(orgIdAndPersonIds);
     }
 
     /**

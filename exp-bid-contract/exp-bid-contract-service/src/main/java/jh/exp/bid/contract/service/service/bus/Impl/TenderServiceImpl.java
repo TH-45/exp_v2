@@ -6,11 +6,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.clinet.api.bus.AccountService;
 import jh.exp.auth.clinet.api.bus.OrgUnitService;
 import jh.exp.auth.clinet.api.bus.PersonService;
+import jh.exp.auth.core.entity.dto.OrgIdAndPersonIdDTO;
 import jh.exp.auth.core.entity.res.OrgUnitDetailRes;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.entity.Tender;
 import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.TenderDetailRes;
+import jh.exp.bid.contract.core.entity.dto.TenderLisDTO;
 import jh.exp.bid.contract.core.entity.res.TenderListRes;
 import jh.exp.bid.contract.core.mapper.TenderMapper;
 import jh.exp.bid.contract.service.service.bus.TenderService;
@@ -25,13 +27,16 @@ import jh.exp.project.client.api.ProjectClientService;
 import jh.exp.project.core.entity.Project;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 招标服务实现类
@@ -50,49 +55,61 @@ public class TenderServiceImpl implements TenderService {
 
     @Override
     public SimplePageRes<TenderListRes> queryTenderList(SimplePageReq<QueryTenderReq> req) {
-        Page<TenderListRes> page = new Page<>(req.getPageNum(), req.getPageSize());
+        Page<TenderLisDTO> page = new Page<>(req.getPageNum(), req.getPageSize());
         QueryTenderReq queryParam = req.getQueryParam();
         if (queryParam == null) {
             queryParam = new QueryTenderReq();
         }
 
-        IPage<TenderListRes> result = tenderMapper.selectTenderList(page, queryParam);
-        List<TenderListRes> records = result.getRecords();
-        if (!CollectionUtils.isEmpty(records)) {
+        IPage<TenderLisDTO> result = tenderMapper.selectTenderList(page, queryParam);
+        List<TenderLisDTO> records = result.getRecords();
+        List<TenderListRes> resList = records.stream().map(dto -> {
+            TenderListRes res = new TenderListRes();
+            BeanUtils.copyProperties(dto, res); // 此时字段名已对齐，可自动复制
+            return res;
+        }).toList();
 
-            List<Long> purchaserIds = records.stream().map(TenderListRes::getPurchaserId).toList();
+        if (!CollectionUtils.isEmpty(records)) {
+            //拼接招标方
+            List<Long> purchaserIds = records.stream().map(TenderLisDTO::getPurchaserId).toList();
             Map<Long, CompanyDetailRes> companyDetailResMap = companyClientService.batchDetail(purchaserIds).getData();
 
-            List<Long> personIds = records.stream().map(TenderListRes::getCreatedBy).toList();
-            Map<Long, PersonDetailRes> personDetailResMap = personService.batchGetPersonByIds(personIds);
+            //拼接负责人 查询组织的部门负责人，对比传入id与负责人id，一致返回部门负责人信息，不一致返回传入id的人员信息
+            ArrayList<OrgIdAndPersonIdDTO> orgIdAndPersonIdDTOs = new ArrayList<>();
+            records.forEach(record -> {
+                OrgIdAndPersonIdDTO orgIdAndPersonIdDTO = new OrgIdAndPersonIdDTO();
+                orgIdAndPersonIdDTO.setOrgId(record.getOrgId());
+                orgIdAndPersonIdDTO.setPersonId(record.getCreatedBy());
+                orgIdAndPersonIdDTOs.add(orgIdAndPersonIdDTO);
+            });
+            Map<Long, PersonDetailRes> orgIdPersonMap = personService.queryProjectManager(orgIdAndPersonIdDTOs);
 
-            List<Long> projectIds = records.stream().map(TenderListRes::getProjectId).toList();
+            //拼接项目信息
+            List<Long> projectIds = records.stream().map(TenderLisDTO::getProjectId).toList();
             Map<Long, Project> projectDetailResMap = projectClientService.batchGetProjectByIds(projectIds).getData();
 
 
-            for (TenderListRes record : records) {
-                if (record.getPurchaserId() != null) {
-//                    String purchaserName = companyNameCache.computeIfAbsent(
-//                            record.getPurchaserId(),
-//                            this::getCompanyNameOrThrow
-//                    );
-                    Long purchaserId = record.getPurchaserId();
-                    record.setPurchaserName(companyDetailResMap.get(purchaserId).getCompanyName());
+            for (TenderListRes item : resList) {
+                if (item.getPurchaserId() != null) {
+                    String companyName = companyDetailResMap.get(item.getPurchaserId()).getCompanyName();
+                    item.setPersonIdName(companyName);
                 }
 
-                if (record.getCreatedBy() != null) {
-                    record.setCreatedByName(personDetailResMap.get(record.getCreatedBy()).getPersonName());
+                if (item.getOrgId() != null) {
+                    PersonDetailRes person = orgIdPersonMap.get(item.getOrgId());
+                    item.setPersonIdName(person.getPersonName());
+                    item.setOrgName(person.getOrgName());
                 }
 
-                if (record.getProjectId() != null) {
-                    Long projectId = record.getProjectId();
-                    record.setProjectName(projectDetailResMap.get(projectId).getProjectName());
+                if (item.getProjectId() != null) {
+                    String projectName = projectDetailResMap.get(item.getProjectId()).getProjectName();
+                    item.setProjectName(projectName);
                 }
             }
         }
 
         SimplePageRes<TenderListRes> pageRes = new SimplePageRes<>();
-        pageRes.setList(records);
+        pageRes.setList(resList);
         pageRes.setTotal(result.getTotal());
         pageRes.setPage(result.getCurrent());
         pageRes.setSize(result.getSize());

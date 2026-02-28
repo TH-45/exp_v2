@@ -12,7 +12,7 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-@HttpExchange("/internal/project/projectMaterialStock")
+@HttpExchange("/projectMaterialStock")
 public interface ProjectMaterialStockClientService {
     @PostExchange("/list")
     ApiResponse<SimplePageRes<ProjectMaterialStock>> list(@RequestBody SimplePageReq<Object> req);

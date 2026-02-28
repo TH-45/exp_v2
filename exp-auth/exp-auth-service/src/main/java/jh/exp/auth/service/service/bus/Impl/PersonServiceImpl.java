@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.core.entity.Account;
 import jh.exp.auth.core.entity.Person;
+import jh.exp.auth.core.entity.dto.OrgIdAndPersonIdDTO;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.AccountRoleRes;
+import jh.exp.auth.core.entity.res.OrgUnitDetailRes;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.auth.core.entity.res.PersonInfoRes;
 
@@ -133,6 +135,66 @@ public class PersonServiceImpl implements PersonService {
         }
 
         return Map.of();
+    }
+
+    /**
+     * 批量查询组织的部门负责人/人员信息
+     * 对比传入 personId 与组织的 managerPersonId：
+     * - 一致：返回部门负责人信息
+     * - 不一致：返回传入 id 的人员信息
+     * 返回 orgId -> 人员详情（每个 orgId 对应一条，同 orgId 多条取第一条有效结果）
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, PersonDetailRes> queryProjectManager(List<OrgIdAndPersonIdDTO> orgIdAndPersonIds) {
+        if (CollectionUtils.isEmpty(orgIdAndPersonIds)) {
+            return Map.of();
+        }
+        // 1. 批量查询组织，获取各组织的部门负责人 managerPersonId
+        List<Long> orgIds = orgIdAndPersonIds.stream()
+                .map(OrgIdAndPersonIdDTO::getOrgId)
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+        final Map<Long, Long> orgIdToManagerId;
+        if (orgIds.isEmpty()) {
+            orgIdToManagerId = Map.of();
+        } else {
+            List<OrgUnitDetailRes> orgDetails = orgUnitMapper.selectOrgUnitDetailByIds(orgIds);
+            orgIdToManagerId = orgDetails.stream()
+                    .filter(o -> o.getManagerPersonId() != null)
+                    .collect(Collectors.toMap(OrgUnitDetailRes::getOrgId, OrgUnitDetailRes::getManagerPersonId, (a, b) -> a));
+        }
+        // 2. 收集需查询的人员 ID：personId 或 负责人 id（一致时为同一人，需去重）
+        List<Long> personIdsToFetch = orgIdAndPersonIds.stream()
+                .filter(dto -> dto.getOrgId() != null && dto.getPersonId() != null)
+                .map(dto -> {
+                    Long managerId = orgIdToManagerId.get(dto.getOrgId());
+                    boolean isMatch = (managerId != null && managerId.equals(dto.getPersonId()));
+                    return isMatch ? managerId : dto.getPersonId();
+                })
+                .distinct()
+                .toList();
+        if (personIdsToFetch.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, PersonDetailRes> personMap = batchGetPersonByIds(personIdsToFetch);
+        // 3. 按 orgId 分组，每个 orgId 取第一条有效人员详情（Map 结构为 orgId -> PersonDetailRes）
+        return orgIdAndPersonIds.stream()
+                .filter(dto -> dto.getOrgId() != null && dto.getPersonId() != null)
+                .collect(Collectors.toMap(
+                        OrgIdAndPersonIdDTO::getOrgId,
+                        dto -> {
+                            Long managerId = orgIdToManagerId.get(dto.getOrgId());
+                            boolean isMatch = (managerId != null && managerId.equals(dto.getPersonId()));
+                            Long personIdToUse = isMatch ? managerId : dto.getPersonId();
+                            return personMap.get(personIdToUse);
+                        },
+                        (a, b) -> a != null ? a : b
+                ))
+                .entrySet().stream()
+                .filter(e -> e.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     /**

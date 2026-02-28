@@ -187,7 +187,7 @@ import type { ExpPersonVO } from '@/api/system/person';
 import PersonSelector from '@/components/Selector/PersonSelector.vue';
 import CompanySelector from '@/components/Selector/CompanySelector.vue';
 import ProjectSelector from '@/components/Selector/ProjectSelector.vue'
-import type { ProjectVO } from '@/components/Selector/ProjectSelector.vue'
+import type { ProjectVO } from '@/api/corpProject/project'
 import {
   queryBiddingProjectList,
   type TenderVO,

@@ -12,7 +12,7 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-@HttpExchange("/internal/project/projectScheduleLog")
+@HttpExchange("/projectScheduleLog")
 public interface ProjectScheduleLogClientService {
     @PostExchange("/list")
     ApiResponse<SimplePageRes<ProjectScheduleLog>> list(@RequestBody SimplePageReq<Object> req);

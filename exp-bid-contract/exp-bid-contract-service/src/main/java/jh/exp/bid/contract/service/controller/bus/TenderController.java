@@ -1,10 +1,11 @@
 package jh.exp.bid.contract.service.controller.bus;
 
+import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.TenderDetailRes;
+import jh.exp.bid.contract.core.entity.dto.TenderLisDTO;
 import jh.exp.bid.contract.core.entity.res.TenderListRes;
 import jh.exp.bid.contract.service.service.bus.TenderService;
-import jh.exp.common.core.annotation.RequiresPermissions;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -86,7 +87,7 @@ public class TenderController {
     /**
      * 更改招标状态
      */
-    @PostMapping("/status")
+    @PostMapping("/update/status")
     //@RequiresPermissions("TENDER:EDIT")
     public ApiResponse<TenderDetailRes> updateStatus(@RequestBody @Valid TenderStatusReq req) {
         TenderDetailRes result = tenderService.updateTenderStatus(req);
@@ -107,6 +108,7 @@ public class TenderController {
      * 检查招标编号是否存在
      */
     @GetMapping("/checkTenderCode")
+    //@RequiresPermissions("TENDER:VIEW")
     public ApiResponse<Boolean> checkTenderCode(@RequestParam String tenderCode,
                                                  @RequestParam(required = false) Long excludeTenderId) {
         boolean exists = tenderService.checkTenderCodeExists(tenderCode, excludeTenderId);
@@ -117,6 +119,7 @@ public class TenderController {
      * 根据项目ID获取项目负责人信息
      */
     @GetMapping("/projectManager")
+    //@RequiresPermissions("TENDER:VIEW")
     public ApiResponse<TenderDetailRes> getProjectManager(@RequestParam Long projectId) {
         TenderDetailRes result = tenderService.getProjectManagerByProjectId(projectId);
         return ApiResponse.success(result);
