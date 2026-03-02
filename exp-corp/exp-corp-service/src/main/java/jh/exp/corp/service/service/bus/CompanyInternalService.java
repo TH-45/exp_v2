@@ -1,4 +1,4 @@
-package jh.exp.corp.service.service.internal;
+package jh.exp.corp.service.service.bus;
 
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
@@ -7,7 +7,6 @@ import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.CompanyDetailRes;
 import jh.exp.corp.core.entity.res.CompanyListRes;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.service.annotation.PostExchange;
 
 import java.util.List;
 import java.util.Map;

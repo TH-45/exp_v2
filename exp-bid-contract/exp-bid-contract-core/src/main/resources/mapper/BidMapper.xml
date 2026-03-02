@@ -12,14 +12,13 @@
         </if>
     </select>
 
-    <!-- 分页查询投标列表 -->
+    <!-- 分页查询投标列表（仅查本模块表 exp_bid、exp_tender；供应商/项目/创建人名称由服务层调用各模块接口补全） -->
     <select id="selectBidList" resultType="jh.exp.bid.contract.core.entity.res.BidListRes">
         SELECT
             b.bid_id AS bidId,
             b.tender_id AS tenderId,
             t.tender_name AS tenderName,
             b.supplier_id AS supplierId,
-            s.supplier_name AS supplierName,
             b.bid_code AS bidCode,
             b.bid_name AS bidName,
             b.bid_total_amount AS bidTotalAmount,
@@ -28,14 +27,11 @@
             b.bid_status AS bidStatus,
             b.win_flag AS winFlag,
             b.win_notice_no AS winNoticeNo,
-            p.project_name AS projectName,
-            u.user_name AS createdByName,
+            b.project_id AS projectId,
+            b.created_by AS createdBy,
             b.created_time AS createdTime
         FROM exp_bid b
         LEFT JOIN exp_tender t ON b.tender_id = t.tender_id
-        LEFT JOIN exp_supplier s ON b.supplier_id = s.supplier_id
-        LEFT JOIN exp_project p ON b.project_id = p.project_id
-        LEFT JOIN exp_user u ON b.created_by = u.user_id
         <where>
             <if test="req.tenderId != null">
                 AND b.tender_id = #{req.tenderId}
@@ -77,14 +73,13 @@
         ORDER BY b.created_time DESC
     </select>
 
-    <!-- 根据投标ID查询投标详情 -->
+    <!-- 根据投标ID查询投标详情（仅查本模块表；供应商/项目/创建人及部门岗位名称由服务层调用各模块接口补全） -->
     <select id="selectBidDetailById" resultType="jh.exp.bid.contract.core.entity.res.BidDetailRes">
         SELECT
             b.bid_id AS bidId,
             b.tender_id AS tenderId,
             t.tender_name AS tenderName,
             b.supplier_id AS supplierId,
-            s.supplier_name AS supplierName,
             b.bid_code AS bidCode,
             b.bid_name AS bidName,
             b.bid_total_amount AS bidTotalAmount,
@@ -95,34 +90,24 @@
             b.win_notice_no AS winNoticeNo,
             b.contract_id AS contractId,
             b.project_id AS projectId,
-            p.project_name AS projectName,
             b.created_by AS createdBy,
-            u.user_name AS createdByName,
             b.created_dept_id AS createdDeptId,
-            d.dept_name AS createdDeptName,
             b.created_post_id AS createdPostId,
-            po.post_name AS createdPostName,
             b.created_time AS createdTime,
             b.updated_time AS updatedTime,
             b.remark AS remark
         FROM exp_bid b
         LEFT JOIN exp_tender t ON b.tender_id = t.tender_id
-        LEFT JOIN exp_supplier s ON b.supplier_id = s.supplier_id
-        LEFT JOIN exp_project p ON b.project_id = p.project_id
-        LEFT JOIN exp_user u ON b.created_by = u.user_id
-        LEFT JOIN exp_dept d ON b.created_dept_id = d.dept_id
-        LEFT JOIN exp_post po ON b.created_post_id = po.post_id
         WHERE b.bid_id = #{bidId}
     </select>
 
-    <!-- 根据招标ID查询投标列表 -->
+    <!-- 根据招标ID查询投标列表（仅查本模块表；供应商/项目/创建人名称由服务层调用各模块接口补全） -->
     <select id="selectBidsByTenderId" resultType="jh.exp.bid.contract.core.entity.res.BidListRes">
         SELECT
             b.bid_id AS bidId,
             b.tender_id AS tenderId,
             t.tender_name AS tenderName,
             b.supplier_id AS supplierId,
-            s.supplier_name AS supplierName,
             b.bid_code AS bidCode,
             b.bid_name AS bidName,
             b.bid_total_amount AS bidTotalAmount,
@@ -131,14 +116,11 @@
             b.bid_status AS bidStatus,
             b.win_flag AS winFlag,
             b.win_notice_no AS winNoticeNo,
-            p.project_name AS projectName,
-            u.user_name AS createdByName,
+            b.project_id AS projectId,
+            b.created_by AS createdBy,
             b.created_time AS createdTime
         FROM exp_bid b
         LEFT JOIN exp_tender t ON b.tender_id = t.tender_id
-        LEFT JOIN exp_supplier s ON b.supplier_id = s.supplier_id
-        LEFT JOIN exp_project p ON b.project_id = p.project_id
-        LEFT JOIN exp_user u ON b.created_by = u.user_id
         WHERE b.tender_id = #{tenderId}
         ORDER BY b.created_time DESC
     </select>

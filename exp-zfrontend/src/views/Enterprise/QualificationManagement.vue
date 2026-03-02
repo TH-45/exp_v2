@@ -327,7 +327,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { Plus, Download, Check, Warning, Close } from '@element-plus/icons-vue';
-import { hasPermission } from '@/utils/permission';
+import { hasPermission } from '@/utils/permission.ts';
 import {
   listQualifications,
   getQualificationDetail,
@@ -336,7 +336,7 @@ import {
   deleteQualification,
   getQualificationsStats,
   type QualificationVO
-} from '@/api/corp';
+} from '@/api/corp.ts';
 
 const loading = ref(false);
 const saving = ref(false);

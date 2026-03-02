@@ -1,5 +1,6 @@
 package jh.exp.bid.contract.core.entity.req;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -67,23 +68,27 @@ public class CreateTenderReq {
     /**
      * 招标公告发布时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime publishTime;
 
     /**
      * 投标开始时间
      */
     @NotNull(message = "投标开始时间不能为空")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime bidStartTime;
 
     /**
      * 投标截止时间
      */
     @NotNull(message = "投标截止时间不能为空")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime bidEndTime;
 
     /**
      * 开标时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime openTime;
 
     /**

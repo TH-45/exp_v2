@@ -1,4 +1,4 @@
-package jh.exp.corp.service.controller.internal;
+package jh.exp.corp.service.controller.bus;
 
 import jakarta.validation.Valid;
 import jh.exp.common.core.api.ApiResponse;
@@ -7,14 +7,14 @@ import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.CompanyContactDetailRes;
 import jh.exp.corp.core.entity.res.CompanyContactListRes;
-import jh.exp.corp.service.service.internal.CompanyContactInternalService;
+import jh.exp.corp.service.service.bus.CompanyContactInternalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/internal/corp/company-contact")
+@RequestMapping("/company-contact")
 @RequiredArgsConstructor
-public class InternalCompanyContactController {
+public class CompanyContactController {
 
     private final CompanyContactInternalService companyContactInternalService;
 

@@ -14,7 +14,6 @@ import jh.exp.common.core.res.SimplePageRes;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.service.annotation.PostExchange;
 
 import java.util.List;
 import java.util.Map;
@@ -63,10 +62,21 @@ public class PersonController {
      * @param personIds
      * @return
      */
-    @PostExchange("/batch")
-    Map<Long , PersonDetailRes> batchGetPersonByIds(@RequestBody List<Long> personIds){
-
+    @PostMapping("/batch")
+    public Map<Long, PersonDetailRes> batchGetPersonByIds(@RequestBody List<Long> personIds) {
         return personService.batchGetPersonByIds(personIds);
+    }
+
+    /**
+     * 批量查询人员详情（按标识+人员id）
+     * 入参：标识和人员id list，返回：标识 -> 人员详情 map
+     *
+     * @param personFlagReqList 标识与人员id列表
+     * @return 标识(Long) -> 人员详情
+     */
+    @PostMapping("/batch/flag")
+    public Map<Long, PersonDetailRes> batchFlagPersonByIds(@RequestBody List<PersonFlagReq> personFlagReqList) {
+        return personService.batchFlagPersonByIds(personFlagReqList);
     }
 
     /**

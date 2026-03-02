@@ -81,9 +81,19 @@ public class BidListRes {
     private String winNoticeNo;
 
     /**
+     * 工程项目ID（用于服务层调用项目模块补全 projectName）
+     */
+    private Long projectId;
+
+    /**
      * 工程项目名称
      */
     private String projectName;
+
+    /**
+     * 创建人ID（用于服务层调用 auth 模块补全 createdByName）
+     */
+    private Long createdBy;
 
     /**
      * 创建人姓名

@@ -1,4 +1,4 @@
-package jh.exp.corp.service.service.internal;
+package jh.exp.corp.service.service.bus;
 
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;

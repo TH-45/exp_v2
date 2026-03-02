@@ -25,13 +25,19 @@ export interface TenderVO {
   purchaserId?: string;
 
   // 招标方名称 (原 purchaserName)
-  tenderCompanyName?: string;
+  purchaserName?: string;
 
   // 招标负责人id
   personId?: string;
 
   // 招标负责人名称 (即负责人)
   personIdName?: string;
+
+  // 业务员id
+  salesmanId?: string;
+
+  //业务员
+  salesmanName?: String;
 
   // 组织id
   orgId?: string;
@@ -41,9 +47,6 @@ export interface TenderVO {
 
   // 招标项目状态
   status: BiddingProjectStatus;
-
-  // 招标开标时间 (原 openTime)
-  bidOpenTime?: string;
 
   // 招标方式
   tenderMode?: string;
@@ -119,25 +122,50 @@ export function queryBiddingProjectList(data: PageQueryInput<QueryTenderParams>)
 }
 
 /**
- * 获取招标详情
+ * 获取招标详情（与 openapi /tender/detail 一致，GET query tenderId）
  */
-export function getBiddingProjectDetail(tenderId: string) {
-  return request.get<TenderVO, TenderVO>(baseUrl + `/detail/${tenderId}`);
+export function getBiddingProjectDetail(tenderId: number | string) {
+  return request.get<TenderVO, TenderVO>(baseUrl + '/detail', {
+    params: { tenderId: Number(tenderId) },
+  });
+}
+
+/** 创建招标请求体，与 openapi CreateTenderReq 一致 */
+export interface CreateTenderReq {
+  tenderCode: string;
+  tenderName: string;
+  tenderType: string;
+  tenderMode: string;
+  companyId: number;
+  budgetAmount: number;
+  currency: string;
+  tenderBrief?: string;
+  publishTime?: string;
+  bidStartTime: string;
+  bidEndTime: string;
+  openTime?: string;
+  openAddress?: string;
+  projectId?: number;
+  remark?: string;
+}
+
+/** 更新招标请求体，与 openapi UpdateTenderReq 一致 */
+export interface UpdateTenderReq extends CreateTenderReq {
+  tenderId: number;
 }
 
 /**
- * 编辑招标项目信息（全量更细）
+ * 创建招标（POST /tender/create）
  */
-export function updateBiddingProject(data: TenderVO) {
-  return request.put<TenderVO, TenderVO>(baseUrl+`/status`, data);
+export function createBiddingProject(data: CreateTenderReq) {
+  return request.post<TenderVO, TenderVO>(baseUrl + '/create', data);
 }
 
 /**
- * 创建招标项目
+ * 更新招标（POST /tender/update）
  */
-export function createBiddingProject(data: TenderVO) {
-  return request.post<TenderVO, TenderVO>(baseUrl+`/create`, data);
-
+export function updateBiddingProject(data: UpdateTenderReq) {
+  return request.post<TenderVO, TenderVO>(baseUrl + '/update', data);
 }
 
 /**

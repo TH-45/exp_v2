@@ -1,5 +1,6 @@
 package jh.exp.bid.contract.service.service.bus.Impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -7,14 +8,17 @@ import jh.exp.auth.clinet.api.bus.AccountService;
 import jh.exp.auth.clinet.api.bus.OrgUnitService;
 import jh.exp.auth.clinet.api.bus.PersonService;
 import jh.exp.auth.core.entity.dto.OrgIdAndPersonIdDTO;
+import jh.exp.auth.core.entity.req.PersonFlagReq;
 import jh.exp.auth.core.entity.res.OrgUnitDetailRes;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.entity.Tender;
+import jh.exp.bid.contract.core.entity.middle.TenderMember;
 import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.TenderDetailRes;
 import jh.exp.bid.contract.core.entity.dto.TenderLisDTO;
 import jh.exp.bid.contract.core.entity.res.TenderListRes;
 import jh.exp.bid.contract.core.mapper.TenderMapper;
+//import jh.exp.bid.contract.core.mapper.middle.TenderMemberMapper;
 import jh.exp.bid.contract.service.service.bus.TenderService;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.auth.CurrentUserHolder;
@@ -33,9 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -47,11 +50,16 @@ import java.util.stream.Collectors;
 public class TenderServiceImpl implements TenderService {
 
     private final TenderMapper tenderMapper;
+//    private final TenderMemberMapper tenderMemberMapper;
+
     private final PersonService personService;
     private final OrgUnitService orgUnitService;
     private final AccountService accountService;
+
     private final CompanyClientService companyClientService;
     private final ProjectClientService projectClientService;
+
+
 
     @Override
     public SimplePageRes<TenderListRes> queryTenderList(SimplePageReq<QueryTenderReq> req) {
@@ -77,12 +85,27 @@ public class TenderServiceImpl implements TenderService {
             //拼接负责人 查询组织的部门负责人，对比传入id与负责人id，一致返回部门负责人信息，不一致返回传入id的人员信息
             ArrayList<OrgIdAndPersonIdDTO> orgIdAndPersonIdDTOs = new ArrayList<>();
             records.forEach(record -> {
-                OrgIdAndPersonIdDTO orgIdAndPersonIdDTO = new OrgIdAndPersonIdDTO();
-                orgIdAndPersonIdDTO.setOrgId(record.getOrgId());
-                orgIdAndPersonIdDTO.setPersonId(record.getCreatedBy());
-                orgIdAndPersonIdDTOs.add(orgIdAndPersonIdDTO);
+                if(record.getOrgId()!=null){
+                    OrgIdAndPersonIdDTO orgIdAndPersonIdDTO = new OrgIdAndPersonIdDTO ();
+                    orgIdAndPersonIdDTO.setOrgId(record.getOrgId());
+                    orgIdAndPersonIdDTO.setPersonId(record.getPersonId());
+                    orgIdAndPersonIdDTOs.add(orgIdAndPersonIdDTO);
+                }
             });
             Map<Long, PersonDetailRes> orgIdPersonMap = personService.queryProjectManager(orgIdAndPersonIdDTOs);
+
+            //拼接业务员
+            List<PersonFlagReq> personFlagReqs = records.stream()
+                    .filter(r -> r.getSalesmanId() != null)
+                    .map(r -> {
+                        PersonFlagReq Preq = new PersonFlagReq();
+                        Preq.setFlag(String.valueOf(r.getTenderId()));
+                        Preq.setPersonId(String.valueOf(r.getSalesmanId()));
+                        return Preq;
+                    }).toList();
+
+            Map<Long, PersonDetailRes> busPersonMap = personService.batchFlagPersonByIds(personFlagReqs);
+
 
             //拼接项目信息
             List<Long> projectIds = records.stream().map(TenderLisDTO::getProjectId).toList();
@@ -92,7 +115,7 @@ public class TenderServiceImpl implements TenderService {
             for (TenderListRes item : resList) {
                 if (item.getPurchaserId() != null) {
                     String companyName = companyDetailResMap.get(item.getPurchaserId()).getCompanyName();
-                    item.setPersonIdName(companyName);
+                    item.setPurchaserName(companyName);
                 }
 
                 if (item.getOrgId() != null) {
@@ -100,6 +123,11 @@ public class TenderServiceImpl implements TenderService {
                     item.setPersonIdName(person.getPersonName());
                     item.setOrgName(person.getOrgName());
                 }
+                if (item.getSalesmanId() != null){
+                    String personName = busPersonMap.get(item.getTenderId()).getPersonName();
+                    item.setSalesmanName(personName);
+                }
+
 
                 if (item.getProjectId() != null) {
                     String projectName = projectDetailResMap.get(item.getProjectId()).getProjectName();
@@ -135,20 +163,22 @@ public class TenderServiceImpl implements TenderService {
 
         // 强校验公司必须存在，避免写入脏数据
         getCompanyNameOrThrow(req.getCompanyId());
+//
+//        TenderDetailRes projectInfo = getProjectManagerByProjectId(req.getProjectId());
+//        if (projectInfo.getProjectId() == null) {
+//            throw new RuntimeException("项目信息不存在");
+//        }
+//        if (projectInfo.getProjectManagerId() == null) {
+//            throw new RuntimeException("项目负责人未设置，无法创建招标");
+//        }
+//        if (projectInfo.getOrgManagerId() == null) {
+//            throw new RuntimeException("项目归属组织的负责人未设置，无法创建招标");
+//        }
 
-        TenderDetailRes projectInfo = getProjectManagerByProjectId(req.getProjectId());
-        if (projectInfo.getProjectId() == null) {
-            throw new RuntimeException("项目信息不存在");
-        }
-        if (projectInfo.getProjectManagerId() == null) {
-            throw new RuntimeException("项目负责人未设置，无法创建招标");
-        }
-        if (projectInfo.getOrgManagerId() == null) {
-            throw new RuntimeException("项目归属组织的负责人未设置，无法创建招标");
-        }
+
 
         CurrentUser currentUser = CurrentUserHolder.get();
-        Long personId = Long.valueOf(currentUser.getUserId());
+        Long personId = currentUser.getUserId();
         PersonDetailRes personDetail = personService.getPersonById(personId);
         if (personDetail == null) {
             throw new RuntimeException("无法获取当前用户信息");

@@ -237,19 +237,9 @@ const routes: RouteRecordRaw[] = [
       },
       // 企业信息管理
       {
-        path: 'corp-project/corp-info/accounts',
-        name: 'CorpInfoAccounts',
-        component: () => import('@/views/CorpProject/CorpInfo/AccountManagement.vue'),
-        meta: {
-          title: '账号信息管理',
-          icon: 'User',
-          perms: ['corp:account:view'],
-        },
-      },
-      {
-        path: 'corp-project/corp-info/announcements',
+        path: 'enterprise/announcements',
         name: 'CorpInfoAnnouncements',
-        component: () => import('@/views/CorpProject/CorpInfo/AnnouncementManagement.vue'),
+        component: () => import('@/views/enterprise/AnnouncementManagement.vue'),
         meta: {
           title: '制度与公告',
           icon: 'Document',
@@ -257,9 +247,9 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
-        path: 'corp-project/corp-info/qualifications',
+        path: 'enterprise/qualifications',
         name: 'CorpInfoQualifications',
-        component: () => import('@/views/CorpProject/CorpInfo/QualificationManagement.vue'),
+        component: () => import('@/views/enterprise/QualificationManagement.vue'),
         meta: {
           title: '企业资质管理',
           icon: 'Medal',
@@ -267,11 +257,11 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
-        path: 'corp-project/corp-info/basic-info',
+        path: 'enterprise/basic-info',
         name: 'CorpInfoBasicInfo',
-        component: () => import('@/views/CorpProject/CorpInfo/BasicInfoManagement.vue'),
+        component: () => import('@/views/Enterprise/BasicInfoManagement.vue'),
         meta: {
-          title: '企业基础信息',
+          title: '基础信息管理',
           icon: 'InfoFilled',
           perms: ['corp:basic:view'],
         },

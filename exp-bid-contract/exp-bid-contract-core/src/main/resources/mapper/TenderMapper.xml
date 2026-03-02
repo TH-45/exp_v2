@@ -28,6 +28,8 @@
         <result property="orgId" column="org_id"/>
         <result property="postId" column="post_id"/>
 
+        <result property="salesmanId" column="salesmanId"/>
+
     </resultMap>
 
     <select id="selectTenderList" resultMap="TenderListResultMap">
@@ -46,15 +48,23 @@
         t.project_id,
         t.created_by,
         t.created_time,
-        tm.person_id,
-        tm.member_role,
-        tm.org_id,
-        tm.post_id
+
+        -- PM 信息
+        MAX(CASE WHEN tm.member_role = 'PM' THEN tm.person_id END) AS person_id,
+        MAX(CASE WHEN tm.member_role = 'PM' THEN tm.member_role END) AS member_role,
+        MAX(CASE WHEN tm.member_role = 'PM' THEN tm.org_id END) AS org_id,
+        MAX(CASE WHEN tm.member_role = 'PM' THEN tm.post_id END) AS post_id,
+
+        -- SP 信息
+        MAX(CASE WHEN tm.member_role = 'SP' THEN tm.person_id END) AS salesmanId
+
         FROM exp_tender t
-        INNER JOIN exp_tender_member tm ON t.tender_id = tm.tender_id
+        LEFT JOIN exp_tender_member tm
+        ON t.tender_id = tm.tender_id
+        AND tm.status = 'ENABLED'
+
+
         <where>
-            AND tm.status = 'ENABLED'
-            AND tm.member_role = 'PM'
 
             <if test="req.tenderCode != null and req.tenderCode.trim() != ''">
                 AND t.tender_code LIKE CONCAT('%', #{req.tenderCode}, '%')
@@ -94,6 +104,8 @@
                 AND t.bid_end_time <![CDATA[<=]]> #{req.bidEndTimeEnd}
             </if>
         </where>
+        GROUP BY t.tender_id
+
         ORDER BY t.created_time DESC
     </select>
 

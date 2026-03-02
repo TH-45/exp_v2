@@ -43,6 +43,15 @@ public interface PersonService {
     Map<Long , PersonDetailRes> batchGetPersonByIds(List<Long>  personIds);
 
     /**
+     * 批量查询人员详情（按标识+人员id）
+     * 入参：标识和人员id list，返回：标识 -> 人员详情 map
+     *
+     * @param personFlagReqList 标识与人员id列表
+     * @return 标识(Long) -> 人员详情
+     */
+    Map<Long, PersonDetailRes> batchFlagPersonByIds(List<PersonFlagReq> personFlagReqList);
+
+    /**
      * 创建人员
      */
     PersonDetailRes createPerson(CreatePersonReq req);

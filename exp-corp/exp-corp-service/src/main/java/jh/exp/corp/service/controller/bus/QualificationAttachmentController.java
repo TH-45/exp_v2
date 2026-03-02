@@ -1,4 +1,4 @@
-package jh.exp.corp.service.controller.internal;
+package jh.exp.corp.service.controller.bus;
 
 import jakarta.validation.Valid;
 import jh.exp.common.core.api.ApiResponse;
@@ -7,14 +7,14 @@ import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.QualificationAttachmentDetailRes;
 import jh.exp.corp.core.entity.res.QualificationAttachmentListRes;
-import jh.exp.corp.service.service.internal.QualificationAttachmentInternalService;
+import jh.exp.corp.service.service.bus.QualificationAttachmentInternalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/internal/corp/qualification-attachment")
+@RequestMapping("qualification-attachment")
 @RequiredArgsConstructor
-public class InternalQualificationAttachmentController {
+public class QualificationAttachmentController {
 
     private final QualificationAttachmentInternalService qualificationAttachmentInternalService;
 

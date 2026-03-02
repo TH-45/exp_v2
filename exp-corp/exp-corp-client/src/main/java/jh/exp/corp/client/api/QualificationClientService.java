@@ -16,7 +16,7 @@ import org.springframework.web.service.annotation.PostExchange;
  * 资质管理客户端服务接口
  * 提供资质相关的远程调用方法
  */
-@HttpExchange("/internal/corp/qualification")
+@HttpExchange("/qualification")
 public interface QualificationClientService {
 
     /**

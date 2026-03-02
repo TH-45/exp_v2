@@ -19,7 +19,7 @@
     <el-dialog
         v-model="dialogVisible"
         title="选择项目"
-        width="1000px"
+        width="800px"
         destroy-on-close
         draggable
     >
@@ -44,14 +44,14 @@
             />
           </el-form-item>
 
-          <el-form-item label="项目状态">
-            <el-input
-                v-model="searchForm.projectStatus"
-                placeholder="请输入项目状态"
-                clearable
-                style="width: 160px"
-            />
-          </el-form-item>
+<!--          <el-form-item label="项目状态">-->
+<!--            <el-input-->
+<!--                v-model="searchForm.projectStatus"-->
+<!--                placeholder="请输入项目状态"-->
+<!--                clearable-->
+<!--                style="width: 160px"-->
+<!--            />-->
+<!--          </el-form-item>-->
 
           <el-form-item>
             <el-button type="primary" @click="handleSearch">
@@ -70,7 +70,7 @@
           v-loading="loading"
           :data="tableData"
           border
-          height="450px"
+          height="350px"
           row-key="projectId"
           highlight-current-row
           @row-click="handleRowClick"

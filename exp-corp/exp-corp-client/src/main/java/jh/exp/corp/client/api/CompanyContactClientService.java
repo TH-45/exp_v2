@@ -16,7 +16,7 @@ import org.springframework.web.service.annotation.PostExchange;
  * 公司联系人客户端服务接口
  * 提供公司联系人的增删改查及相关批量操作功能
  */
-@HttpExchange("/internal/corp/company-contact")
+@HttpExchange("/company-contact")
 public interface CompanyContactClientService {
 
     /**

@@ -137,6 +137,33 @@ public class PersonServiceImpl implements PersonService {
         return Map.of();
     }
 
+    @Override
+    public Map<Long, PersonDetailRes> batchFlagPersonByIds(List<PersonFlagReq> personFlagReqList) {
+        if (CollectionUtils.isEmpty(personFlagReqList)) {
+            return Map.of();
+        }
+        List<Long> personIds = personFlagReqList.stream()
+                .map(PersonFlagReq::getPersonId)
+                .filter(id -> id != null && !id.isBlank())
+                .map(id -> Long.parseLong(id.trim()))
+                .distinct()
+                .toList();
+        if (personIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, PersonDetailRes> personMap = batchGetPersonByIds(personIds);
+        return personFlagReqList.stream()
+                .filter(req -> req.getFlag() != null && !req.getFlag().isBlank() && req.getPersonId() != null && !req.getPersonId().isBlank())
+                .collect(Collectors.toMap(
+                        req -> Long.parseLong(req.getFlag().trim()),
+                        req -> personMap.get(Long.parseLong(req.getPersonId().trim())),
+                        (a, b) -> a
+                ))
+                .entrySet().stream()
+                .filter(e -> e.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
     /**
      * 批量查询组织的部门负责人/人员信息
      * 对比传入 personId 与组织的 managerPersonId：

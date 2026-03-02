@@ -59,23 +59,20 @@
         </el-sub-menu>
 
         <!-- 企业信息管理 -->
-        <el-sub-menu v-if="canCorpView" index="/corp-project/corp-info">
+        <el-sub-menu v-if="canCorpView" index="/enterprise">
           <template #title>企业信息管理</template>
           <!-- 概览页面 -->
-          <el-menu-item index="/corp-project">
-            概览
-          </el-menu-item>
-          <el-menu-item v-if="canAccountView" index="/corp-project/corp-info/accounts">
-            账号信息管理
-          </el-menu-item>
-          <el-menu-item v-if="canAnnouncementView" index="/corp-project/corp-info/announcements">
+<!--          <el-menu-item index="/corp-project">-->
+<!--            概览-->
+<!--          </el-menu-item>-->
+          <el-menu-item v-if="canAnnouncementView" index="/enterprise/announcements">
             制度与公告
           </el-menu-item>
-          <el-menu-item v-if="canQualificationView" index="/corp-project/corp-info/qualifications">
+          <el-menu-item v-if="canQualificationView" index="/enterprise/qualifications">
             企业资质管理
           </el-menu-item>
-          <el-menu-item v-if="canBasicInfoView" index="/corp-project/corp-info/basic-info">
-            企业基础信息
+          <el-menu-item v-if="canBasicInfoView" index="/enterprise/basic-info">
+            基础信息管理
           </el-menu-item>
         </el-sub-menu>
 

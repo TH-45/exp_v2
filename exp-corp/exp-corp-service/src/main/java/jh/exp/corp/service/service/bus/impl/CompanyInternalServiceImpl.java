@@ -1,4 +1,4 @@
-package jh.exp.corp.service.service.internal.impl;
+package jh.exp.corp.service.service.bus.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -12,7 +12,7 @@ import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.CompanyDetailRes;
 import jh.exp.corp.core.entity.res.CompanyListRes;
 import jh.exp.corp.core.mapper.CompanyMapper;
-import jh.exp.corp.service.service.internal.CompanyInternalService;
+import jh.exp.corp.service.service.bus.CompanyInternalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;

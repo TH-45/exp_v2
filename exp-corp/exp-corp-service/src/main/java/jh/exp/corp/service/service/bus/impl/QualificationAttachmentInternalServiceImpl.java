@@ -1,4 +1,4 @@
-package jh.exp.corp.service.service.internal.impl;
+package jh.exp.corp.service.service.bus.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -10,7 +10,7 @@ import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.QualificationAttachmentDetailRes;
 import jh.exp.corp.core.entity.res.QualificationAttachmentListRes;
 import jh.exp.corp.core.mapper.QualificationAttachmentMapper;
-import jh.exp.corp.service.service.internal.QualificationAttachmentInternalService;
+import jh.exp.corp.service.service.bus.QualificationAttachmentInternalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;

@@ -120,4 +120,9 @@ public class TenderLisDTO {
      * 创建时间
      */
     private LocalDateTime createdTime;
+
+    /**
+     * 业务员
+     */
+    private Long salesmanId;
 }

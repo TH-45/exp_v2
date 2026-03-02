@@ -8,6 +8,8 @@ import jh.exp.auth.core.entity.res.PersonInfoRes;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
@@ -39,14 +41,22 @@ public interface PersonService {
     /**
      * 根据ID查询人员详情
      */
-    @PostExchange("/detail/{personId}")
-    PersonDetailRes getPersonById(Long personId);
+    @GetExchange("/detail")
+    PersonDetailRes getPersonById(@RequestParam("personId") Long personId);
 
     /**
      * 批量查询人员详情
      */
     @PostExchange("/batch")
-    Map<Long , PersonDetailRes> batchGetPersonByIds(@RequestBody  List<Long>  personIds);
+    Map<Long , PersonDetailRes> batchGetPersonByIds(@RequestBody  List<Long> personIds);
+
+    /**
+     * 批量查询人员详情
+     * 入参：标识和人员id list
+     * 返回：标识和人员信息 map
+     */
+    @PostExchange("/batch/flag")
+    Map<Long, PersonDetailRes> batchFlagPersonByIds(@RequestBody List<PersonFlagReq> personFlagResList);
 
     /**
      * 创建人员

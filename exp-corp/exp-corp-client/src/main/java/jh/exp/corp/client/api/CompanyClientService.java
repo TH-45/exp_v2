@@ -19,7 +19,7 @@ import java.util.Map;
  * 公司服务客户端接口
  * 提供公司相关的API调用方法
  */
-@HttpExchange("/internal/corp/company")
+@HttpExchange("/company")
 public interface CompanyClientService {
 
     /**

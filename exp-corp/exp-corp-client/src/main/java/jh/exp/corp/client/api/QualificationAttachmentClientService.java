@@ -12,7 +12,7 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-@HttpExchange("/internal/corp/qualification-attachment")
+@HttpExchange("/qualification-attachment")
 public interface QualificationAttachmentClientService {
 
     @PostExchange("/list")

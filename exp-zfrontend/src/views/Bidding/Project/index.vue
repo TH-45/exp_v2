@@ -59,19 +59,22 @@
         <el-table-column prop="tenderCode" label="项目编码" min-width="120" />
         <el-table-column prop="tenderName" label="项目名称" min-width="200" />
         <el-table-column prop="purchaserName" label="招标单位" min-width="180" />
-        <el-table-column prop="ownerName" label="负责人" min-width="120" />
-        <el-table-column label="招标方式">
+        <el-table-column prop="orgName" label="归属部门" min-width="120" />
+        <el-table-column prop="personIdName" label="负责人" min-width="120" />
+        <el-table-column prop="salesmanName" label="业务员" min-width="170" />
+        <el-table-column label="招标方式" min-width="100">
           <template #default="{ row }">
             {{ formatTenderMode(row.tenderMode) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="状态" min-width="80">
+        <el-table-column label="状态" min-width="90">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)">{{ statusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdTime" label="创建时间" min-width="170" />
+        <el-table-column prop="bidStartTime" label="开标时间" min-width="170" />
+        <el-table-column prop="bidEndTime" label="截止时间" min-width="170" />
         <el-table-column label="操作" fixed="right" width="140">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openEdit(true, row)" :disabled="!canManage">
@@ -150,9 +153,9 @@
               style="width: 100%"
             />
           </el-form-item>
-          <el-form-item label="开标时间" prop="openTime">
+          <el-form-item label="开标时间" prop="bidStartTime">
             <el-date-picker
-              v-model="form.openTime"
+              v-model="form.bidStartTime"
               type="datetime"
               value-format="YYYY-MM-DD HH:mm:ss"
               placeholder="请选择开标时间"
@@ -190,8 +193,12 @@ import ProjectSelector from '@/components/Selector/ProjectSelector.vue'
 import type { ProjectVO } from '@/api/corpProject/project'
 import {
   queryBiddingProjectList,
+  createBiddingProject,
+  updateBiddingProject,
   type TenderVO,
   type BiddingProjectStatus,
+  type CreateTenderReq,
+  type UpdateTenderReq,
 } from '@/api/bidding/project';
 
 import { useRouter } from 'vue-router';
@@ -275,10 +282,10 @@ const tableData = ref<TenderVO[]>([]);
 const total = ref(0);
 
 
-
-function normalizeDateTime (value?: string) {
-  return (value || '').replace('T', ' ');
-}
+//
+// function normalizeDateTime (value?: string) {
+//   return (value || '').replace('T', ' ');
+// }
 
 
 
@@ -451,25 +458,64 @@ const rules: FormRules = {
 function openEdit(isEdit: boolean, row?: TenderVO) {
   editDialog.isEdit = isEdit;
 
+  // 1. 重置表单验证状态
+  if (formRef.value) {
+    formRef.value.resetFields();
+  }
+
   if (isEdit && row) {
+    // 2. 编辑模式：将行数据（row）映射到表单（form）
     form.tenderId = row.tenderId;
     form.tenderCode = row.tenderCode;
     form.tenderName = row.tenderName;
+    form.tenderType = row.tenderType || '';
     form.tenderMode = row.tenderMode || '';
     form.status = row.status;
+    form.budgetAmount = row.budgetAmount || 0;
+    form.bidStartTime = row.bidStartTime || '';
+    form.bidEndTime = row.bidEndTime || '';
+    form.openTime = ''; // 注意：后端返回可能是 openTime 或其他，需根据后端字段名调整
+    form.remark = row.remark || '';
+    form.openAddress = row.openAddress || '';
+
+    // 3. 处理选择器组件的回显 (关键：构造对象)
+    // 负责人回显 - 强制断言
+    form.owner = row.personId ? ({
+      personId: row.personId,
+      personName: row.personIdName
+    } as any) : undefined;
+
+    // 招标单位回显
+    form.company = row.purchaserId ? {
+      companyId: row.purchaserId,
+      companyName: row.purchaserName
+    } as any : undefined;
+
+    // 关联项目回显 - 强制断言
+    form.relatedProject = row.projectId ? ({
+      projectId: row.projectId,
+      projectName: row.projectName
+    } as any) : undefined;
+
   } else {
-    form.tenderId = '';
-    form.tenderCode = '';
-    form.tenderName = '';
-    form.tenderType = '';
-    form.tenderMode = '';
-    form.status = '未开始';
-    form.budgetAmount = 0;
-    form.bidStartTime = '';
-    form.bidEndTime = '';
-    form.openTime = '';
-    form.openAddress = '';
-    form.remark = '';
+    // 4. 新增模式：重置所有字段
+    Object.assign(form, {
+      tenderId: '',
+      tenderCode: '',
+      tenderName: '',
+      tenderType: '',
+      tenderMode: '',
+      status: '未开始',
+      budgetAmount: 0,
+      owner: undefined,
+      company: undefined,
+      relatedProject: undefined,
+      bidStartTime: '',
+      bidEndTime: '',
+      openTime: '',
+      openAddress: '',
+      remark: '',
+    });
     // 自动生成项目编码
     autoGenerateProjectCode();
   }
@@ -500,20 +546,43 @@ async function submitForm() {
   const valid = await formRef.value.validate();
   if (!valid) return;
 
-  saving.value = true;
+  const companyId = form.company?.companyId != null ? Number(form.company.companyId) : null;
+  if (companyId == null || companyId === 0) {
+    ElMessage.warning('请选择招标单位');
+    return;
+  }
 
+  saving.value = true;
   try {
-    const payload = {
-      ...form,
-      ownerId: form.owner?.personId,
-      companyId: form.company?.companyId,
-      relatedProjectId: form.relatedProject?.projectId,
+    const basePayload: CreateTenderReq = {
+      tenderCode: form.tenderCode || '',
+      tenderName: form.tenderName || '',
+      tenderType: form.tenderType || '',
+      tenderMode: form.tenderMode || '',
+      companyId,
+      budgetAmount: Number(form.budgetAmount) || 0,
+      currency: form.currency || 'CNY',
+      tenderBrief: form.tenderBrief || undefined,
+      bidStartTime: form.bidStartTime || '',
+      bidEndTime: form.bidEndTime || '',
+      openTime: form.openTime || undefined,
+      openAddress: form.openAddress || undefined,
+      projectId: form.relatedProject?.projectId != null ? Number(form.relatedProject.projectId) : undefined,
+      remark: form.remark || undefined,
     };
 
-    console.log('提交参数:', payload);
-
+    if (editDialog.isEdit && form.tenderId) {
+      const updatePayload: UpdateTenderReq = { ...basePayload, tenderId: Number(form.tenderId) };
+      await updateBiddingProject(updatePayload);
+      ElMessage.success('更新成功');
+    } else {
+      await createBiddingProject(basePayload);
+      ElMessage.success('创建成功');
+    }
     editDialog.visible = false;
-    fetchList();
+    await fetchList();
+  } catch (e: any) {
+    ElMessage.error(e?.message || (editDialog.isEdit ? '更新失败' : '创建失败'));
   } finally {
     saving.value = false;
   }

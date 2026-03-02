@@ -5,8 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.clinet.api.bus.AccountService;
 import jh.exp.auth.clinet.api.bus.PersonService;
-
-
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.entity.Bid;
 import jh.exp.bid.contract.core.entity.req.*;
@@ -16,44 +14,58 @@ import jh.exp.bid.contract.core.mapper.BidMapper;
 import jh.exp.bid.contract.service.service.bus.BidService;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
+import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import jh.exp.corp.client.api.CompanyClientService;
+import jh.exp.corp.core.entity.res.CompanyDetailRes;
+import jh.exp.project.client.api.ProjectClientService;
+import jh.exp.project.core.entity.Project;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 投标服务实现类
+ * 本模块表（exp_bid、exp_tender）仅通过 Mapper 增删改查；其他模块表（供应商/项目/人员等）通过调用对应模块接口查询，不直接查表。
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class BidServiceImpl implements BidService {
 
     private final BidMapper bidMapper;
     private final PersonService personService;
     private final AccountService accountService;
+    private final CompanyClientService companyClientService;
+    private final ProjectClientService projectClientService;
 
     @Override
     public SimplePageRes<BidListRes> queryBidList(SimplePageReq<QueryBidReq> req) {
-        // 创建分页对象
+        req.pageDefault();
         Page<BidListRes> page = new Page<>(req.getPageNum(), req.getPageSize());
+        QueryBidReq queryParam = req.getQueryParam() != null ? req.getQueryParam() : new QueryBidReq();
 
-        QueryBidReq queryParam = req.getQueryParam();
-        // 如果前端没有传递查询参数，创建一个默认的空对象
-        if (queryParam == null) {
-            queryParam = new QueryBidReq();
+        // 仅查本模块表（exp_bid、exp_tender）
+        IPage<BidListRes> result = bidMapper.selectBidList(page, queryParam);
+        List<BidListRes> records = result.getRecords();
+
+        // 通过各模块接口补全供应商名称、项目名称、创建人姓名（不直接查其他模块表）
+        if (!CollectionUtils.isEmpty(records)) {
+            fillBidListResNames(records);
         }
 
-        // 使用MyBatis-Plus自动分页查询
-        IPage<BidListRes> result = bidMapper.selectBidList(page, queryParam);
-
-        // 转换为统一的响应格式
         SimplePageRes<BidListRes> pageRes = new SimplePageRes<>();
-        pageRes.setList(result.getRecords());
+        pageRes.setList(records);
         pageRes.setTotal(result.getTotal());
         pageRes.setPage(result.getCurrent());
         pageRes.setSize(result.getSize());
@@ -62,10 +74,13 @@ public class BidServiceImpl implements BidService {
 
     @Override
     public BidDetailRes getBidById(Long bidId) {
+        // 仅查本模块表
         BidDetailRes bidDetail = bidMapper.selectBidDetailById(bidId);
         if (bidDetail == null) {
             throw new RuntimeException("投标信息不存在");
         }
+        // 通过各模块接口补全供应商/项目/创建人及部门岗位名称
+        fillBidDetailResNames(bidDetail);
         return bidDetail;
     }
 
@@ -230,12 +245,108 @@ public class BidServiceImpl implements BidService {
 
     @Override
     public List<BidListRes> getBidsByTenderId(Long tenderId) {
-        return bidMapper.selectBidsByTenderId(tenderId);
+        // 仅查本模块表
+        List<BidListRes> list = bidMapper.selectBidsByTenderId(tenderId);
+        if (!CollectionUtils.isEmpty(list)) {
+            fillBidListResNames(list);
+        }
+        return list;
     }
 
     @Override
     public boolean checkSupplierBidExists(Long tenderId, Long supplierId, Long excludeBidId) {
         return bidMapper.countByTenderAndSupplier(tenderId, supplierId, excludeBidId) > 0;
+    }
+
+    /**
+     * 通过 corp/project/auth 模块接口补全列表中的供应商名称、项目名称、创建人姓名（不直接查其他模块表）
+     */
+    private void fillBidListResNames(List<BidListRes> records) {
+        List<Long> supplierIds = records.stream().map(BidListRes::getSupplierId).filter(Objects::nonNull).distinct().collect(Collectors.toList());
+        List<Long> projectIds = records.stream().map(BidListRes::getProjectId).filter(Objects::nonNull).distinct().collect(Collectors.toList());
+        List<Long> createdByIds = records.stream().map(BidListRes::getCreatedBy).filter(Objects::nonNull).distinct().collect(Collectors.toList());
+
+        Map<Long, CompanyDetailRes> companyMap = Collections.emptyMap();
+        if (!supplierIds.isEmpty()) {
+            ApiResponse<Map<Long, CompanyDetailRes>> companyResp = companyClientService.batchDetail(supplierIds);
+            if (companyResp != null && companyResp.isSuccess() && companyResp.getData() != null) {
+                companyMap = companyResp.getData();
+            }
+        }
+        Map<Long, Project> projectMap = Collections.emptyMap();
+        if (!projectIds.isEmpty()) {
+            ApiResponse<Map<Long, Project>> projectResp = projectClientService.batchGetProjectByIds(projectIds);
+            if (projectResp != null && projectResp.isSuccess() && projectResp.getData() != null) {
+                projectMap = projectResp.getData();
+            }
+        }
+        Map<Long, PersonDetailRes> personMap = Collections.emptyMap();
+        if (!createdByIds.isEmpty()) {
+            try {
+                Map<Long, PersonDetailRes> map = personService.batchGetPersonByIds(createdByIds);
+                if (map != null) {
+                    personMap = map;
+                }
+            } catch (Exception e) {
+                log.warn("批量查询创建人信息失败, createdByIds={}", createdByIds, e);
+            }
+        }
+
+        final Map<Long, CompanyDetailRes> companyMapFinal = companyMap;
+        final Map<Long, Project> projectMapFinal = projectMap;
+        final Map<Long, PersonDetailRes> personMapFinal = personMap;
+        records.forEach(item -> {
+            if (item.getSupplierId() != null) {
+                CompanyDetailRes company = companyMapFinal.get(item.getSupplierId());
+                item.setSupplierName(company != null ? company.getCompanyName() : null);
+            }
+            if (item.getProjectId() != null) {
+                Project project = projectMapFinal.get(item.getProjectId());
+                item.setProjectName(project != null ? project.getProjectName() : null);
+            }
+            if (item.getCreatedBy() != null) {
+                PersonDetailRes person = personMapFinal.get(item.getCreatedBy());
+                item.setCreatedByName(person != null ? person.getPersonName() : null);
+            }
+        });
+    }
+
+    /**
+     * 通过 corp/project/auth 模块接口补全详情中的供应商名称、项目名称、创建人及部门岗位名称（不直接查其他模块表）
+     */
+    private void fillBidDetailResNames(BidDetailRes detail) {
+        if (detail.getSupplierId() != null) {
+            try {
+                ApiResponse<CompanyDetailRes> resp = companyClientService.detail(detail.getSupplierId());
+                if (resp != null && resp.isSuccess() && resp.getData() != null) {
+                    detail.setSupplierName(resp.getData().getCompanyName());
+                }
+            } catch (Exception e) {
+                log.warn("查询供应商(公司)详情失败, supplierId={}", detail.getSupplierId(), e);
+            }
+        }
+        if (detail.getProjectId() != null) {
+            try {
+                ApiResponse<Project> resp = projectClientService.detail(detail.getProjectId());
+                if (resp != null && resp.isSuccess() && resp.getData() != null) {
+                    detail.setProjectName(resp.getData().getProjectName());
+                }
+            } catch (Exception e) {
+                log.warn("查询项目详情失败, projectId={}", detail.getProjectId(), e);
+            }
+        }
+        if (detail.getCreatedBy() != null) {
+            try {
+                PersonDetailRes person = personService.getPersonById(detail.getCreatedBy());
+                if (person != null) {
+                    detail.setCreatedByName(person.getPersonName());
+                    detail.setCreatedDeptName(person.getOrgName());
+                    detail.setCreatedPostName(person.getPostName());
+                }
+            } catch (Exception e) {
+                log.warn("查询创建人详情失败, createdBy={}", detail.getCreatedBy(), e);
+            }
+        }
     }
 
     @Override
@@ -247,7 +358,7 @@ public class BidServiceImpl implements BidService {
         }
 
         // 检查是否为投标创建者
-        if (bid.getCreatedBy().equals(userId)) {
+        if (Objects.equals(bid.getCreatedBy(), userId)) {
             return true;
         }
 

@@ -23,7 +23,7 @@ public class TenderListRes {
     private Long purchaserId;
 
     // 招标方名称
-    private String tenderCompanyName;
+    private String purchaserName;
 
     // 招标负责人id
     private Long personId;
@@ -40,8 +40,6 @@ public class TenderListRes {
     // 招标项目状态
     private String status;
 
-    // 招标开标时间
-    private LocalDateTime bidOpenTime;
 
     // 招标方式
     private String tenderMode;
@@ -75,4 +73,9 @@ public class TenderListRes {
 
     // 招标项目创建时间
     private LocalDateTime createdTime;
+
+    // 业务员id
+    private Long salesmanId;
+    //业务员名称
+    private String salesmanName;
 }

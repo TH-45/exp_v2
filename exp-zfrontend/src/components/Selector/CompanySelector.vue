@@ -1,11 +1,11 @@
 <template>
   <div>
     <el-input
-        v-model="displayText"
-        :placeholder="placeholder"
-        readonly
-        @click="openDialog"
-        class="selector-input"
+      v-model="displayText"
+      :placeholder="placeholder"
+      readonly
+      @click="openDialog"
+      class="selector-input"
     >
       <template #suffix>
         <el-icon @click="openDialog" class="cursor-pointer">
@@ -15,73 +15,70 @@
     </el-input>
 
     <el-dialog
-        v-model="dialogVisible"
-        title="选择公司"
-        width="800px"
-        destroy-on-close
-        draggable
+      v-model="dialogVisible"
+      title="选择公司"
+      width="800px"
+      destroy-on-close
+      draggable
     >
       <!-- 搜索区 -->
       <div class="search-bar">
         <el-form :inline="true" :model="searchForm">
           <el-form-item label="公司名称">
             <el-input
-                v-model="searchForm.companyName"
-                placeholder="请输入公司名称"
-                clearable
-                style="width: 200px"
+              v-model="searchForm.companyName"
+              placeholder="请输入公司名称"
+              clearable
+              style="width: 200px"
             />
           </el-form-item>
-
           <el-form-item label="公司编码">
             <el-input
-                v-model="searchForm.companyCode"
-                placeholder="请输入公司编码"
-                clearable
-                style="width: 160px"
+              v-model="searchForm.companyCode"
+              placeholder="请输入公司编码"
+              clearable
+              style="width: 160px"
             />
           </el-form-item>
-
           <el-form-item>
-            <el-button type="primary" @click="handleSearch">
-              查询
-            </el-button>
-            <el-button @click="handleReset">
-              重置
-            </el-button>
+            <el-button type="primary" @click="handleSearch">查询</el-button>
+            <el-button @click="handleReset">重置</el-button>
           </el-form-item>
         </el-form>
       </div>
 
-      <!-- 公司列表 -->
+      <!-- 公司列表（列表数据来自接口，选择后仅回传 companyId / companyName / contactPhone，不含编号） -->
       <el-table
-          ref="tableRef"
-          v-loading="loading"
-          :data="tableData"
-          border
-          height="400px"
-          @row-click="handleRowClick"
+        ref="tableRef"
+        v-loading="loading"
+        :data="tableData"
+        border
+        height="400px"
+        row-key="companyId"
+        @row-click="handleRowClick"
+        highlight-current-row
+        @current-change="handleCurrentChangeRow"
       >
-        <el-table-column prop="companyCode" label="公司编码" min-width="140" />
-        <el-table-column prop="companyName" label="公司名称" min-width="220" />
-        <el-table-column prop="contactPerson" label="联系人" min-width="140" />
+        <el-table-column prop="companyName" label="公司名称" min-width="200" />
+        <el-table-column prop="companyCode" label="公司编码" min-width="130" />
+        <el-table-column prop="legalPerson" label="法定代表人" min-width="120" />
         <el-table-column prop="contactPhone" label="联系电话" min-width="140" />
       </el-table>
 
       <div class="pagination">
         <el-pagination
-            background
-            layout="total, prev, pager, next"
-            :current-page="query.pageNum"
-            :page-size="query.pageSize"
-            :total="total"
-            @current-change="handleCurrentChange"
+          background
+          layout="total, prev, pager, next"
+          :current-page="query.pageNum"
+          :page-size="query.pageSize"
+          :total="total"
+          @current-change="handleCurrentChange"
         />
       </div>
 
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleConfirm" :disabled="!selectedCompany">
+        <el-button type="primary" @click="handleConfirm" :disabled="!selectedRow">
           确定
         </el-button>
       </template>
@@ -90,33 +87,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue';
+import { ref, reactive, computed, watch, nextTick } from 'vue';
 import { Search } from '@element-plus/icons-vue';
+import { parsePageResult } from '@/api/common';
+import {
+  listCompany,
+  type CompanyListVO,
+  type CompanySelectorValue,
+} from '@/api/enterprise/company';
 
 /* ===============================
-   DTO 定义
+   对外值类型（不含编号，见 api/enterprise/company CompanySelectorValue）
 ================================ */
 
-export interface CompanyVO {
-  companyId: string;
-  companyCode: string;
-  companyName: string;
-  contactPerson?: string;
+/** 选择器接受的 modelValue 类型：支持仅 companyId + companyName 回显，兼容历史带 companyCode 的传值 */
+export type CompanySelectorModelValue = CompanySelectorValue | {
+  companyId?: number | string;
+  companyName?: string;
+  companyCode?: string;
   contactPhone?: string;
-}
+};
 
 /* ===============================
    Props / Emits
 ================================ */
 
 interface Props {
-  modelValue?: CompanyVO;
+  modelValue?: CompanySelectorModelValue | null;
   placeholder?: string;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: CompanyVO | undefined): void;
-  (e: 'change', value: CompanyVO | undefined): void;
+  (e: 'update:modelValue', value: CompanySelectorValue | undefined): void;
+  (e: 'change', value: CompanySelectorValue | undefined): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -132,9 +135,10 @@ const emit = defineEmits<Emits>();
 const dialogVisible = ref(false);
 const loading = ref(false);
 const tableRef = ref();
-const tableData = ref<CompanyVO[]>([]);
+const tableData = ref<CompanyListVO[]>([]);
 const total = ref(0);
-const selectedCompany = ref<CompanyVO>();
+/** 当前选中的列表行（用于高亮与确认时转为 CompanySelectorValue 传出） */
+const selectedRow = ref<CompanyListVO | null>(null);
 
 const query = reactive({
   pageNum: 1,
@@ -147,13 +151,13 @@ const searchForm = reactive({
 });
 
 /* ===============================
-   显示文本
+   回显：仅用名称，不依赖编号
 ================================ */
 
 const displayText = computed(() => {
-  return props.modelValue
-      ? `${props.modelValue.companyName}(${props.modelValue.companyCode})`
-      : '';
+  const v = props.modelValue;
+  if (!v || typeof v !== 'object') return '';
+  return (v as { companyName?: string }).companyName ?? '';
 });
 
 /* ===============================
@@ -162,58 +166,46 @@ const displayText = computed(() => {
 
 function openDialog() {
   dialogVisible.value = true;
-  selectedCompany.value = props.modelValue;
-  tableData.value = [];
-  total.value = 0;
+  selectedRow.value = null;
+  query.pageNum = 1;
+  fetchCompanyList();
 }
 
 /* ===============================
-   TODO：接入公司查询接口
+   接入公司列表接口
 ================================ */
-
-/**
- * TODO:
- * 替换为真实接口
- *
- * import { queryCompanyList } from '@/api/system/company'
- */
 
 async function fetchCompanyList() {
   loading.value = true;
-
   try {
-    // TODO: 替换为真实接口
-    /*
-    const res = await queryCompanyList({
-      ...query,
+    const res = await listCompany({
+      pageNum: query.pageNum,
+      pageSize: query.pageSize,
       companyName: searchForm.companyName.trim() || undefined,
       companyCode: searchForm.companyCode.trim() || undefined,
     });
+    const parsed = parsePageResult<CompanyListVO>(res);
+    tableData.value = parsed.list;
+    total.value = parsed.total;
 
-    tableData.value = res.list || [];
-    total.value = res.total || 0;
-    */
-
-    // 临时模拟数据
-    tableData.value = [
-      {
-        companyId: '1',
-        companyCode: 'CMP001',
-        companyName: '测试招标有限公司',
-        contactPerson: '张三',
-        contactPhone: '13800000000',
-      },
-    ];
-    total.value = 1;
-
+    // 回显：若已有 modelValue，在列表里选中对应行
+    await nextTick();
+    const current = props.modelValue as CompanySelectorModelValue | undefined;
+    const wantId = current?.companyId != null ? Number(current.companyId) : null;
+    if (wantId != null && tableData.value.length > 0) {
+      const row = tableData.value.find((r) => r.companyId === wantId);
+      if (row) {
+        selectedRow.value = row;
+        tableRef.value?.setCurrentRow(row);
+      }
+    }
+  } catch (_e) {
+    tableData.value = [];
+    total.value = 0;
   } finally {
     loading.value = false;
   }
 }
-
-/* ===============================
-   搜索
-================================ */
 
 function handleSearch() {
   query.pageNum = 1;
@@ -224,41 +216,55 @@ function handleReset() {
   searchForm.companyName = '';
   searchForm.companyCode = '';
   query.pageNum = 1;
+  fetchCompanyList();
 }
 
-/* ===============================
-   行点击
-================================ */
-
-function handleRowClick(row: CompanyVO) {
-  selectedCompany.value = row;
-  tableRef.value?.setCurrentRow(row);
+// function handleRowClick(row: CompanyListVO) {
+//   selectedRow.value = row;
+//   tableRef.value?.setCurrentRow(row);
+// }
+function handleCurrentChangeRow(row: CompanyListVO | undefined) {
+  selectedRow.value = row ?? null;
 }
 
-/* ===============================
-   确认
-================================ */
-
+/** 确认时只传出 companyId、companyName、contactPhone，不含编号 */
 function handleConfirm() {
-  if (!selectedCompany.value) return;
+  const row = selectedRow.value;
+  if (!row || row.companyId == null) return;
 
-  emit('update:modelValue', selectedCompany.value);
-  emit('change', selectedCompany.value);
+  const value: CompanySelectorValue = {
+    companyId: row.companyId,
+    companyName: row.companyName ?? '',
+    contactPhone: row.contactPhone,
+  };
+  emit('update:modelValue', value);
+  emit('change', value);
   dialogVisible.value = false;
 }
-
-/* ===============================
-   分页
-================================ */
 
 function handleCurrentChange(page: number) {
   query.pageNum = page;
   fetchCompanyList();
 }
 
-watch(() => props.modelValue, (val) => {
-  selectedCompany.value = val;
-}, { immediate: true });
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (!dialogVisible.value) return;
+    const wantId = val && typeof val === 'object' && val.companyId != null
+      ? Number((val as CompanySelectorModelValue).companyId)
+      : null;
+    if (wantId == null) {
+      selectedRow.value = null;
+      tableRef.value?.setCurrentRow();
+      return;
+    }
+    const row = tableData.value.find((r) => r.companyId === wantId);
+    selectedRow.value = row ?? null;
+    tableRef.value?.setCurrentRow(row ?? undefined);
+  },
+  { deep: true },
+);
 </script>
 
 <style scoped lang="scss">
