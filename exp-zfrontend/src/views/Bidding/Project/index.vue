@@ -81,6 +81,8 @@
               编辑
             </el-button>
             <el-button link size="small" @click="goDetail(row)">详情</el-button>
+            <el-button link size="small" @click="deleteById(row)">删除</el-button>
+
           </template>
         </el-table-column>
       </el-table>
@@ -183,7 +185,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, computed, watch } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
+import { ElMessage,ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
 import { generateProjectCode } from '@/utils/codeGenerator';
 import type { ExpPersonVO } from '@/api/system/person';
@@ -195,6 +197,7 @@ import {
   queryBiddingProjectList,
   createBiddingProject,
   updateBiddingProject,
+  deleteBiddingProject,
   type TenderVO,
   type BiddingProjectStatus,
   type CreateTenderReq,
@@ -287,7 +290,48 @@ const total = ref(0);
 //   return (value || '').replace('T', ' ');
 // }
 
+//删除
 
+
+async function deleteById(row: TenderVO) {
+  if (!row?.tenderId) {
+    ElMessage.warning('未获取到项目ID');
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(
+        `确认删除项目「${row.tenderName}」吗？`,
+        '删除确认',
+        {
+          type: 'warning',
+          confirmButtonText: '确认删除',
+          cancelButtonText: '取消',
+        }
+    );
+
+    loading.value = true;
+
+    await deleteBiddingProject(Number(row.tenderId));
+
+    ElMessage.success('删除成功');
+
+    // 如果当前页只有一条数据，删除后回退一页
+    if (tableData.value.length === 1 && query.pageNum > 1) {
+      query.pageNum -= 1;
+    }
+
+    await fetchList();
+
+  } catch (err: any) {
+    // 用户点取消，不提示错误
+    if (err !== 'cancel') {
+      ElMessage.error(err?.message || '删除失败');
+    }
+  } finally {
+    loading.value = false;
+  }
+}
 
 async function fetchList() {
   loading.value = true;

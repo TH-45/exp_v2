@@ -1,6 +1,5 @@
 package jh.exp.bid.contract.service.service.bus.Impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,6 +10,7 @@ import jh.exp.auth.core.entity.dto.OrgIdAndPersonIdDTO;
 import jh.exp.auth.core.entity.req.PersonFlagReq;
 import jh.exp.auth.core.entity.res.OrgUnitDetailRes;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
+import jh.exp.bid.contract.core.constant.BidContractConstant;
 import jh.exp.bid.contract.core.entity.Tender;
 import jh.exp.bid.contract.core.entity.middle.TenderMember;
 import jh.exp.bid.contract.core.entity.req.*;
@@ -19,10 +19,12 @@ import jh.exp.bid.contract.core.entity.dto.TenderLisDTO;
 import jh.exp.bid.contract.core.entity.res.TenderListRes;
 import jh.exp.bid.contract.core.mapper.TenderMapper;
 //import jh.exp.bid.contract.core.mapper.middle.TenderMemberMapper;
+import jh.exp.bid.contract.core.mapper.middle.TenderMemberMapper;
 import jh.exp.bid.contract.service.service.bus.TenderService;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
+import jh.exp.common.core.constant.CommonConstant;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.corp.client.api.CompanyClientService;
@@ -36,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -50,7 +53,7 @@ import java.util.stream.Collectors;
 public class TenderServiceImpl implements TenderService {
 
     private final TenderMapper tenderMapper;
-//    private final TenderMemberMapper tenderMemberMapper;
+    private final TenderMemberMapper tenderMemberMapper;
 
     private final PersonService personService;
     private final OrgUnitService orgUnitService;
@@ -85,8 +88,8 @@ public class TenderServiceImpl implements TenderService {
             //拼接负责人 查询组织的部门负责人，对比传入id与负责人id，一致返回部门负责人信息，不一致返回传入id的人员信息
             ArrayList<OrgIdAndPersonIdDTO> orgIdAndPersonIdDTOs = new ArrayList<>();
             records.forEach(record -> {
-                if(record.getOrgId()!=null){
-                    OrgIdAndPersonIdDTO orgIdAndPersonIdDTO = new OrgIdAndPersonIdDTO ();
+                if (record.getOrgId() != null) {
+                    OrgIdAndPersonIdDTO orgIdAndPersonIdDTO = new OrgIdAndPersonIdDTO();
                     orgIdAndPersonIdDTO.setOrgId(record.getOrgId());
                     orgIdAndPersonIdDTO.setPersonId(record.getPersonId());
                     orgIdAndPersonIdDTOs.add(orgIdAndPersonIdDTO);
@@ -113,26 +116,32 @@ public class TenderServiceImpl implements TenderService {
 
 
             for (TenderListRes item : resList) {
+                // 设置招标方名称
                 if (item.getPurchaserId() != null) {
                     String companyName = companyDetailResMap.get(item.getPurchaserId()).getCompanyName();
                     item.setPurchaserName(companyName);
                 }
 
+                // 设置负责人信息（包括姓名和组织名称）
                 if (item.getOrgId() != null) {
                     PersonDetailRes person = orgIdPersonMap.get(item.getOrgId());
                     item.setPersonIdName(person.getPersonName());
                     item.setOrgName(person.getOrgName());
                 }
-                if (item.getSalesmanId() != null){
+
+                // 设置业务员名称
+                if (item.getSalesmanId() != null) {
                     String personName = busPersonMap.get(item.getTenderId()).getPersonName();
                     item.setSalesmanName(personName);
                 }
 
-
+                // 设置项目名称
                 if (item.getProjectId() != null) {
                     String projectName = projectDetailResMap.get(item.getProjectId()).getProjectName();
                     item.setProjectName(projectName);
                 }
+
+
             }
         }
 
@@ -175,8 +184,6 @@ public class TenderServiceImpl implements TenderService {
 //            throw new RuntimeException("项目归属组织的负责人未设置，无法创建招标");
 //        }
 
-
-
         CurrentUser currentUser = CurrentUserHolder.get();
         Long personId = currentUser.getUserId();
         PersonDetailRes personDetail = personService.getPersonById(personId);
@@ -199,7 +206,7 @@ public class TenderServiceImpl implements TenderService {
         tender.setOpenTime(req.getOpenTime());
         tender.setOpenAddress(req.getOpenAddress());
         tender.setProjectId(req.getProjectId());
-        tender.setStatus("准备"); // 新建招标默认为准备状态
+        tender.setStatus(BidContractConstant.BID_CONTRACT_PROJECT_PREPARE); // 新建招标默认为准备状态
         tender.setRemark(req.getRemark());
         tender.setCreatedTime(LocalDateTime.now());
         tender.setUpdatedTime(LocalDateTime.now());
@@ -209,6 +216,22 @@ public class TenderServiceImpl implements TenderService {
         tender.setCreatedPostId(personDetail.getPostId());
 
         tenderMapper.insert(tender);
+
+
+        TenderMember tenderMember = TenderMember.builder()
+                .tenderId(tender.getTenderId())
+                .personId(req.getPersonId())
+                .memberRole(BidContractConstant.BID_CONTRACT_PRINCIPAL)
+                .orgId(req.getOrgId())
+//                .postId(projectInfo.getProjectManagerPostId())
+                .startDate(LocalDate.now())
+                .endDate(LocalDate.now().plusYears(10))
+                .status(CommonConstant.ENABLED_STATUS_STR)
+                .createdTime(LocalDateTime.now())
+                .updatedTime(LocalDateTime.now())
+                .build();
+        tenderMemberMapper.insert(tenderMember);
+
         return getTenderById(tender.getTenderId());
     }
 
@@ -220,21 +243,17 @@ public class TenderServiceImpl implements TenderService {
             throw new RuntimeException("招标信息不存在");
         }
 
-        if (checkTenderCodeExists(req.getTenderCode(), req.getTenderId())) {
-            throw new RuntimeException("招标编号已存在");
-        }
-
         getCompanyNameOrThrow(req.getCompanyId());
 
         Tender tender = new Tender();
         tender.setTenderId(req.getTenderId());
-        tender.setTenderCode(req.getTenderCode());
+//        tender.setTenderCode(req.getTenderCode());
         tender.setTenderName(req.getTenderName());
         tender.setTenderType(req.getTenderType());
         tender.setTenderMode(req.getTenderMode());
         tender.setCompanyId(req.getCompanyId());
         tender.setBudgetAmount(req.getBudgetAmount());
-        tender.setCurrency(req.getCurrency());
+//        tender.setCurrency(req.getCurrency());
         tender.setTenderBrief(req.getTenderBrief());
         tender.setPublishTime(req.getPublishTime());
         tender.setBidStartTime(req.getBidStartTime());
@@ -257,7 +276,7 @@ public class TenderServiceImpl implements TenderService {
         }
 
         CurrentUser currentUser = CurrentUserHolder.get();
-        if (!checkDeletePermission(tenderId, Long.valueOf(currentUser.getUserId()))) {
+        if (!checkDeletePermission(tenderId, currentUser.getUserId())) {
             throw new RuntimeException("无权限删除该招标信息");
         }
 

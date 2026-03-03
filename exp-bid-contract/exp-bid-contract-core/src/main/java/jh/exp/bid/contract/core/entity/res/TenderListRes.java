@@ -59,11 +59,23 @@ public class TenderListRes {
     //关联项目名称
     private String projectName;
 
-    // 招标开始时间
-    private LocalDateTime bidStartTime;
+    /**
+     * 招标发布时间
+     */
+    private LocalDateTime publishTime;
 
-    // 招标截止时间
+    // 投标截止时间
     private LocalDateTime bidEndTime;
+
+    /**
+     * 开标时间
+     */
+    private LocalDateTime openTime;
+    /**
+     * 开标地址
+     */
+    private String openAddress;
+
 
     // 招标项目创建人id
     private Long createdBy;

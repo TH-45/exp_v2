@@ -16,12 +16,15 @@
         <result property="purchaserId" column="purchaser_id"/>
         <result property="budgetAmount" column="budget_amount"/>
         <result property="currency" column="currency"/>
-        <result property="bidStartTime" column="bid_start_time"/>
+        <result property="publishTime" column="publish_time"/>
         <result property="bidEndTime" column="bid_end_time"/>
         <result property="status" column="status"/>
         <result property="projectId" column="project_id"/>
         <result property="createdBy" column="created_by"/>
         <result property="createdTime" column="created_time"/>
+        <result property="openTime" column="open_time"/>
+        <result property="openAddress" column="open_address"/>
+
 
         <result property="personId" column="person_id"/>
         <result property="memberRole" column="member_role"/>
@@ -42,7 +45,9 @@
         t.company_id AS purchaser_id,
         t.budget_amount,
         t.currency,
-        t.bid_start_time,
+        t.open_time,
+        t.open_address,
+        t.publish_time,
         t.bid_end_time,
         t.status,
         t.project_id,

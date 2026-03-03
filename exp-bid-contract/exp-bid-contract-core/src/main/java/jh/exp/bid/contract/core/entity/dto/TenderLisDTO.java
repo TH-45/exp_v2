@@ -82,14 +82,25 @@ public class TenderLisDTO {
     private String currency;
 
     /**
-     * 投标开始时间
+     * 招标发布时间
      */
-    private LocalDateTime bidStartTime;
+    private LocalDateTime publishTime;
+
 
     /**
      * 投标截止时间
      */
     private LocalDateTime bidEndTime;
+
+    /**
+     * 开标时间
+     */
+    private LocalDateTime openTime;
+
+    /**
+     * 开标地址
+     */
+    private String openAddress;
 
     /**
      * 招标状态（准备、公告发布、投标中、开标中、评标中、已结束、已废标等）

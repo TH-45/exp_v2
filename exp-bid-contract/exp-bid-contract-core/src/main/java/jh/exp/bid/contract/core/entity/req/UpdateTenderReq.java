@@ -59,11 +59,6 @@ public class UpdateTenderReq {
     @NotNull(message = "招标预算金额不能为空")
     private BigDecimal budgetAmount;
 
-    /**
-     * 币种
-     */
-    @NotBlank(message = "币种不能为空")
-    private String currency;
 
     /**
      * 招标项目概要/公告摘要

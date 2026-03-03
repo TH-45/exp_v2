@@ -9,6 +9,7 @@ import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.service.annotation.DeleteExchange;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
@@ -24,7 +25,8 @@ public interface PersonService {
     @PostExchange("/list")
     SimplePageRes<PersonInfoRes> queryPersonInfo(SimplePageReq<QueryPersonReq> personReq);
 
-    void updatePersonStatus(Long personId, String status);
+    @PostExchange("/update-status")
+    void updatePersonStatus(@RequestParam("personId") Long personId, @RequestParam("status") String status);
 
 
     /**
@@ -61,35 +63,42 @@ public interface PersonService {
     /**
      * 创建人员
      */
-    PersonDetailRes createPerson(CreatePersonReq req);
+    @PostExchange("/create")
+    PersonDetailRes createPerson(@RequestBody CreatePersonReq req);
 
     /**
      * 更新人员
      */
-    PersonDetailRes updatePerson(UpdatePersonReq req);
+    @PostExchange("/update")
+    PersonDetailRes updatePerson(@RequestBody UpdatePersonReq req);
 
     /**
      * 删除人员
      */
-    void deletePerson(Long personId);
+    @DeleteExchange("/delete")
+    void deletePerson(@RequestParam("personId") Long personId);
 
     /**
      * 批量删除人员
      */
-    void batchDeletePersons(BatchDeletePersonReq req);
+    @PostExchange("/batch-delete")
+    void batchDeletePersons(@RequestBody BatchDeletePersonReq req);
 
     /**
      * 更改人员状态
      */
-    PersonDetailRes updatePersonStatus(PersonStatusReq req);
+    @PostExchange("/update-status-by-req")
+    PersonDetailRes updatePersonStatus(@RequestBody PersonStatusReq req);
 
     /**
      * 批量更改人员状态
      */
-    void batchUpdatePersonStatus(BatchPersonStatusReq req);
+    @PostExchange("/batch-update-status")
+    void batchUpdatePersonStatus(@RequestBody BatchPersonStatusReq req);
 
     /**
      * 检查人员工号是否存在
      */
-    boolean checkPersonCodeExists(String personCode, Long excludePersonId);
+    @GetExchange("/check-code-exists")
+    boolean checkPersonCodeExists(@RequestParam("personCode") String personCode, @RequestParam(value = "excludePersonId", required = false) Long excludePersonId);
 }

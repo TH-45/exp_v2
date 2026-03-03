@@ -168,11 +168,16 @@ export function updateBiddingProject(data: UpdateTenderReq) {
   return request.post<TenderVO, TenderVO>(baseUrl + '/update', data);
 }
 
+
+export interface DeleteTenderReq {
+  tenderId: number;
+}
 /**
  * 删除招标项目
  */
-export function deleteBiddingProject(tenderId: string) {
-  return request.post<void, void>(baseUrl+`/delete/`, { tenderId });
+export function deleteBiddingProject(tenderId: number) {
+  const deleteTenderReq: DeleteTenderReq = { tenderId };
+  return request.post<void, void>(baseUrl+`/delete`, deleteTenderReq);
 }
 
 

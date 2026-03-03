@@ -66,6 +66,19 @@ public class CreateTenderReq {
     private String tenderBrief;
 
     /**
+     * 负责人ID，关联人员信息
+     */
+    @NotNull(message = "负责人ID不能为空")
+    private Long personId;
+
+    /**
+     * 组织ID，关联组织信息
+     */
+    @NotNull(message = "组织ID不能为空")
+    private Long orgId;
+
+
+    /**
      * 招标公告发布时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
