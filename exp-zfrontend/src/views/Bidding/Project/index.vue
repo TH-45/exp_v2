@@ -74,6 +74,11 @@
             {{ formatTenderMode(row.tenderMode) }}
           </template>
         </el-table-column>
+        <el-table-column label="金额(万元)" min-width="130">
+          <template #default="{ row }">
+            {{ formatAmountWithTax(row.budgetAmount, row.isTaxIncluded) }}
+          </template>
+        </el-table-column>
         <el-table-column label="币种" min-width="80">
           <template #default="{ row }">
             {{ formatCurrency(row.currency) }}
@@ -97,7 +102,7 @@
               编辑
             </el-button>
             <el-button link size="small" @click="goDetail(row)">详情</el-button>
-            <el-button link size="small" @click="deleteById(row)">删除</el-button>
+            <el-button link type="danger" size="small" @click="deleteById(row)">删除</el-button>
 
           </template>
         </el-table-column>
@@ -135,13 +140,20 @@
         >
           <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="项目编码" prop="tenderCode">
-            <el-input v-model="form.tenderCode" placeholder="请输入项目编码" />
+            <el-input v-model="form.tenderCode" placeholder="请输入项目编码" :disabled="editDialog.isEdit" />
           </el-form-item>
           <el-form-item label="项目名称" prop="tenderName">
             <el-input v-model="form.tenderName" placeholder="请输入项目名称" />
           </el-form-item>
           <el-form-item label="招标单位" prop="company">
             <CompanySelector v-model="form.company" />
+          </el-form-item>
+          <el-form-item label="归属组织" prop="orgId">
+            <OrgSelector
+              v-model="selectedOrg"
+              placeholder="请选择归属组织"
+              @change="handleOrgChange"
+            />
           </el-form-item>
           <el-form-item label="负责人" prop="owner">
             <PersonSelector v-model="form.owner" />
@@ -150,11 +162,43 @@
             <ProjectSelector v-model="form.relatedProject" />
           </el-form-item>
           <el-form-item label="预算金额(万)" prop="budgetAmount">
-            <el-input-number v-model="form.budgetAmount" :min="0" :max="999999999" style="width: 100%" />
+            <div class="budget-row">
+              <el-input-number v-model="form.budgetAmount" :min="0" :max="999999999"  />
+              <el-checkbox v-model="form.isTaxIncluded" style="margin-left: 8px;">含税</el-checkbox>
+            </div>
           </el-form-item>
           <el-form-item label="币种" prop="currency">
             <el-select v-model="form.currency" placeholder="请选择币种" clearable style="width: 100%">
               <el-option v-for="c in currencyOptions" :key="c.value" :label="c.label" :value="c.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="税率" prop="taxRatePercent">
+            <el-select
+              v-model="form.taxRatePercent"
+              placeholder="请选择税率"
+              filterable
+              allow-create
+              default-first-option
+              @change="handleTaxRateChange"
+              @blur="handleTaxRateBlur"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="opt in taxRateOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="采购性质" prop="purchaseNature">
+            <el-select v-model="form.purchaseNature" placeholder="请选择采购性质" clearable style="width: 100%">
+              <el-option
+                v-for="opt in purchaseNatureOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="招标类型" prop="tenderType">
@@ -166,6 +210,16 @@
             <el-select v-model="form.tenderMode" clearable style="width: 100%">
               <el-option v-for="t in tenderModeList" :key="t.value" :label="t.label" :value="t.value" />
             </el-select>
+          </el-form-item>
+          <el-form-item label="发布时间" prop="publishTime">
+            <el-date-picker
+              v-model="form.publishTime"
+              type="datetime"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              placeholder="请选择发布时间"
+              style="width: 100%"
+              :disabled="editDialog.isEdit"
+            />
           </el-form-item>
           <el-form-item label="投标开始时间" prop="bidStartTime">
             <el-date-picker
@@ -243,8 +297,10 @@ import { generateProjectCode } from '@/utils/codeGenerator';
 import type { ExpPersonVO } from '@/api/system/person';
 import PersonSelector from '@/components/Selector/PersonSelector.vue';
 import CompanySelector from '@/components/Selector/CompanySelector.vue';
-import ProjectSelector from '@/components/Selector/ProjectSelector.vue'
-import type { ProjectVO } from '@/api/corpProject/project'
+import ProjectSelector from '@/components/Selector/ProjectSelector.vue';
+import OrgSelector from '@/components/Selector/OrgSelector.vue';
+import type { ProjectVO } from '@/api/corpProject/project';
+import type { OrgNode } from '@/api/system/post';
 import {
   queryBiddingProjectList,
   createBiddingProject,
@@ -313,10 +369,30 @@ function formatCurrency(value?: string) {
   return found?.label ?? value;
 }
 
+/** 金额 + 含税标识展示 */
+function formatAmountWithTax(amount?: number, isTaxIncluded?: boolean) {
+  if (amount == null) return '';
+  const num = Number(amount);
+  if (!Number.isFinite(num)) return '';
+  const value = num.toFixed(2);
+  if (isTaxIncluded === true) return `${value}(含税)`;
+  if (isTaxIncluded === false) return `${value}(不含税)`;
+  return value;
+}
+
 const tenderModeList = ref<DictOption[]>([]);
 const tenderTypeList = ref<DictOption[]>([]);
 /** 币种字典，用于列表/表单展示 */
 const currencyOptions = ref<DictOption[]>([]);
+/** 采购性质字典 */
+const purchaseNatureOptions = ref<DictOption[]>([]);
+/** 常用税率选项（界面显示百分数，内部值为百分数数字字符串） */
+const taxRateOptions = ref<DictOption[]>([
+  { label: '3%', value: '3' },
+  { label: '6%', value: '6' },
+  { label: '9%', value: '9' },
+  { label: '13%', value: '13' },
+]);
 const loading = ref(false);
 const saving = ref(false);
 
@@ -460,19 +536,22 @@ function handleSizeChange(size: number) {
 }
 async function fetchPostDictOptions() {
   try {
-    const [modeRes, typeRes, currencyRes] = await Promise.all([
+    const [modeRes, typeRes, currencyRes, purchaseNatureRes] = await Promise.all([
       listDictOptions('tender_mode'),
       listDictOptions('tender_type'),
       listDictOptions('currency'),
+      listDictOptions('purchase_nature'),
     ]);
 
     tenderModeList.value = normalizeDictOptions(modeRes);
     tenderTypeList.value = normalizeDictOptions(typeRes);
     currencyOptions.value = normalizeDictOptions(currencyRes);
+    purchaseNatureOptions.value = normalizeDictOptions(purchaseNatureRes);
   } catch (e) {
     tenderModeList.value = [];
     tenderTypeList.value = [];
     currencyOptions.value = [];
+    purchaseNatureOptions.value = [];
   }
 }
 function normalizeDictOptions(res: DictOption[] | { data?: DictOption[] }) {
@@ -487,6 +566,7 @@ const editDialog = reactive({
   isEdit: false,
 });
 const formRef = ref<FormInstance>();
+const selectedOrg = ref<OrgNode>();
 interface CompanyVO {
   companyId: string;
   companyCode: string;
@@ -508,13 +588,23 @@ const form = reactive({
   owner: undefined as ExpPersonVO | undefined,
   // 招标人
   company: undefined as CompanyVO | undefined,
+  // 归属组织
+  orgId: undefined as number | undefined,
   // 预算金额
   budgetAmount: 0,
+  // 是否含税
+  isTaxIncluded: false,
+  // 税率（界面用百分数存储，如 13 表示 13%）
+  taxRatePercent: '' as string | number,
+  // 采购性质（1 政府采购 2 企业采购 3 其他）
+  purchaseNature: '',
   status: '未开始' as BiddingProjectStatus,
 
   currency: 'CNY',
   // 招标项目概要/公告摘要
   tenderBrief:'',
+  // 招标发布时间
+  publishTime: '',
   // 招标开始时间
   bidStartTime:'',
   // 招标截止时间
@@ -529,6 +619,62 @@ const form = reactive({
   relatedProject: undefined as ProjectVO | undefined,
   remark: '',
 });
+
+function normalizeTaxRateValue(value: unknown) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const cleaned = raw.replace(/\s*%$/, '').trim();
+  if (!cleaned) return '';
+  const num = Number(cleaned);
+  if (!Number.isFinite(num)) return '';
+  return String(num);
+}
+
+function ensureTaxRateOption(value: string) {
+  if (!value) return;
+  const exists = taxRateOptions.value.some((opt) => String(opt.value) === value);
+  if (!exists) {
+    taxRateOptions.value.push({ label: `${value}%`, value });
+    return;
+  }
+  const option = taxRateOptions.value.find((opt) => String(opt.value) === value);
+  if (option && option.label !== `${value}%`) {
+    option.label = `${value}%`;
+  }
+}
+
+function applyTaxRateDisplay(value: unknown) {
+  const normalized = normalizeTaxRateValue(value);
+  if (normalized === '') {
+    if (value == null || String(value).trim() === '') {
+      form.taxRatePercent = '';
+    }
+    return;
+  }
+  form.taxRatePercent = normalized;
+  ensureTaxRateOption(normalized);
+}
+
+function handleTaxRateChange(value: string | number) {
+  applyTaxRateDisplay(value);
+}
+
+function handleTaxRateBlur() {
+  applyTaxRateDisplay(form.taxRatePercent);
+}
+
+function validateTaxRatePercent(_rule: any, value: any, callback: (error?: Error) => void) {
+  if (value === '' || value === null || value === undefined) {
+    callback(new Error('请输入税率'));
+    return;
+  }
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0 || num > 100) {
+    callback(new Error('税率必须是 0~100 之间的数字'));
+    return;
+  }
+  callback();
+}
 
 const rules: FormRules = {
   tenderCode: [
@@ -553,11 +699,14 @@ const rules: FormRules = {
     { required: true, message: '请选择开标时间', trigger: 'change' }
   ],
   // 开标地点留空表示线上，不校验必填
-   owner: [
-    { required: true, message: '请选择负责人', trigger: 'change' }
+  publishTime: [
+    { required: true, message: '请选择发布时间', trigger: 'change' }
   ],
   company: [
     { required: true, message: '请选择招标人', trigger: 'change' }
+  ],
+  orgId: [
+    { required: true, message: '请选择归属组织', trigger: 'change' }
   ],
   relatedProject: [
     { required: false, message: '请选择关联项目', trigger: 'change' }
@@ -565,9 +714,18 @@ const rules: FormRules = {
   budgetAmount: [
     { required: true, message: '请输入预算金额', trigger: 'blur' }
   ],
-
-
+  taxRatePercent: [
+    { required: true, message: '请输入税率', trigger: 'change' },
+    { validator: validateTaxRatePercent, trigger: 'change' },
+  ],
+  purchaseNature: [
+    { required: true, message: '请选择采购性质', trigger: 'change' }
+  ],
 };
+
+function handleOrgChange(org: OrgNode | undefined) {
+  form.orgId = org?.orgId as number | undefined;
+}
 
 function openEdit(isEdit: boolean, row?: TenderVO) {
   editDialog.isEdit = isEdit;
@@ -585,13 +743,20 @@ function openEdit(isEdit: boolean, row?: TenderVO) {
     form.tenderType = row.tenderType || '';
     form.tenderMode = row.tenderMode || '';
     form.status = row.status;
+  form.orgId = row.orgId != null ? Number(row.orgId) : undefined;
     form.budgetAmount = row.budgetAmount || 0;
+    form.isTaxIncluded = row.isTaxIncluded ?? false;
+    form.taxRatePercent =
+      row.taxRate != null ? String(Number(row.taxRate) * 100) : '';
+    applyTaxRateDisplay(form.taxRatePercent);
+    form.purchaseNature = row.purchaseNature || '';
     form.bidStartTime = row.bidStartTime || '';
     form.bidEndTime = row.bidEndTime || '';
     form.openTime = row.openTime || '';
     form.remark = row.remark || '';
     form.tenderBrief = row.tenderBrief ?? '';
     form.currency = row.currency ?? 'CNY';
+  form.publishTime = (row as any).publishTime || '';
     // 开标地点回显：解析为级联值 + 详细地址
     const parsed = parseOpenAddress(row.openAddress);
     if (parsed.province || parsed.city || parsed.district) {
@@ -609,6 +774,15 @@ function openEdit(isEdit: boolean, row?: TenderVO) {
     }
 
     // 3. 处理选择器组件的回显 (关键：构造对象)
+    // 归属组织回显
+    selectedOrg.value = row.orgId
+      ? ({
+          orgId: Number(row.orgId),
+          orgName: row.orgName || '',
+          orgCode: '',
+          children: [],
+        } as OrgNode)
+      : undefined;
     // 负责人回显 - 强制断言
     form.owner = row.personId ? ({
       personId: row.personId,
@@ -637,8 +811,12 @@ function openEdit(isEdit: boolean, row?: TenderVO) {
       tenderMode: '',
       status: '未开始',
       budgetAmount: 0,
+      isTaxIncluded: false,
+      taxRatePercent: '',
+      purchaseNature: '',
       owner: undefined,
       company: undefined,
+      orgId: undefined,
       relatedProject: undefined,
       bidStartTime: '',
       bidEndTime: '',
@@ -647,6 +825,7 @@ function openEdit(isEdit: boolean, row?: TenderVO) {
       openAddressDetail: '',
       tenderBrief: '',
       currency: 'CNY',
+      publishTime: '',
       remark: '',
     });
     // 自动生成项目编码
@@ -679,6 +858,7 @@ async function openEditById(projectId: string) {
 async function submitForm() {
   if (!formRef.value) return;
 
+  applyTaxRateDisplay(form.taxRatePercent);
   const valid = await formRef.value.validate();
   if (!valid) return;
 
@@ -688,7 +868,12 @@ async function submitForm() {
     return;
   }
 
-  // 开标地点：级联+详细地址拼接为 "省, 市, 区, 详细地址"，未选则为空（线上）
+  if (form.orgId == null) {
+    ElMessage.warning('请选择归属组织');
+    return;
+  }
+
+  // 开标地点：级联+详细地址拼接为 "省, 市, 区, 详细地址"，未选则传空字符串
   let openAddressValue: string | undefined;
   const cascader = form.openAddressCascader;
   const c0 = cascader?.[0];
@@ -703,11 +888,14 @@ async function submitForm() {
     );
     if (openAddressValue.endsWith(', ')) openAddressValue = openAddressValue.slice(0, -2);
   } else {
-    openAddressValue = undefined;
+    openAddressValue = '';
   }
 
   saving.value = true;
   try {
+    const taxRatePercentNum = Number(form.taxRatePercent);
+    const taxRateDecimal = taxRatePercentNum / 100;
+
     const basePayload: CreateTenderReq = {
       tenderCode: form.tenderCode || '',
       tenderName: form.tenderName || '',
@@ -716,17 +904,24 @@ async function submitForm() {
       companyId,
       budgetAmount: Number(form.budgetAmount) || 0,
       currency: form.currency || 'CNY',
+      taxRate: taxRateDecimal,
+      isTaxIncluded: !!form.isTaxIncluded,
+      purchaseNature: form.purchaseNature || '',
       tenderBrief: form.tenderBrief || undefined,
+      publishTime: form.publishTime || '',
       bidStartTime: form.bidStartTime || '',
       bidEndTime: form.bidEndTime || '',
       openTime: form.openTime || undefined,
-      openAddress: openAddressValue,
+      openAddress: openAddressValue ?? '',
       projectId: form.relatedProject?.projectId != null ? Number(form.relatedProject.projectId) : undefined,
+      personId: form.owner?.personId != null ? Number(form.owner.personId) : undefined,
+      orgId: form.orgId != null ? Number(form.orgId) : undefined,
       remark: form.remark || undefined,
     };
 
     if (editDialog.isEdit && form.tenderId) {
-      const updatePayload: UpdateTenderReq = { ...basePayload, tenderId: Number(form.tenderId) };
+      const { currency, ...rest } = basePayload;
+      const updatePayload: UpdateTenderReq = { ...rest, tenderId: Number(form.tenderId) };
       await updateBiddingProject(updatePayload);
       ElMessage.success('更新成功');
     } else {
@@ -793,6 +988,19 @@ async function submitForm() {
   align-items: center;
   flex-wrap: wrap;
 }
+/* 在 .open-address-row 样式后面添加 */
+.budget-row {
+  display: flex;         /* 强制横向排列 */
+  align-items: center;   /* 垂直居中 */
+  width: 100%;
+
+  :deep(.el-input-number) {
+    flex: 1;             /* 关键：让数字输入框填满剩余空间 */
+  }
+
+  :deep(.el-checkbox) {
+    margin-left: 12px;   /* 增加间距 */
+    flex-shrink: 0;      /* 防止含税两个字被挤扁 */
+  }
+}
 </style>
-
-

@@ -16,6 +16,9 @@
         <result property="purchaserId" column="purchaser_id"/>
         <result property="budgetAmount" column="budget_amount"/>
         <result property="currency" column="currency"/>
+        <result property="taxRate" column="tax_rate"/>
+        <result property="isTaxIncluded" column="is_tax_included"/>
+        <result property="purchaseNature" column="purchase_nature"/>
         <result property="publishTime" column="publish_time"/>
         <result property="bidEndTime" column="bid_end_time"/>
         <result property="status" column="status"/>
@@ -45,6 +48,9 @@
         t.company_id AS purchaser_id,
         t.budget_amount,
         t.currency,
+        t.tax_rate,
+        t.is_tax_included,
+        t.purchase_nature,
         t.open_time,
         t.open_address,
         t.publish_time,
@@ -96,6 +102,13 @@
                 AND t.created_by = #{req.createdBy}
             </if>
 
+            <if test="req.isTaxIncluded != null">
+                AND t.is_tax_included = #{req.isTaxIncluded}
+            </if>
+            <if test="req.purchaseNature != null and req.purchaseNature.trim() != ''">
+                AND t.purchase_nature = #{req.purchaseNature}
+            </if>
+
             <if test="req.bidStartTimeStart != null">
                 AND t.bid_start_time >= #{req.bidStartTimeStart}
             </if>
@@ -124,6 +137,9 @@
                t.company_id AS purchaser_id,
                t.budget_amount,
                t.currency,
+               t.tax_rate,
+               t.is_tax_included,
+               t.purchase_nature,
                t.tender_brief,
                t.publish_time,
                t.bid_start_time,

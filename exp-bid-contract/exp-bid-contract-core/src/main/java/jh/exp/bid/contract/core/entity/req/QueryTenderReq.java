@@ -73,4 +73,14 @@ public class QueryTenderReq {
      * 投标截止时间结束范围
      */
     private LocalDateTime bidEndTimeEnd;
+
+    /**
+     * 是否含税（true 含税，false 不含税）
+     */
+    private Boolean isTaxIncluded;
+
+    /**
+     * 采购性质（1 政府采购 2 企业采购 3 其他）
+     */
+    private String purchaseNature;
 }

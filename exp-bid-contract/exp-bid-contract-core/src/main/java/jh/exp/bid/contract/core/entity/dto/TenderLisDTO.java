@@ -82,6 +82,21 @@ public class TenderLisDTO {
     private String currency;
 
     /**
+     * 税率（示例：0.13 表示 13%）
+     */
+    private BigDecimal taxRate;
+
+    /**
+     * 是否含税（true 含税，false 不含税）
+     */
+    private Boolean isTaxIncluded;
+
+    /**
+     * 采购性质（1 政府采购 2 企业采购 3 其他）
+     */
+    private String purchaseNature;
+
+    /**
      * 招标发布时间
      */
     private LocalDateTime publishTime;

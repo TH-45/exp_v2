@@ -116,7 +116,7 @@ public class Tender {
     @Column(name = "tax_rate")
     private BigDecimal taxRate;
 
-    //是否含税
+    //是否含税 默认位false，不含税
     @Column(name = "is_tax_included")
     private Boolean isTaxIncluded;
 

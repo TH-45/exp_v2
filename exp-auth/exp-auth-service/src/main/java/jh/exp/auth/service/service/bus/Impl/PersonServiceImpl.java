@@ -43,6 +43,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -174,50 +175,65 @@ public class PersonServiceImpl implements PersonService {
     @Override
     @Transactional(readOnly = true)
     public Map<Long, PersonDetailRes> queryProjectManager(List<OrgIdAndPersonIdDTO> orgIdAndPersonIds) {
+
         if (CollectionUtils.isEmpty(orgIdAndPersonIds)) {
             return Map.of();
         }
-        // 1. 批量查询组织，获取各组织的部门负责人 managerPersonId
+
+        // 1. 收集 orgId
         List<Long> orgIds = orgIdAndPersonIds.stream()
                 .map(OrgIdAndPersonIdDTO::getOrgId)
-                .filter(id -> id != null)
+                .filter(Objects::nonNull)
                 .distinct()
                 .toList();
-        final Map<Long, Long> orgIdToManagerId;
+
         if (orgIds.isEmpty()) {
-            orgIdToManagerId = Map.of();
-        } else {
-            List<OrgUnitDetailRes> orgDetails = orgUnitMapper.selectOrgUnitDetailByIds(orgIds);
-            orgIdToManagerId = orgDetails.stream()
-                    .filter(o -> o.getManagerPersonId() != null)
-                    .collect(Collectors.toMap(OrgUnitDetailRes::getOrgId, OrgUnitDetailRes::getManagerPersonId, (a, b) -> a));
-        }
-        // 2. 收集需查询的人员 ID：personId 或 负责人 id（一致时为同一人，需去重）
-        List<Long> personIdsToFetch = orgIdAndPersonIds.stream()
-                .filter(dto -> dto.getOrgId() != null && dto.getPersonId() != null)
-                .map(dto -> {
-                    Long managerId = orgIdToManagerId.get(dto.getOrgId());
-                    boolean isMatch = (managerId != null && managerId.equals(dto.getPersonId()));
-                    return isMatch ? managerId : dto.getPersonId();
-                })
-                .distinct()
-                .toList();
-        if (personIdsToFetch.isEmpty()) {
             return Map.of();
         }
-        Map<Long, PersonDetailRes> personMap = batchGetPersonByIds(personIdsToFetch);
-        // 3. 按 orgId 分组，每个 orgId 取第一条有效人员详情（Map 结构为 orgId -> PersonDetailRes）
-        return orgIdAndPersonIds.stream()
-                .filter(dto -> dto.getOrgId() != null && dto.getPersonId() != null)
+
+        // 2. 查询组织负责人
+        List<OrgUnitDetailRes> orgDetails = orgUnitMapper.selectOrgUnitDetailByIds(orgIds);
+
+        Map<Long, Long> orgIdToManagerId = orgDetails.stream()
+                .filter(o -> o.getManagerPersonId() != null)
+                .collect(Collectors.toMap(
+                        OrgUnitDetailRes::getOrgId,
+                        OrgUnitDetailRes::getManagerPersonId,
+                        (a, b) -> a
+                ));
+
+        // 3. 计算真正要查询的人员ID
+        Map<Long, Long> orgToPersonId = orgIdAndPersonIds.stream()
+                .filter(dto -> dto.getOrgId() != null)
                 .collect(Collectors.toMap(
                         OrgIdAndPersonIdDTO::getOrgId,
                         dto -> {
-                            Long managerId = orgIdToManagerId.get(dto.getOrgId());
-                            boolean isMatch = (managerId != null && managerId.equals(dto.getPersonId()));
-                            Long personIdToUse = isMatch ? managerId : dto.getPersonId();
-                            return personMap.get(personIdToUse);
+                            if (dto.getPersonId() != null) {
+                                return dto.getPersonId();
+                            }
+                            return orgIdToManagerId.get(dto.getOrgId());
                         },
                         (a, b) -> a != null ? a : b
+                ));
+
+        // 4. 去重查询人员
+        List<Long> personIdsToFetch = orgToPersonId.values().stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (personIdsToFetch.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, PersonDetailRes> personMap = batchGetPersonByIds(personIdsToFetch);
+
+        // 5. 组装结果 orgId -> PersonDetailRes
+        return orgToPersonId.entrySet().stream()
+                .filter(e -> e.getValue() != null)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> personMap.get(e.getValue())
                 ))
                 .entrySet().stream()
                 .filter(e -> e.getValue() != null)

@@ -60,6 +60,15 @@ export interface TenderVO {
   // 币种
   currency?: string;
 
+  /** 税率（后端存 0.13 表示 13%） */
+  taxRate?: number;
+
+  /** 是否含税（true 含税，false 不含税） */
+  isTaxIncluded?: boolean;
+
+  /** 采购性质（1 政府采购 2 企业采购 3 其他） */
+  purchaseNature?: string;
+
   // 关联项目 id
   projectId?: string;
 
@@ -89,6 +98,9 @@ export interface TenderVO {
 
   /** 招标项目概要/公告摘要（详情接口返回） */
   tenderBrief?: string;
+
+  /** 招标发布时间 */
+  publishTime?: string;
 
   /** 更新时间（详情接口返回） */
   updatedTime?: string;
@@ -149,18 +161,27 @@ export interface CreateTenderReq {
   companyId: number;
   budgetAmount: number;
   currency: string;
+   /** 税率（小数形式，如 0.13 表示 13%） */
+  taxRate: number;
+  /** 是否含税（true 含税，false 不含税） */
+  isTaxIncluded: boolean;
+  /** 采购性质（1 政府采购 2 企业采购 3 其他） */
+  purchaseNature: string;
   tenderBrief?: string;
   publishTime?: string;
   bidStartTime: string;
   bidEndTime: string;
   openTime?: string;
-  openAddress?: string;
+  /** 开标地点，必传字段，可为空字符串表示未填写 */
+  openAddress: string;
   projectId?: number;
+  personId?: number;
+  orgId?: number;
   remark?: string;
 }
 
 /** 更新招标请求体，与 openapi UpdateTenderReq 一致 */
-export interface UpdateTenderReq extends CreateTenderReq {
+export interface UpdateTenderReq extends Omit<CreateTenderReq, 'currency'> {
   tenderId: number;
 }
 

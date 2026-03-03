@@ -185,21 +185,23 @@ public class TenderServiceImpl implements TenderService {
 //        }
 
         CurrentUser currentUser = CurrentUserHolder.get();
-        Long personId = currentUser.getUserId();
-        PersonDetailRes personDetail = personService.getPersonById(personId);
+        Long CreatedById = currentUser.getUserId();
+        PersonDetailRes personDetail = personService.getPersonById(CreatedById);
         if (personDetail == null) {
             throw new RuntimeException("无法获取当前用户信息");
         }
 
+
         Tender tender = new Tender();
         tender.setTenderCode(req.getTenderCode());
         tender.setTenderName(req.getTenderName());
-//        tender.setTenderType(req.getTenderType());
-        //todo ：需要做校验，规则如下；
-        //  招标文件发布时间到投标截止时间
+        tender.setTenderType(req.getTenderType());
         tender.setTenderMode(req.getTenderMode());
         tender.setCompanyId(req.getCompanyId());
         tender.setBudgetAmount(req.getBudgetAmount());
+        tender.setTaxRate(req.getTaxRate());
+        tender.setIsTaxIncluded(req.getIsTaxIncluded());
+        tender.setPurchaseNature(req.getPurchaseNature());
         tender.setCurrency(req.getCurrency());
         tender.setTenderBrief(req.getTenderBrief());
         tender.setPublishTime(req.getPublishTime());
@@ -212,19 +214,25 @@ public class TenderServiceImpl implements TenderService {
         tender.setRemark(req.getRemark());
         tender.setCreatedTime(LocalDateTime.now());
         tender.setUpdatedTime(LocalDateTime.now());
-
-        tender.setCreatedBy(personId);
+        tender.setCreatedBy(CreatedById);
         tender.setCreatedDeptId(personDetail.getOrgId());
         tender.setCreatedPostId(personDetail.getPostId());
 
         tenderMapper.insert(tender);
 
-
+        Long personId = req.getPersonId();
+        Long orgId = req.getOrgId();
+        OrgIdAndPersonIdDTO orgIdAndPersonIdDTO = new OrgIdAndPersonIdDTO(orgId, personId);
+        Map<Long, PersonDetailRes> longPersonDetailResMap = personService.queryProjectManager(List.of(orgIdAndPersonIdDTO));
+        if (longPersonDetailResMap.size() != 1) {
+            throw new RuntimeException("项目负责人信息查询错误");
+        }
+        personId= longPersonDetailResMap.get(orgId).getPersonId();
         TenderMember tenderMember = TenderMember.builder()
                 .tenderId(tender.getTenderId())
-                .personId(req.getPersonId())
+                .personId(personId)
                 .memberRole(BidContractConstant.BID_CONTRACT_PRINCIPAL)
-                .orgId(req.getOrgId())
+                .orgId(orgId)
 //                .postId(projectInfo.getProjectManagerPostId())
                 .startDate(LocalDate.now())
                 .endDate(LocalDate.now().plusYears(10))
@@ -255,6 +263,9 @@ public class TenderServiceImpl implements TenderService {
         tender.setTenderMode(req.getTenderMode());
         tender.setCompanyId(req.getCompanyId());
         tender.setBudgetAmount(req.getBudgetAmount());
+        tender.setTaxRate(req.getTaxRate());
+        tender.setIsTaxIncluded(req.getIsTaxIncluded());
+        tender.setPurchaseNature(req.getPurchaseNature());
 //        tender.setCurrency(req.getCurrency());
         tender.setTenderBrief(req.getTenderBrief());
         tender.setPublishTime(req.getPublishTime());

@@ -59,6 +59,33 @@ public class UpdateTenderReq {
     @NotNull(message = "招标预算金额不能为空")
     private BigDecimal budgetAmount;
 
+    /**
+     * 负责人ID，关联人员信息
+     */
+    private Long personId;
+
+    /**
+     * 组织ID，关联组织信息
+     */
+    @NotNull(message = "组织ID不能为空")
+    private Long orgId;
+
+    /**
+     * 税率（示例：0.13 表示 13%）
+     */
+    private BigDecimal taxRate;
+
+    /**
+     * 是否含税（true 含税，false 不含税）
+     */
+    @NotNull(message = "是否含税不能为空")
+    private Boolean isTaxIncluded;
+
+    /**
+     * 采购性质（1 政府采购 2 企业采购 3 其他）
+     */
+    @NotBlank(message = "采购性质不能为空")
+    private String purchaseNature;
 
     /**
      * 招标项目概要/公告摘要
