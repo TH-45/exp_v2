@@ -54,10 +54,17 @@
         </el-form-item>
       </el-form>
 
-      <!-- 表格 -->
-      <el-table v-loading="loading" :data="tableData" row-key="tenderId" border style="width: 100%">
-        <el-table-column prop="tenderCode" label="项目编码" min-width="120" />
-        <el-table-column prop="tenderName" label="项目名称" min-width="200" />
+      <!-- 表格：双击行打开详情 -->
+      <el-table
+        v-loading="loading"
+        :data="tableData"
+        row-key="tenderId"
+        border
+        style="width: 100%"
+        @row-dblclick="(row: TenderVO) => goDetail(row)"
+      >
+        <el-table-column prop="tenderCode" label="招标编号" min-width="120" />
+        <el-table-column prop="tenderName" label="招标项目名称" min-width="200" />
         <el-table-column prop="purchaserName" label="招标单位" min-width="180" />
         <el-table-column prop="orgName" label="归属部门" min-width="120" />
         <el-table-column prop="personIdName" label="负责人" min-width="120" />
@@ -67,14 +74,23 @@
             {{ formatTenderMode(row.tenderMode) }}
           </template>
         </el-table-column>
-
+        <el-table-column label="币种" min-width="80">
+          <template #default="{ row }">
+            {{ formatCurrency(row.currency) }}
+          </template>
+        </el-table-column>
         <el-table-column label="状态" min-width="90">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)">{{ statusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="bidStartTime" label="开标时间" min-width="170" />
-        <el-table-column prop="bidEndTime" label="截止时间" min-width="170" />
+        <el-table-column label="开标地点" min-width="100">
+          <template #default="{ row }">
+            {{ parseOpenAddressCity(row.openAddress) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="openTime" label="开标时间" min-width="170" />
+        <el-table-column prop="bidEndTime" label="投标截止时间" min-width="170" />
         <el-table-column label="操作" fixed="right" width="140">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openEdit(true, row)" :disabled="!canManage">
@@ -136,6 +152,11 @@
           <el-form-item label="预算金额(万)" prop="budgetAmount">
             <el-input-number v-model="form.budgetAmount" :min="0" :max="999999999" style="width: 100%" />
           </el-form-item>
+          <el-form-item label="币种" prop="currency">
+            <el-select v-model="form.currency" placeholder="请选择币种" clearable style="width: 100%">
+              <el-option v-for="c in currencyOptions" :key="c.value" :label="c.label" :value="c.value" />
+            </el-select>
+          </el-form-item>
           <el-form-item label="招标类型" prop="tenderType">
             <el-select v-model="form.tenderType" clearable style="width: 100%">
               <el-option v-for="t in tenderTypeList" :key="t.value" :label="t.label" :value="t.value" />
@@ -146,6 +167,15 @@
               <el-option v-for="t in tenderModeList" :key="t.value" :label="t.label" :value="t.value" />
             </el-select>
           </el-form-item>
+          <el-form-item label="投标开始时间" prop="bidStartTime">
+            <el-date-picker
+              v-model="form.bidStartTime"
+              type="datetime"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              placeholder="请选择投标开始时间"
+              style="width: 100%"
+            />
+          </el-form-item>
           <el-form-item label="投标截止时间" prop="bidEndTime">
             <el-date-picker
               v-model="form.bidEndTime"
@@ -155,20 +185,42 @@
               style="width: 100%"
             />
           </el-form-item>
-          <el-form-item label="开标时间" prop="bidStartTime">
+          <el-form-item label="开标时间" prop="openTime">
             <el-date-picker
-              v-model="form.bidStartTime"
+              v-model="form.openTime"
               type="datetime"
               value-format="YYYY-MM-DD HH:mm:ss"
               placeholder="请选择开标时间"
               style="width: 100%"
             />
           </el-form-item>
-<!--          <el-form-item label="状态" prop="status">-->
-<!--            <el-select v-model="form.status" style="width: 100%">-->
-<!--              <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />-->
-<!--            </el-select>-->
-<!--          </el-form-item>-->
+          <el-form-item label="开标地点" class="full-row">
+            <div class="open-address-row">
+              <el-cascader
+                v-model="form.openAddressCascader"
+                :options="regionData"
+                :props="{ value: 'value', label: 'label', checkStrictly: false }"
+                placeholder="省 / 市 / 区（选填，不选则为线上开标）"
+                clearable
+                style="width: 100%; max-width: 360px"
+              />
+              <el-input
+                v-model="form.openAddressDetail"
+                placeholder="详细地址（选填）"
+                clearable
+                style="flex: 1; min-width: 160px"
+              />
+            </div>
+          </el-form-item>
+          <el-form-item label="招标项目概要/公告摘要" prop="tenderBrief" class="full-row">
+            <el-input
+              v-model="form.tenderBrief"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入招标项目概要或公告摘要（可选）"
+              @keydown.enter.stop
+            />
+          </el-form-item>
           <el-form-item label="备注" class="full-row">
             <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注（可选）" @keydown.enter.stop />
           </el-form-item>
@@ -198,6 +250,7 @@ import {
   createBiddingProject,
   updateBiddingProject,
   deleteBiddingProject,
+  getBiddingProjectDetail,
   type TenderVO,
   type BiddingProjectStatus,
   type CreateTenderReq,
@@ -206,7 +259,9 @@ import {
 
 import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
-import {type DictOption, listDictOptions} from "@/api/system/dict.ts";
+import { type DictOption, listDictOptions } from '@/api/system/dict';
+import { parseOpenAddressCity, parseOpenAddress, buildOpenAddress, findRegionCodesByLabels } from '@/utils/openAddress';
+import { regionData, codeToText } from 'element-china-area-data';
 
 const route = useRoute();
 const router = useRouter();
@@ -251,8 +306,17 @@ function formatTenderMode(value?: string) {
   return found?.label ?? value;
 }
 
+/** 币种展示：字典转中文 */
+function formatCurrency(value?: string) {
+  if (!value) return '';
+  const found = currencyOptions.value.find((x) => x.value === value);
+  return found?.label ?? value;
+}
+
 const tenderModeList = ref<DictOption[]>([]);
 const tenderTypeList = ref<DictOption[]>([]);
+/** 币种字典，用于列表/表单展示 */
+const currencyOptions = ref<DictOption[]>([]);
 const loading = ref(false);
 const saving = ref(false);
 
@@ -396,16 +460,19 @@ function handleSizeChange(size: number) {
 }
 async function fetchPostDictOptions() {
   try {
-    const [modeRes, typeRes] = await Promise.all([
+    const [modeRes, typeRes, currencyRes] = await Promise.all([
       listDictOptions('tender_mode'),
       listDictOptions('tender_type'),
+      listDictOptions('currency'),
     ]);
 
     tenderModeList.value = normalizeDictOptions(modeRes);
     tenderTypeList.value = normalizeDictOptions(typeRes);
+    currencyOptions.value = normalizeDictOptions(currencyRes);
   } catch (e) {
     tenderModeList.value = [];
     tenderTypeList.value = [];
+    currencyOptions.value = [];
   }
 }
 function normalizeDictOptions(res: DictOption[] | { data?: DictOption[] }) {
@@ -454,8 +521,10 @@ const form = reactive({
   bidEndTime: '',
   // 开标时间
   openTime: '',
-  // 开标地点
-  openAddress: '',
+  // 开标地点：级联选择器值 [省code, 市code, 区code]
+  openAddressCascader: [] as string[],
+  // 开标地点：详细地址
+  openAddressDetail: '',
   // 关联项目id
   relatedProject: undefined as ProjectVO | undefined,
   remark: '',
@@ -474,15 +543,16 @@ const rules: FormRules = {
   tenderMode: [
     { required: true, message: '请选择招标方式', trigger: 'change' }
   ],
+  bidStartTime: [
+    { required: true, message: '请选择投标开始时间', trigger: 'change' }
+  ],
   bidEndTime: [
     { required: true, message: '请选择投标截止时间', trigger: 'change' }
   ],
   openTime: [
     { required: true, message: '请选择开标时间', trigger: 'change' }
   ],
-  openAddress: [
-    { required: true, message: '请输入开标地点', trigger: 'blur' }
-  ],
+  // 开标地点留空表示线上，不校验必填
    owner: [
     { required: true, message: '请选择负责人', trigger: 'change' }
   ],
@@ -518,9 +588,25 @@ function openEdit(isEdit: boolean, row?: TenderVO) {
     form.budgetAmount = row.budgetAmount || 0;
     form.bidStartTime = row.bidStartTime || '';
     form.bidEndTime = row.bidEndTime || '';
-    form.openTime = ''; // 注意：后端返回可能是 openTime 或其他，需根据后端字段名调整
+    form.openTime = row.openTime || '';
     form.remark = row.remark || '';
-    form.openAddress = row.openAddress || '';
+    form.tenderBrief = row.tenderBrief ?? '';
+    form.currency = row.currency ?? 'CNY';
+    // 开标地点回显：解析为级联值 + 详细地址
+    const parsed = parseOpenAddress(row.openAddress);
+    if (parsed.province || parsed.city || parsed.district) {
+      const codes = findRegionCodesByLabels(
+        regionData as any,
+        parsed.province,
+        parsed.city,
+        parsed.district
+      );
+      form.openAddressCascader = codes ?? [];
+      form.openAddressDetail = parsed.detail;
+    } else {
+      form.openAddressCascader = [];
+      form.openAddressDetail = '';
+    }
 
     // 3. 处理选择器组件的回显 (关键：构造对象)
     // 负责人回显 - 强制断言
@@ -557,7 +643,10 @@ function openEdit(isEdit: boolean, row?: TenderVO) {
       bidStartTime: '',
       bidEndTime: '',
       openTime: '',
-      openAddress: '',
+      openAddressCascader: [],
+      openAddressDetail: '',
+      tenderBrief: '',
+      currency: 'CNY',
       remark: '',
     });
     // 自动生成项目编码
@@ -568,19 +657,22 @@ function openEdit(isEdit: boolean, row?: TenderVO) {
 }
 
 function goDetail(row: TenderVO) {
-  router.push(`/bidding/tender/${row.tenderId}`);
+  router.push(`/bidding/project/${row.tenderId}`);
 }
 
-function openEditById(projectId: string) {
+async function openEditById(projectId: string) {
   const list = tableData.value;
-  const row = list.find((x) => String((x as any).tenderId) === String(projectId));
+  let row = list.find((x) => String((x as any).tenderId) === String(projectId));
   if (row) {
     openEdit(true, row);
     return;
   }
-  if (!row) {
+  // 从详情页带 edit 跳转时，当前页可能没有该项目，用详情接口拉取后打开编辑
+  try {
+    const detail = await getBiddingProjectDetail(projectId);
+    openEdit(true, { ...detail, tenderId: detail.tenderId ?? projectId } as TenderVO);
+  } catch {
     ElMessage.warning('未找到该项目');
-    return;
   }
 }
 
@@ -594,6 +686,24 @@ async function submitForm() {
   if (companyId == null || companyId === 0) {
     ElMessage.warning('请选择招标单位');
     return;
+  }
+
+  // 开标地点：级联+详细地址拼接为 "省, 市, 区, 详细地址"，未选则为空（线上）
+  let openAddressValue: string | undefined;
+  const cascader = form.openAddressCascader;
+  const c0 = cascader?.[0];
+  const c1 = cascader?.[1];
+  const c2 = cascader?.[2];
+  if (c0 != null && c1 != null && c2 != null && codeToText[c0] && codeToText[c1] && codeToText[c2]) {
+    openAddressValue = buildOpenAddress(
+      codeToText[c0],
+      codeToText[c1],
+      codeToText[c2],
+      form.openAddressDetail || ''
+    );
+    if (openAddressValue.endsWith(', ')) openAddressValue = openAddressValue.slice(0, -2);
+  } else {
+    openAddressValue = undefined;
   }
 
   saving.value = true;
@@ -610,7 +720,7 @@ async function submitForm() {
       bidStartTime: form.bidStartTime || '',
       bidEndTime: form.bidEndTime || '',
       openTime: form.openTime || undefined,
-      openAddress: form.openAddress || undefined,
+      openAddress: openAddressValue,
       projectId: form.relatedProject?.projectId != null ? Number(form.relatedProject.projectId) : undefined,
       remark: form.remark || undefined,
     };
@@ -675,6 +785,13 @@ async function submitForm() {
 
 .dialog-form.two-col .full-row {
   grid-column: 1 / span 2;
+}
+
+.open-address-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 </style>
 

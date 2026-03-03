@@ -111,4 +111,17 @@ public class Tender {
     // 备注
     @Column(name = "remark", length = 500)
     private String remark;
+
+    //税率
+    @Column(name = "tax_rate")
+    private BigDecimal taxRate;
+
+    //是否含税
+    @Column(name = "is_tax_included")
+    private Boolean isTaxIncluded;
+
+    //采购性质（用来确定日期）
+    @Column(name = "purchase_nature", length = 32)
+    private String purchaseNature;
+
 }

@@ -1,11 +1,11 @@
 <template>
   <el-config-provider :locale="zhCn">
-    <el-card>
+    <el-card v-loading="loading">
       <template #header>
         <div class="header">
           <div class="left">
             <el-button link type="primary" @click="goBack">返回</el-button>
-            <div class="title">项目详情</div>
+            <div class="title">招标项目详情</div>
             <el-tag :type="statusTagType(project.status)" class="status-tag">
               {{ statusText(project.status) }}
             </el-tag>
@@ -19,13 +19,30 @@
         </div>
       </template>
 
+      <!-- 基本信息：与后端 /tender/detail 字段对齐 -->
       <el-descriptions :column="3" border class="summary">
-        <el-descriptions-item label="项目编码">{{ project.projectCode }}</el-descriptions-item>
-        <el-descriptions-item label="项目名称">{{ project.projectName }}</el-descriptions-item>
-        <el-descriptions-item label="招标单位">{{ project.tenderOrg || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="负责人">{{ project.ownerName || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="年度">{{ project.year || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="招标编号">{{ project.tenderCode || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="招标项目名称">{{ project.tenderName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="招标单位">{{ project.purchaserName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="招标类型">{{ formatTenderType(project.tenderType) }}</el-descriptions-item>
+        <el-descriptions-item label="招标方式">{{ formatTenderMode(project.tenderMode) }}</el-descriptions-item>
+        <el-descriptions-item label="币种">{{ formatCurrency(project.currency) || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="预算金额(万)" :span="2">{{ project.budgetAmount ?? '-' }}</el-descriptions-item>
+        <el-descriptions-item label="关联项目">{{ project.projectName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="招标公告发布时间">{{ project.publishTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="投标开始时间">{{ project.bidStartTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="投标截止时间">{{ project.bidEndTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="开标时间">{{ project.openTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="开标地点" :span="3">
+          {{ project.openAddress && project.openAddress.trim() ? project.openAddress : '线上' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="招标项目概要/公告摘要" :span="3">
+          {{ project.tenderBrief || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="创建人">{{ project.createdByName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="创建时间">{{ project.createdTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="更新时间">{{ project.updatedTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="备注" :span="3">{{ project.remark || '-' }}</el-descriptions-item>
       </el-descriptions>
 
       <el-tabs v-model="activeTab" class="tabs">
@@ -150,54 +167,83 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { hasPermission } from '@/utils/permission';
-
-type BiddingProjectStatus =
-  | 'DRAFT'
-  | 'PUBLISHED'
-  | 'BIDDING'
-  | 'EVALUATING'
-  | 'AWARDED'
-  | 'ARCHIVED';
+import { getBiddingProjectDetail, type TenderVO, type BiddingProjectStatus } from '@/api/bidding/project';
+import { listDictOptions, type DictOption } from '@/api/system/dict';
 
 const route = useRoute();
 const router = useRouter();
 
 const canManage = computed(() => hasPermission('bidding:project:manage'));
 
-const statusOptions: Array<{ label: string; value: BiddingProjectStatus }> = [
-  { label: '草稿', value: 'DRAFT' },
-  { label: '已发布', value: 'PUBLISHED' },
-  { label: '投标中', value: 'BIDDING' },
-  { label: '评标中', value: 'EVALUATING' },
-  { label: '已定标', value: 'AWARDED' },
-  { label: '已归档', value: 'ARCHIVED' },
+const statusOptions: Array<{ label: string; value: string }> = [
+  { label: '未开始', value: '未开始' },
+  { label: '进行中', value: '进行中' },
+  { label: '已结束', value: '已结束' },
 ];
 
-function statusText(s: BiddingProjectStatus) {
-  return statusOptions.find((x) => x.value === s)?.label || s;
+function statusText(s: BiddingProjectStatus | string) {
+  return statusOptions.find((x) => x.value === s)?.label || s || '-';
 }
 
-function statusTagType(s: BiddingProjectStatus) {
-  if (s === 'DRAFT') return 'info';
-  if (s === 'PUBLISHED') return 'success';
-  if (s === 'BIDDING') return 'warning';
-  if (s === 'EVALUATING') return 'warning';
-  if (s === 'AWARDED') return 'success';
-  if (s === 'ARCHIVED') return 'info';
+function statusTagType(s: BiddingProjectStatus | string) {
+  if (s === '未开始') return 'info';
+  if (s === '进行中') return 'warning';
+  if (s === '已结束') return 'success';
   return '';
 }
 
+function normalizeDictOptions(res: DictOption[] | { data?: DictOption[] }) {
+  if (Array.isArray(res)) return res;
+  return Array.isArray(res?.data) ? res.data : [];
+}
+
+const tenderModeList = ref<DictOption[]>([]);
+const tenderTypeList = ref<DictOption[]>([]);
+const currencyOptions = ref<DictOption[]>([]);
+
+function formatTenderMode(value?: string) {
+  if (!value) return '-';
+  const found = tenderModeList.value.find((x) => x.value === value);
+  return found?.label ?? value;
+}
+
+function formatTenderType(value?: string) {
+  if (!value) return '-';
+  const found = tenderTypeList.value.find((x) => x.value === value);
+  return found?.label ?? value;
+}
+
+function formatCurrency(value?: string) {
+  if (!value) return '';
+  const found = currencyOptions.value.find((x) => x.value === value);
+  return found?.label ?? value;
+}
+
+const loading = ref(false);
 const activeTab = ref('overview');
 
-const project = reactive({
-  projectId: '',
-  projectCode: '',
+/** 招标详情数据，与 /tender/detail 响应字段对齐 */
+const project = reactive<Partial<TenderVO> & { updatedTime?: string }>({
+  tenderId: '',
+  tenderCode: '',
+  tenderName: '',
+  purchaserName: '',
+  tenderType: '',
+  tenderMode: '',
+  budgetAmount: undefined,
+  currency: '',
+  tenderBrief: '',
+  publishTime: '',
+  bidStartTime: '',
+  bidEndTime: '',
+  openTime: '',
+  openAddress: '',
+  status: undefined,
   projectName: '',
-  tenderOrg: '',
-  ownerName: '',
-  year: new Date().getFullYear(),
-  status: 'DRAFT' as BiddingProjectStatus,
+  createdByName: '',
   createdTime: '',
+  updatedTime: '',
+  remark: '',
 });
 
 const metrics = reactive({
@@ -239,16 +285,40 @@ const logList = ref([
   { time: '2025-01-10 09:10:00', user: '张三', action: '发布公告', remark: '发布成功' },
 ]);
 
-onMounted(() => {
-  const projectId = route.params.projectId as string;
-  project.projectId = projectId;
-  // mock：根据 id 填充展示
-  project.projectCode = `TB-${project.year}-${String(projectId).padStart(3, '0')}`;
-  project.projectName = `示例招标项目 ${projectId}`;
-  project.tenderOrg = '总部';
-  project.ownerName = '张三';
-  project.status = statusOptions[Number(projectId) % statusOptions.length].value;
-  project.createdTime = '2025-01-01 10:00:00';
+async function fetchDetail() {
+  const tenderId = route.params.projectId as string;
+  if (!tenderId) return;
+  loading.value = true;
+  try {
+    const res = await getBiddingProjectDetail(tenderId);
+    Object.assign(project, res);
+  } catch (e) {
+    console.error('获取招标详情失败:', e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function fetchDictOptions() {
+  try {
+    const [modeRes, typeRes, currencyRes] = await Promise.all([
+      listDictOptions('tender_mode'),
+      listDictOptions('tender_type'),
+      listDictOptions('currency'),
+    ]);
+    tenderModeList.value = normalizeDictOptions(modeRes);
+    tenderTypeList.value = normalizeDictOptions(typeRes);
+    currencyOptions.value = normalizeDictOptions(currencyRes);
+  } catch {
+    tenderModeList.value = [];
+    tenderTypeList.value = [];
+    currencyOptions.value = [];
+  }
+}
+
+onMounted(async () => {
+  await fetchDictOptions();
+  await fetchDetail();
 });
 
 function goBack() {
@@ -259,9 +329,10 @@ function goAttachmentLib() {
   router.push('/bidding/attachments');
 }
 
+/** 编辑：跳转列表页并带上 edit 参数，由列表页打开编辑弹窗 */
 function openEditProject() {
-  // 你选了 3.B：编辑从列表弹窗为主；详情页的编辑入口先占位，后面可联动同一弹窗或跳转编辑页
-  router.push({ path: '/bidding/project', query: { edit: project.projectId } });
+  const id = project.tenderId ?? route.params.projectId;
+  if (id) router.push({ path: '/bidding/project', query: { edit: String(id) } });
 }
 </script>
 
@@ -338,5 +409,3 @@ function openEditProject() {
   gap: 8px;
 }
 </style>
-
-

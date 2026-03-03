@@ -194,7 +194,9 @@ public class TenderServiceImpl implements TenderService {
         Tender tender = new Tender();
         tender.setTenderCode(req.getTenderCode());
         tender.setTenderName(req.getTenderName());
-        tender.setTenderType(req.getTenderType());
+//        tender.setTenderType(req.getTenderType());
+        //todo ：需要做校验，规则如下；
+        //  招标文件发布时间到投标截止时间
         tender.setTenderMode(req.getTenderMode());
         tender.setCompanyId(req.getCompanyId());
         tender.setBudgetAmount(req.getBudgetAmount());

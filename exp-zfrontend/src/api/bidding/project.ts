@@ -66,11 +66,14 @@ export interface TenderVO {
   // 关联项目名称
   projectName?: string;
 
-  // 招标开始时间
+  // 投标开始时间
   bidStartTime?: string;
 
   // 招标截止时间
   bidEndTime?: string;
+
+  /** 开标时间 */
+  openTime?: string;
 
   // 招标项目创建人id
   createdBy?: string;
@@ -81,8 +84,15 @@ export interface TenderVO {
   // 招标项目创建时间
   createdTime?: string;
 
-  //开标地址
+  // 开标地址
   openAddress?: string;
+
+  /** 招标项目概要/公告摘要（详情接口返回） */
+  tenderBrief?: string;
+
+  /** 更新时间（详情接口返回） */
+  updatedTime?: string;
+
   remark?: string;
 }
 
