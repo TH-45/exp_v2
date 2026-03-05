@@ -1,6 +1,7 @@
 package jh.exp.bid.contract.service.service.bus.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.clinet.api.bus.AccountService;
@@ -497,5 +498,49 @@ public class TenderServiceImpl implements TenderService {
             log.error("调用project详情异常，scene={}, projectId={}", scene, projectId, ex);
             throw new RuntimeException("查询项目信息失败");
         }
+    }
+
+    @Override
+    @Transactional
+    public void bindSalesman(BindTenderSalesmanReq req) {
+        Tender tender = tenderMapper.selectById(req.getTenderId());
+        if (tender == null) {
+            throw new RuntimeException("招标信息不存在");
+        }
+
+        PersonDetailRes salesman = personService.getPersonById(req.getSalesmanId());
+        if (salesman == null) {
+            throw new RuntimeException("业务员信息不存在");
+        }
+
+        TenderMember existMember = tenderMemberMapper.selectOne(new LambdaQueryWrapper<TenderMember>()
+                .eq(TenderMember::getTenderId, req.getTenderId())
+                .eq(TenderMember::getMemberRole, BidContractConstant.BID_CONTRACT_SALESMAN)
+                .last("LIMIT 1"));
+
+        LocalDateTime now = LocalDateTime.now();
+        if (existMember == null) {
+            TenderMember tenderMember = TenderMember.builder()
+                    .tenderId(req.getTenderId())
+                    .personId(req.getSalesmanId())
+                    .memberRole(BidContractConstant.BID_CONTRACT_SALESMAN)
+                    .orgId(salesman.getOrgId())
+                    .postId(salesman.getPostId())
+                    .startDate(LocalDate.now())
+                    .endDate(LocalDate.now().plusYears(10))
+                    .status(CommonConstant.ENABLED_STATUS_STR)
+                    .createdTime(now)
+                    .updatedTime(now)
+                    .build();
+            tenderMemberMapper.insert(tenderMember);
+            return;
+        }
+
+        existMember.setPersonId(req.getSalesmanId());
+        existMember.setOrgId(salesman.getOrgId());
+        existMember.setPostId(salesman.getPostId());
+        existMember.setStatus(CommonConstant.ENABLED_STATUS_STR);
+        existMember.setUpdatedTime(now);
+        tenderMemberMapper.updateById(existMember);
     }
 }

@@ -48,13 +48,19 @@
         </el-sub-menu>
 
         <!-- 审批管理 -->
-        <el-sub-menu v-if="canApprovalView" index="/approval">
+        <el-sub-menu v-if="canApprovalView || canProcessDefView || canProcessStartView" index="/approval">
           <template #title>
             <span>审批管理</span>
           </template>
 
-          <el-menu-item index="/approval">
+          <el-menu-item v-if="canProcessStartView" index="/approval/start-center">
+            流程发起中心
+          </el-menu-item>
+          <el-menu-item v-if="canApprovalView" index="/approval">
             审批/待办中心
+          </el-menu-item>
+          <el-menu-item v-if="canProcessDefView" index="/approval/definition">
+            流程定义
           </el-menu-item>
         </el-sub-menu>
 
@@ -277,6 +283,12 @@ const canContractsAttachmentsView = computed(
 );
 const canApprovalView = computed(
   () => userStore.isAdmin || userStore.permissions.includes('approval:task:view'),
+);
+const canProcessDefView = computed(
+  () => userStore.isAdmin || userStore.permissions.includes('process:def:view'),
+);
+const canProcessStartView = computed(
+  () => userStore.isAdmin || userStore.permissions.includes('process:start:view'),
 );
 // 企业信息与工程项目权限
 const canCorpView = computed(() => userStore.isAdmin || userStore.permissions.some(p =>

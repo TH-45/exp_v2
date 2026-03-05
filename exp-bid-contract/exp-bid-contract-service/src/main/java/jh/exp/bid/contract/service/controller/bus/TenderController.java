@@ -124,4 +124,13 @@ public class TenderController {
         TenderDetailRes result = tenderService.getProjectManagerByProjectId(projectId);
         return ApiResponse.success(result);
     }
+
+    /**
+     * 绑定业务员
+     */
+    @PostMapping("/bindSalesman")
+    public ApiResponse<Void> bindSalesman(@RequestBody @Valid BindTenderSalesmanReq req) {
+        tenderService.bindSalesman(req);
+        return ApiResponse.success(null);
+    }
 }

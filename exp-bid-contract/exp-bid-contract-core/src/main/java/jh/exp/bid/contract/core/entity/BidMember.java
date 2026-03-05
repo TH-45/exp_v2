@@ -32,12 +32,12 @@ public class BidMember {
     private Long bidId;
 
     // 用户ID，关联账号信息
-    @Column(name = "user_id")
-    private Long userId;
+    @Column(name = "person_id")
+    private Long personId;
 
     // 部门ID，关联部门管理
-    @Column(name = "dept_id")
-    private Long deptId;
+    @Column(name = "Org_Id")
+    private Long orgId;
 
     // 岗位ID，关联岗位管理
     @Column(name = "post_id")

@@ -42,15 +42,20 @@ public class UpdateBidReq {
     private BigDecimal bidTotalAmount;
 
     /**
-     * 币种
+     * 负责人 ID
      */
-    @NotBlank(message = "币种不能为空")
-    private String currency;
+    private Long principalId;
 
     /**
-     * 投标提交时间
+     * 业务员 ID
      */
-    private LocalDateTime bidSubmitTime;
+    private Long salesmanId;
+
+    /**
+     * 归属组织 ID
+     */
+    @NotNull(message = "归属组织ID不能为空")
+    private Long orgId;
 
     /**
      * 备注

@@ -54,6 +54,23 @@ public class CreateBidReq {
     private String currency;
 
     /**
+     * 负责人 ID
+     */
+    private Long  principalId;
+
+    /**
+     * 业务员 ID
+     */
+    private Long salesmanId;
+
+    /**
+     * 归属组织 ID
+     */
+    @NotNull(message = "归属组织ID不能为空")
+    private Long orgId;
+
+
+    /**
      * 投标提交时间
      */
     private LocalDateTime bidSubmitTime;

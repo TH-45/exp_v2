@@ -19,5 +19,6 @@
         <module>exp-corp</module>
         <module>exp-dependency</module>
         <module>exp-sys</module>
+        <module>exp-process</module>
     </modules>
 </project>

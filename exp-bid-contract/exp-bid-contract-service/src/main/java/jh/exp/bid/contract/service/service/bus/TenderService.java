@@ -66,4 +66,9 @@ public interface TenderService {
      * 检查用户是否有删除招标的权限
      */
     boolean checkDeletePermission(Long tenderId, Long userId);
+
+    /**
+     * 绑定招标业务员
+     */
+    void bindSalesman(BindTenderSalesmanReq req);
 }

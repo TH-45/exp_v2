@@ -135,4 +135,14 @@ public class BidController {
         boolean exists = bidService.checkSupplierBidExists(tenderId, supplierId, excludeBidId);
         return ApiResponse.success(exists);
     }
+
+    /**
+     * 绑定业务员
+     */
+    @PostMapping("/bindSalesman")
+    public ApiResponse<Void> bindSalesman(@RequestBody @Valid BindBidSalesmanReq req) {
+        bidService.bindSalesman(req);
+        return ApiResponse.success(null);
+    }
+
 }

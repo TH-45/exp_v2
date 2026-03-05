@@ -72,4 +72,9 @@ public interface BidService {
      * 检查用户是否有删除投标的权限
      */
     boolean checkDeletePermission(Long bidId, Long userId);
+
+    /**
+     * 绑定投标业务员
+     */
+    void bindSalesman(BindBidSalesmanReq req);
 }

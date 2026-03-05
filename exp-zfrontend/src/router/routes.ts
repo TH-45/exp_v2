@@ -223,6 +223,26 @@ const routes: RouteRecordRaw[] = [
           perms: ['approval:task:view'],
         },
       },
+      {
+        path: 'approval/start-center',
+        name: 'ApprovalStartCenter',
+        component: () => import('@/views/Approval/StartCenter.vue'),
+        meta: {
+          title: '流程发起中心',
+          icon: 'Grid',
+          perms: ['process:start:view'],
+        },
+      },
+      {
+        path: 'approval/definition',
+        name: 'ApprovalDefinition',
+        component: () => import('@/views/Approval/ProcessDefinition.vue'),
+        meta: {
+          title: '流程定义',
+          icon: 'Connection',
+          perms: ['process:def:view'],
+        },
+      },
 
       // 企业信息与工程项目
       {
@@ -308,6 +328,16 @@ const routes: RouteRecordRaw[] = [
         },
       },
     ],
+  },
+  {
+    path: '/approval/definition/node-config',
+    name: 'ApprovalNodeConfig',
+    component: () => import('@/views/Approval/ProcessNodeConfig.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '节点配置',
+      perms: ['process:def:view'],
+    },
   },
   {
     path: '/403',

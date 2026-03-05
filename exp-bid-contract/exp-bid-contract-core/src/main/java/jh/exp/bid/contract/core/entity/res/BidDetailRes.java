@@ -139,4 +139,31 @@ public class BidDetailRes {
      * 备注
      */
     private String remark;
+    //    ------------------------------------------------
+
+    /**
+     * 负责人 ID
+     */
+    private Long managerPersonId;
+    /**
+     * 负责人姓名
+     */
+    private String managerPersonName;
+
+    /**
+     * 归属组织id
+     */
+    private Long orgId;
+    /**
+     * 归属组织名称
+     */
+    private String orgIdName;
+    /**
+     * 业务员ID
+     */
+    private Long salesmanId;
+    /**
+     * 业务员姓名
+     */
+    private String salesmanName;
 }

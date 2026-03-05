@@ -158,6 +158,175 @@
           </el-table>
         </el-tab-pane>
       </el-tabs>
+
+      <!-- 详情页内编辑项目弹窗 -->
+      <el-dialog
+        v-model="editDialog.visible"
+        title="编辑项目"
+        width="860px"
+        destroy-on-close
+        draggable
+      >
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-width="110px"
+          class="dialog-form two-col"
+          @submit.prevent="submitForm"
+        >
+          <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
+          <el-form-item label="项目编码" prop="tenderCode">
+            <el-input v-model="form.tenderCode" placeholder="请输入项目编码" :disabled="true" />
+          </el-form-item>
+          <el-form-item label="项目名称" prop="tenderName">
+            <el-input v-model="form.tenderName" placeholder="请输入项目名称" />
+          </el-form-item>
+          <el-form-item label="招标单位" prop="company">
+            <CompanySelector v-model="form.company" />
+          </el-form-item>
+          <el-form-item label="归属组织" prop="orgId">
+            <OrgSelector
+              v-model="selectedOrg"
+              placeholder="请选择归属组织"
+              @change="handleOrgChange"
+            />
+          </el-form-item>
+          <el-form-item label="负责人" prop="owner">
+            <PersonSelector v-model="form.owner" />
+          </el-form-item>
+          <el-form-item label="关联项目" prop="relatedProject">
+            <ProjectSelector v-model="form.relatedProject" />
+          </el-form-item>
+          <el-form-item label="预算金额(万)" prop="budgetAmount">
+            <div class="budget-row">
+              <el-input-number v-model="form.budgetAmount" :min="0" :max="999999999" />
+              <el-checkbox v-model="form.isTaxIncluded" style="margin-left: 8px;">含税</el-checkbox>
+            </div>
+          </el-form-item>
+          <el-form-item label="币种" prop="currency">
+            <el-select v-model="form.currency" placeholder="请选择币种" clearable style="width: 100%">
+              <el-option v-for="c in currencyOptions" :key="c.value" :label="c.label" :value="c.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="税率" prop="taxRatePercent">
+            <el-select
+              v-model="form.taxRatePercent"
+              placeholder="请选择税率"
+              filterable
+              allow-create
+              default-first-option
+              @change="handleTaxRateChange"
+              @blur="handleTaxRateBlur"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="opt in taxRateOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="采购性质" prop="purchaseNature">
+            <el-select v-model="form.purchaseNature" placeholder="请选择采购性质" clearable style="width: 100%">
+              <el-option
+                v-for="opt in purchaseNatureOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="招标类型" prop="tenderType">
+            <el-select v-model="form.tenderType" clearable style="width: 100%">
+              <el-option v-for="t in tenderTypeList" :key="t.value" :label="t.label" :value="t.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="招标方式" prop="tenderMode">
+            <el-select v-model="form.tenderMode" clearable style="width: 100%">
+              <el-option v-for="t in tenderModeList" :key="t.value" :label="t.label" :value="t.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="发布时间" prop="publishTime">
+            <el-date-picker
+              v-model="form.publishTime"
+              type="datetime"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              placeholder="请选择发布时间"
+              style="width: 100%"
+              :disabled="true"
+            />
+          </el-form-item>
+          <el-form-item label="投标开始时间" prop="bidStartTime">
+            <el-date-picker
+              v-model="form.bidStartTime"
+              type="datetime"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              placeholder="请选择投标开始时间"
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-form-item label="投标截止时间" prop="bidEndTime">
+            <el-date-picker
+              v-model="form.bidEndTime"
+              type="datetime"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              placeholder="请选择投标截止时间"
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-form-item label="开标时间" prop="openTime">
+            <el-date-picker
+              v-model="form.openTime"
+              type="datetime"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              placeholder="请选择开标时间"
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-form-item label="开标地点" class="full-row">
+            <div class="open-address-row">
+              <el-cascader
+                v-model="form.openAddressCascader"
+                :options="regionData"
+                :props="{ value: 'value', label: 'label', checkStrictly: false }"
+                placeholder="省 / 市 / 区（选填，不选则为线上开标）"
+                clearable
+                style="width: 100%; max-width: 360px"
+              />
+              <el-input
+                v-model="form.openAddressDetail"
+                placeholder="详细地址（选填）"
+                clearable
+                style="flex: 1; min-width: 160px"
+              />
+            </div>
+          </el-form-item>
+          <el-form-item label="招标项目概要/公告摘要" prop="tenderBrief" class="full-row">
+            <el-input
+              v-model="form.tenderBrief"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入招标项目概要或公告摘要（可选）"
+              @keydown.enter.stop
+            />
+          </el-form-item>
+          <el-form-item label="备注" class="full-row">
+            <el-input
+              v-model="form.remark"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入备注（可选）"
+              @keydown.enter.stop
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="editDialog.visible = false">取消</el-button>
+          <el-button type="primary" :loading="saving" @click="submitForm">确认</el-button>
+        </template>
+      </el-dialog>
     </el-card>
   </el-config-provider>
 </template>
@@ -166,9 +335,25 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
-import { getBiddingProjectDetail, type TenderVO, type BiddingProjectStatus } from '@/api/bidding/project';
+import {
+  getBiddingProjectDetail,
+  updateBiddingProject,
+  type TenderVO,
+  type BiddingProjectStatus,
+  type UpdateTenderReq,
+} from '@/api/bidding/project';
 import { listDictOptions, type DictOption } from '@/api/system/dict';
+import type { ExpPersonVO } from '@/api/system/person';
+import PersonSelector from '@/components/Selector/PersonSelector.vue';
+import CompanySelector from '@/components/Selector/CompanySelector.vue';
+import ProjectSelector from '@/components/Selector/ProjectSelector.vue';
+import type { ProjectVO } from '@/api/corpProject/project';
+import OrgSelector from '@/components/Selector/OrgSelector.vue';
+import type { OrgNode } from '@/api/system/post';
+import { parseOpenAddress, buildOpenAddress, findRegionCodesByLabels } from '@/utils/openAddress';
+import { regionData, codeToText } from 'element-china-area-data';
 
 const route = useRoute();
 const router = useRouter();
@@ -285,6 +470,130 @@ const logList = ref([
   { time: '2025-01-10 09:10:00', user: '张三', action: '发布公告', remark: '发布成功' },
 ]);
 
+// 编辑弹窗相关状态与表单
+const purchaseNatureOptions = ref<DictOption[]>([]);
+const taxRateOptions = ref<DictOption[]>([
+  { label: '3%', value: '3' },
+  { label: '6%', value: '6' },
+  { label: '9%', value: '9' },
+  { label: '13%', value: '13' },
+]);
+
+const editDialog = reactive({
+  visible: false,
+  isEdit: true,
+});
+const formRef = ref<FormInstance>();
+
+interface CompanyVO {
+  companyId: string;
+  companyCode?: string;
+  companyName: string;
+}
+
+const selectedOrg = ref<OrgNode>();
+
+const form = reactive({
+  tenderId: '',
+  tenderCode: '',
+  tenderName: '',
+  tenderType: '',
+  tenderMode: '',
+  owner: undefined as ExpPersonVO | undefined,
+  company: undefined as CompanyVO | undefined,
+  orgId: undefined as number | undefined,
+  budgetAmount: 0,
+  isTaxIncluded: false,
+  taxRatePercent: '' as string | number,
+  purchaseNature: '',
+  status: '未开始' as BiddingProjectStatus,
+  currency: 'CNY',
+  tenderBrief: '',
+  publishTime: '',
+  bidStartTime: '',
+  bidEndTime: '',
+  openTime: '',
+  openAddressCascader: [] as string[],
+  openAddressDetail: '',
+  relatedProject: undefined as ProjectVO | undefined,
+  remark: '',
+});
+
+function normalizeTaxRateValue(value: unknown) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const cleaned = raw.replace(/\s*%$/, '').trim();
+  if (!cleaned) return '';
+  const num = Number(cleaned);
+  if (!Number.isFinite(num)) return '';
+  return String(num);
+}
+
+function ensureTaxRateOption(value: string) {
+  if (!value) return;
+  const exists = taxRateOptions.value.some((opt) => String(opt.value) === value);
+  if (!exists) {
+    taxRateOptions.value.push({ label: `${value}%`, value });
+    return;
+  }
+  const option = taxRateOptions.value.find((opt) => String(opt.value) === value);
+  if (option && option.label !== `${value}%`) {
+    option.label = `${value}%`;
+  }
+}
+
+function applyTaxRateDisplay(value: unknown) {
+  const normalized = normalizeTaxRateValue(value);
+  if (normalized === '') {
+    if (value == null || String(value).trim() === '') {
+      form.taxRatePercent = '';
+    }
+    return;
+  }
+  form.taxRatePercent = normalized;
+  ensureTaxRateOption(normalized);
+}
+
+function handleTaxRateChange(value: string | number) {
+  applyTaxRateDisplay(value);
+}
+
+function handleTaxRateBlur() {
+  applyTaxRateDisplay(form.taxRatePercent);
+}
+
+function validateTaxRatePercent(_rule: any, value: any, callback: (error?: Error) => void) {
+  if (value === '' || value === null || value === undefined) {
+    callback(new Error('请输入税率'));
+    return;
+  }
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0 || num > 100) {
+    callback(new Error('税率必须是 0~100 之间的数字'));
+    return;
+  }
+  callback();
+}
+
+const rules: FormRules = {
+  tenderCode: [{ required: true, message: '请输入项目编码', trigger: 'blur' }],
+  tenderName: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
+  tenderType: [{ required: true, message: '请选择招标类型', trigger: 'change' }],
+  tenderMode: [{ required: true, message: '请选择招标方式', trigger: 'change' }],
+  bidStartTime: [{ required: true, message: '请选择投标开始时间', trigger: 'change' }],
+  bidEndTime: [{ required: true, message: '请选择投标截止时间', trigger: 'change' }],
+  openTime: [{ required: true, message: '请选择开标时间', trigger: 'change' }],
+  publishTime: [{ required: true, message: '请选择发布时间', trigger: 'change' }],
+  company: [{ required: true, message: '请选择招标人', trigger: 'change' }],
+  orgId: [{ required: true, message: '请选择归属组织', trigger: 'change' }],
+  budgetAmount: [{ required: true, message: '请输入预算金额', trigger: 'blur' }],
+  taxRatePercent: [
+    { required: true, message: '请输入税率', trigger: 'change' },
+    { validator: validateTaxRatePercent, trigger: 'change' },
+  ],
+  purchaseNature: [{ required: true, message: '请选择采购性质', trigger: 'change' }],
+};
+
 async function fetchDetail() {
   const tenderId = route.params.projectId as string;
   if (!tenderId) return;
@@ -301,18 +610,21 @@ async function fetchDetail() {
 
 async function fetchDictOptions() {
   try {
-    const [modeRes, typeRes, currencyRes] = await Promise.all([
+    const [modeRes, typeRes, currencyRes, purchaseNatureRes] = await Promise.all([
       listDictOptions('tender_mode'),
       listDictOptions('tender_type'),
       listDictOptions('currency'),
+      listDictOptions('purchase_nature'),
     ]);
     tenderModeList.value = normalizeDictOptions(modeRes);
     tenderTypeList.value = normalizeDictOptions(typeRes);
     currencyOptions.value = normalizeDictOptions(currencyRes);
+    purchaseNatureOptions.value = normalizeDictOptions(purchaseNatureRes);
   } catch {
     tenderModeList.value = [];
     tenderTypeList.value = [];
     currencyOptions.value = [];
+    purchaseNatureOptions.value = [];
   }
 }
 
@@ -329,10 +641,173 @@ function goAttachmentLib() {
   router.push('/bidding/attachments');
 }
 
-/** 编辑：跳转列表页并带上 edit 参数，由列表页打开编辑弹窗 */
 function openEditProject() {
-  const id = project.tenderId ?? route.params.projectId;
-  if (id) router.push({ path: '/bidding/project', query: { edit: String(id) } });
+  // 将详情数据映射到编辑表单
+  form.tenderId = String(project.tenderId ?? route.params.projectId ?? '');
+  form.tenderCode = project.tenderCode || '';
+  form.tenderName = project.tenderName || '';
+  form.tenderType = project.tenderType || '';
+  form.tenderMode = project.tenderMode || '';
+  form.status = (project.status as BiddingProjectStatus) || '未开始';
+  form.budgetAmount = project.budgetAmount || 0;
+  form.isTaxIncluded = project.isTaxIncluded ?? false;
+  form.taxRatePercent =
+    project.taxRate != null ? String(Number(project.taxRate) * 100) : '';
+  applyTaxRateDisplay(form.taxRatePercent);
+  form.purchaseNature = project.purchaseNature || '';
+  form.bidStartTime = project.bidStartTime || '';
+  form.bidEndTime = project.bidEndTime || '';
+  form.openTime = project.openTime || '';
+  form.remark = project.remark || '';
+  form.tenderBrief = project.tenderBrief ?? '';
+  form.currency = project.currency ?? 'CNY';
+  form.publishTime = project.publishTime || '';
+
+  // 开标地点回显
+  const parsed = parseOpenAddress(project.openAddress || '');
+  if (parsed.province || parsed.city || parsed.district) {
+    const codes = findRegionCodesByLabels(
+      regionData as any,
+      parsed.province,
+      parsed.city,
+      parsed.district
+    );
+    form.openAddressCascader = codes ?? [];
+    form.openAddressDetail = parsed.detail;
+  } else {
+    form.openAddressCascader = [];
+    form.openAddressDetail = '';
+  }
+
+  // 负责人回显
+  form.owner = project.personId
+    ? ({
+        personId: project.personId,
+        personName: project.personIdName,
+      } as any)
+    : undefined;
+
+  // 招标单位回显
+  form.company = project.purchaserId
+    ? ({
+        companyId: project.purchaserId,
+        companyName: project.purchaserName,
+      } as any)
+    : undefined;
+
+  // 归属组织回显
+  form.orgId = project.orgId != null ? Number(project.orgId) : undefined;
+  selectedOrg.value =
+    project.orgId != null
+      ? ({
+          orgId: Number(project.orgId),
+          orgName: project.orgName || '',
+          orgCode: '',
+          children: [],
+        } as OrgNode)
+      : undefined;
+
+  // 关联项目回显
+  form.relatedProject = project.projectId
+    ? ({
+        projectId: project.projectId,
+        projectName: project.projectName,
+      } as any)
+    : undefined;
+
+  editDialog.visible = true;
+}
+
+function handleOrgChange(org: OrgNode | undefined) {
+  form.orgId = org?.orgId as number | undefined;
+}
+
+async function submitForm() {
+  if (!formRef.value) return;
+
+  applyTaxRateDisplay(form.taxRatePercent);
+  const valid = await formRef.value.validate();
+  if (!valid) return;
+
+  const companyId =
+    form.company?.companyId != null ? Number(form.company.companyId) : null;
+  if (companyId == null || companyId === 0) {
+    ElMessage.warning('请选择招标单位');
+    return;
+  }
+
+  if (form.orgId == null) {
+    ElMessage.warning('请选择归属组织');
+    return;
+  }
+
+  // 开标地点拼接
+  let openAddressValue: string | undefined;
+  const cascader = form.openAddressCascader;
+  const c0 = cascader?.[0];
+  const c1 = cascader?.[1];
+  const c2 = cascader?.[2];
+  if (
+    c0 != null &&
+    c1 != null &&
+    c2 != null &&
+    codeToText[c0] &&
+    codeToText[c1] &&
+    codeToText[c2]
+  ) {
+    openAddressValue = buildOpenAddress(
+      codeToText[c0],
+      codeToText[c1],
+      codeToText[c2],
+      form.openAddressDetail || ''
+    );
+    if (openAddressValue.endsWith(', '))
+      openAddressValue = openAddressValue.slice(0, -2);
+  } else {
+    openAddressValue = '';
+  }
+
+  const taxRatePercentNum = Number(form.taxRatePercent);
+  const taxRateDecimal = taxRatePercentNum / 100;
+
+  const payload: UpdateTenderReq = {
+    tenderId: Number(form.tenderId),
+    tenderCode: form.tenderCode || '',
+    tenderName: form.tenderName || '',
+    tenderType: form.tenderType || '',
+    tenderMode: form.tenderMode || '',
+    companyId,
+    budgetAmount: Number(form.budgetAmount) || 0,
+    taxRate: taxRateDecimal,
+    isTaxIncluded: !!form.isTaxIncluded,
+    purchaseNature: form.purchaseNature || '',
+    tenderBrief: form.tenderBrief || undefined,
+    publishTime: form.publishTime || '',
+    bidStartTime: form.bidStartTime || '',
+    bidEndTime: form.bidEndTime || '',
+    openTime: form.openTime || undefined,
+    openAddress: openAddressValue ?? '',
+    projectId:
+      form.relatedProject?.projectId != null
+        ? Number(form.relatedProject.projectId)
+        : undefined,
+    personId:
+      form.owner?.personId != null ? Number(form.owner.personId) : undefined,
+    orgId: form.orgId != null ? Number(form.orgId) : undefined,
+    remark: form.remark || undefined,
+  };
+
+  loading.value = true;
+  try {
+    await updateBiddingProject(payload);
+    ElMessage.success('更新成功');
+    editDialog.visible = false;
+    await fetchDetail();
+  } catch (e: any) {
+    ElMessage.error(e?.message || '更新失败');
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
 
@@ -369,6 +844,43 @@ function openEditProject() {
 
 .tabs {
   margin-top: 8px;
+}
+
+.dialog-form.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 12px;
+}
+
+.dialog-form.two-col :deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+.dialog-form.two-col .full-row {
+  grid-column: 1 / span 2;
+}
+
+.open-address-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.budget-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+
+  :deep(.el-input-number) {
+    flex: 1;
+  }
+
+  :deep(.el-checkbox) {
+    margin-left: 12px;
+    flex-shrink: 0;
+  }
 }
 
 .grid {

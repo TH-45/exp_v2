@@ -1,89 +1,89 @@
 import request from '@/api/request';
+import { buildPageQuery, type PageQueryInput } from '@/api/common';
 
-export type ApprovalType = 'bidding' | 'tender' | 'contract' | 'project';
-export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'draft';
-export type Priority = 'urgent' | 'important' | 'normal';
-
-export interface ApprovalTask {
-  id: string;
-  type: ApprovalType;
-  title: string;
-  description: string;
-  applicant: string;
-  applicantId: string;
-  submitTime: string;
-  status: ApprovalStatus;
-  priority: Priority;
-  businessId: string; // 关联的业务ID
-  businessType: string; // 业务类型
-  attachments?: string[];
-  comments?: string;
-  approveTime?: string;
-  approver?: string;
-  approverId?: string;
-}
+export type WorkbenchTab = 'todo' | 'done' | 'started' | 'closed';
+export type InstanceStatus = 'RUNNING' | 'COMPLETED' | 'REJECTED' | 'CLOSED' | string;
 
 export interface ApprovalStats {
-  todayPending: number;
-  urgentPending: number;
-  completedToday: number;
-  efficiency: number; // 审批效率百分比
+  todoCount: number;
+  doneCount: number;
+  startedCount: number;
+  closedCount: number;
 }
 
-export interface ApprovalListQuery {
-  page: number;
+export interface ApprovalTaskQuery {
+  tab: WorkbenchTab;
+  pageNum: number;
   pageSize: number;
   keyword?: string;
-  type?: ApprovalType;
-  status?: ApprovalStatus;
-  priority?: Priority;
-  startDate?: string;
-  endDate?: string;
-  applicant?: string;
+  busType?: string;
+  status?: InstanceStatus;
 }
 
-export interface ApprovalDetail extends ApprovalTask {
-  businessData?: any; // 具体的业务数据
+export interface ApprovalTask {
+  taskId: number;
+  instanceId: number;
+  title: string;
+  busType: string;
+  busId: string;
+  starterId: number;
+  startTime: string;
+  currentNode: string;
+  status: InstanceStatus;
+  isDone: number;
+}
+
+export interface ApprovalDetail {
+  taskId: number;
+  instanceId: number;
+  busType: string;
+  busId: string;
+  status: InstanceStatus;
+  currentNode: string;
+  starterId: number;
+  businessData?: unknown;
   approvalHistory: ApprovalHistory[];
   attachments: Attachment[];
 }
 
 export interface ApprovalHistory {
-  id: string;
-  taskId: string;
-  action: 'submit' | 'approve' | 'reject' | 'delegate';
-  operator: string;
-  operatorId: string;
-  operateTime: string;
-  comments?: string;
-  status: ApprovalStatus;
+  taskId: number;
+  nodeId: number;
+  nodeName: string;
+  action: string;
+  handlerId: number;
+  opinion?: string;
+  isDone: number;
+  createTime: string;
+  finishTime?: string;
 }
 
 export interface Attachment {
-  id: string;
+  id: number;
   name: string;
   url: string;
   size: number;
-  uploadTime: string;
+  uploadTime?: string;
 }
 
 export interface ApprovalAction {
-  taskId: string;
-  action: 'approve' | 'reject' | 'delegate';
+  taskId: number;
   comments?: string;
-  delegateTo?: string; // 委托给谁
+  attachments?: Array<{
+    name: string;
+    url: string;
+    size?: number;
+  }>;
 }
 
 export interface PageResult<T> {
-  records?: T[];
-  total?: number;
-  page?: number;
-  pageSize?: number;
-  list?: T[];
-  rows?: T[];
+  list: T[];
+  total: number;
+  page: number;
+  size: number;
 }
 
-const BASE = '/exp/approval';
+const BASE = '/exp/process/approval';
 
 // 获取审批统计信息
 export function getApprovalStats() {
@@ -91,12 +91,12 @@ export function getApprovalStats() {
 }
 
 // 获取审批任务列表
-export function listApprovalTasks(params: ApprovalListQuery) {
-  return request.get<PageResult<ApprovalTask>, PageResult<ApprovalTask>>(`${BASE}/tasks`, { params });
+export function listApprovalTasks(params: PageQueryInput<ApprovalTaskQuery>) {
+  return request.post<PageResult<ApprovalTask>, PageResult<ApprovalTask>>(`${BASE}/tasks`, buildPageQuery(params));
 }
 
 // 获取审批任务详情
-export function getApprovalDetail(taskId: string) {
+export function getApprovalDetail(taskId: number) {
   return request.get<ApprovalDetail, ApprovalDetail>(`${BASE}/detail`, { params: { taskId } });
 }
 
@@ -110,22 +110,22 @@ export function rejectTask(data: ApprovalAction) {
   return request.post<void, void>(`${BASE}/reject`, data);
 }
 
-// 委托审批
-export function delegateTask(data: ApprovalAction) {
-  return request.post<void, void>(`${BASE}/delegate`, data);
-}
-
 // 批量审批
-export function batchApprove(data: { taskIds: string[]; comments?: string }) {
+export function batchApprove(data: { taskIds: number[]; comments?: string }) {
   return request.post<void, void>(`${BASE}/batch-approve`, data);
 }
 
 // 批量驳回
-export function batchReject(data: { taskIds: string[]; comments?: string }) {
+export function batchReject(data: { taskIds: number[]; comments?: string }) {
   return request.post<void, void>(`${BASE}/batch-reject`, data);
 }
 
 // 获取审批历史
-export function getApprovalHistory(taskId: string) {
+export function getApprovalHistory(taskId: number) {
   return request.get<ApprovalHistory[], ApprovalHistory[]>(`${BASE}/history`, { params: { taskId } });
+}
+
+// 强制关闭（仅发起人）
+export function forceCloseInstance(data: { instanceId: number; reason?: string }) {
+  return request.post<void, void>(`${BASE}/force-close`, data);
 }
