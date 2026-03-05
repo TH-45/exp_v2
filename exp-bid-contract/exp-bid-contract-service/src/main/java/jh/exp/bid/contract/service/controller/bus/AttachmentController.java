@@ -1,6 +1,7 @@
 package jh.exp.bid.contract.service.controller.bus;
 
 import jh.exp.bid.contract.core.entity.req.CreateAttachmentReq;
+import jh.exp.bid.contract.core.entity.req.CreateAttachmentBizReq;
 import jh.exp.bid.contract.core.entity.req.QueryAttachmentReq;
 import jh.exp.bid.contract.core.entity.res.AttachmentDetailRes;
 import jh.exp.bid.contract.core.entity.res.AttachmentListRes;
@@ -11,7 +12,9 @@ import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -49,10 +52,11 @@ public class AttachmentController {
     /**
      * 上传附件
      */
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     //@RequiresPermissions("ATTACHMENT:UPLOAD")
-    public ApiResponse<AttachmentDetailRes> upload(@RequestBody @Valid CreateAttachmentReq req) {
-        AttachmentDetailRes result = attachmentService.uploadAttachment(req);
+    public ApiResponse<AttachmentDetailRes> upload(@RequestPart("file") MultipartFile file,
+                                                   @RequestPart("biz") @Valid CreateAttachmentBizReq biz) {
+        AttachmentDetailRes result = attachmentService.uploadAttachment(file, biz);
         return ApiResponse.success(result);
     }
 

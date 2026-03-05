@@ -1,11 +1,13 @@
 package jh.exp.bid.contract.service.service.bus;
 
 import jh.exp.bid.contract.core.entity.req.CreateAttachmentReq;
+import jh.exp.bid.contract.core.entity.req.CreateAttachmentBizReq;
 import jh.exp.bid.contract.core.entity.req.QueryAttachmentReq;
 import jh.exp.bid.contract.core.entity.res.AttachmentDetailRes;
 import jh.exp.bid.contract.core.entity.res.AttachmentListRes;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public interface AttachmentService {
     /**
      * 上传附件
      */
-    AttachmentDetailRes uploadAttachment(CreateAttachmentReq req);
+    AttachmentDetailRes uploadAttachment(MultipartFile file, CreateAttachmentBizReq biz);
 
     /**
      * 批量上传附件

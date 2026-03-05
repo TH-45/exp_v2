@@ -76,6 +76,18 @@ public class Bid {
     @Column(name = "project_id")
     private Long projectId;
 
+    // 归属组织ID（冗余快照，用于强约束和快速查询）
+    @Column(name = "org_id")
+    private Long orgId;
+
+    // 负责人（人员ID，冗余快照，要求不能为空）
+    @Column(name = "principal_person_id")
+    private Long principalPersonId;
+
+    // 业务员（人员ID，冗余快照）
+    @Column(name = "salesman_person_id")
+    private Long salesmanPersonId;
+
     // 创建人用户ID，关联账号信息表
     @Column(name = "created_by")
     private Long createdBy;

@@ -4,22 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>jh.exp.dependency</groupId>
-        <artifactId>exp-dependency</artifactId>
+        <groupId>jh.exp.sys</groupId>
+        <artifactId>exp-sys</artifactId>
         <version>1.0.0</version>
-        <relativePath>../exp-dependency/pom.xml</relativePath>
     </parent>
 
-    <groupId>jh.exp.sys</groupId>
-    <artifactId>exp-sys</artifactId>
-    <version>1.0.0</version>
-    <packaging>pom</packaging>
-    <modules>
-        <module>exp-sys-service</module>
-        <module>exp-sys-core</module>
-        <module>exp-sys-client</module>
-    </modules>
-
+    <artifactId>exp-sys-client</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -29,11 +19,24 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jh.exp.sys</groupId>
+            <artifactId>exp-sys-core</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>jh.exp.common</groupId>
             <artifactId>exp-common-core</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
-
 </project>

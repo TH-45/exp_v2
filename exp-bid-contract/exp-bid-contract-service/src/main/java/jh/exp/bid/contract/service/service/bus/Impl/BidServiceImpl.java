@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import jh.exp.auth.clinet.api.bus.AccountService;
 import jh.exp.auth.clinet.api.bus.PersonService;
 import jh.exp.auth.core.entity.dto.OrgIdAndPersonIdDTO;
 import jh.exp.auth.core.entity.req.PersonFlagReq;
@@ -12,13 +11,11 @@ import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.constant.BidContractConstant;
 import jh.exp.bid.contract.core.entity.Bid;
 import jh.exp.bid.contract.core.entity.BidMember;
-import jh.exp.bid.contract.core.entity.dto.ManagerAndSalespersonDTO;
 import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.BidDetailRes;
 import jh.exp.bid.contract.core.entity.res.BidListRes;
 import jh.exp.bid.contract.core.mapper.BidMapper;
 import jh.exp.bid.contract.core.mapper.middle.BidMemberMapper;
-import jh.exp.bid.contract.core.mapper.middle.TenderMemberMapper;
 import jh.exp.bid.contract.service.service.bus.BidService;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
@@ -48,9 +45,35 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BidServiceImpl implements BidService {
 
+    private static final Set<String> BID_STATUS_SET = Set.of(
+            BidContractConstant.BID_CONTRACT_PROJECT_PREPARE,
+            BidContractConstant.BID_CONTRACT_PROJECT_SUBMITTED,
+            BidContractConstant.BID_CONTRACT_PROJECT_EVALUATING,
+            BidContractConstant.BID_CONTRACT_PROJECT_WON,
+            BidContractConstant.BID_CONTRACT_PROJECT_LOST,
+            BidContractConstant.BID_CONTRACT_PROJECT_ABANDONED
+    );
+    private static final Map<String, Set<String>> BID_STATUS_TRANSITIONS = Map.of(
+            BidContractConstant.BID_CONTRACT_PROJECT_PREPARE, Set.of(
+                    BidContractConstant.BID_CONTRACT_PROJECT_SUBMITTED,
+                    BidContractConstant.BID_CONTRACT_PROJECT_ABANDONED
+            ),
+            BidContractConstant.BID_CONTRACT_PROJECT_SUBMITTED, Set.of(
+                    BidContractConstant.BID_CONTRACT_PROJECT_EVALUATING,
+                    BidContractConstant.BID_CONTRACT_PROJECT_ABANDONED
+            ),
+            BidContractConstant.BID_CONTRACT_PROJECT_EVALUATING, Set.of(
+                    BidContractConstant.BID_CONTRACT_PROJECT_WON,
+                    BidContractConstant.BID_CONTRACT_PROJECT_LOST,
+                    BidContractConstant.BID_CONTRACT_PROJECT_ABANDONED
+            ),
+            BidContractConstant.BID_CONTRACT_PROJECT_WON, Set.of(),
+            BidContractConstant.BID_CONTRACT_PROJECT_LOST, Set.of(),
+            BidContractConstant.BID_CONTRACT_PROJECT_ABANDONED, Set.of()
+    );
+
     private final BidMapper bidMapper;
     private final PersonService personService;
-    private final AccountService accountService;
     private final CompanyClientService companyClientService;
     private final ProjectClientService projectClientService;
     private final BidMemberMapper bidMemberMapper;
@@ -82,18 +105,18 @@ public class BidServiceImpl implements BidService {
     public BidDetailRes getBidById(Long bidId) {
         // 仅查本模块表
         BidDetailRes bidDetail = bidMapper.selectBidDetailById(bidId);
-        List<BidMember> bidMembers = bidMemberMapper.selectList(new LambdaQueryWrapper<BidMember>().eq(BidMember::getBidId, bidId));
-        bidMembers.forEach(r ->{
-            if(r.getRoleInBid().equals(BidContractConstant.BID_CONTRACT_PRINCIPAL)){
-                bidDetail.setManagerPersonId(r.getPersonId());
-            }
-            if(r.getRoleInBid().equals(BidContractConstant.BID_CONTRACT_SALESMAN)){
-                bidDetail.setSalesmanId(r.getPersonId());
-            }
-        });
         if (bidDetail == null) {
             throw new RuntimeException("投标信息不存在");
         }
+        List<BidMember> bidMembers = bidMemberMapper.selectList(new LambdaQueryWrapper<BidMember>().eq(BidMember::getBidId, bidId));
+        bidMembers.forEach(r -> {
+            if (BidContractConstant.BID_CONTRACT_PRINCIPAL.equals(r.getRoleInBid())) {
+                bidDetail.setManagerPersonId(r.getPersonId());
+            }
+            if (BidContractConstant.BID_CONTRACT_SALESMAN.equals(r.getRoleInBid())) {
+                bidDetail.setSalesmanId(r.getPersonId());
+            }
+        });
         // 通过各模块接口补全供应商/项目/创建人及部门岗位名称
         fillBidDetailResNames(bidDetail);
         return bidDetail;
@@ -134,6 +157,7 @@ public class BidServiceImpl implements BidService {
         bid.setProjectId(req.getProjectId());
         bid.setBidStatus(BidContractConstant.BID_CONTRACT_PROJECT_PREPARE); // 新建投标默认为准备状态
         bid.setWinFlag(0); // 默认未中标
+        bid.setOrgId(req.getOrgId());
         bid.setRemark(req.getRemark());
         bid.setCreatedTime(LocalDateTime.now());
         bid.setUpdatedTime(LocalDateTime.now());
@@ -144,25 +168,19 @@ public class BidServiceImpl implements BidService {
         bid.setCreatedPostId(personDetail.getPostId());
 
         bidMapper.insert(bid);
-        Long principalId=(req.getPrincipalId()==null||req.getPrincipalId()==0)? null: req.getPrincipalId();
-        Map<Long, PersonDetailRes> pmMap = personService.queryProjectManager(List.of(new OrgIdAndPersonIdDTO(req.getOrgId(), principalId)));
-        if (pmMap == null || pmMap.isEmpty()) {
-            throw new RuntimeException("无法获取负责人信息");
+        PersonDetailRes principal = queryPrincipal(req.getOrgId(), req.getPrincipalId());
+        upsertRoleMember(bid.getBidId(), req.getOrgId(), principal, BidContractConstant.BID_CONTRACT_PRINCIPAL, 1, "负责人");
+        bid.setBidId(bid.getBidId());
+        bid.setPrincipalPersonId(principal.getPersonId());
+        if (req.getSalesmanId() != null && req.getSalesmanId() > 0) {
+            PersonDetailRes salesman = queryPersonById(req.getSalesmanId(), "业务员信息不存在");
+            upsertRoleMember(bid.getBidId(), salesman.getOrgId(), salesman, BidContractConstant.BID_CONTRACT_SALESMAN, 0, "业务员");
+            bid.setSalesmanPersonId(salesman.getPersonId());
+        } else {
+            bid.setSalesmanPersonId(null);
         }
-        // 获取 Map 中的第一个值（因为只传入了一个 ID，预期只有一个结果）
-        PersonDetailRes personDetailRes = pmMap.get(req.getOrgId());
-
-        BidMember bidMember = new BidMember();
-        bidMember.setBidId(bid.getBidId());
-        bidMember.setPersonId(personDetailRes.getPersonId());
-        bidMember.setOrgId(req.getOrgId());
-        bidMember.setPostId(personDetailRes.getPostId());
-        bidMember.setRoleInBid(BidContractConstant.BID_CONTRACT_PRINCIPAL);
-        bidMember.setIsLeader(1);
-        bidMember.setJoinTime(LocalDateTime.now());
-        bidMember.setResponsibilityDesc("负责人");
-        bidMember.setJoinTime(LocalDateTime.now());
-        bidMemberMapper.insert(bidMember);
+        bid.setUpdatedTime(LocalDateTime.now());
+        bidMapper.updateById(bid);
 
 
         // 返回创建后的投标详情信息
@@ -188,29 +206,25 @@ public class BidServiceImpl implements BidService {
         bid.setBidCode(req.getBidCode());
         bid.setBidName(req.getBidName());
         bid.setBidTotalAmount(req.getBidTotalAmount());
+        bid.setOrgId(req.getOrgId());
         bid.setRemark(req.getRemark());
         bid.setUpdatedTime(LocalDateTime.now());
         bidMapper.updateById(bid);
 
 
-        Long principalId=(req.getPrincipalId()==null||req.getPrincipalId()==0)? null: req.getPrincipalId();
-        Map<Long, PersonDetailRes> pmMap = personService.queryProjectManager(List.of(new OrgIdAndPersonIdDTO(req.getOrgId(), principalId)));
-        if (pmMap == null || pmMap.isEmpty()) {
-            throw new RuntimeException("无法获取负责人信息");
-        }
-        // 获取 Map 中的第一个值（因为只传入了一个 ID，预期只有一个结果）
-        PersonDetailRes personDetailRes = pmMap.get(req.getOrgId());
+        PersonDetailRes principal = queryPrincipal(req.getOrgId(), req.getPrincipalId());
+        upsertRoleMember(req.getBidId(), req.getOrgId(), principal, BidContractConstant.BID_CONTRACT_PRINCIPAL, 1, "负责人");
 
-        BidMember bidMember = new BidMember();
-        bidMember.setBidId(req.getBidId());
-        bidMember.setPersonId(personDetailRes.getPersonId());
-        bidMember.setOrgId(req.getOrgId());
-        bidMember.setPostId(personDetailRes.getPostId());
-        bidMember.setRoleInBid(BidContractConstant.BID_CONTRACT_PRINCIPAL);
-        bidMember.setIsLeader(1);
-        bidMember.setJoinTime(LocalDateTime.now());
-        bidMember.setResponsibilityDesc("负责人");
-        bidMemberMapper.updateById(bidMember);
+        Bid updateFields = new Bid();
+        updateFields.setBidId(req.getBidId());
+        updateFields.setPrincipalPersonId(principal.getPersonId());
+        if (req.getSalesmanId() != null && req.getSalesmanId() > 0) {
+            PersonDetailRes salesman = queryPersonById(req.getSalesmanId(), "业务员信息不存在");
+            upsertRoleMember(req.getBidId(), salesman.getOrgId(), salesman, BidContractConstant.BID_CONTRACT_SALESMAN, 0, "业务员");
+            updateFields.setSalesmanPersonId(salesman.getPersonId());
+        }
+        updateFields.setUpdatedTime(LocalDateTime.now());
+        bidMapper.updateById(updateFields);
 
         // 返回更新后的投标信息
         return getBidById(req.getBidId());
@@ -227,7 +241,7 @@ public class BidServiceImpl implements BidService {
 
         // 检查当前用户是否有删除权限
         CurrentUser currentUser = CurrentUserHolder.get();
-        if (!checkDeletePermission(bidId, Long.valueOf(currentUser.getUserId()))) {
+        if (!checkDeletePermission(bidId, currentUser.getUserId())) {
             throw new RuntimeException("无权限删除该投标信息");
         }
 
@@ -244,7 +258,7 @@ public class BidServiceImpl implements BidService {
         }
 
         CurrentUser currentUser = CurrentUserHolder.get();
-        Long userId = Long.valueOf(currentUser.getUserId());
+        Long userId = currentUser.getUserId();
 
         // 检查每个投标的删除权限
         for (Long bidId : req.getBidIds()) {
@@ -271,8 +285,7 @@ public class BidServiceImpl implements BidService {
 
         Bid bid = new Bid();
         bid.setBidId(req.getBidId());
-        bid.setBidStatus(req.getBidStatus());
-        bid.setUpdatedTime(LocalDateTime.now());
+        fillStatusTransitionFields(existingBid, req.getBidStatus(), bid);
 
         bidMapper.updateById(bid);
 
@@ -286,8 +299,16 @@ public class BidServiceImpl implements BidService {
         if (CollectionUtils.isEmpty(req.getBidIds())) {
             return;
         }
-
-        bidMapper.batchUpdateStatus(req.getBidIds(), req.getBidStatus());
+        for (Long bidId : req.getBidIds()) {
+            Bid existingBid = bidMapper.selectById(bidId);
+            if (existingBid == null) {
+                throw new RuntimeException("投标信息不存在, bidId=" + bidId);
+            }
+            Bid bid = new Bid();
+            bid.setBidId(bidId);
+            fillStatusTransitionFields(existingBid, req.getBidStatus(), bid);
+            bidMapper.updateById(bid);
+        }
     }
 
     @Override
@@ -319,19 +340,40 @@ public class BidServiceImpl implements BidService {
         List<Long> createdByIds = records.stream().map(BidListRes::getCreatedBy).filter(Objects::nonNull).distinct().collect(Collectors.toList());
         //获取负责人和业务员
         List<Long> bidIdList = records.stream().map(BidListRes::getBidId).filter(Objects::nonNull).distinct().toList();
-        List<BidMember> bidMembers = bidMemberMapper.selectList(new LambdaQueryWrapper<BidMember>().in(BidMember::getBidId, bidIdList));
+        List<BidMember> bidMembers = CollectionUtils.isEmpty(bidIdList)
+                ? Collections.emptyList()
+                : bidMemberMapper.selectList(new LambdaQueryWrapper<BidMember>().in(BidMember::getBidId, bidIdList));
+        Map<Long, BidMember> principalByBidId = bidMembers.stream()
+                .filter(r -> BidContractConstant.BID_CONTRACT_PRINCIPAL.equals(r.getRoleInBid()))
+                .collect(Collectors.toMap(BidMember::getBidId, r -> r, (a, b) -> a));
+        Map<Long, BidMember> salesmanByBidId = bidMembers.stream()
+                .filter(r -> BidContractConstant.BID_CONTRACT_SALESMAN.equals(r.getRoleInBid()))
+                .collect(Collectors.toMap(BidMember::getBidId, r -> r, (a, b) -> a));
 
         List<OrgIdAndPersonIdDTO> opIdList = bidMembers.stream()
-                .filter(r -> r.getPersonId() != null&& r.getRoleInBid().equals(BidContractConstant.BID_CONTRACT_PRINCIPAL))
+                .filter(r -> r.getPersonId() != null && BidContractConstant.BID_CONTRACT_PRINCIPAL.equals(r.getRoleInBid()))
                 .map(r -> new OrgIdAndPersonIdDTO(r.getOrgId(), r.getPersonId())).toList();
 
-        List<PersonFlagReq> spIdList =bidMembers.stream()
-                .filter(r -> r.getPersonId() != null&& r.getRoleInBid().equals(BidContractConstant.BID_CONTRACT_SALESMAN))
-                .map(r -> new PersonFlagReq(String.valueOf(r.getOrgId()), String.valueOf(r.getOrgId()))).toList();
+        List<PersonFlagReq> spIdList = bidMembers.stream()
+                .filter(r -> r.getPersonId() != null && BidContractConstant.BID_CONTRACT_SALESMAN.equals(r.getRoleInBid()))
+                // flag 作为返回映射标识，按你的语义继续使用 orgId；personId 传真实人员ID用于查询
+                .map(r -> new PersonFlagReq(String.valueOf(r.getOrgId()), String.valueOf(r.getPersonId()))).toList();
 
 
-        Map<Long, PersonDetailRes> managerPersonResMap = personService.queryProjectManager(opIdList);
-        Map<Long, PersonDetailRes> salesPersonResMap = personService.batchFlagPersonByIds(spIdList);
+        Map<Long, PersonDetailRes> managerPersonResMap = Collections.emptyMap();
+        if (!CollectionUtils.isEmpty(opIdList)) {
+            Map<Long, PersonDetailRes> managerMap = personService.queryProjectManager(opIdList);
+            if (managerMap != null) {
+                managerPersonResMap = managerMap;
+            }
+        }
+        Map<Long, PersonDetailRes> salesPersonResMap = Collections.emptyMap();
+        if (!CollectionUtils.isEmpty(spIdList)) {
+            Map<Long, PersonDetailRes> salesMap = personService.batchFlagPersonByIds(spIdList);
+            if (salesMap != null) {
+                salesPersonResMap = salesMap;
+            }
+        }
 
 
         Map<Long, CompanyDetailRes> companyMap = Collections.emptyMap();
@@ -366,6 +408,17 @@ public class BidServiceImpl implements BidService {
         final Map<Long, PersonDetailRes> managerPersonResMapFinal = managerPersonResMap;
         final Map<Long, PersonDetailRes> salesPersonResMapFinal = salesPersonResMap;
         records.forEach(item -> {
+            BidMember principalMember = principalByBidId.get(item.getBidId());
+            if (principalMember != null) {
+                item.setOrgId(principalMember.getOrgId());
+                item.setManagerPersonId(principalMember.getPersonId());
+            } else {
+                item.setOrgId(null);
+                item.setManagerPersonId(null);
+            }
+            BidMember salesmanMember = salesmanByBidId.get(item.getBidId());
+            item.setSalesmanId(salesmanMember != null ? salesmanMember.getPersonId() : null);
+
             if (item.getSupplierId() != null) {
                 CompanyDetailRes company = companyMapFinal.get(item.getSupplierId());
                 item.setSupplierName(company != null ? company.getCompanyName() : null);
@@ -379,14 +432,14 @@ public class BidServiceImpl implements BidService {
                 item.setCreatedByName(person != null ? person.getPersonName() : null);
             }
 
-            if(item.getOrgId()!=null){
+            if (item.getOrgId() != null) {
                 PersonDetailRes managerPerson = managerPersonResMapFinal.get(item.getOrgId());
                 item.setOrgIdName(managerPerson != null ? managerPerson.getOrgName() : null);
                 item.setManagerPersonName(managerPerson != null ? managerPerson.getPersonName() : null);
-
-                PersonDetailRes salesPerson = salesPersonResMapFinal.get(item.getOrgId());
-                item.setSalesmanName(salesPerson != null ? salesPerson.getPersonName() : null);
             }
+            Long salesmanOrgId = salesmanMember != null ? salesmanMember.getOrgId() : null;
+            PersonDetailRes salesPerson = salesmanOrgId != null ? salesPersonResMapFinal.get(salesmanOrgId) : null;
+            item.setSalesmanName(salesPerson != null ? salesPerson.getPersonName() : null);
         });
     }
 
@@ -425,53 +478,58 @@ public class BidServiceImpl implements BidService {
         if (detail.getSalesmanId() != null){
             ids.add(detail.getSalesmanId());
         }
-        Map<Long, PersonDetailRes> personMap=null;
-        try{
-            personMap= personService.batchGetPersonByIds(ids);
-        }catch (Exception e){
-             log.warn("批量查询创建人信息失败, ids={}", ids, e);
+        Map<Long, PersonDetailRes> personMap = Collections.emptyMap();
+        if (!ids.isEmpty()) {
+            try {
+                Map<Long, PersonDetailRes> map = personService.batchGetPersonByIds(ids);
+                if (map != null) {
+                    personMap = map;
+                }
+            } catch (Exception e) {
+                log.warn("批量查询创建人信息失败, ids={}", ids, e);
+            }
         }
-        if (personMap != null) {
-            PersonDetailRes person = personMap.get(detail.getCreatedBy());
-            detail.setCreatedByName(person != null ? person.getPersonName() : null);
-            detail.setCreatedDeptName(person != null ? person.getOrgName() : null);
-            detail.setCreatedPostName(person != null ? person.getPostName() : null);
+        PersonDetailRes person = personMap.get(detail.getCreatedBy());
+        detail.setCreatedByName(person != null ? person.getPersonName() : null);
+        detail.setCreatedDeptName(person != null ? person.getOrgName() : null);
+        detail.setCreatedPostName(person != null ? person.getPostName() : null);
 
-            person = personMap.get(detail.getManagerPersonId());
-            detail.setManagerPersonName(person != null ? person.getPersonName() : null);
-            person = personMap.get(detail.getSalesmanId());
-            detail.setSalesmanName(person != null ? person.getPersonName() : null);
-        }
+        person = personMap.get(detail.getManagerPersonId());
+        detail.setManagerPersonName(person != null ? person.getPersonName() : null);
+        person = personMap.get(detail.getSalesmanId());
+        detail.setSalesmanName(person != null ? person.getPersonName() : null);
     }
 
     @Override
-    public boolean checkDeletePermission(Long bidId, Long userId) {
+    public boolean checkDeletePermission(Long bidId, Long personId) {
         // 检查投标是否存在
         Bid bid = bidMapper.selectById(bidId);
         if (bid == null) {
             return false;
         }
 
-        // 检查是否为投标创建者
-        if (Objects.equals(bid.getCreatedBy(), userId)) {
+        // 先按人员ID判断是否为投标创建者（当前模块 created_by 存人员ID）
+        if (Objects.equals(bid.getCreatedBy(), personId)) {
             return true;
         }
 
-        // 示例：通过认证服务获取账号详细信息进行权限检查
-        try {
-            Object accountDetail = accountService.getAccountById(userId);
-            if (accountDetail != null) {
-                // 可以根据账号信息进行更复杂的权限检查
-                // 例如：检查账号状态、角色、部门等
-                // 这里暂时简化处理，实际使用时需要根据返回的具体类型进行处理
-                return true; // 账号存在且正常
-            }
-        } catch (Exception e) {
-            // 服务调用失败时的降级处理
-            // 可以记录日志，但不影响原有逻辑
-        }
-
         return false;
+    }
+
+    private PersonDetailRes queryPrincipal(Long orgId, Long principalId) {
+        if (orgId == null) {
+            throw new RuntimeException("归属组织不能为空");
+        }
+        Long fixedPrincipalId = (principalId == null || principalId == 0) ? null : principalId;
+        Map<Long, PersonDetailRes> pmMap = personService.queryProjectManager(List.of(new OrgIdAndPersonIdDTO(orgId, fixedPrincipalId)));
+        if (pmMap == null || pmMap.isEmpty()) {
+            throw new RuntimeException("无法获取负责人信息");
+        }
+        PersonDetailRes principal = pmMap.get(orgId);
+        if (principal == null || principal.getPersonId() == null) {
+            throw new RuntimeException("负责人信息缺失");
+        }
+        return principal;
     }
 
     @Override
@@ -514,5 +572,55 @@ public class BidServiceImpl implements BidService {
         existMember.setJoinTime(now);
         existMember.setResponsibilityDesc("业务员");
         bidMemberMapper.updateById(existMember);
+    }
+
+    private PersonDetailRes queryPersonById(Long personId, String errMsg) {
+        if (personId == null || personId <= 0) {
+            throw new RuntimeException(errMsg);
+        }
+        PersonDetailRes person = personService.getPersonById(personId);
+        if (person == null || person.getPersonId() == null) {
+            throw new RuntimeException(errMsg);
+        }
+        return person;
+    }
+
+    private void upsertRoleMember(Long bidId, Long orgId, PersonDetailRes person, String role, Integer isLeader, String responsibilityDesc) {
+        BidMember existMember = bidMemberMapper.selectOne(new LambdaQueryWrapper<BidMember>()
+                .eq(BidMember::getBidId, bidId)
+                .eq(BidMember::getRoleInBid, role)
+                .last("LIMIT 1"));
+        if (existMember == null) {
+            existMember = new BidMember();
+            existMember.setBidId(bidId);
+            existMember.setRoleInBid(role);
+        }
+        existMember.setPersonId(person.getPersonId());
+        existMember.setOrgId(orgId);
+        existMember.setPostId(person.getPostId());
+        existMember.setIsLeader(isLeader);
+        existMember.setJoinTime(LocalDateTime.now());
+        existMember.setResponsibilityDesc(responsibilityDesc);
+        if (existMember.getId() == null) {
+            bidMemberMapper.insert(existMember);
+        } else {
+            bidMemberMapper.updateById(existMember);
+        }
+    }
+
+    private void fillStatusTransitionFields(Bid existingBid, String targetStatus, Bid updateBid) {
+        if (!BID_STATUS_SET.contains(targetStatus)) {
+            throw new RuntimeException("非法投标状态: " + targetStatus);
+        }
+        String currentStatus = existingBid.getBidStatus();
+        if (currentStatus != null && !Objects.equals(currentStatus, targetStatus)) {
+            Set<String> nextSet = BID_STATUS_TRANSITIONS.get(currentStatus);
+            if (nextSet == null || !nextSet.contains(targetStatus)) {
+                throw new RuntimeException("不允许的状态流转: " + currentStatus + " -> " + targetStatus);
+            }
+        }
+        updateBid.setBidStatus(targetStatus);
+        updateBid.setWinFlag(BidContractConstant.BID_CONTRACT_PROJECT_WON.equals(targetStatus) ? 1 : 0);
+        updateBid.setUpdatedTime(LocalDateTime.now());
     }
 }

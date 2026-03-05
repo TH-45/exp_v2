@@ -17,6 +17,31 @@ public class BidContractConstant {
      */
     public static final String BID_CONTRACT_PROJECT_PREPARE = "PREPARE";
 
+    /**
+     * 已提交
+     */
+    public static final String BID_CONTRACT_PROJECT_SUBMITTED = "SUBMITTED";
+
+    /**
+     * 评审中
+     */
+    public static final String BID_CONTRACT_PROJECT_EVALUATING = "EVALUATING";
+
+    /**
+     * 中标
+     */
+    public static final String BID_CONTRACT_PROJECT_WON = "WON";
+
+    /**
+     * 未中标
+     */
+    public static final String BID_CONTRACT_PROJECT_LOST = "LOST";
+
+    /**
+     * 放弃
+     */
+    public static final String BID_CONTRACT_PROJECT_ABANDONED = "ABANDONED";
+
 
 
 

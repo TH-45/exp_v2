@@ -28,6 +28,9 @@
             b.win_flag AS winFlag,
             b.win_notice_no AS winNoticeNo,
             b.project_id AS projectId,
+            b.org_id AS orgId,
+            b.principal_person_id AS managerPersonId,
+            b.salesman_person_id AS salesmanId,
             b.created_by AS createdBy,
             b.created_time AS createdTime
         FROM exp_bid b
@@ -90,6 +93,9 @@
             b.win_notice_no AS winNoticeNo,
             b.contract_id AS contractId,
             b.project_id AS projectId,
+            b.org_id AS orgId,
+            b.principal_person_id AS managerPersonId,
+            b.salesman_person_id AS salesmanId,
             b.created_by AS createdBy,
             b.created_dept_id AS createdDeptId,
             b.created_post_id AS createdPostId,
@@ -117,6 +123,9 @@
             b.win_flag AS winFlag,
             b.win_notice_no AS winNoticeNo,
             b.project_id AS projectId,
+            b.org_id AS orgId,
+            b.principal_person_id AS managerPersonId,
+            b.salesman_person_id AS salesmanId,
             b.created_by AS createdBy,
             b.created_time AS createdTime
         FROM exp_bid b
