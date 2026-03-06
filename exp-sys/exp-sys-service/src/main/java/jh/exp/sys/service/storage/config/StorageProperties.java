@@ -1,4 +1,4 @@
-package jh.exp.sys.servcie.storage.config;
+package jh.exp.sys.service.storage.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

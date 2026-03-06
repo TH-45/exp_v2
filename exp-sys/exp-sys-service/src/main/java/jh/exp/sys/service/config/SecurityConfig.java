@@ -1,4 +1,4 @@
-package jh.exp.sys.servcie.config;
+package jh.exp.sys.service.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

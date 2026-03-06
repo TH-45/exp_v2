@@ -1,10 +1,10 @@
-package jh.exp.sys.servcie.dic.service.Impl;
+package jh.exp.sys.service.dic.service.Impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import jh.exp.sys.core.entity.dic.SysDictType;
 import jh.exp.sys.core.mapper.dic.SysDictTypeMapper;
-import jh.exp.sys.servcie.dic.service.SysDictTypeService;
+import jh.exp.sys.service.dic.service.SysDictTypeService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

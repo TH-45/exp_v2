@@ -1,6 +1,5 @@
-package jh.exp.sys.servcie.storage.config;
+package jh.exp.sys.service.storage.config;
 
-import jh.exp.sys.service.storage.config.StorageProperties;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;

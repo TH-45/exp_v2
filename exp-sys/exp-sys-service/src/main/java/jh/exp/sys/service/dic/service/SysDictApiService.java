@@ -1,4 +1,4 @@
-package jh.exp.sys.servcie.dic.service;
+package jh.exp.sys.service.dic.service;
 
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;

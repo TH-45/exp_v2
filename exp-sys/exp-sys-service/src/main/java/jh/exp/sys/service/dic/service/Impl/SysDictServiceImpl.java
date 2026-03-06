@@ -1,4 +1,4 @@
-package jh.exp.sys.servcie.dic.service.Impl;
+package jh.exp.sys.service.dic.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import jh.exp.auth.clinet.api.bus.AccountService;

@@ -1,4 +1,4 @@
-package jh.exp.sys.servcie.storage.service;
+package jh.exp.sys.service.storage.service;
 
 import jh.exp.sys.core.req.storage.StorageUploadBizReq;
 import jh.exp.sys.core.res.storage.StorageUploadRes;

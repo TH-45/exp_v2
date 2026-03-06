@@ -1,4 +1,4 @@
-package jh.exp.sys.servcie;
+package jh.exp.sys.service;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;

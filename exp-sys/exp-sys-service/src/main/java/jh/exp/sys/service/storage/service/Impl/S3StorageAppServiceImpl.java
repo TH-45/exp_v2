@@ -1,9 +1,9 @@
-package jh.exp.sys.servcie.storage.service.Impl;
+package jh.exp.sys.service.storage.service.Impl;
 
 import jh.exp.sys.core.req.storage.StorageUploadBizReq;
 import jh.exp.sys.core.res.storage.StorageUploadRes;
-import jh.exp.sys.servcie.storage.config.StorageProperties;
-import jh.exp.sys.servcie.storage.service.StorageAppService;
+import jh.exp.sys.service.storage.config.StorageProperties;
+import jh.exp.sys.service.storage.service.StorageAppService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;

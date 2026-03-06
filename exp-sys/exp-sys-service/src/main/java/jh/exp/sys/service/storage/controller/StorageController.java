@@ -1,10 +1,10 @@
-package jh.exp.sys.servcie.storage.controller;
+package jh.exp.sys.service.storage.controller;
 
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.sys.core.req.storage.StorageDeleteReq;
 import jh.exp.sys.core.req.storage.StorageUploadBizReq;
 import jh.exp.sys.core.res.storage.StorageUploadRes;
-import jh.exp.sys.servcie.storage.service.StorageAppService;
+import jh.exp.sys.service.storage.service.StorageAppService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;

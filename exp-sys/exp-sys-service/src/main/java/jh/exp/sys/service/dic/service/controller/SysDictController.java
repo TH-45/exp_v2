@@ -1,4 +1,4 @@
-package jh.exp.sys.servcie.dic.service.controller;
+package jh.exp.sys.service.dic.service.controller;
 
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
@@ -19,7 +19,7 @@ import jh.exp.sys.core.resp.dic.DictOptionRes;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jh.exp.sys.servcie.dic.service.SysDictApiService;
+import jh.exp.sys.service.dic.service.SysDictApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;

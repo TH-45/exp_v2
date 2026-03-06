@@ -1,4 +1,4 @@
-package jh.exp.sys.servcie.dic.service.Impl;
+package jh.exp.sys.service.dic.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -22,8 +22,8 @@ import jh.exp.sys.core.req.dic.DictTypeUpdateReq;
 import jh.exp.sys.core.req.dic.IdsReq;
 import jh.exp.sys.core.req.dic.StatusReq;
 import jh.exp.sys.core.resp.dic.DictOptionRes;
-import jh.exp.sys.servcie.dic.service.SysDictApiService;
-import jh.exp.sys.servcie.dic.service.SysDictTypeService;
+import jh.exp.sys.service.dic.service.SysDictApiService;
+import jh.exp.sys.service.dic.service.SysDictTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
