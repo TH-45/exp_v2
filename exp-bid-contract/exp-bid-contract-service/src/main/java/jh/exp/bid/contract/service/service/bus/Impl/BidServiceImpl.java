@@ -23,7 +23,9 @@ import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.corp.client.api.CompanyClientService;
+import jh.exp.corp.core.entity.req.QueryCompanyReq;
 import jh.exp.corp.core.entity.res.CompanyDetailRes;
+import jh.exp.corp.core.entity.res.CompanyListRes;
 import jh.exp.project.client.api.ProjectClientService;
 import jh.exp.project.core.entity.Project;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class BidServiceImpl implements BidService {
+    private static final int NAME_QUERY_PAGE_SIZE = 200;
+    private static final int NAME_QUERY_MAX_PAGE = 20;
 
     private static final Set<String> BID_STATUS_SET = Set.of(
             BidContractConstant.BID_CONTRACT_PROJECT_PREPARE,
@@ -83,9 +87,21 @@ public class BidServiceImpl implements BidService {
         req.pageDefault();
         Page<BidListRes> page = new Page<>(req.getPageNum(), req.getPageSize());
         QueryBidReq queryParam = req.getQueryParam() != null ? req.getQueryParam() : new QueryBidReq();
+        queryParam.setPurchaserName(trimToNull(queryParam.getPurchaserName()));
+        queryParam.setTenderName(trimToNull(queryParam.getTenderName()));
+        queryParam.setProjectName(trimToNull(queryParam.getProjectName()));
+
+        List<Long> purchaserIds = resolvePurchaserIdsByName(queryParam.getPurchaserName());
+        if (queryParam.getPurchaserName() != null && CollectionUtils.isEmpty(purchaserIds)) {
+            return emptyPage(req);
+        }
+        List<Long> projectIds = resolveProjectIdsByName(queryParam.getProjectName());
+        if (queryParam.getProjectName() != null && CollectionUtils.isEmpty(projectIds)) {
+            return emptyPage(req);
+        }
 
         // 仅查本模块表（exp_bid、exp_tender）
-        IPage<BidListRes> result = bidMapper.selectBidList(page, queryParam);
+        IPage<BidListRes> result = bidMapper.selectBidList(page, queryParam, purchaserIds, projectIds);
         List<BidListRes> records = result.getRecords();
 
         // 通过各模块接口补全供应商名称、项目名称、创建人姓名（不直接查其他模块表）
@@ -99,6 +115,92 @@ public class BidServiceImpl implements BidService {
         pageRes.setPage(result.getCurrent());
         pageRes.setSize(result.getSize());
         return pageRes;
+    }
+
+    /**
+     * 查询名称类筛选无命中时，直接返回空分页，避免无效数据库扫描。
+     */
+    private SimplePageRes<BidListRes> emptyPage(SimplePageReq<?> req) {
+        SimplePageRes<BidListRes> pageRes = new SimplePageRes<>();
+        pageRes.setList(Collections.emptyList());
+        pageRes.setTotal(0L);
+        pageRes.setPage((long) req.getPageNum());
+        pageRes.setSize((long) req.getPageSize());
+        return pageRes;
+    }
+
+    /**
+     * 将招标单位名称转换为 company_id 集合，用于后续 SQL IN 过滤。
+     */
+    private List<Long> resolvePurchaserIdsByName(String purchaserName) {
+        if (purchaserName == null) {
+            return null;
+        }
+        QueryCompanyReq companyQuery = new QueryCompanyReq();
+        companyQuery.setCompanyName(purchaserName);
+        Set<Long> companyIds = new LinkedHashSet<>();
+        for (int pageNum = 1; pageNum <= NAME_QUERY_MAX_PAGE; pageNum++) {
+            SimplePageReq<QueryCompanyReq> pageReq = new SimplePageReq<>();
+            pageReq.setPageNum(pageNum);
+            pageReq.setPageSize(NAME_QUERY_PAGE_SIZE);
+            pageReq.setQueryParam(companyQuery);
+            ApiResponse<SimplePageRes<CompanyListRes>> companyResp = companyClientService.list(pageReq);
+            if (companyResp == null || !companyResp.isSuccess() || companyResp.getData() == null
+                    || CollectionUtils.isEmpty(companyResp.getData().getList())) {
+                break;
+            }
+            companyResp.getData().getList().stream()
+                    .map(CompanyListRes::getCompanyId)
+                    .filter(Objects::nonNull)
+                    .forEach(companyIds::add);
+
+            if (companyResp.getData().getList().size() < NAME_QUERY_PAGE_SIZE) {
+                break;
+            }
+        }
+        return new ArrayList<>(companyIds);
+    }
+
+    /**
+     * 将项目名称转换为 project_id 集合，用于后续 SQL IN 过滤。
+     */
+    private List<Long> resolveProjectIdsByName(String projectName) {
+        if (projectName == null) {
+            return null;
+        }
+        Set<Long> projectIds = new LinkedHashSet<>();
+        String keyword = projectName.toLowerCase(Locale.ROOT);
+        for (int pageNum = 1; pageNum <= NAME_QUERY_MAX_PAGE; pageNum++) {
+            SimplePageReq<Object> pageReq = new SimplePageReq<>();
+            pageReq.setPageNum(pageNum);
+            pageReq.setPageSize(NAME_QUERY_PAGE_SIZE);
+            pageReq.setQueryParam(null);
+            ApiResponse<SimplePageRes<Project>> projectResp = projectClientService.list(pageReq);
+            if (projectResp == null || !projectResp.isSuccess() || projectResp.getData() == null
+                    || CollectionUtils.isEmpty(projectResp.getData().getList())) {
+                break;
+            }
+            projectResp.getData().getList().stream()
+                    .filter(Objects::nonNull)
+                    .filter(project -> trimToNull(project.getProjectName()) != null)
+                    .filter(project -> project.getProjectName().toLowerCase(Locale.ROOT).contains(keyword))
+                    .map(Project::getProjectId)
+                    .filter(Objects::nonNull)
+                    .forEach(projectIds::add);
+
+            if (projectResp.getData().getList().size() < NAME_QUERY_PAGE_SIZE) {
+                break;
+            }
+        }
+        return new ArrayList<>(projectIds);
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     @Override

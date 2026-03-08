@@ -6,8 +6,8 @@
           <div class="left">
             <el-button link type="primary" @click="goBack">返回</el-button>
             <div class="title">招标项目详情</div>
-            <el-tag :type="statusTagType(project.status)" class="status-tag">
-              {{ statusText(project.status) }}
+            <el-tag :type="getTenderStatusTagType(project.status)" class="status-tag">
+              {{ getTenderStatusText(project.status) }}
             </el-tag>
           </div>
           <div class="actions">
@@ -353,29 +353,18 @@ import type { ProjectVO } from '@/api/corpProject/project';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
 import type { OrgNode } from '@/api/system/post';
 import { parseOpenAddress, buildOpenAddress, findRegionCodesByLabels } from '@/utils/openAddress';
+import { useTenderStatusDict } from '@/composables/useTenderStatusDict';
 import { regionData, codeToText } from 'element-china-area-data';
 
 const route = useRoute();
 const router = useRouter();
 
 const canManage = computed(() => hasPermission('bidding:project:manage'));
-
-const statusOptions: Array<{ label: string; value: string }> = [
-  { label: '未开始', value: '未开始' },
-  { label: '进行中', value: '进行中' },
-  { label: '已结束', value: '已结束' },
-];
-
-function statusText(s: BiddingProjectStatus | string) {
-  return statusOptions.find((x) => x.value === s)?.label || s || '-';
-}
-
-function statusTagType(s: BiddingProjectStatus | string) {
-  if (s === '未开始') return 'info';
-  if (s === '进行中') return 'warning';
-  if (s === '已结束') return 'success';
-  return '';
-}
+const {
+  fetchTenderStatusOptions,
+  getTenderStatusText,
+  getTenderStatusTagType,
+} = useTenderStatusDict();
 
 function normalizeDictOptions(res: DictOption[] | { data?: DictOption[] }) {
   if (Array.isArray(res)) return res;
@@ -615,6 +604,7 @@ async function fetchDictOptions() {
       listDictOptions('tender_type'),
       listDictOptions('currency'),
       listDictOptions('purchase_nature'),
+      fetchTenderStatusOptions(),
     ]);
     tenderModeList.value = normalizeDictOptions(modeRes);
     tenderTypeList.value = normalizeDictOptions(typeRes);

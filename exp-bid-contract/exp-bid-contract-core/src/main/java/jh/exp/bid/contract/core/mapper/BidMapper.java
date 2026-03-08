@@ -32,7 +32,10 @@ public interface BidMapper extends BaseMapper<Bid> {
      * @return 投标列表（分页结果会自动填充到page对象中）
      */
 
-    IPage<BidListRes> selectBidList(IPage<BidListRes> page, @Param("req") QueryBidReq req);
+    IPage<BidListRes> selectBidList(IPage<BidListRes> page,
+                                    @Param("req") QueryBidReq req,
+                                    @Param("purchaserIds") List<Long> purchaserIds,
+                                    @Param("projectIds") List<Long> projectIds);
 
     /**
      * 根据投标ID查询投标详情信息（多表联查）

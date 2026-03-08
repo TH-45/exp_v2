@@ -36,11 +36,19 @@
         FROM exp_bid b
         LEFT JOIN exp_tender t ON b.tender_id = t.tender_id
         <where>
-            <if test="req.tenderId != null">
-                AND b.tender_id = #{req.tenderId}
+            <if test="req.purchaserName != null and req.purchaserName != ''">
+                <if test="purchaserIds != null and purchaserIds.size() > 0">
+                    AND t.company_id IN
+                    <foreach item="id" collection="purchaserIds" open="(" separator="," close=")">
+                        #{id}
+                    </foreach>
+                </if>
+                <if test="purchaserIds == null or purchaserIds.size() == 0">
+                    AND 1 = 0
+                </if>
             </if>
-            <if test="req.supplierId != null">
-                AND b.supplier_id = #{req.supplierId}
+            <if test="req.tenderName != null and req.tenderName != ''">
+                AND t.tender_name LIKE CONCAT('%', #{req.tenderName}, '%')
             </if>
             <if test="req.bidCode != null and req.bidCode != ''">
                 AND b.bid_code LIKE CONCAT('%', #{req.bidCode}, '%')
@@ -54,8 +62,16 @@
             <if test="req.winFlag != null">
                 AND b.win_flag = #{req.winFlag}
             </if>
-            <if test="req.projectId != null">
-                AND b.project_id = #{req.projectId}
+            <if test="req.projectName != null and req.projectName != ''">
+                <if test="projectIds != null and projectIds.size() > 0">
+                    AND b.project_id IN
+                    <foreach item="id" collection="projectIds" open="(" separator="," close=")">
+                        #{id}
+                    </foreach>
+                </if>
+                <if test="projectIds == null or projectIds.size() == 0">
+                    AND 1 = 0
+                </if>
             </if>
             <if test="req.bidSubmitTimeStart != null">
                 AND b.bid_submit_time >= #{req.bidSubmitTimeStart}

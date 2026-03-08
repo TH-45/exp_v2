@@ -7,6 +7,7 @@ import jh.exp.auth.core.entity.res.AccountRoleRes;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
@@ -69,5 +70,5 @@ public interface AccountService {
      * 获取账号角色信息
      */
     @PostExchange("/roles")
-    List<AccountRoleRes> getAccountRoles(List<Long> accountIds);
+    List<AccountRoleRes> getAccountRoles(@RequestBody List<Long> accountIds);
 }

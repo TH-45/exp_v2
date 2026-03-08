@@ -15,43 +15,49 @@
       </template>
 
       <!-- 查询栏 -->
-      <el-form :inline="true" :model="query" class="search-bar" @submit.prevent>
-        <el-form-item label="项目编码">
-          <el-input v-model="query.tenderCode" placeholder="请输入项目编码" clearable style="width: 180px" />
-        </el-form-item>
-        <el-form-item label="项目名称">
-          <el-input v-model="query.tenderName" placeholder="请输入项目名称" clearable style="width: 200px" />
-        </el-form-item>
-        <el-form-item label="招标单位">
-          <el-input v-model="query.purchaserName" placeholder="请输入招标单位" clearable style="width: 200px" />
-        </el-form-item>
-        <!-- 强制换行 -->
-        <div style="flex-basis: 100%; height: 0;"></div>
-        <el-form-item label="招标方式">
-          <el-select v-model="query.tenderMode" clearable style="width: 140px">
-            <el-option v-for="t in tenderModeList" :key="t.value" :label="t.label" :value="t.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="招标类型">
-          <el-select v-model="query.tenderType" clearable style="width: 140px">
-            <el-option v-for="t in tenderTypeList" :key="t.value" :label="t.label" :value="t.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="query.status" clearable style="width: 100px">
-            <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="年度">
-          <el-select v-model="yearSelectValue" clearable style="width: 100px">
-            <el-option label="全部" :value="YEAR_ALL" />
-            <el-option v-for="y in yearOptions" :key="y" :label="String(y)" :value="y" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
+      <el-form :model="query" class="search-bar" @submit.prevent>
+        <div class="search-row search-row-primary">
+          <el-form-item label="项目编码" class="search-item search-item-keyword">
+            <el-input v-model="query.tenderCode" placeholder="请输入项目编码" clearable />
+          </el-form-item>
+          <el-form-item label="项目名称" class="search-item search-item-keyword">
+            <el-input v-model="query.tenderName" placeholder="请输入项目名称" clearable />
+          </el-form-item>
+          <el-form-item label="查询状态" class="search-item search-item-status">
+            <el-select v-model="query.status" clearable placeholder="全部状态">
+              <el-option v-for="s in tenderStatusOptions" :key="s.value" :label="s.label" :value="s.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="招标方式" class="search-item search-item-select">
+            <el-select v-model="query.tenderMode" clearable placeholder="全部方式">
+              <el-option v-for="t in tenderModeList" :key="t.value" :label="t.label" :value="t.value" />
+            </el-select>
+          </el-form-item>
+          <div class="search-actions">
+            <el-button type="primary" @click="handleSearch">查询</el-button>
+            <el-button @click="handleReset">重置</el-button>
+            <el-button link type="primary" @click="toggleAdvancedSearch">
+              {{ advancedSearchVisible ? '收起高级筛选' : '展开高级筛选' }}
+            </el-button>
+            <span v-if="activeFilterCount > 0" class="filter-summary">已筛选 {{ activeFilterCount }} 项</span>
+          </div>
+        </div>
+        <div v-show="advancedSearchVisible" class="search-row search-row-advanced">
+          <el-form-item label="招标单位" class="search-item search-item-keyword">
+            <el-input v-model="query.purchaserName" placeholder="请输入招标单位" clearable />
+          </el-form-item>
+          <el-form-item label="招标类型" class="search-item search-item-select">
+            <el-select v-model="query.tenderType" clearable placeholder="全部类型">
+              <el-option v-for="t in tenderTypeList" :key="t.value" :label="t.label" :value="t.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="年度" class="search-item search-item-year">
+            <el-select v-model="yearSelectValue" clearable>
+              <el-option label="全部" :value="YEAR_ALL" />
+              <el-option v-for="y in yearOptions" :key="y" :label="String(y)" :value="y" />
+            </el-select>
+          </el-form-item>
+        </div>
       </el-form>
 
       <!-- 表格：双击行打开详情 -->
@@ -86,7 +92,7 @@
         </el-table-column>
         <el-table-column label="状态" min-width="90">
           <template #default="{ row }">
-            <el-tag :type="statusTagType(row.status)">{{ statusText(row.status) }}</el-tag>
+            <el-tag :type="getTenderStatusTagType(row.status)">{{ getTenderStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="开标地点" min-width="100">
@@ -317,28 +323,18 @@ import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
 import { type DictOption, listDictOptions } from '@/api/system/dict';
 import { parseOpenAddressCity, parseOpenAddress, buildOpenAddress, findRegionCodesByLabels } from '@/utils/openAddress';
+import { useTenderStatusDict } from '@/composables/useTenderStatusDict';
 import { regionData, codeToText } from 'element-china-area-data';
 
 const route = useRoute();
 const router = useRouter();
 const canManage = computed(() => hasPermission('bidding:project:manage'));
-
-const statusOptions: Array<{ label: string; value: BiddingProjectStatus }> = [
-  { label: '未开始', value: '未开始' },
-  { label: '进行中', value: '进行中' },
-  { label: '已结束', value: '已结束' },
-];
-
-function statusText(s: BiddingProjectStatus) {
-  return statusOptions.find((x) => x.value === s)?.label || s;
-}
-
-function statusTagType(s: BiddingProjectStatus) {
-  if (s === '未开始') return 'info';
-  if (s === '进行中') return 'warning';
-  if (s === '已结束') return 'success';
-  return '';
-}
+const {
+  tenderStatusOptions,
+  fetchTenderStatusOptions,
+  getTenderStatusText,
+  getTenderStatusTagType,
+} = useTenderStatusDict();
 /**
  * 生成项目编码并填充
  */
@@ -395,6 +391,8 @@ const taxRateOptions = ref<DictOption[]>([
 ]);
 const loading = ref(false);
 const saving = ref(false);
+const advancedSearchVisible = ref(false);
+const currentYear = new Date().getFullYear();
 
 const query = reactive({
   tenderCode: '',
@@ -403,13 +401,13 @@ const query = reactive({
   tenderType: '',
   tenderMode: '',
   status: undefined as BiddingProjectStatus | undefined,
-  year: new Date().getFullYear() as number | undefined,
+  year: currentYear as number | undefined,
   pageNum: 1,
   pageSize: 10,
   sort: undefined as string | undefined,
 });
 const YEAR_ALL = 'ALL';
-const yearOptions = Array.from({ length: 20 }).map((_, idx) => new Date().getFullYear() - idx);
+const yearOptions = Array.from({ length: 20 }).map((_, idx) => currentYear - idx);
 const yearSelectValue = computed({
   get: () => query.year ?? YEAR_ALL,
   set: (val) => {
@@ -419,6 +417,18 @@ const yearSelectValue = computed({
     }
     query.year = Number(val);
   },
+});
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if ((query.tenderCode || '').trim()) count += 1;
+  if ((query.tenderName || '').trim()) count += 1;
+  if ((query.purchaserName || '').trim()) count += 1;
+  if (query.tenderType) count += 1;
+  if (query.tenderMode) count += 1;
+  if (query.status) count += 1;
+  if (query.year != null && query.year !== currentYear) count += 1;
+  return count;
 });
 
 const tableData = ref<TenderVO[]>([]);
@@ -491,6 +501,7 @@ async function fetchList() {
 onMounted(async () => {
   await Promise.all([
     fetchPostDictOptions(),
+    fetchTenderStatusOptions(),
   ]);
   await fetchList();
 });
@@ -518,10 +529,16 @@ function handleReset() {
   query.tenderCode = '';
   query.tenderName = '';
   query.purchaserName = '';
+  query.tenderType = '';
+  query.tenderMode = '';
   query.status = undefined;
-  query.year = new Date().getFullYear();
+  query.year = currentYear;
   query.pageNum = 1;
   fetchList();
+}
+
+function toggleAdvancedSearch() {
+  advancedSearchVisible.value = !advancedSearchVisible.value;
 }
 
 function handleCurrentChange(page: number) {
@@ -959,6 +976,85 @@ async function submitForm() {
 
 .search-bar {
   margin-bottom: 12px;
+  padding: 16px 16px 4px;
+  background: #f7f9fc;
+  border: 1px solid #e4e7ed;
+  border-radius: 12px;
+}
+
+.search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+
+.search-row + .search-row {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #dcdfe6;
+}
+
+.search-row :deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+.search-item {
+  margin-right: 0;
+}
+
+.search-item :deep(.el-input),
+.search-item :deep(.el-select) {
+  width: 100%;
+}
+
+.search-item-keyword {
+  width: 220px;
+}
+
+.search-item-select,
+.search-item-status {
+  width: 160px;
+}
+
+.search-item-year {
+  width: 120px;
+}
+
+.search-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-summary {
+  padding: 0 10px;
+  line-height: 28px;
+  border-radius: 999px;
+  background: #ecf5ff;
+  color: #409eff;
+  font-size: 12px;
+}
+
+@media (max-width: 1400px) {
+  .search-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-item-keyword,
+  .search-item-select,
+  .search-item-status,
+  .search-item-year {
+    width: 100%;
+  }
+
+  .search-actions {
+    justify-content: flex-start;
+  }
 }
 
 .pagination {

@@ -120,6 +120,16 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'bidding/bid/:bidId',
+        name: 'BiddingBidDetail',
+        component: () => import('@/views/Bidding/BidDetail/index.vue'),
+        meta: {
+          title: '投标详情',
+          icon: 'Tickets',
+          perms: ['bidding:bid:view'],
+        },
+      },
+      {
         path: 'bidding/evaluation',
         name: 'BiddingEvaluation',
         component: () => import('@/views/Bidding/Evaluation/index.vue'),

@@ -15,14 +15,20 @@ import java.time.LocalDateTime;
 public class QueryBidReq {
 
     /**
-     * 招标项目ID
+     * 招标单位名称
      */
-    private Long tenderId;
+    private String purchaserName;
 
     /**
-     * 投标单位ID
+     * 招标项目名称
      */
-    private Long supplierId;
+    private String tenderName;
+
+    /**
+     * 关联项目名称
+     */
+    private String projectName;
+
 
     /**
      * 投标编号
@@ -44,10 +50,6 @@ public class QueryBidReq {
      */
     private Integer winFlag;
 
-    /**
-     * 工程项目ID
-     */
-    private Long projectId;
 
     /**
      * 投标提交时间开始

@@ -1,6 +1,7 @@
 package jh.exp.sys.client.api.storage;
 
 import jh.exp.common.core.api.ApiResponse;
+import jh.exp.sys.core.req.storage.StorageBatchDownloadReq;
 import jh.exp.sys.core.req.storage.StorageDeleteReq;
 import jh.exp.sys.core.req.storage.StorageUploadBizReq;
 import jh.exp.sys.core.res.storage.StorageUploadRes;
@@ -24,4 +25,10 @@ public interface StorageService {
 
     @GetExchange("/download")
     byte[] download(@RequestParam("objectKey") String objectKey);
+
+    @GetExchange("/exist")
+    ApiResponse<Boolean> exist(@RequestParam("objectKey") String objectKey);
+
+    @PostExchange("/batchDownload")
+    byte[] batchDownload(@RequestBody StorageBatchDownloadReq req);
 }
