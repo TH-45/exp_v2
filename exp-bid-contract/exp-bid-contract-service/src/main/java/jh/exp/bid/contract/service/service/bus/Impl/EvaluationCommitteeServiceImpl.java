@@ -11,6 +11,7 @@ import jh.exp.bid.contract.core.entity.req.QueryEvaluationCommitteeReq;
 import jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes;
 import jh.exp.bid.contract.core.mapper.EvaluationCommitteeMapper;
 import jh.exp.bid.contract.service.service.bus.EvaluationCommitteeService;
+import jh.exp.bid.contract.service.service.bus.support.EvaluationFlowEligibilityService;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
 import jh.exp.common.core.req.SimplePageReq;
@@ -31,6 +32,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
 
     private final EvaluationCommitteeMapper committeeMapper;
     private final PersonService personService;
+    private final EvaluationFlowEligibilityService eligibilityService;
 
     @Override
     public SimplePageRes<EvaluationCommitteeListRes> queryCommitteeList(SimplePageReq<QueryEvaluationCommitteeReq> req) {
@@ -63,6 +65,8 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
     @Override
     @Transactional
     public EvaluationCommitteeListRes createCommittee(CreateEvaluationCommitteeReq req) {
+        eligibilityService.ensureTenderEligible(req.getTenderId());
+
         // 检查委员会编号是否已存在
         if (checkCommitteeCodeExists(req.getCommitteeCode(), null)) {
             throw new RuntimeException("委员会编号已存在");
@@ -110,6 +114,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
         if (existingCommittee == null) {
             throw new RuntimeException("评标委员会不存在");
         }
+        eligibilityService.ensureTenderEligible(existingCommittee.getTenderId());
 
         if (checkCommitteeCodeExists(req.getCommitteeCode(), committeeId)) {
             throw new RuntimeException("委员会编号已存在");
@@ -139,6 +144,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
         if (committee == null) {
             throw new RuntimeException("评标委员会不存在");
         }
+        eligibilityService.ensureTenderEligible(committee.getTenderId());
 
         // 检查是否可以删除（有相关评标数据时不允许删除）
         // TODO: 添加删除前检查逻辑
@@ -159,6 +165,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
             if (committee == null) {
                 throw new RuntimeException("评标委员会不存在: " + committeeId);
             }
+            eligibilityService.ensureTenderEligible(committee.getTenderId());
             // TODO: 添加删除前检查逻辑
         }
 
@@ -172,6 +179,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
         if (committee == null) {
             throw new RuntimeException("评标委员会不存在");
         }
+        eligibilityService.ensureTenderEligible(committee.getTenderId());
 
         committee.setStatus(status);
         committee.setUpdatedTime(LocalDateTime.now());
@@ -185,6 +193,9 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
     public void batchUpdateCommitteeStatus(List<Long> committeeIds, String status) {
         if (committeeIds == null || committeeIds.isEmpty()) {
             return;
+        }
+        for (Long committeeId : committeeIds) {
+            eligibilityService.ensureCommitteeEligible(committeeId);
         }
         committeeMapper.batchUpdateStatus(committeeIds, status);
     }

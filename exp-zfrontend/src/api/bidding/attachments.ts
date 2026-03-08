@@ -1,48 +1,55 @@
 import request from '@/api/request';
+import { buildPageQuery, type PageQueryInput, type PageResult } from '@/api/common';
 
-export type AttachmentBizType =
-  | 'TENDER_DOC'
-  | 'CLARIFICATION'
-  | 'BID_DOC'
-  | 'EVALUATION_REPORT'
-  | 'OTHER';
+export type AttachmentBusinessType = 'TENDER' | 'BID' | 'CONTRACT' | string;
+export type AttachmentFileType = string;
 
 export interface AttachmentVO {
-  fileId: string;
+  attachmentId: number;
+  businessType: AttachmentBusinessType;
+  businessId: number;
+  businessName?: string;
   fileName: string;
-  bizType: AttachmentBizType;
-  projectId?: string;
-  projectCode?: string;
-  projectName?: string;
-  uploader?: string;
+  fileType?: AttachmentFileType;
+  fileCategory?: string;
+  uploadUserName?: string;
   uploadTime?: string;
-  url?: string;
-}
-
-export interface PageResult<T> {
-  list: T[];
-  total: number;
-  pageNum: number;
-  size: number;
 }
 
 export interface QueryAttachmentParams {
-  pageNum: number;
-  size: number;
-  keyword?: string;
-  projectKeyword?: string;
-  bizType?: AttachmentBizType;
+  businessType?: AttachmentBusinessType;
+  fileType?: AttachmentFileType;
+  fileName?: string;
+  businessId?: number;
   sort?: string;
 }
 
-// 说明：docs 只约定了 upload/download，这里 list 先占位，后续对齐后端即可
-export function queryBiddingAttachmentList(params: QueryAttachmentParams) {
-  return request.post<PageResult<AttachmentVO>, PageResult<AttachmentVO>>('/exp/bid/attachment/list', params);
+export interface CreateAttachmentBizReq {
+  businessType: AttachmentBusinessType;
+  businessId: number;
+  fileType: AttachmentFileType;
+  fileCategory?: string;
+  versionNo?: string;
+  securityLevel?: string;
+  remark?: string;
 }
 
-export function downloadFile(fileId: string) {
-  // 实际下载为文件流；这里返回 url 供前端打开
-  return `/api/exp/files/download?fileId=${encodeURIComponent(fileId)}`;
+export function queryBiddingAttachmentList(data: PageQueryInput<QueryAttachmentParams>) {
+  return request.post<PageResult<AttachmentVO>, PageResult<AttachmentVO>>(
+    '/exp/bid/attachment/list',
+    buildPageQuery<QueryAttachmentParams>(data),
+  );
 }
 
+export function uploadBiddingAttachment(file: File, biz: CreateAttachmentBizReq) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('biz', new Blob([JSON.stringify(biz)], { type: 'application/json' }));
+  return request.post('/exp/bid/attachment/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
 
+export function downloadFile(attachmentId: number | string) {
+  return `/api/exp/bid/attachment/downloadStream?attachmentId=${encodeURIComponent(String(attachmentId))}`;
+}

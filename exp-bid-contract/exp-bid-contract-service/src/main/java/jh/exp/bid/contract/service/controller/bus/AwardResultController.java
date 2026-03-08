@@ -1,10 +1,11 @@
 package jh.exp.bid.contract.service.controller.bus;
 
 import jh.exp.bid.contract.core.entity.BidAwardResult;
+import jh.exp.bid.contract.core.entity.req.AwardProcessDecisionReq;
 import jh.exp.bid.contract.core.entity.req.CreateAwardResultReq;
 import jh.exp.bid.contract.service.service.bus.AwardResultService;
-import jh.exp.common.core.annotation.RequiresPermissions;
 import jh.exp.common.core.api.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -77,6 +78,15 @@ public class AwardResultController {
     public ApiResponse<BidAwardResult> updateStatus(@RequestParam Long awardId,
                                                       @RequestParam String awardStatus) {
         BidAwardResult result = awardService.updateAwardStatus(awardId, awardStatus);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 处理定标审批流程回调决策（APPROVE/REJECT）
+     */
+    @PostMapping("/processDecision")
+    public ApiResponse<BidAwardResult> processDecision(@RequestBody @Valid AwardProcessDecisionReq req) {
+        BidAwardResult result = awardService.processDecision(req);
         return ApiResponse.success(result);
     }
 

@@ -4,6 +4,7 @@ import jh.exp.bid.contract.core.entity.BidEvaluationResult;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationResultReq;
 import jh.exp.bid.contract.core.mapper.EvaluationResultMapper;
 import jh.exp.bid.contract.service.service.bus.EvaluationResultService;
+import jh.exp.bid.contract.service.service.bus.support.EvaluationFlowEligibilityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +20,14 @@ import java.util.List;
 public class EvaluationResultServiceImpl implements EvaluationResultService {
 
     private final EvaluationResultMapper resultMapper;
+    private final EvaluationFlowEligibilityService eligibilityService;
 
     @Override
     @Transactional
     public BidEvaluationResult generateEvaluationResult(CreateEvaluationResultReq req) {
+        eligibilityService.ensureCommitteeEligible(req.getCommitteeId());
+        eligibilityService.ensureBidEligible(req.getBidId());
+
         // 检查是否已存在该投标的评标结果
         BidEvaluationResult existingResult = resultMapper.selectResultByBidId(req.getBidId());
         if (existingResult != null) {
@@ -60,6 +65,8 @@ public class EvaluationResultServiceImpl implements EvaluationResultService {
         if (existingResult == null) {
             throw new RuntimeException("评标结果不存在");
         }
+        eligibilityService.ensureCommitteeEligible(existingResult.getCommitteeId());
+        eligibilityService.ensureBidEligible(existingResult.getBidId());
 
         existingResult.setTechnicalScore(req.getTechnicalScore());
         existingResult.setBusinessScore(req.getBusinessScore());
@@ -80,27 +87,37 @@ public class EvaluationResultServiceImpl implements EvaluationResultService {
     @Override
     @Transactional
     public void deleteEvaluationResult(Long resultId) {
+        BidEvaluationResult existingResult = resultMapper.selectById(resultId);
+        if (existingResult == null) {
+            throw new RuntimeException("评标结果不存在");
+        }
+        eligibilityService.ensureCommitteeEligible(existingResult.getCommitteeId());
+        eligibilityService.ensureBidEligible(existingResult.getBidId());
         resultMapper.deleteById(resultId);
     }
 
     @Override
     public List<BidEvaluationResult> getResultsByCommitteeId(Long committeeId) {
+        eligibilityService.ensureCommitteeEligible(committeeId);
         return resultMapper.selectResultsByCommitteeId(committeeId);
     }
 
     @Override
     public BidEvaluationResult getResultByBidId(Long bidId) {
+        eligibilityService.ensureBidEligible(bidId);
         return resultMapper.selectResultByBidId(bidId);
     }
 
     @Override
     @Transactional
     public void calculateRanking(Long committeeId) {
+        eligibilityService.ensureCommitteeEligible(committeeId);
         resultMapper.updateRankingByCommitteeId(committeeId);
     }
 
     @Override
     public BidEvaluationResult getRecommendedWinner(Long committeeId) {
+        eligibilityService.ensureCommitteeEligible(committeeId);
         return resultMapper.selectHighestScoreByCommitteeId(committeeId);
     }
 }

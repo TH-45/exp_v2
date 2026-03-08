@@ -5,7 +5,7 @@
         <div class="header">
           <div class="title">评标 / 定标</div>
           <div class="actions">
-            <el-button type="primary" size="small" :disabled="!canManage" @click="saveEvaluation">
+            <el-button type="primary" size="small" :disabled="!canManage" :loading="saveLoading" @click="saveEvaluation">
               保存结果
             </el-button>
             <el-button size="small" :disabled="true">导出评标报告</el-button>
@@ -16,7 +16,20 @@
       <!-- 选择项目 -->
       <el-form :inline="true" :model="query" class="search-bar" @submit.prevent>
         <el-form-item label="项目">
-          <el-input v-model="query.projectKeyword" placeholder="项目编码/名称（占位）" clearable style="width: 260px" />
+          <el-select
+            v-model="query.tenderId"
+            filterable
+            clearable
+            placeholder="请选择项目（仅展示可进入评标/定标流程的项目）"
+            style="width: 360px"
+          >
+            <el-option
+              v-for="item in eligibleTenderOptions"
+              :key="item.tenderId"
+              :label="`${item.tenderCode || '-'} / ${item.tenderName || '-'}`"
+              :value="item.tenderId"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="query.status" clearable style="width: 180px">
@@ -96,6 +109,51 @@
               {{ bestScore }}
             </el-descriptions-item>
           </el-descriptions>
+
+          <el-divider />
+
+          <el-form :model="processForm" label-width="120px">
+            <el-form-item label="审批动作">
+              <el-radio-group v-model="processForm.action">
+                <el-radio label="APPROVE">通过</el-radio>
+                <el-radio label="REJECT">驳回</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item v-if="processForm.action === 'REJECT'" label="驳回原因码">
+              <el-select v-model="processForm.rejectReasonCode" style="width: 260px">
+                <el-option label="文档补正（默认回退RESULT_CONFIRMED）" value="DOC_FIX" />
+                <el-option label="需复评（回退SCORING）" value="SCORE_REWORK" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="审批意见">
+              <el-input
+                v-model="processForm.opinion"
+                type="textarea"
+                :rows="3"
+                placeholder="请输入审批意见"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button
+                type="success"
+                size="small"
+                :disabled="!canManage"
+                :loading="decisionLoading"
+                @click="submitDecision('APPROVE')"
+              >
+                审批通过
+              </el-button>
+              <el-button
+                type="warning"
+                size="small"
+                :disabled="!canManage"
+                :loading="decisionLoading"
+                @click="submitDecision('REJECT')"
+              >
+                审批驳回
+              </el-button>
+            </el-form-item>
+          </el-form>
         </el-card>
       </div>
     </el-card>
@@ -107,6 +165,21 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
+import { queryEvaluationEligibleBiddingProjectList, type TenderVO } from '@/api/bidding/project';
+import { getTenderBids } from '@/api/bidding/bid';
+import {
+  createAwardResult,
+  getAwardResultByTender,
+  processAwardDecision,
+  type AwardResultVO,
+} from '@/api/bidding/award';
+import {
+  generateEvaluationResult,
+  getCommitteesByTender,
+  getEvaluationResultByBid,
+  updateEvaluationResult,
+  type EvaluationResultVO,
+} from '@/api/bidding/evaluation';
 
 type EvalStatus = 'EVALUATING' | 'AWARDED';
 
@@ -122,11 +195,16 @@ type EvalBidRow = {
 const canManage = computed(() => hasPermission('bidding:evaluation:manage'));
 
 const query = reactive({
-  projectKeyword: '',
+  tenderId: undefined as string | undefined,
   status: undefined as EvalStatus | undefined,
 });
 
 const loading = ref(false);
+const eligibleTenderOptions = ref<TenderVO[]>([]);
+const decisionLoading = ref(false);
+const saveLoading = ref(false);
+const committeeId = ref<number | null>(null);
+const evaluationResultByBidId = ref<Record<string, EvaluationResultVO>>({});
 
 const bidList = ref<EvalBidRow[]>([]);
 const currentBid = ref<EvalBidRow | null>(null);
@@ -136,6 +214,12 @@ const evaluation = reactive({
   comment: '',
 });
 
+const processForm = reactive({
+  action: 'APPROVE' as 'APPROVE' | 'REJECT',
+  rejectReasonCode: 'DOC_FIX',
+  opinion: '',
+});
+
 const winnerName = computed(() => bidList.value.find((b) => b.isWinner)?.bidderName || '-');
 const bestScore = computed(() => {
   if (!bidList.value.length) return '-';
@@ -143,22 +227,66 @@ const bestScore = computed(() => {
   return Number.isFinite(max) ? String(max) : '-';
 });
 
-function mockFetch() {
-  bidList.value = [
-    { bidId: '1', bidderName: '供应商A', amount: 120, score: 86, comment: '报价较高', isWinner: false },
-    { bidId: '2', bidderName: '供应商B', amount: 118, score: 92, comment: '综合最优', isWinner: true },
-    { bidId: '3', bidderName: '供应商C', amount: 119, score: 88, comment: '方案可行', isWinner: false },
-  ];
-  currentBid.value = bidList.value[0];
-  evaluation.score = currentBid.value.score;
-  evaluation.comment = currentBid.value.comment || '';
+async function fetchEligibleTenders() {
+  const res = await queryEvaluationEligibleBiddingProjectList({
+    pageNum: 1,
+    pageSize: 200,
+  });
+  eligibleTenderOptions.value = Array.isArray(res?.list) ? res.list : [];
+  if (!eligibleTenderOptions.value.find((item) => item.tenderId === query.tenderId)) {
+    query.tenderId = eligibleTenderOptions.value[0]?.tenderId;
+  }
 }
 
 async function fetchList() {
   loading.value = true;
   try {
-    // 后续接接口：按 query.projectKeyword / query.status 获取项目的投标与评分
-    mockFetch();
+    await fetchEligibleTenders();
+    if (!query.tenderId) {
+      bidList.value = [];
+      currentBid.value = null;
+      evaluation.score = 0;
+      evaluation.comment = '';
+      committeeId.value = null;
+      evaluationResultByBidId.value = {};
+      return;
+    }
+
+    const committees = await getCommitteesByTender(Number(query.tenderId));
+    committeeId.value = committees?.[0]?.committeeId ? Number(committees[0].committeeId) : null;
+
+    const bids = await getTenderBids(Number(query.tenderId));
+    const award = await getAwardResultByTender(Number(query.tenderId)).catch(() => null);
+    const winnerBidId = award?.winningBidId ? String(award.winningBidId) : '';
+
+    const rows = (Array.isArray(bids) ? bids : []).map((item) => ({
+      bidId: String(item.bidId),
+      bidderName: item.supplierName || item.bidName || `投标${item.bidId}`,
+      amount: Number(item.bidTotalAmount ?? 0),
+      score: 0,
+      comment: '',
+      isWinner: winnerBidId === String(item.bidId),
+    }));
+
+    const resultMap: Record<string, EvaluationResultVO> = {};
+    await Promise.all(rows.map(async (row) => {
+      try {
+        const result = await getEvaluationResultByBid(Number(row.bidId));
+        if (result?.resultId) {
+          row.score = Number(result.finalScore ?? 0);
+          row.comment = result.evaluationOpinion || '';
+          resultMap[row.bidId] = result;
+        }
+      } catch (_e) {
+        // 无评标结果时忽略
+      }
+    }));
+
+    bidList.value = rows;
+    evaluationResultByBidId.value = resultMap;
+    currentBid.value = bidList.value[0] || null;
+    evaluation.score = currentBid.value?.score ?? 0;
+    evaluation.comment = currentBid.value?.comment || '';
   } finally {
     loading.value = false;
   }
@@ -169,12 +297,11 @@ onMounted(() => {
 });
 
 function handleSearch() {
-  query.projectKeyword = (query.projectKeyword || '').trim();
   fetchList();
 }
 
 function handleReset() {
-  query.projectKeyword = '';
+  query.tenderId = undefined;
   query.status = undefined;
   fetchList();
 }
@@ -189,16 +316,122 @@ function applyToBid() {
   if (!currentBid.value) return;
   currentBid.value.score = evaluation.score;
   currentBid.value.comment = evaluation.comment;
-  ElMessage.success('已应用到当前投标（示例模式）');
+  ElMessage.success('已应用到当前投标');
 }
 
 function setWinner(row: EvalBidRow) {
   bidList.value.forEach((b) => (b.isWinner = b.bidId === row.bidId));
-  ElMessage.success(`已设为中标：${row.bidderName}（示例模式）`);
+  ElMessage.success(`已设为中标：${row.bidderName}`);
 }
 
-function saveEvaluation() {
-  ElMessage.success('评标结果已保存（示例模式）');
+function computeRankingMap(rows: EvalBidRow[]) {
+  const sorted = [...rows].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+  const rankingMap: Record<string, number> = {};
+  sorted.forEach((item, index) => {
+    rankingMap[item.bidId] = index + 1;
+  });
+  return rankingMap;
+}
+
+async function saveEvaluation() {
+  if (!query.tenderId) {
+    ElMessage.warning('请先选择项目');
+    return;
+  }
+  if (!committeeId.value) {
+    ElMessage.warning('该项目尚未组建评标委员会，无法保存评标结果');
+    return;
+  }
+  if (!bidList.value.length) {
+    ElMessage.warning('暂无投标数据可保存');
+    return;
+  }
+
+  saveLoading.value = true;
+  try {
+    const rankingMap = computeRankingMap(bidList.value);
+    const top3BidIds = new Set(
+      Object.entries(rankingMap)
+        .filter(([, rank]) => rank <= 3)
+        .map(([bidId]) => bidId),
+    );
+
+    for (const row of bidList.value) {
+      const payload = {
+        committeeId: Number(committeeId.value),
+        bidId: Number(row.bidId),
+        comprehensiveScore: Number(row.score || 0),
+        finalScore: Number(row.score || 0),
+        ranking: rankingMap[row.bidId],
+        isRecommended: top3BidIds.has(row.bidId) ? 1 : 0,
+        evaluationConclusion: Number(row.score || 0) > 0 ? '通过' : '待定',
+        evaluationOpinion: row.comment || undefined,
+        resultStatus: '终评',
+      };
+      const existing = evaluationResultByBidId.value[row.bidId];
+      if (existing?.resultId) {
+        const updated = await updateEvaluationResult(Number(existing.resultId), payload);
+        evaluationResultByBidId.value[row.bidId] = updated;
+      } else {
+        const created = await generateEvaluationResult(payload);
+        evaluationResultByBidId.value[row.bidId] = created;
+      }
+    }
+    ElMessage.success('评标结果保存成功');
+  } catch (e: any) {
+    ElMessage.error(e?.message || '评标结果保存失败');
+  } finally {
+    saveLoading.value = false;
+  }
+}
+
+async function ensureAwardResult(tenderId: number, winningBidId: number): Promise<AwardResultVO> {
+  try {
+    const existing = await getAwardResultByTender(tenderId);
+    if (existing?.awardId) {
+      return existing;
+    }
+  } catch (_e) {
+    // 无定标结果时创建
+  }
+  return createAwardResult({
+    tenderId,
+    winningBidId,
+    awardOpinion: evaluation.comment || undefined,
+  });
+}
+
+async function submitDecision(action: 'APPROVE' | 'REJECT') {
+  if (!query.tenderId) {
+    ElMessage.warning('请先选择项目');
+    return;
+  }
+  const winner = bidList.value.find((item) => item.isWinner);
+  if (!winner) {
+    ElMessage.warning('请先设置推荐中标人');
+    return;
+  }
+
+  if (action === 'REJECT' && !processForm.rejectReasonCode) {
+    ElMessage.warning('请选择驳回原因码');
+    return;
+  }
+
+  decisionLoading.value = true;
+  try {
+    const award = await ensureAwardResult(Number(query.tenderId), Number(winner.bidId));
+    await processAwardDecision({
+      awardId: award.awardId,
+      action,
+      rejectReasonCode: action === 'REJECT' ? processForm.rejectReasonCode : undefined,
+      opinion: processForm.opinion || undefined,
+    });
+    ElMessage.success(action === 'APPROVE' ? '审批通过成功' : '审批驳回成功');
+  } catch (e: any) {
+    ElMessage.error(e?.message || (action === 'APPROVE' ? '审批通过失败' : '审批驳回失败'));
+  } finally {
+    decisionLoading.value = false;
+  }
 }
 </script>
 

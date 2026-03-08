@@ -12,6 +12,7 @@ import jh.exp.auth.core.entity.req.PersonFlagReq;
 import jh.exp.auth.core.entity.res.OrgUnitDetailRes;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.constant.BidContractConstant;
+import jh.exp.bid.contract.core.constant.BidEvaluationFlowConstant;
 import jh.exp.bid.contract.core.entity.Tender;
 import jh.exp.bid.contract.core.entity.middle.TenderMember;
 import jh.exp.bid.contract.core.entity.req.*;
@@ -22,6 +23,7 @@ import jh.exp.bid.contract.core.mapper.TenderMapper;
 //import jh.exp.bid.contract.core.mapper.middle.TenderMemberMapper;
 import jh.exp.bid.contract.core.mapper.middle.TenderMemberMapper;
 import jh.exp.bid.contract.service.service.bus.TenderService;
+import jh.exp.bid.contract.service.service.bus.support.EvaluationFlowEligibilityService;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
@@ -29,7 +31,9 @@ import jh.exp.common.core.constant.CommonConstant;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.corp.client.api.CompanyClientService;
+import jh.exp.corp.core.entity.req.QueryCompanyReq;
 import jh.exp.corp.core.entity.res.CompanyDetailRes;
+import jh.exp.corp.core.entity.res.CompanyListRes;
 import jh.exp.project.client.api.ProjectClientService;
 import jh.exp.project.core.entity.Project;
 import lombok.RequiredArgsConstructor;
@@ -42,8 +46,6 @@ import org.springframework.util.CollectionUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * 招标服务实现类
@@ -52,6 +54,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class TenderServiceImpl implements TenderService {
+    private static final int COMPANY_QUERY_PAGE_SIZE = 200;
+    private static final int COMPANY_QUERY_MAX_PAGE = 20;
 
     private final TenderMapper tenderMapper;
     private final TenderMemberMapper tenderMemberMapper;
@@ -62,6 +66,7 @@ public class TenderServiceImpl implements TenderService {
 
     private final CompanyClientService companyClientService;
     private final ProjectClientService projectClientService;
+    private final EvaluationFlowEligibilityService eligibilityService;
 
 
 
@@ -74,6 +79,41 @@ public class TenderServiceImpl implements TenderService {
         }
 
         IPage<TenderLisDTO> result = tenderMapper.selectTenderList(page, queryParam);
+        return buildTenderListPageRes(result);
+    }
+
+    @Override
+    public SimplePageRes<TenderListRes> queryEvaluationEligibleTenderList(SimplePageReq<QueryTenderReq> req) {
+        req.pageDefault();
+        Page<TenderLisDTO> page = new Page<>(req.getPageNum(), req.getPageSize());
+        QueryTenderReq queryParam = req.getQueryParam();
+        if (queryParam == null) {
+            queryParam = new QueryTenderReq();
+        }
+
+        List<Long> eligiblePurchaserIds = resolveEvaluationEligiblePurchaserIds();
+        if (CollectionUtils.isEmpty(eligiblePurchaserIds)) {
+            return new SimplePageRes<>(0L, (long) req.getPageNum(), (long) req.getPageSize(), Collections.emptyList());
+        }
+
+        IPage<TenderLisDTO> result = tenderMapper.selectTenderListByPurchaserIds(page, queryParam, eligiblePurchaserIds);
+        return buildTenderListPageRes(result);
+    }
+
+    @Override
+    public boolean checkEvaluationFlowEligible(Long tenderId) {
+        Tender tender = tenderMapper.selectById(tenderId);
+        if (tender == null || tender.getCompanyId() == null) {
+            return false;
+        }
+        try {
+            return eligibilityService.isCompanyEligible(tender.getCompanyId());
+        } catch (RuntimeException ex) {
+            return false;
+        }
+    }
+
+    private SimplePageRes<TenderListRes> buildTenderListPageRes(IPage<TenderLisDTO> result) {
         List<TenderLisDTO> records = result.getRecords();
         List<TenderListRes> resList = records.stream().map(dto -> {
             TenderListRes res = new TenderListRes();
@@ -152,6 +192,64 @@ public class TenderServiceImpl implements TenderService {
         pageRes.setPage(result.getCurrent());
         pageRes.setSize(result.getSize());
         return pageRes;
+    }
+
+    private List<Long> resolveEvaluationEligiblePurchaserIds() {
+        Set<Long> purchaserIds = new LinkedHashSet<>();
+        purchaserIds.addAll(queryEligibleCompanyIdsByName());
+        purchaserIds.addAll(queryEligibleCompanyIdsByType());
+        return new ArrayList<>(purchaserIds);
+    }
+
+    private Set<Long> queryEligibleCompanyIdsByName() {
+        QueryCompanyReq companyReq = new QueryCompanyReq();
+        companyReq.setCompanyName(BidEvaluationFlowConstant.FLOW_COMPANY_NAME);
+        return queryCompanyIds(companyReq);
+    }
+
+    private Set<Long> queryEligibleCompanyIdsByType() {
+        QueryCompanyReq companyReq = new QueryCompanyReq();
+        companyReq.setCompanyType(BidEvaluationFlowConstant.FLOW_COMPANY_TYPE_SELF);
+        return queryCompanyIds(companyReq);
+    }
+
+    private Set<Long> queryCompanyIds(QueryCompanyReq companyReq) {
+        Set<Long> ids = new LinkedHashSet<>();
+        for (int pageNum = 1; pageNum <= COMPANY_QUERY_MAX_PAGE; pageNum++) {
+            SimplePageReq<QueryCompanyReq> pageReq = new SimplePageReq<>();
+            pageReq.setPageNum(pageNum);
+            pageReq.setPageSize(COMPANY_QUERY_PAGE_SIZE);
+            pageReq.setQueryParam(companyReq);
+            ApiResponse<SimplePageRes<CompanyListRes>> response = companyClientService.list(pageReq);
+            if (response == null || !response.isSuccess() || response.getData() == null
+                    || CollectionUtils.isEmpty(response.getData().getList())) {
+                break;
+            }
+            response.getData().getList().stream()
+                    .filter(this::isEvaluationFlowCompany)
+                    .map(CompanyListRes::getCompanyId)
+                    .filter(Objects::nonNull)
+                    .forEach(ids::add);
+
+            if (response.getData().getList().size() < COMPANY_QUERY_PAGE_SIZE) {
+                break;
+            }
+        }
+        return ids;
+    }
+
+    private boolean isEvaluationFlowCompany(CompanyListRes company) {
+        if (company == null) {
+            return false;
+        }
+        String companyName = safeTrim(company.getCompanyName());
+        String companyType = safeTrim(company.getCompanyType());
+        return BidEvaluationFlowConstant.FLOW_COMPANY_NAME.equals(companyName)
+                || BidEvaluationFlowConstant.FLOW_COMPANY_TYPE_SELF.equalsIgnoreCase(companyType);
+    }
+
+    private String safeTrim(String source) {
+        return source == null ? null : source.trim();
     }
 
     @Override
@@ -462,10 +560,6 @@ public class TenderServiceImpl implements TenderService {
             log.error("调用auth人员详情异常，scene={}, personId={}", scene, personId, ex);
             throw new RuntimeException("查询人员信息失败");
         }
-    }
-
-    private String getPersonNameOrThrow(Long personId) {
-        return getPersonOrThrow(personId, "queryTenderList createdBy").getPersonName();
     }
 
     private OrgUnitDetailRes getOrgUnitOrThrow(Long orgId, String scene) {

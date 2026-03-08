@@ -151,3 +151,8 @@ export function checkSupplierBid(params: CheckSupplierBidParams) {
   return request.get<boolean, boolean>('/exp/bid/bidding/checkSupplierBid', { params });
 }
 
+export function getTenderBids(tenderId: number | string) {
+  return request.get<BidListVO[], BidListVO[]>('/exp/bid/bidding/tenderBids', {
+    params: { tenderId: Number(tenderId) },
+  });
+}

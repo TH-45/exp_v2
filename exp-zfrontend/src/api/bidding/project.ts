@@ -144,6 +144,25 @@ export function queryBiddingProjectList(data: PageQueryInput<QueryTenderParams>)
 }
 
 /**
+ * 查询可进入评标/定标流程的招标列表
+ */
+export function queryEvaluationEligibleBiddingProjectList(data: PageQueryInput<QueryTenderParams>) {
+  return request.post<PageResult<TenderVO>, PageResult<TenderVO>>(
+    baseUrl + '/listEvaluationEligible',
+    buildPageQuery<QueryTenderParams>(data),
+  );
+}
+
+/**
+ * 校验单个招标项目是否可进入评标/定标流程
+ */
+export function checkEvaluationEligible(tenderId: number | string) {
+  return request.get<boolean, boolean>(baseUrl + '/checkEvaluationEligible', {
+    params: { tenderId: Number(tenderId) },
+  });
+}
+
+/**
  * 获取招标详情（与 openapi /tender/detail 一致，GET query tenderId）
  */
 export function getBiddingProjectDetail(tenderId: number | string) {

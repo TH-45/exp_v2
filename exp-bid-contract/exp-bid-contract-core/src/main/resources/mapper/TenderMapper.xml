@@ -127,6 +127,92 @@
         ORDER BY t.created_time DESC
     </select>
 
+    <select id="selectTenderListByPurchaserIds" resultMap="TenderListResultMap">
+        SELECT
+        t.tender_id,
+        t.tender_code,
+        t.tender_name,
+        t.tender_type,
+        t.tender_mode,
+        t.company_id AS purchaser_id,
+        t.budget_amount,
+        t.currency,
+        t.tax_rate,
+        t.is_tax_included,
+        t.purchase_nature,
+        t.open_time,
+        t.open_address,
+        t.publish_time,
+        t.bid_end_time,
+        t.status,
+        t.project_id,
+        t.created_by,
+        t.created_time,
+
+        MAX(CASE WHEN tm.member_role = 'PM' THEN tm.person_id END) AS person_id,
+        MAX(CASE WHEN tm.member_role = 'PM' THEN tm.member_role END) AS member_role,
+        MAX(CASE WHEN tm.member_role = 'PM' THEN tm.org_id END) AS org_id,
+        MAX(CASE WHEN tm.member_role = 'PM' THEN tm.post_id END) AS post_id,
+        MAX(CASE WHEN tm.member_role = 'SP' THEN tm.person_id END) AS salesmanId
+        FROM exp_tender t
+        LEFT JOIN exp_tender_member tm
+        ON t.tender_id = tm.tender_id
+        AND tm.status = 'ENABLED'
+
+        <where>
+            <if test="purchaserIds != null and purchaserIds.size > 0">
+                AND t.company_id IN
+                <foreach item="id" collection="purchaserIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="req.tenderCode != null and req.tenderCode.trim() != ''">
+                AND t.tender_code LIKE CONCAT('%', #{req.tenderCode}, '%')
+            </if>
+            <if test="req.tenderName != null and req.tenderName.trim() != ''">
+                AND t.tender_name LIKE CONCAT('%', #{req.tenderName}, '%')
+            </if>
+            <if test="req.tenderType != null and req.tenderType.trim() != ''">
+                AND t.tender_type = #{req.tenderType}
+            </if>
+            <if test="req.tenderMode != null and req.tenderMode.trim() != ''">
+                AND t.tender_mode = #{req.tenderMode}
+            </if>
+            <if test="req.purchaserId != null">
+                AND t.company_id = #{req.purchaserId}
+            </if>
+            <if test="req.status != null and req.status.trim() != ''">
+                AND t.status = #{req.status}
+            </if>
+            <if test="req.projectId != null">
+                AND t.project_id = #{req.projectId}
+            </if>
+            <if test="req.createdBy != null">
+                AND t.created_by = #{req.createdBy}
+            </if>
+            <if test="req.isTaxIncluded != null">
+                AND t.is_tax_included = #{req.isTaxIncluded}
+            </if>
+            <if test="req.purchaseNature != null and req.purchaseNature.trim() != ''">
+                AND t.purchase_nature = #{req.purchaseNature}
+            </if>
+            <if test="req.bidStartTimeStart != null">
+                AND t.bid_start_time >= #{req.bidStartTimeStart}
+            </if>
+            <if test="req.bidStartTimeEnd != null">
+                AND t.bid_start_time <![CDATA[<=]]> #{req.bidStartTimeEnd}
+            </if>
+            <if test="req.bidEndTimeStart != null">
+                AND t.bid_end_time >= #{req.bidEndTimeStart}
+            </if>
+            <if test="req.bidEndTimeEnd != null">
+                AND t.bid_end_time <![CDATA[<=]]> #{req.bidEndTimeEnd}
+            </if>
+        </where>
+        GROUP BY t.tender_id
+        ORDER BY t.created_time DESC
+    </select>
+
     <!-- 根据招标ID查询招标详情信息（仅查询招标域数据，跨域信息由service远程组装） -->
     <select id="selectTenderDetailById" resultType="jh.exp.bid.contract.core.entity.res.TenderDetailRes">
         SELECT t.tender_id,

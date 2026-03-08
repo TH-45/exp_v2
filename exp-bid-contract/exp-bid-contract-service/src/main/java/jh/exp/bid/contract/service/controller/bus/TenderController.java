@@ -1,9 +1,7 @@
 package jh.exp.bid.contract.service.controller.bus;
 
-import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.TenderDetailRes;
-import jh.exp.bid.contract.core.entity.dto.TenderLisDTO;
 import jh.exp.bid.contract.core.entity.res.TenderListRes;
 import jh.exp.bid.contract.service.service.bus.TenderService;
 import jh.exp.common.core.api.ApiResponse;
@@ -31,6 +29,25 @@ public class TenderController {
     public ApiResponse<SimplePageRes<TenderListRes>> list(@RequestBody SimplePageReq<QueryTenderReq> req) {
         req.pageDefault();
         SimplePageRes<TenderListRes> result = tenderService.queryTenderList(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 分页查询可进入评标/定标流程的招标列表
+     */
+    @PostMapping("/listEvaluationEligible")
+    public ApiResponse<SimplePageRes<TenderListRes>> listEvaluationEligible(@RequestBody SimplePageReq<QueryTenderReq> req) {
+        req.pageDefault();
+        SimplePageRes<TenderListRes> result = tenderService.queryEvaluationEligibleTenderList(req);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 校验招标项目是否可进入评标/定标流程
+     */
+    @GetMapping("/checkEvaluationEligible")
+    public ApiResponse<Boolean> checkEvaluationEligible(@RequestParam Long tenderId) {
+        boolean result = tenderService.checkEvaluationFlowEligible(tenderId);
         return ApiResponse.success(result);
     }
 

@@ -1,6 +1,7 @@
 package jh.exp.bid.contract.service.service.bus;
 
 import jh.exp.bid.contract.core.entity.BidAwardResult;
+import jh.exp.bid.contract.core.entity.req.AwardProcessDecisionReq;
 import jh.exp.bid.contract.core.entity.req.CreateAwardResultReq;
 
 /**
@@ -42,4 +43,9 @@ public interface AwardResultService {
      * 检查招标项目是否已有定标结果
      */
     boolean checkTenderHasAwardResult(Long tenderId, Long excludeAwardId);
+
+    /**
+     * 处理定标审批流程回调决策
+     */
+    BidAwardResult processDecision(AwardProcessDecisionReq req);
 }

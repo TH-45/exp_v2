@@ -4,6 +4,7 @@ import jh.exp.bid.contract.core.entity.BidEvaluationMember;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationMemberReq;
 import jh.exp.bid.contract.core.mapper.EvaluationMemberMapper;
 import jh.exp.bid.contract.service.service.bus.EvaluationMemberService;
+import jh.exp.bid.contract.service.service.bus.support.EvaluationFlowEligibilityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.List;
 public class EvaluationMemberServiceImpl implements EvaluationMemberService {
 
     private final EvaluationMemberMapper memberMapper;
+    private final EvaluationFlowEligibilityService eligibilityService;
 
     @Override
     public List<BidEvaluationMember> getMembersByCommitteeId(Long committeeId) {
@@ -28,6 +30,8 @@ public class EvaluationMemberServiceImpl implements EvaluationMemberService {
     @Override
     @Transactional
     public BidEvaluationMember addMember(CreateEvaluationMemberReq req) {
+        eligibilityService.ensureCommitteeEligible(req.getCommitteeId());
+
         // 检查专家是否已在委员会中
         if (checkExpertInCommittee(req.getCommitteeId(), req.getExpertUserId(), null)) {
             throw new RuntimeException("该专家已在评标委员会中");
@@ -57,6 +61,7 @@ public class EvaluationMemberServiceImpl implements EvaluationMemberService {
     @Override
     @Transactional
     public void batchAddMembers(Long committeeId, List<CreateEvaluationMemberReq> members) {
+        eligibilityService.ensureCommitteeEligible(committeeId);
         for (CreateEvaluationMemberReq req : members) {
             req.setCommitteeId(committeeId);
             addMember(req);
@@ -70,6 +75,7 @@ public class EvaluationMemberServiceImpl implements EvaluationMemberService {
         if (existingMember == null) {
             throw new RuntimeException("评标成员不存在");
         }
+        eligibilityService.ensureCommitteeEligible(existingMember.getCommitteeId());
 
         // 检查专家是否已在委员会中（排除当前成员）
         if (checkExpertInCommittee(req.getCommitteeId(), req.getExpertUserId(), memberId)) {
@@ -99,6 +105,7 @@ public class EvaluationMemberServiceImpl implements EvaluationMemberService {
         if (member == null) {
             throw new RuntimeException("评标成员不存在");
         }
+        eligibilityService.ensureCommitteeEligible(member.getCommitteeId());
 
         memberMapper.deleteById(memberId);
     }
@@ -106,12 +113,18 @@ public class EvaluationMemberServiceImpl implements EvaluationMemberService {
     @Override
     @Transactional
     public void batchRemoveMembers(Long committeeId, List<Long> memberIds) {
+        eligibilityService.ensureCommitteeEligible(committeeId);
         memberMapper.batchDeleteByCommitteeId(committeeId, memberIds);
     }
 
     @Override
     @Transactional
     public BidEvaluationMember updateMemberPresence(Long memberId, Integer isPresent) {
+        BidEvaluationMember existingMember = memberMapper.selectById(memberId);
+        if (existingMember == null) {
+            throw new RuntimeException("评标成员不存在");
+        }
+        eligibilityService.ensureCommitteeEligible(existingMember.getCommitteeId());
         memberMapper.updatePresentStatus(memberId, isPresent);
         return memberMapper.selectById(memberId);
     }

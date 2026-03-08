@@ -2,7 +2,6 @@ package jh.exp.bid.contract.service.service.bus;
 
 import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.TenderDetailRes;
-import jh.exp.bid.contract.core.entity.dto.TenderLisDTO;
 import jh.exp.bid.contract.core.entity.res.TenderListRes;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -16,6 +15,16 @@ public interface TenderService {
      * 分页查询招标列表
      */
     SimplePageRes<TenderListRes> queryTenderList(SimplePageReq<QueryTenderReq> req);
+
+    /**
+     * 分页查询可进入评标/定标流程的招标列表
+     */
+    SimplePageRes<TenderListRes> queryEvaluationEligibleTenderList(SimplePageReq<QueryTenderReq> req);
+
+    /**
+     * 校验招标项目是否可进入评标/定标流程
+     */
+    boolean checkEvaluationFlowEligible(Long tenderId);
 
     /**
      * 根据ID查询招标详情

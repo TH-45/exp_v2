@@ -34,6 +34,17 @@ public interface TenderMapper extends BaseMapper<Tender> {
     IPage<TenderLisDTO> selectTenderList(IPage<TenderLisDTO> page, @Param("req") QueryTenderReq req);
 
     /**
+     * 分页查询可进入评标/定标流程的招标列表（按招标方ID集合过滤）
+     * @param page 分页对象
+     * @param req 查询条件
+     * @param purchaserIds 招标方ID集合
+     * @return 招标列表
+     */
+    IPage<TenderLisDTO> selectTenderListByPurchaserIds(IPage<TenderLisDTO> page,
+                                                       @Param("req") QueryTenderReq req,
+                                                       @Param("purchaserIds") List<Long> purchaserIds);
+
+    /**
      * 根据招标ID查询招标详情信息（多表联查）
      * @param tenderId 招标ID
      * @return 招标详情信息

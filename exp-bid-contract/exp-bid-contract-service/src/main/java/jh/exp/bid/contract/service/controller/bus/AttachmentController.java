@@ -6,16 +6,23 @@ import jh.exp.bid.contract.core.entity.req.QueryAttachmentReq;
 import jh.exp.bid.contract.core.entity.res.AttachmentDetailRes;
 import jh.exp.bid.contract.core.entity.res.AttachmentListRes;
 import jh.exp.bid.contract.service.service.bus.AttachmentService;
-import jh.exp.common.core.annotation.RequiresPermissions;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import jh.exp.sys.client.api.storage.StorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -27,6 +34,7 @@ import java.util.List;
 public class AttachmentController {
 
     private final AttachmentService attachmentService;
+    private final StorageService storageService;
 
     /**
      * 分页查询附件列表
@@ -109,6 +117,31 @@ public class AttachmentController {
     public ApiResponse<AttachmentDetailRes> download(@RequestParam Long attachmentId) {
         AttachmentDetailRes result = attachmentService.downloadAttachment(attachmentId);
         return ApiResponse.success(result);
+    }
+
+    /**
+     * 单段式文件流下载（前端直接使用此接口）
+     */
+    @GetMapping("/downloadStream")
+    public ResponseEntity<Resource> downloadStream(@RequestParam Long attachmentId) {
+        AttachmentDetailRes detail = attachmentService.downloadAttachment(attachmentId);
+        if (detail == null || !StringUtils.hasText(detail.getFilePath())) {
+            throw new RuntimeException("附件不存在或文件路径为空");
+        }
+        byte[] bytes = storageService.download(detail.getFilePath());
+        String fileName = StringUtils.hasText(detail.getFileName()) ? detail.getFileName() : ("attachment_" + attachmentId);
+        ByteArrayResource resource = new ByteArrayResource(bytes);
+        return ResponseEntity.ok()
+            .header(
+                HttpHeaders.CONTENT_DISPOSITION,
+                ContentDisposition.attachment()
+                    .filename(fileName, StandardCharsets.UTF_8)
+                    .build()
+                    .toString()
+            )
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .contentLength(bytes.length)
+            .body(resource);
     }
 
     /**
