@@ -129,6 +129,9 @@ public class AttachmentController {
             throw new RuntimeException("附件不存在或文件路径为空");
         }
         byte[] bytes = storageService.download(detail.getFilePath());
+        if (bytes == null) {
+            throw new RuntimeException("附件文件内容不存在");
+        }
         String fileName = StringUtils.hasText(detail.getFileName()) ? detail.getFileName() : ("attachment_" + attachmentId);
         ByteArrayResource resource = new ByteArrayResource(bytes);
         return ResponseEntity.ok()

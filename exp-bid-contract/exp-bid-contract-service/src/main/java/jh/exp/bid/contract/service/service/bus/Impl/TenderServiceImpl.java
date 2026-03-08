@@ -221,8 +221,10 @@ public class TenderServiceImpl implements TenderService {
             pageReq.setPageSize(COMPANY_QUERY_PAGE_SIZE);
             pageReq.setQueryParam(companyReq);
             ApiResponse<SimplePageRes<CompanyListRes>> response = companyClientService.list(pageReq);
-            if (response == null || !response.isSuccess() || response.getData() == null
-                    || CollectionUtils.isEmpty(response.getData().getList())) {
+            if (response == null || !response.isSuccess() || response.getData() == null) {
+                throw new RuntimeException("查询公司列表失败，无法筛选可进入评标/定标流程的招标");
+            }
+            if (CollectionUtils.isEmpty(response.getData().getList())) {
                 break;
             }
             response.getData().getList().stream()
