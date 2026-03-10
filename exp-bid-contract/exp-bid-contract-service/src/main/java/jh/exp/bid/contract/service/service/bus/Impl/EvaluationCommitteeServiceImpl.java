@@ -3,9 +3,7 @@ package jh.exp.bid.contract.service.service.bus.Impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jh.exp.auth.clinet.api.bus.PersonService;
-
 import jh.exp.auth.core.entity.res.PersonDetailRes;
-import jh.exp.bid.contract.core.entity.BidEvaluationCommittee;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationCommitteeReq;
 import jh.exp.bid.contract.core.entity.req.QueryEvaluationCommitteeReq;
 import jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes;
@@ -21,7 +19,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 评标委员会服务实现类
@@ -44,6 +47,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
         }
 
         IPage<EvaluationCommitteeListRes> result = committeeMapper.selectCommitteeList(page, queryParam);
+        fillCommitteeNames(result.getRecords());
 
         SimplePageRes<EvaluationCommitteeListRes> pageRes = new SimplePageRes<>();
         pageRes.setList(result.getRecords());
@@ -59,6 +63,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
         if (committee == null) {
             throw new RuntimeException("评标委员会不存在");
         }
+        fillCommitteeNames(Collections.singletonList(committee));
         return committee;
     }
 
@@ -67,89 +72,69 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
     public EvaluationCommitteeListRes createCommittee(CreateEvaluationCommitteeReq req) {
         eligibilityService.ensureTenderEligible(req.getTenderId());
 
-        // 检查委员会编号是否已存在
-        if (checkCommitteeCodeExists(req.getCommitteeCode(), null)) {
-            throw new RuntimeException("委员会编号已存在");
-        }
-
         // 检查招标项目是否已有评标委员会
         if (checkTenderHasCommittee(req.getTenderId(), null)) {
             throw new RuntimeException("该招标项目已存在评标委员会");
         }
 
         CurrentUser currentUser = CurrentUserHolder.get();
-        Long personId = Long.valueOf(currentUser.getUserId());
-
-        PersonDetailRes personDetail = personService.getPersonById(personId);
-        if (personDetail == null) {
-            throw new RuntimeException("无法获取当前用户信息");
+        Long creatorId = Long.valueOf(currentUser.getUserId());
+        Long evaluatorUserId = req.getEvaluationDirectorId() == null ? creatorId : req.getEvaluationDirectorId();
+        Integer roundNo = resolveRoundNo(req.getCommitteeCode(), req.getTenderId());
+        String normalizedCode = buildCommitteeCode(roundNo);
+        if (checkCommitteeCodeExists(normalizedCode, null)) {
+            throw new RuntimeException("委员会编号已存在");
         }
 
-        BidEvaluationCommittee committee = new BidEvaluationCommittee();
-        committee.setTenderId(req.getTenderId());
-        committee.setCommitteeCode(req.getCommitteeCode());
-        committee.setCommitteeName(req.getCommitteeName());
-        committee.setEvaluationMethod(req.getEvaluationMethod());
-        committee.setEvaluationLocation(req.getEvaluationLocation());
-        committee.setEvaluationStartTime(req.getEvaluationStartTime());
-        committee.setEvaluationEndTime(req.getEvaluationEndTime());
-        committee.setStatus("组建中");
-        committee.setEvaluationDirectorId(req.getEvaluationDirectorId());
-        committee.setSupervisorId(req.getSupervisorId());
-        committee.setRemark(req.getRemark());
-        committee.setCreatedTime(LocalDateTime.now());
-        committee.setUpdatedTime(LocalDateTime.now());
-        committee.setCreatedBy(personId);
-        committee.setCreatedDeptId(personDetail.getOrgId());
-        committee.setCreatedPostId(personDetail.getPostId());
+        LocalDateTime evalTime = req.getEvaluationStartTime() != null ? req.getEvaluationStartTime() : LocalDateTime.now();
+        int inserted = committeeMapper.insertCommittee(req, evaluatorUserId, roundNo, "组建中", evalTime);
+        if (inserted <= 0) {
+            throw new RuntimeException("创建评标委员会失败");
+        }
 
-        committeeMapper.insert(committee);
-        return getCommitteeById(committee.getCommitteeId());
+        EvaluationCommitteeListRes created = committeeMapper.selectCommitteeByCode(req.getTenderId(), normalizedCode);
+        if (created == null) {
+            throw new RuntimeException("创建成功但回查失败");
+        }
+        return created;
     }
 
     @Override
     @Transactional
     public EvaluationCommitteeListRes updateCommittee(CreateEvaluationCommitteeReq req, Long committeeId) {
-        BidEvaluationCommittee existingCommittee = committeeMapper.selectById(committeeId);
-        if (existingCommittee == null) {
-            throw new RuntimeException("评标委员会不存在");
-        }
+        EvaluationCommitteeListRes existingCommittee = getCommitteeById(committeeId);
         eligibilityService.ensureTenderEligible(existingCommittee.getTenderId());
 
-        if (checkCommitteeCodeExists(req.getCommitteeCode(), committeeId)) {
+        Integer roundNo = resolveRoundNo(req.getCommitteeCode(), existingCommittee.getTenderId());
+        String normalizedCode = buildCommitteeCode(roundNo);
+        if (checkCommitteeCodeExists(normalizedCode, committeeId)) {
             throw new RuntimeException("委员会编号已存在");
         }
 
-        BidEvaluationCommittee committee = new BidEvaluationCommittee();
-        committee.setCommitteeId(committeeId);
-        committee.setCommitteeCode(req.getCommitteeCode());
-        committee.setCommitteeName(req.getCommitteeName());
-        committee.setEvaluationMethod(req.getEvaluationMethod());
-        committee.setEvaluationLocation(req.getEvaluationLocation());
-        committee.setEvaluationStartTime(req.getEvaluationStartTime());
-        committee.setEvaluationEndTime(req.getEvaluationEndTime());
-        committee.setEvaluationDirectorId(req.getEvaluationDirectorId());
-        committee.setSupervisorId(req.getSupervisorId());
-        committee.setRemark(req.getRemark());
-        committee.setUpdatedTime(LocalDateTime.now());
-
-        committeeMapper.updateById(committee);
+        LocalDateTime evalTime = req.getEvaluationStartTime() != null ? req.getEvaluationStartTime() : LocalDateTime.now();
+        int updated = committeeMapper.updateCommittee(
+            committeeId,
+            req,
+            roundNo,
+            existingCommittee.getStatus() == null ? "组建中" : existingCommittee.getStatus(),
+            evalTime
+        );
+        if (updated <= 0) {
+            throw new RuntimeException("更新评标委员会失败");
+        }
         return getCommitteeById(committeeId);
     }
 
     @Override
     @Transactional
     public void deleteCommittee(Long committeeId) {
-        BidEvaluationCommittee committee = committeeMapper.selectById(committeeId);
-        if (committee == null) {
-            throw new RuntimeException("评标委员会不存在");
-        }
+        EvaluationCommitteeListRes committee = getCommitteeById(committeeId);
         eligibilityService.ensureTenderEligible(committee.getTenderId());
 
         // 检查是否可以删除（有相关评标数据时不允许删除）
         // TODO: 添加删除前检查逻辑
 
-        committeeMapper.deleteById(committeeId);
+        committeeMapper.deleteCommittee(committeeId);
     }
 
     @Override
@@ -161,10 +146,7 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
 
         // 检查每个委员会是否可以删除
         for (Long committeeId : committeeIds) {
-            BidEvaluationCommittee committee = committeeMapper.selectById(committeeId);
-            if (committee == null) {
-                throw new RuntimeException("评标委员会不存在: " + committeeId);
-            }
+            EvaluationCommitteeListRes committee = getCommitteeById(committeeId);
             eligibilityService.ensureTenderEligible(committee.getTenderId());
             // TODO: 添加删除前检查逻辑
         }
@@ -175,16 +157,10 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
     @Override
     @Transactional
     public EvaluationCommitteeListRes updateCommitteeStatus(Long committeeId, String status) {
-        BidEvaluationCommittee committee = committeeMapper.selectById(committeeId);
-        if (committee == null) {
-            throw new RuntimeException("评标委员会不存在");
-        }
+        EvaluationCommitteeListRes committee = getCommitteeById(committeeId);
         eligibilityService.ensureTenderEligible(committee.getTenderId());
 
-        committee.setStatus(status);
-        committee.setUpdatedTime(LocalDateTime.now());
-        committeeMapper.updateById(committee);
-
+        committeeMapper.batchUpdateStatus(Collections.singletonList(committeeId), status);
         return getCommitteeById(committeeId);
     }
 
@@ -207,7 +183,9 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
 
     @Override
     public List<EvaluationCommitteeListRes> getCommitteesByTenderId(Long tenderId) {
-        return committeeMapper.selectCommitteesByTenderId(tenderId);
+        List<EvaluationCommitteeListRes> committees = committeeMapper.selectCommitteesByTenderId(tenderId);
+        fillCommitteeNames(committees);
+        return committees;
     }
 
     @Override
@@ -217,5 +195,64 @@ public class EvaluationCommitteeServiceImpl implements EvaluationCommitteeServic
             committees.removeIf(c -> c.getCommitteeId().equals(excludeCommitteeId));
         }
         return !committees.isEmpty();
+    }
+
+    private Integer resolveRoundNo(String committeeCode, Long tenderId) {
+        if (committeeCode != null && committeeCode.startsWith("ROUND-")) {
+            String suffix = committeeCode.substring("ROUND-".length());
+            try {
+                return Integer.parseInt(suffix);
+            } catch (NumberFormatException ignored) {
+                // 非标准编号时按下一轮次兜底
+            }
+        }
+        Integer maxRoundNo = committeeMapper.selectMaxRoundNoByTenderId(tenderId);
+        return (maxRoundNo == null ? 0 : maxRoundNo) + 1;
+    }
+
+    private String buildCommitteeCode(Integer roundNo) {
+        return "ROUND-" + roundNo;
+    }
+
+    /**
+     * 名称信息由服务层远程补齐，避免在 XML 中跨服务联查。
+     */
+    private void fillCommitteeNames(List<EvaluationCommitteeListRes> committees) {
+        if (committees == null || committees.isEmpty()) {
+            return;
+        }
+        Set<Long> personIds = new HashSet<>();
+        for (EvaluationCommitteeListRes committee : committees) {
+            if (committee.getEvaluationDirectorId() != null) {
+                personIds.add(committee.getEvaluationDirectorId());
+            }
+            if (committee.getSupervisorId() != null) {
+                personIds.add(committee.getSupervisorId());
+            }
+            if (committee.getCreatedBy() != null) {
+                personIds.add(committee.getCreatedBy());
+            }
+        }
+        if (personIds.isEmpty()) {
+            return;
+        }
+        Map<Long, PersonDetailRes> personMap = personService.batchGetPersonByIds(new ArrayList<>(personIds));
+        if (personMap == null || personMap.isEmpty()) {
+            return;
+        }
+        for (EvaluationCommitteeListRes committee : committees) {
+            PersonDetailRes director = personMap.get(committee.getEvaluationDirectorId());
+            if (director != null) {
+                committee.setEvaluationDirectorName(director.getPersonName());
+            }
+            PersonDetailRes supervisor = personMap.get(committee.getSupervisorId());
+            if (supervisor != null) {
+                committee.setSupervisorName(supervisor.getPersonName());
+            }
+            PersonDetailRes creator = personMap.get(committee.getCreatedBy());
+            if (creator != null) {
+                committee.setCreatedByName(creator.getPersonName());
+            }
+        }
     }
 }

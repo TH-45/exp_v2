@@ -41,12 +41,14 @@
           />
         </el-form-item>
         <el-form-item label="企业类型">
-          <el-input
-            v-model="query.companyType"
-            placeholder="企业类型"
-            clearable
-            style="width: 140px"
-          />
+          <el-select v-model="query.companyType" clearable placeholder="全部" style="width: 140px">
+            <el-option
+              v-for="item in companyTypeOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="query.status" clearable placeholder="全部" style="width: 120px">
@@ -72,7 +74,11 @@
         <el-table-column prop="companyCode" label="企业编码" min-width="120" />
         <el-table-column prop="companyName" label="企业名称" min-width="180" />
         <el-table-column prop="companyShortName" label="简称" min-width="100" />
-        <el-table-column prop="companyType" label="企业类型" min-width="100" />
+        <el-table-column label="企业类型" min-width="100">
+          <template #default="{ row }">
+            {{ getCompanyTypeLabel(row.companyType) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="unifiedSocialCreditCode" label="统一社会信用代码" min-width="180" />
         <el-table-column prop="legalPerson" label="法定代表人" min-width="100" />
         <el-table-column prop="contactPhone" label="联系电话" min-width="130" />
@@ -139,8 +145,8 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="企业编码" prop="companyCode">
-                <el-input v-model="form.companyCode" placeholder="请输入企业编码" />
+              <el-form-item v-if="editDialog.isEdit" label="企业编码" prop="companyCode">
+                <el-input v-model="form.companyCode" readonly />
               </el-form-item>
             </el-col>
           </el-row>
@@ -152,7 +158,14 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="企业类型" prop="companyType">
-                <el-input v-model="form.companyType" placeholder="如：有限责任公司" />
+                <el-select v-model="form.companyType" placeholder="请选择企业类型" style="width: 100%">
+                  <el-option
+                    v-for="item in companyTypeOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
               </el-form-item>
             </el-col>
           </el-row>
@@ -223,7 +236,7 @@
           <el-descriptions-item label="企业编码">{{ detailDrawer.data.companyCode }}</el-descriptions-item>
           <el-descriptions-item label="企业名称">{{ detailDrawer.data.companyName }}</el-descriptions-item>
           <el-descriptions-item label="简称">{{ detailDrawer.data.companyShortName || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="企业类型">{{ detailDrawer.data.companyType || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="企业类型">{{ getCompanyTypeLabel(detailDrawer.data.companyType) }}</el-descriptions-item>
           <el-descriptions-item label="统一社会信用代码">{{ detailDrawer.data.unifiedSocialCreditCode || '—' }}</el-descriptions-item>
           <el-descriptions-item label="纳税人识别号">{{ detailDrawer.data.taxNo || '—' }}</el-descriptions-item>
           <el-descriptions-item label="法定代表人">{{ detailDrawer.data.legalPerson || '—' }}</el-descriptions-item>
@@ -253,6 +266,7 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Plus, Download } from '@element-plus/icons-vue';
 import { hasPermission } from '@/utils/permission';
 import { parsePageResult } from '@/api/common';
+import { listDictOptions, type DictOption } from '@/api/system/dict';
 import {
   listCompany,
   getCompanyDetail,
@@ -267,6 +281,7 @@ import {
 
 const loading = ref(false);
 const saving = ref(false);
+const companyTypeOptions = ref<DictOption[]>([]);
 
 // 查询条件（与 QueryCompanyParam 对齐）
 const query = reactive({
@@ -307,6 +322,9 @@ const form = reactive<CreateCompanyReq & UpdateCompanyReq & { taxNo?: string }>(
 
 const rules: FormRules = {
   companyName: [{ required: true, message: '请输入企业名称', trigger: 'blur' }],
+  companyType: [{ required: true, message: '请选择企业类型', trigger: 'change' }],
+  unifiedSocialCreditCode: [{ required: true, message: '请输入统一社会信用代码', trigger: 'blur' }],
+  officeAddress: [{ required: true, message: '请输入办公地址', trigger: 'blur' }],
 };
 
 const detailDrawer = reactive<{
@@ -337,6 +355,34 @@ function getStatusTagType(status?: string) {
     DISABLED: 'info',
   };
   return (types[status ?? ''] ?? 'info') as 'success' | 'info' | 'warning' | 'danger';
+}
+
+function normalizeDictOptions(res: DictOption[] | { data?: DictOption[] }) {
+  if (Array.isArray(res)) return res;
+  return Array.isArray(res?.data) ? res.data : [];
+}
+
+function getCompanyTypeLabel(code?: string) {
+  if (!code) return '—';
+  const option = companyTypeOptions.value.find((item) => item.value === code);
+  return option?.label ?? code;
+}
+
+async function loadCompanyTypeOptions() {
+  const dictCodes = ['Enterprise_Type', 'enterprise_type', 'ENTERPRISE_TYPE'];
+  for (const dictCode of dictCodes) {
+    try {
+      const res = await listDictOptions(dictCode);
+      const options = normalizeDictOptions(res);
+      if (options.length) {
+        companyTypeOptions.value = options;
+        return;
+      }
+    } catch (e) {
+      // 当前写法未命中时继续尝试下一种大小写
+    }
+  }
+  companyTypeOptions.value = [];
 }
 
 async function fetchList() {
@@ -456,7 +502,6 @@ async function submitForm() {
     } else {
       await createCompany({
         companyName: form.companyName,
-        companyCode: form.companyCode,
         companyShortName: form.companyShortName,
         companyType: form.companyType,
         unifiedSocialCreditCode: form.unifiedSocialCreditCode,
@@ -512,7 +557,8 @@ function handleExport() {
   ElMessage.info('导出功能开发中...');
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await loadCompanyTypeOptions();
   fetchList();
 });
 </script>

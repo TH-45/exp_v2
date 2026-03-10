@@ -2,135 +2,172 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="jh.exp.bid.contract.core.mapper.EvaluationCommitteeMapper">
 
-    <!-- 检查委员会编号是否存在 -->
+    <!--
+      说明：
+      1) 按数据标准使用 exp_tender_evaluation 作为评标数据来源。
+      2) “委员会”为兼容视图语义，字段由标准表映射而来。
+      3) 名称类字段（人员姓名）不在 XML 跨服务联查，由 service 远程补齐。
+    -->
+
+    <sql id="CommitteeSelectColumns">
+        c.eval_id AS committeeId,
+        c.tender_id AS tenderId,
+        t.tender_name AS tenderName,
+        CONCAT('ROUND-', c.round_no) AS committeeCode,
+        CONCAT('第', c.round_no, '轮评标') AS committeeName,
+        c.stage_code AS evaluationMethod,
+        NULL AS evaluationLocation,
+        c.eval_time AS evaluationStartTime,
+        c.eval_time AS evaluationEndTime,
+        c.result AS status,
+        NULL AS evaluationDirectorName,
+        c.evaluator_user_id AS evaluationDirectorId,
+        NULL AS supervisorName,
+        NULL AS supervisorId,
+        NULL AS createdByName,
+        c.evaluator_user_id AS createdBy,
+        c.eval_time AS createdTime
+    </sql>
+
+    <!-- 检查委员会编号是否存在（兼容规则：committeeCode -> ROUND-{round_no}） -->
     <select id="countByCommitteeCode" resultType="int">
         SELECT COUNT(1)
-        FROM exp_bid_evaluation_committee
-        WHERE committee_code = #{committeeCode}
+        FROM exp_tender_evaluation
+        WHERE CONCAT('ROUND-', round_no) = #{committeeCode}
         <if test="excludeCommitteeId != null">
-            AND committee_id != #{excludeCommitteeId}
+            AND eval_id != #{excludeCommitteeId}
         </if>
+    </select>
+
+    <select id="selectMaxRoundNoByTenderId" resultType="int">
+        SELECT COALESCE(MAX(round_no), 0)
+        FROM exp_tender_evaluation
+        WHERE tender_id = #{tenderId}
     </select>
 
     <!-- 分页查询评标委员会列表 -->
     <select id="selectCommitteeList" resultType="jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes">
         SELECT
-            c.committee_id AS committeeId,
-            c.tender_id AS tenderId,
-            t.tender_name AS tenderName,
-            c.committee_code AS committeeCode,
-            c.committee_name AS committeeName,
-            c.evaluation_method AS evaluationMethod,
-            c.evaluation_location AS evaluationLocation,
-            c.evaluation_start_time AS evaluationStartTime,
-            c.evaluation_end_time AS evaluationEndTime,
-            c.status AS status,
-            d.user_name AS evaluationDirectorName,
-            s.user_name AS supervisorName,
-            u.user_name AS createdByName,
-            c.created_time AS createdTime
-        FROM exp_bid_evaluation_committee c
+            <include refid="CommitteeSelectColumns"/>
+        FROM exp_tender_evaluation c
         LEFT JOIN exp_tender t ON c.tender_id = t.tender_id
-        LEFT JOIN exp_user d ON c.evaluation_director_id = d.user_id
-        LEFT JOIN exp_user s ON c.supervisor_id = s.user_id
-        LEFT JOIN exp_user u ON c.created_by = u.user_id
         <where>
             <if test="req.tenderId != null">
                 AND c.tender_id = #{req.tenderId}
             </if>
             <if test="req.committeeCode != null and req.committeeCode != ''">
-                AND c.committee_code LIKE CONCAT('%', #{req.committeeCode}, '%')
+                AND CONCAT('ROUND-', c.round_no) LIKE CONCAT('%', #{req.committeeCode}, '%')
             </if>
             <if test="req.committeeName != null and req.committeeName != ''">
-                AND c.committee_name LIKE CONCAT('%', #{req.committeeName}, '%')
+                AND CONCAT('第', c.round_no, '轮评标') LIKE CONCAT('%', #{req.committeeName}, '%')
             </if>
             <if test="req.evaluationMethod != null and req.evaluationMethod != ''">
-                AND c.evaluation_method = #{req.evaluationMethod}
+                AND c.stage_code = #{req.evaluationMethod}
             </if>
             <if test="req.status != null and req.status != ''">
-                AND c.status = #{req.status}
+                AND c.result = #{req.status}
             </if>
             <if test="req.evaluationDirectorId != null">
-                AND c.evaluation_director_id = #{req.evaluationDirectorId}
+                AND c.evaluator_user_id = #{req.evaluationDirectorId}
             </if>
             <if test="req.evaluationStartTimeStart != null">
-                AND c.evaluation_start_time >= #{req.evaluationStartTimeStart}
+                AND c.eval_time >= #{req.evaluationStartTimeStart}
             </if>
             <if test="req.evaluationStartTimeEnd != null">
-                AND c.evaluation_start_time <![CDATA[<=]]> #{req.evaluationStartTimeEnd}
+                AND c.eval_time <![CDATA[<=]]> #{req.evaluationStartTimeEnd}
             </if>
             <if test="req.createdBy != null">
-                AND c.created_by = #{req.createdBy}
+                AND c.evaluator_user_id = #{req.createdBy}
             </if>
             <if test="req.createdTimeStart != null">
-                AND c.created_time >= #{req.createdTimeStart}
+                AND c.eval_time >= #{req.createdTimeStart}
             </if>
             <if test="req.createdTimeEnd != null">
-                AND c.created_time <![CDATA[<=]]> #{req.createdTimeEnd}
+                AND c.eval_time <![CDATA[<=]]> #{req.createdTimeEnd}
             </if>
         </where>
-        ORDER BY c.created_time DESC
+        ORDER BY c.eval_time DESC
     </select>
 
     <!-- 根据委员会ID查询评标委员会详情 -->
     <select id="selectCommitteeDetailById" resultType="jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes">
         SELECT
-            c.committee_id AS committeeId,
-            c.tender_id AS tenderId,
-            t.tender_name AS tenderName,
-            c.committee_code AS committeeCode,
-            c.committee_name AS committeeName,
-            c.evaluation_method AS evaluationMethod,
-            c.evaluation_location AS evaluationLocation,
-            c.evaluation_start_time AS evaluationStartTime,
-            c.evaluation_end_time AS evaluationEndTime,
-            c.status AS status,
-            d.user_name AS evaluationDirectorName,
-            s.user_name AS supervisorName,
-            u.user_name AS createdByName,
-            c.created_time AS createdTime
-        FROM exp_bid_evaluation_committee c
+            <include refid="CommitteeSelectColumns"/>
+        FROM exp_tender_evaluation c
         LEFT JOIN exp_tender t ON c.tender_id = t.tender_id
-        LEFT JOIN exp_user d ON c.evaluation_director_id = d.user_id
-        LEFT JOIN exp_user s ON c.supervisor_id = s.user_id
-        LEFT JOIN exp_user u ON c.created_by = u.user_id
-        WHERE c.committee_id = #{committeeId}
+        WHERE c.eval_id = #{committeeId}
+    </select>
+
+    <select id="selectCommitteeByCode" resultType="jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes">
+        SELECT
+            <include refid="CommitteeSelectColumns"/>
+        FROM exp_tender_evaluation c
+        LEFT JOIN exp_tender t ON c.tender_id = t.tender_id
+        WHERE c.tender_id = #{tenderId}
+          AND CONCAT('ROUND-', c.round_no) = #{committeeCode}
+        ORDER BY c.eval_id DESC
+        LIMIT 1
     </select>
 
     <!-- 根据招标ID查询评标委员会列表 -->
     <select id="selectCommitteesByTenderId" resultType="jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes">
         SELECT
-            c.committee_id AS committeeId,
-            c.tender_id AS tenderId,
-            t.tender_name AS tenderName,
-            c.committee_code AS committeeCode,
-            c.committee_name AS committeeName,
-            c.evaluation_method AS evaluationMethod,
-            c.evaluation_location AS evaluationLocation,
-            c.evaluation_start_time AS evaluationStartTime,
-            c.evaluation_end_time AS evaluationEndTime,
-            c.status AS status,
-            d.user_name AS evaluationDirectorName,
-            s.user_name AS supervisorName,
-            u.user_name AS createdByName,
-            c.created_time AS createdTime
-        FROM exp_bid_evaluation_committee c
+            <include refid="CommitteeSelectColumns"/>
+        FROM exp_tender_evaluation c
         LEFT JOIN exp_tender t ON c.tender_id = t.tender_id
-        LEFT JOIN exp_user d ON c.evaluation_director_id = d.user_id
-        LEFT JOIN exp_user s ON c.supervisor_id = s.user_id
-        LEFT JOIN exp_user u ON c.created_by = u.user_id
         WHERE c.tender_id = #{tenderId}
-        ORDER BY c.created_time DESC
+        ORDER BY c.eval_time DESC
     </select>
 
-    <!-- 批量更新委员会状态 -->
+    <!-- 批量更新委员会状态（映射到标准表 result 字段） -->
     <update id="batchUpdateStatus">
-        UPDATE exp_bid_evaluation_committee
-        SET status = #{status}, updated_time = NOW()
-        WHERE committee_id IN
+        UPDATE exp_tender_evaluation
+        SET result = #{status}
+        WHERE eval_id IN
         <foreach item="committeeId" collection="committeeIds" open="(" separator="," close=")">
             #{committeeId}
         </foreach>
     </update>
+
+    <insert id="insertCommittee">
+        INSERT INTO exp_tender_evaluation (
+            tender_id,
+            bid_id,
+            round_no,
+            stage_code,
+            stage_name,
+            result,
+            evaluator_user_id,
+            eval_time,
+            remark
+        ) VALUES (
+            #{req.tenderId},
+            NULL,
+            #{roundNo},
+            #{req.evaluationMethod},
+            #{req.committeeName},
+            #{status},
+            #{evaluatorUserId},
+            #{evalTime},
+            #{req.remark}
+        )
+    </insert>
+
+    <update id="updateCommittee">
+        UPDATE exp_tender_evaluation
+        SET round_no = #{roundNo},
+            stage_code = #{req.evaluationMethod},
+            stage_name = #{req.committeeName},
+            result = #{status},
+            evaluator_user_id = #{req.evaluationDirectorId},
+            eval_time = #{evalTime},
+            remark = #{req.remark}
+        WHERE eval_id = #{committeeId}
+    </update>
+
+    <delete id="deleteCommittee">
+        DELETE FROM exp_tender_evaluation
+        WHERE eval_id = #{committeeId}
+    </delete>
 
 </mapper>

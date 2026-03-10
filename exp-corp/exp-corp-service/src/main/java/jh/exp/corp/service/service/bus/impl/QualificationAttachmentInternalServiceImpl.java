@@ -3,8 +3,10 @@ package jh.exp.corp.service.service.bus.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.common.core.exception.GatewayBizException;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import jh.exp.corp.core.constant.CorpErrorCode;
 import jh.exp.corp.core.entity.QualificationAttachment;
 import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.QualificationAttachmentDetailRes;
@@ -50,7 +52,7 @@ public class QualificationAttachmentInternalServiceImpl implements Qualification
     public QualificationAttachmentDetailRes detail(Long attachmentId) {
         QualificationAttachment entity = qualificationAttachmentMapper.selectById(attachmentId);
         if (entity == null) {
-            throw new RuntimeException("资质附件不存在");
+            throw new GatewayBizException(CorpErrorCode.ATTACHMENT_NOT_FOUND, "资质附件不存在");
         }
         QualificationAttachmentDetailRes res = new QualificationAttachmentDetailRes();
         BeanUtils.copyProperties(entity, res);
@@ -74,7 +76,7 @@ public class QualificationAttachmentInternalServiceImpl implements Qualification
     public QualificationAttachmentDetailRes update(UpdateQualificationAttachmentReq req) {
         QualificationAttachment old = qualificationAttachmentMapper.selectById(req.getAttachmentId());
         if (old == null) {
-            throw new RuntimeException("资质附件不存在");
+            throw new GatewayBizException(CorpErrorCode.ATTACHMENT_NOT_FOUND, "资质附件不存在");
         }
         BeanUtils.copyProperties(req, old);
         qualificationAttachmentMapper.updateById(old);
@@ -85,7 +87,7 @@ public class QualificationAttachmentInternalServiceImpl implements Qualification
     @Transactional
     public void delete(DeleteQualificationAttachmentReq req) {
         if (qualificationAttachmentMapper.selectById(req.getAttachmentId()) == null) {
-            throw new RuntimeException("资质附件不存在");
+            throw new GatewayBizException(CorpErrorCode.ATTACHMENT_NOT_FOUND, "资质附件不存在");
         }
         qualificationAttachmentMapper.deleteById(req.getAttachmentId());
     }

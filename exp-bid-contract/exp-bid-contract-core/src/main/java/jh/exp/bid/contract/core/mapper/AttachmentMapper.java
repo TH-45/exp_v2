@@ -1,21 +1,21 @@
 package jh.exp.bid.contract.core.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import jh.exp.bid.contract.core.entity.Attachment;
+import jh.exp.bid.contract.core.entity.req.CreateAttachmentReq;
 import jh.exp.bid.contract.core.entity.req.QueryAttachmentReq;
 import jh.exp.bid.contract.core.entity.res.AttachmentDetailRes;
 import jh.exp.bid.contract.core.entity.res.AttachmentListRes;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * 附件Mapper接口
  */
 @Mapper
-public interface AttachmentMapper extends BaseMapper<Attachment> {
+public interface AttachmentMapper {
 
     /**
      * 分页查询附件列表
@@ -97,4 +97,29 @@ public interface AttachmentMapper extends BaseMapper<Attachment> {
      * @return 影响行数
      */
     int updateOldVersionsToNotLatest(@Param("businessType") String businessType, @Param("businessId") Long businessId, @Param("fileName") String fileName);
+
+    /**
+     * 插入附件（统一接口路由到标准表）
+     */
+    int insertAttachment(@Param("req") CreateAttachmentReq req,
+                         @Param("uploadUserId") Long uploadUserId,
+                         @Param("uploadTime") LocalDateTime uploadTime);
+
+    /**
+     * 查询最新插入附件ID
+     */
+    Long selectLatestAttachmentId(@Param("businessType") String businessType,
+                                  @Param("businessId") Long businessId,
+                                  @Param("fileName") String fileName,
+                                  @Param("uploadUserId") Long uploadUserId);
+
+    /**
+     * 更新附件基础信息（标准表可维护字段）
+     */
+    int updateAttachment(@Param("attachmentId") Long attachmentId, @Param("req") CreateAttachmentReq req);
+
+    /**
+     * 按ID删除附件（按业务类型路由）
+     */
+    int deleteAttachmentById(@Param("attachmentId") Long attachmentId, @Param("businessType") String businessType);
 }

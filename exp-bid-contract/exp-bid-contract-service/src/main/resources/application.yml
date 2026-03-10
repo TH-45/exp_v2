@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: exp-bid-contract
+  servlet:
+    multipart:
+      # 附件上传大小限制（避免大文件上传时报 413/超限）
+      max-file-size: 200MB
+      max-request-size: 200MB
   jackson:
     default-property-inclusion: non_null
     time-zone: Asia/Shanghai

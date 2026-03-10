@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.bid.contract.core.mapper.EvaluationMemberMapper">
+
+    <!--
+      说明：
+      1) 仅查询/更新本域数据表 exp_bid_evaluation_member。
+      2) 跨服务信息（如专家姓名）由 service 层远程补齐，不在 XML 联查。
+    -->
+
+    <sql id="BaseColumns">
+        member_id,
+        committee_id,
+        expert_user_id,
+        expert_type,
+        committee_role,
+        is_chairman,
+        expert_title,
+        expert_field,
+        contact_phone,
+        contact_email,
+        is_present,
+        member_status,
+        join_time,
+        created_time,
+        updated_time,
+        remark
+    </sql>
+
+    <select id="selectMembersByCommitteeId" resultType="jh.exp.bid.contract.core.entity.BidEvaluationMember">
+        SELECT
+            <include refid="BaseColumns"/>
+        FROM exp_bid_evaluation_member
+        WHERE committee_id = #{committeeId}
+        ORDER BY member_id DESC
+    </select>
+
+    <select id="countByCommitteeAndExpert" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_bid_evaluation_member
+        WHERE committee_id = #{committeeId}
+          AND expert_user_id = #{expertUserId}
+        <if test="excludeMemberId != null">
+            AND member_id != #{excludeMemberId}
+        </if>
+    </select>
+
+    <delete id="batchDeleteByCommitteeId">
+        DELETE FROM exp_bid_evaluation_member
+        WHERE committee_id = #{committeeId}
+        <if test="memberIds != null and memberIds.size > 0">
+            AND member_id IN
+            <foreach item="memberId" collection="memberIds" open="(" separator="," close=")">
+                #{memberId}
+            </foreach>
+        </if>
+        <if test="memberIds == null or memberIds.size == 0">
+            AND 1 = 0
+        </if>
+    </delete>
+
+    <update id="updatePresentStatus">
+        UPDATE exp_bid_evaluation_member
+        SET is_present = #{isPresent},
+            member_status = CASE
+                                WHEN #{isPresent} = 1 THEN '已到场'
+                                ELSE '已离场'
+                            END,
+            updated_time = NOW()
+        WHERE member_id = #{memberId}
+    </update>
+
+</mapper>

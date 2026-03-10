@@ -2,228 +2,440 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="jh.exp.bid.contract.core.mapper.AttachmentMapper">
 
-    <!-- 分页查询附件列表 -->
+    <!--
+      说明：
+      1) 按数据标准统一使用 exp_tender_attachment / exp_bid_attachment。
+      2) 为保持统一接口，使用 UNION ALL 输出统一字段。
+      3) 标准表未提供的字段使用兼容降级默认值（如 file_status/security_level/download_count）。
+      4) 用户/部门/岗位名称禁止在 XML 跨服务联查，由 service 远程补齐。
+    -->
+
+    <sql id="AttachmentUnionData">
+        SELECT
+            ta.attachment_id,
+            'TENDER' AS business_type,
+            ta.tender_id AS business_id,
+            t.tender_name AS business_name,
+            ta.file_type,
+            NULL AS file_category,
+            ta.file_name,
+            ta.file_path,
+            ta.file_size,
+            SUBSTRING_INDEX(ta.file_name, '.', -1) AS file_format,
+            NULL AS file_md5,
+            ta.version_no,
+            1 AS is_latest,
+            ta.upload_user_id,
+            ta.upload_time,
+            0 AS download_count,
+            NULL AS last_download_time,
+            '正常' AS file_status,
+            '内部' AS security_level,
+            ta.upload_user_id AS created_by,
+            NULL AS created_dept_id,
+            NULL AS created_post_id,
+            ta.upload_time AS created_time,
+            ta.upload_time AS updated_time,
+            ta.remark
+        FROM exp_tender_attachment ta
+        LEFT JOIN exp_tender t ON ta.tender_id = t.tender_id
+        UNION ALL
+        SELECT
+            ba.attachment_id,
+            'BID' AS business_type,
+            ba.bid_id AS business_id,
+            b.bid_name AS business_name,
+            ba.file_type,
+            NULL AS file_category,
+            ba.file_name,
+            ba.file_path,
+            ba.file_size,
+            SUBSTRING_INDEX(ba.file_name, '.', -1) AS file_format,
+            NULL AS file_md5,
+            ba.version_no,
+            1 AS is_latest,
+            ba.upload_user_id,
+            ba.upload_time,
+            0 AS download_count,
+            NULL AS last_download_time,
+            '正常' AS file_status,
+            '内部' AS security_level,
+            ba.upload_user_id AS created_by,
+            NULL AS created_dept_id,
+            NULL AS created_post_id,
+            ba.upload_time AS created_time,
+            ba.upload_time AS updated_time,
+            ba.remark
+        FROM exp_bid_attachment ba
+        LEFT JOIN exp_bid b ON ba.bid_id = b.bid_id
+    </sql>
+
+    <!-- 分页查询附件列表（统一接口） -->
     <select id="selectAttachmentList" resultType="jh.exp.bid.contract.core.entity.res.AttachmentListRes">
         SELECT
-            a.attachment_id AS attachmentId,
-            a.business_type AS businessType,
-            a.business_id AS businessId,
-            CASE
-                WHEN a.business_type = 'TENDER' THEN t.tender_name
-                WHEN a.business_type = 'BID' THEN b.bid_name
-                ELSE '未知业务'
-            END AS businessName,
-            a.file_type AS fileType,
-            a.file_category AS fileCategory,
-            a.file_name AS fileName,
-            a.file_size AS fileSize,
-            a.file_format AS fileFormat,
-            a.version_no AS versionNo,
-            a.is_latest AS isLatest,
-            u.user_name AS uploadUserName,
-            a.upload_time AS uploadTime,
-            a.download_count AS downloadCount,
-            a.file_status AS fileStatus,
-            a.security_level AS securityLevel,
-            cu.user_name AS createdByName,
-            a.created_time AS createdTime
-        FROM exp_attachment a
-        LEFT JOIN exp_tender t ON a.business_type = 'TENDER' AND a.business_id = t.tender_id
-        LEFT JOIN exp_bid b ON a.business_type = 'BID' AND a.business_id = b.bid_id
-        LEFT JOIN exp_user u ON a.upload_user_id = u.user_id
-        LEFT JOIN exp_user cu ON a.created_by = cu.user_id
+            x.attachment_id AS attachmentId,
+            x.business_type AS businessType,
+            x.business_id AS businessId,
+            x.business_name AS businessName,
+            x.file_type AS fileType,
+            x.file_category AS fileCategory,
+            x.file_name AS fileName,
+            x.file_size AS fileSize,
+            x.file_format AS fileFormat,
+            x.version_no AS versionNo,
+            x.is_latest AS isLatest,
+            NULL AS uploadUserName,
+            x.upload_user_id AS uploadUserId,
+            x.upload_time AS uploadTime,
+            x.download_count AS downloadCount,
+            x.file_status AS fileStatus,
+            x.security_level AS securityLevel,
+            NULL AS createdByName,
+            x.created_by AS createdBy,
+            x.created_time AS createdTime
+        FROM (
+            <include refid="AttachmentUnionData"/>
+        ) x
         <where>
             <if test="req.businessType != null and req.businessType != ''">
-                AND a.business_type = #{req.businessType}
+                AND x.business_type = #{req.businessType}
             </if>
             <if test="req.businessId != null">
-                AND a.business_id = #{req.businessId}
+                AND x.business_id = #{req.businessId}
             </if>
             <if test="req.fileType != null and req.fileType != ''">
-                AND a.file_type = #{req.fileType}
+                AND x.file_type = #{req.fileType}
             </if>
             <if test="req.fileCategory != null and req.fileCategory != ''">
-                AND a.file_category = #{req.fileCategory}
+                AND 1 = 0
             </if>
             <if test="req.fileName != null and req.fileName != ''">
-                AND a.file_name LIKE CONCAT('%', #{req.fileName}, '%')
+                AND x.file_name LIKE CONCAT('%', #{req.fileName}, '%')
             </if>
             <if test="req.fileFormat != null and req.fileFormat != ''">
-                AND a.file_format = #{req.fileFormat}
+                AND x.file_format = #{req.fileFormat}
             </if>
             <if test="req.uploadUserId != null">
-                AND a.upload_user_id = #{req.uploadUserId}
+                AND x.upload_user_id = #{req.uploadUserId}
             </if>
             <if test="req.securityLevel != null and req.securityLevel != ''">
-                AND a.security_level = #{req.securityLevel}
+                AND x.security_level = #{req.securityLevel}
             </if>
             <if test="req.fileStatus != null and req.fileStatus != ''">
-                AND a.file_status = #{req.fileStatus}
+                AND x.file_status = #{req.fileStatus}
             </if>
             <if test="req.uploadTimeStart != null">
-                AND a.upload_time >= #{req.uploadTimeStart}
+                AND x.upload_time >= #{req.uploadTimeStart}
             </if>
             <if test="req.uploadTimeEnd != null">
-                AND a.upload_time <![CDATA[<=]]> #{req.uploadTimeEnd}
+                AND x.upload_time <![CDATA[<=]]> #{req.uploadTimeEnd}
             </if>
             <if test="req.createdBy != null">
-                AND a.created_by = #{req.createdBy}
+                AND x.created_by = #{req.createdBy}
             </if>
             <if test="req.createdTimeStart != null">
-                AND a.created_time >= #{req.createdTimeStart}
+                AND x.created_time >= #{req.createdTimeStart}
             </if>
             <if test="req.createdTimeEnd != null">
-                AND a.created_time <![CDATA[<=]]> #{req.createdTimeEnd}
+                AND x.created_time <![CDATA[<=]]> #{req.createdTimeEnd}
             </if>
         </where>
-        ORDER BY a.created_time DESC
+        ORDER BY x.created_time DESC
     </select>
 
-    <!-- 根据附件ID查询附件详情 -->
+    <!-- 根据附件ID查询附件详情（统一接口） -->
     <select id="selectAttachmentDetailById" resultType="jh.exp.bid.contract.core.entity.res.AttachmentDetailRes">
         SELECT
-            a.attachment_id AS attachmentId,
-            a.business_type AS businessType,
-            a.business_id AS businessId,
-            CASE
-                WHEN a.business_type = 'TENDER' THEN t.tender_name
-                WHEN a.business_type = 'BID' THEN b.bid_name
-                ELSE '未知业务'
-            END AS businessName,
-            a.file_type AS fileType,
-            a.file_category AS fileCategory,
-            a.file_name AS fileName,
-            a.file_path AS filePath,
-            a.file_size AS fileSize,
-            a.file_format AS fileFormat,
-            a.file_md5 AS fileMd5,
-            a.version_no AS versionNo,
-            a.is_latest AS isLatest,
-            a.upload_user_id AS uploadUserId,
-            uu.user_name AS uploadUserName,
-            ud.dept_name AS uploadDeptName,
-            a.upload_time AS uploadTime,
-            a.download_count AS downloadCount,
-            a.last_download_time AS lastDownloadTime,
-            a.file_status AS fileStatus,
-            a.security_level AS securityLevel,
-            a.created_by AS createdBy,
-            cu.user_name AS createdByName,
-            a.created_dept_id AS createdDeptId,
-            cd.dept_name AS createdDeptName,
-            a.created_post_id AS createdPostId,
-            cp.post_name AS createdPostName,
-            a.created_time AS createdTime,
-            a.updated_time AS updatedTime,
-            a.remark AS remark
-        FROM exp_attachment a
-        LEFT JOIN exp_tender t ON a.business_type = 'TENDER' AND a.business_id = t.tender_id
-        LEFT JOIN exp_bid b ON a.business_type = 'BID' AND a.business_id = b.bid_id
-        LEFT JOIN exp_user uu ON a.upload_user_id = uu.user_id
-        LEFT JOIN exp_dept ud ON uu.dept_id = ud.dept_id
-        LEFT JOIN exp_user cu ON a.created_by = cu.user_id
-        LEFT JOIN exp_dept cd ON a.created_dept_id = cd.dept_id
-        LEFT JOIN exp_post cp ON a.created_post_id = cp.post_id
-        WHERE a.attachment_id = #{attachmentId}
+            x.attachment_id AS attachmentId,
+            x.business_type AS businessType,
+            x.business_id AS businessId,
+            x.business_name AS businessName,
+            x.file_type AS fileType,
+            x.file_category AS fileCategory,
+            x.file_name AS fileName,
+            x.file_path AS filePath,
+            x.file_size AS fileSize,
+            x.file_format AS fileFormat,
+            x.file_md5 AS fileMd5,
+            x.version_no AS versionNo,
+            x.is_latest AS isLatest,
+            x.upload_user_id AS uploadUserId,
+            NULL AS uploadUserName,
+            NULL AS uploadDeptName,
+            x.upload_time AS uploadTime,
+            x.download_count AS downloadCount,
+            x.last_download_time AS lastDownloadTime,
+            x.file_status AS fileStatus,
+            x.security_level AS securityLevel,
+            x.created_by AS createdBy,
+            NULL AS createdByName,
+            x.created_dept_id AS createdDeptId,
+            NULL AS createdDeptName,
+            x.created_post_id AS createdPostId,
+            NULL AS createdPostName,
+            x.created_time AS createdTime,
+            x.updated_time AS updatedTime,
+            x.remark AS remark
+        FROM (
+            <include refid="AttachmentUnionData"/>
+        ) x
+        WHERE x.attachment_id = #{attachmentId}
+        LIMIT 1
     </select>
 
-    <!-- 根据业务ID查询附件列表 -->
+    <!-- 根据业务ID查询附件列表（统一接口） -->
     <select id="selectAttachmentsByBusiness" resultType="jh.exp.bid.contract.core.entity.res.AttachmentListRes">
         SELECT
-            a.attachment_id AS attachmentId,
-            a.business_type AS businessType,
-            a.business_id AS businessId,
-            CASE
-                WHEN a.business_type = 'TENDER' THEN t.tender_name
-                WHEN a.business_type = 'BID' THEN b.bid_name
-                ELSE '未知业务'
-            END AS businessName,
-            a.file_type AS fileType,
-            a.file_category AS fileCategory,
-            a.file_name AS fileName,
-            a.file_size AS fileSize,
-            a.file_format AS fileFormat,
-            a.version_no AS versionNo,
-            a.is_latest AS isLatest,
-            u.user_name AS uploadUserName,
-            a.upload_time AS uploadTime,
-            a.download_count AS downloadCount,
-            a.file_status AS fileStatus,
-            a.security_level AS securityLevel,
-            cu.user_name AS createdByName,
-            a.created_time AS createdTime
-        FROM exp_attachment a
-        LEFT JOIN exp_tender t ON a.business_type = 'TENDER' AND a.business_id = t.tender_id
-        LEFT JOIN exp_bid b ON a.business_type = 'BID' AND a.business_id = b.bid_id
-        LEFT JOIN exp_user u ON a.upload_user_id = u.user_id
-        LEFT JOIN exp_user cu ON a.created_by = cu.user_id
-        WHERE a.business_type = #{businessType}
-        AND a.business_id = #{businessId}
-        ORDER BY a.created_time DESC
+            x.attachment_id AS attachmentId,
+            x.business_type AS businessType,
+            x.business_id AS businessId,
+            x.business_name AS businessName,
+            x.file_type AS fileType,
+            x.file_category AS fileCategory,
+            x.file_name AS fileName,
+            x.file_size AS fileSize,
+            x.file_format AS fileFormat,
+            x.version_no AS versionNo,
+            x.is_latest AS isLatest,
+            NULL AS uploadUserName,
+            x.upload_user_id AS uploadUserId,
+            x.upload_time AS uploadTime,
+            x.download_count AS downloadCount,
+            x.file_status AS fileStatus,
+            x.security_level AS securityLevel,
+            NULL AS createdByName,
+            x.created_by AS createdBy,
+            x.created_time AS createdTime
+        FROM (
+            <include refid="AttachmentUnionData"/>
+        ) x
+        WHERE x.business_type = #{businessType}
+          AND x.business_id = #{businessId}
+        ORDER BY x.created_time DESC
     </select>
 
-    <!-- 检查文件是否已存在 -->
+    <!-- 检查文件是否已存在（标准表无 md5 字段，按文件名 + 业务维度兜底） -->
     <select id="countByFileNameAndMd5" resultType="int">
-        SELECT COUNT(1)
-        FROM exp_attachment
-        WHERE file_name = #{fileName}
-        AND file_md5 = #{fileMd5}
-        AND business_type = #{businessType}
-        AND business_id = #{businessId}
-        AND file_status = '正常'
+        SELECT COALESCE(SUM(cnt), 0) FROM (
+            SELECT COUNT(1) AS cnt
+            FROM exp_tender_attachment
+            WHERE #{businessType} = 'TENDER'
+              AND tender_id = #{businessId}
+              AND file_name = #{fileName}
+            UNION ALL
+            SELECT COUNT(1) AS cnt
+            FROM exp_bid_attachment
+            WHERE #{businessType} = 'BID'
+              AND bid_id = #{businessId}
+              AND file_name = #{fileName}
+        ) s
     </select>
 
-    <!-- 更新文件下载信息 -->
+    <!-- 更新文件下载信息（标准表无下载字段，保留空实现兼容调用） -->
     <update id="updateDownloadInfo">
-        UPDATE exp_attachment
-        SET download_count = download_count + 1,
-            last_download_time = NOW()
-        WHERE attachment_id = #{attachmentId}
+        UPDATE exp_bid_attachment
+        SET remark = remark
+        WHERE 1 = 0
     </update>
 
-    <!-- 批量更新文件状态 -->
+    <!-- 批量更新文件状态（标准表无状态字段，保留空实现兼容调用） -->
     <update id="batchUpdateFileStatus">
-        UPDATE exp_attachment
-        SET file_status = #{fileStatus}, updated_time = NOW()
-        WHERE attachment_id IN
-        <foreach item="attachmentId" collection="attachmentIds" open="(" separator="," close=")">
-            #{attachmentId}
-        </foreach>
+        UPDATE exp_bid_attachment
+        SET remark = remark
+        WHERE 1 = 0
     </update>
 
     <!-- 根据业务删除附件 -->
     <delete id="deleteByBusiness">
-        DELETE FROM exp_attachment
-        WHERE business_type = #{businessType}
-        AND business_id = #{businessId}
+        DELETE FROM
+        <choose>
+            <when test="businessType == 'TENDER'">
+                exp_tender_attachment
+            </when>
+            <when test="businessType == 'BID'">
+                exp_bid_attachment
+            </when>
+            <otherwise>
+                exp_bid_attachment
+            </otherwise>
+        </choose>
+        WHERE
+        <choose>
+            <when test="businessType == 'TENDER'">
+                tender_id = #{businessId}
+            </when>
+            <when test="businessType == 'BID'">
+                bid_id = #{businessId}
+            </when>
+            <otherwise>
+                1 = 0
+            </otherwise>
+        </choose>
     </delete>
 
     <!-- 获取文件大小统计 -->
     <select id="getTotalFileSize" resultType="java.lang.Long">
-        SELECT COALESCE(SUM(file_size), 0)
-        FROM exp_attachment
-        WHERE business_type = #{businessType}
-        AND business_id = #{businessId}
-        AND file_status = '正常'
+        SELECT COALESCE(SUM(s.file_size), 0)
+        FROM (
+            SELECT ta.file_size
+            FROM exp_tender_attachment ta
+            WHERE #{businessType} = 'TENDER'
+              AND ta.tender_id = #{businessId}
+            UNION ALL
+            SELECT ba.file_size
+            FROM exp_bid_attachment ba
+            WHERE #{businessType} = 'BID'
+              AND ba.bid_id = #{businessId}
+        ) s
     </select>
 
     <!-- 获取附件数量统计 -->
     <select id="getAttachmentCount" resultType="java.lang.Integer">
         SELECT COUNT(1)
-        FROM exp_attachment
-        WHERE business_type = #{businessType}
-        AND business_id = #{businessId}
-        AND file_status = '正常'
+        FROM (
+            SELECT ta.attachment_id
+            FROM exp_tender_attachment ta
+            WHERE #{businessType} = 'TENDER'
+              AND ta.tender_id = #{businessId}
+            UNION ALL
+            SELECT ba.attachment_id
+            FROM exp_bid_attachment ba
+            WHERE #{businessType} = 'BID'
+              AND ba.bid_id = #{businessId}
+        ) s
     </select>
 
-    <!-- 更新旧版本文件状态 -->
+    <!-- 更新旧版本文件状态（标准表无 is_latest 字段，保留空实现兼容调用） -->
     <update id="updateOldVersionsToNotLatest">
-        UPDATE exp_attachment
-        SET is_latest = 0, updated_time = NOW()
-        WHERE business_type = #{businessType}
-        AND business_id = #{businessId}
-        AND file_name = #{fileName}
-        AND is_latest = 1
+        UPDATE exp_bid_attachment
+        SET remark = remark
+        WHERE 1 = 0
     </update>
+
+    <insert id="insertAttachment">
+        <choose>
+            <when test="req.businessType == 'TENDER'">
+                INSERT INTO exp_tender_attachment (
+                    tender_id,
+                    file_type,
+                    file_name,
+                    file_path,
+                    file_size,
+                    version_no,
+                    upload_user_id,
+                    upload_time,
+                    remark
+                ) VALUES (
+                    #{req.businessId},
+                    #{req.fileType},
+                    #{req.fileName},
+                    #{req.filePath},
+                    #{req.fileSize},
+                    #{req.versionNo},
+                    #{uploadUserId},
+                    #{uploadTime},
+                    #{req.remark}
+                )
+            </when>
+            <when test="req.businessType == 'BID'">
+                INSERT INTO exp_bid_attachment (
+                    bid_id,
+                    file_type,
+                    file_name,
+                    file_path,
+                    file_size,
+                    version_no,
+                    upload_user_id,
+                    upload_time,
+                    remark
+                ) VALUES (
+                    #{req.businessId},
+                    #{req.fileType},
+                    #{req.fileName},
+                    #{req.filePath},
+                    #{req.fileSize},
+                    #{req.versionNo},
+                    #{uploadUserId},
+                    #{uploadTime},
+                    #{req.remark}
+                )
+            </when>
+            <otherwise>
+                SELECT 0
+            </otherwise>
+        </choose>
+    </insert>
+
+    <select id="selectLatestAttachmentId" resultType="java.lang.Long">
+        <choose>
+            <when test="businessType == 'TENDER'">
+                SELECT attachment_id
+                FROM exp_tender_attachment
+                WHERE tender_id = #{businessId}
+                  AND file_name = #{fileName}
+                  AND upload_user_id = #{uploadUserId}
+                ORDER BY attachment_id DESC
+                LIMIT 1
+            </when>
+            <when test="businessType == 'BID'">
+                SELECT attachment_id
+                FROM exp_bid_attachment
+                WHERE bid_id = #{businessId}
+                  AND file_name = #{fileName}
+                  AND upload_user_id = #{uploadUserId}
+                ORDER BY attachment_id DESC
+                LIMIT 1
+            </when>
+            <otherwise>
+                SELECT NULL
+            </otherwise>
+        </choose>
+    </select>
+
+    <update id="updateAttachment">
+        <choose>
+            <when test="req.businessType == 'TENDER'">
+                UPDATE exp_tender_attachment
+                SET file_type = #{req.fileType},
+                    file_name = #{req.fileName},
+                    file_path = #{req.filePath},
+                    file_size = #{req.fileSize},
+                    version_no = #{req.versionNo},
+                    remark = #{req.remark}
+                WHERE attachment_id = #{attachmentId}
+            </when>
+            <when test="req.businessType == 'BID'">
+                UPDATE exp_bid_attachment
+                SET file_type = #{req.fileType},
+                    file_name = #{req.fileName},
+                    file_path = #{req.filePath},
+                    file_size = #{req.fileSize},
+                    version_no = #{req.versionNo},
+                    remark = #{req.remark}
+                WHERE attachment_id = #{attachmentId}
+            </when>
+            <otherwise>
+                UPDATE exp_bid_attachment
+                SET remark = remark
+                WHERE 1 = 0
+            </otherwise>
+        </choose>
+    </update>
+
+    <delete id="deleteAttachmentById">
+        DELETE FROM
+        <choose>
+            <when test="businessType == 'TENDER'">
+                exp_tender_attachment
+            </when>
+            <when test="businessType == 'BID'">
+                exp_bid_attachment
+            </when>
+            <otherwise>
+                exp_bid_attachment
+            </otherwise>
+        </choose>
+        WHERE attachment_id = #{attachmentId}
+    </delete>
 
 </mapper>

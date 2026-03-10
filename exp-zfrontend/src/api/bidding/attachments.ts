@@ -50,6 +50,14 @@ export function uploadBiddingAttachment(file: File, biz: CreateAttachmentBizReq)
   });
 }
 
+export function deleteBiddingAttachment(attachmentId: number) {
+  return request.post<void, void>(`/exp/bid/attachment/delete?attachmentId=${attachmentId}`);
+}
+
+export function batchDeleteBiddingAttachment(attachmentIds: number[]) {
+  return request.post<void, void>('/exp/bid/attachment/batchDelete', attachmentIds);
+}
+
 export function downloadFile(attachmentId: number | string) {
   return `/api/exp/bid/attachment/downloadStream?attachmentId=${encodeURIComponent(String(attachmentId))}`;
 }

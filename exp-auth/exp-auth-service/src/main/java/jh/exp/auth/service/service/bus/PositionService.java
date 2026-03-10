@@ -13,6 +13,7 @@ import jh.exp.common.core.res.SimplePageRes;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public interface PositionService {
@@ -22,6 +23,9 @@ public interface PositionService {
 
     //根据ID查询岗位详情
     PositionDetailRes getPositionById(Long postId);
+
+    //根据ID批量查询岗位详情
+    Map<Long, PositionDetailRes> batchGetPositionByIds(List<Long> postIds);
 
     //创建岗位
     PositionDetailRes createPosition(CreatePositionReq req);

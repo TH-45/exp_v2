@@ -2,11 +2,11 @@ package jh.exp.bid.contract.service.service.bus.support;
 
 import jh.exp.bid.contract.core.constant.BidEvaluationFlowConstant;
 import jh.exp.bid.contract.core.entity.Bid;
-import jh.exp.bid.contract.core.entity.BidEvaluationCommittee;
 import jh.exp.bid.contract.core.entity.Tender;
 import jh.exp.bid.contract.core.mapper.BidMapper;
 import jh.exp.bid.contract.core.mapper.EvaluationCommitteeMapper;
 import jh.exp.bid.contract.core.mapper.TenderMapper;
+import jh.exp.bid.contract.core.entity.res.EvaluationCommitteeListRes;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.corp.client.api.CompanyClientService;
 import jh.exp.corp.core.entity.res.CompanyDetailRes;
@@ -45,7 +45,7 @@ public class EvaluationFlowEligibilityService {
      * 根据评委会校验流程资格。
      */
     public void ensureCommitteeEligible(Long committeeId) {
-        BidEvaluationCommittee committee = committeeMapper.selectById(committeeId);
+        EvaluationCommitteeListRes committee = committeeMapper.selectCommitteeDetailById(committeeId);
         if (committee == null) {
             throw new RuntimeException("评标委员会不存在");
         }

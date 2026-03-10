@@ -1,6 +1,8 @@
 server {
     listen       80;
     server_name  localhost;
+    # 上传体积限制（默认通常为 1m，附件上传易触发 413）
+    client_max_body_size 100m;
 
     ## 前端静态资源目录（npm run build 之后的 dist）
     ## 请将本项目打包生成的 dist 目录拷贝到下方 root 指定的路径

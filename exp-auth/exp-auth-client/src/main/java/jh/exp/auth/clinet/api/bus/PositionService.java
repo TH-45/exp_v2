@@ -7,11 +7,16 @@ import jh.exp.auth.core.entity.res.PositionDetailRes;
 import jh.exp.auth.core.entity.res.PositionListRes;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.stereotype.Service;
+import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PostExchange;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
+@HttpExchange("/position")
 public interface PositionService {
 
     //分页查询职位信息
@@ -19,6 +24,10 @@ public interface PositionService {
 
     //根据ID查询岗位详情
     PositionDetailRes getPositionById(Long postId);
+
+    //根据ID批量查询岗位详情
+    @PostExchange("/batch/detail")
+    Map<Long, PositionDetailRes> batchGetPositionByIds(@RequestBody List<Long> postIds);
 
     //创建岗位
     PositionDetailRes createPosition(CreatePositionReq req);

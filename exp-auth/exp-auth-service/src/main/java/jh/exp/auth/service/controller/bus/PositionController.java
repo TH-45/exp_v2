@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/position")
@@ -40,6 +41,15 @@ public class PositionController {
     @GetMapping("/detail")
     public ApiResponse<PositionDetailRes> detail(@RequestParam Long postId) {
         PositionDetailRes result = positionService.getPositionById(postId);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 根据ID批量查询岗位详情
+     */
+    @PostMapping("/batch/detail")
+    public ApiResponse<Map<Long, PositionDetailRes>> batchDetail(@RequestBody List<Long> postIds) {
+        Map<Long, PositionDetailRes> result = positionService.batchGetPositionByIds(postIds);
         return ApiResponse.success(result);
     }
 

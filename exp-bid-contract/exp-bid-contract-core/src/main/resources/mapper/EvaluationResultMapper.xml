@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.bid.contract.core.mapper.EvaluationResultMapper">
+
+    <!--
+      说明：
+      1) 仅查询/更新本域数据表 exp_bid_evaluation_result。
+      2) 跨服务信息（如供应商扩展信息）由 service 层远程补齐，不在 XML 联查。
+    -->
+
+    <sql id="BaseColumns">
+        result_id,
+        committee_id,
+        bid_id,
+        supplier_id,
+        supplier_name,
+        bid_code,
+        bid_name,
+        bid_total_amount,
+        currency,
+        technical_score,
+        business_score,
+        comprehensive_score,
+        final_score,
+        ranking,
+        is_recommended,
+        evaluation_conclusion,
+        evaluation_opinion,
+        result_status,
+        evaluation_completed_time,
+        created_time,
+        updated_time,
+        remark
+    </sql>
+
+    <select id="selectResultsByCommitteeId" resultType="jh.exp.bid.contract.core.entity.BidEvaluationResult">
+        SELECT
+            <include refid="BaseColumns"/>
+        FROM exp_bid_evaluation_result
+        WHERE committee_id = #{committeeId}
+        ORDER BY ranking ASC, result_id ASC
+    </select>
+
+    <select id="selectResultByBidId" resultType="jh.exp.bid.contract.core.entity.BidEvaluationResult">
+        SELECT
+            <include refid="BaseColumns"/>
+        FROM exp_bid_evaluation_result
+        WHERE bid_id = #{bidId}
+        ORDER BY result_id DESC
+        LIMIT 1
+    </select>
+
+    <delete id="deleteByCommitteeId">
+        DELETE FROM exp_bid_evaluation_result
+        WHERE committee_id = #{committeeId}
+    </delete>
+
+    <update id="updateRankingByCommitteeId">
+        UPDATE exp_bid_evaluation_result r
+        JOIN (
+            SELECT z.result_id, (@rn := @rn + 1) AS new_ranking
+            FROM (
+                SELECT result_id
+                FROM exp_bid_evaluation_result
+                WHERE committee_id = #{committeeId}
+                ORDER BY final_score DESC, updated_time ASC, result_id ASC
+            ) z,
+            (SELECT @rn := 0) init_rank
+        ) x ON r.result_id = x.result_id
+        SET r.ranking = x.new_ranking,
+            r.updated_time = NOW()
+        WHERE r.committee_id = #{committeeId}
+    </update>
+
+    <select id="selectHighestScoreByCommitteeId" resultType="jh.exp.bid.contract.core.entity.BidEvaluationResult">
+        SELECT
+            <include refid="BaseColumns"/>
+        FROM exp_bid_evaluation_result
+        WHERE committee_id = #{committeeId}
+        ORDER BY final_score DESC, updated_time ASC, result_id ASC
+        LIMIT 1
+    </select>
+
+</mapper>

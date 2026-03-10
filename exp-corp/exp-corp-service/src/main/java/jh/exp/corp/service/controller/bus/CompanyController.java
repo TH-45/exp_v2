@@ -33,7 +33,7 @@ public class CompanyController {
     }
 
     @PostMapping("/batchDetail")
-    public ApiResponse<Map<String,CompanyDetailRes>> batchDetail(@RequestBody List<Long> companyIds) {
+    public ApiResponse<Map<Long, CompanyDetailRes>> batchDetail(@RequestBody List<Long> companyIds) {
         return companyInternalService.batchDetail(companyIds);
     }
 

@@ -71,14 +71,16 @@
 <!--          <el-menu-item index="/corp-project">-->
 <!--            概览-->
 <!--          </el-menu-item>-->
-          <el-menu-item v-if="canAnnouncementView" index="/enterprise/announcements">
-            制度与公告
+
+
+          <el-menu-item v-if="canBasicInfoView" index="/enterprise/basic-info">
+            基础信息
           </el-menu-item>
           <el-menu-item v-if="canQualificationView" index="/enterprise/qualifications">
-            企业资质管理
+            证件资质
           </el-menu-item>
-          <el-menu-item v-if="canBasicInfoView" index="/enterprise/basic-info">
-            基础信息管理
+          <el-menu-item v-if="canAnnouncementView" index="/enterprise/announcements">
+            制度与公告
           </el-menu-item>
         </el-sub-menu>
 

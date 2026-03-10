@@ -75,6 +75,11 @@ public class AttachmentListRes {
     private String uploadUserName;
 
     /**
+     * 上传人ID
+     */
+    private Long uploadUserId;
+
+    /**
      * 上传时间
      */
     private LocalDateTime uploadTime;
@@ -98,6 +103,11 @@ public class AttachmentListRes {
      * 创建人姓名
      */
     private String createdByName;
+
+    /**
+     * 创建人ID
+     */
+    private Long createdBy;
 
     /**
      * 创建时间

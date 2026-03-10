@@ -26,5 +26,5 @@ public interface CompanyInternalService {
     /**
      * 批量或许公司详细信息，最多获取一次性获取50个公司详细信息 companyId主键
      */
-    ApiResponse<Map<String,CompanyDetailRes>> batchDetail(@RequestBody List<Long> companyIds);
+    ApiResponse<Map<Long, CompanyDetailRes>> batchDetail(@RequestBody List<Long> companyIds);
 }

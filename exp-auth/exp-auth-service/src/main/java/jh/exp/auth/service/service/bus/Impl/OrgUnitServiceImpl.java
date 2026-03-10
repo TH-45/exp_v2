@@ -29,7 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import jh.exp.auth.core.util.OrgTreeUtil;
 
@@ -97,6 +99,22 @@ public class OrgUnitServiceImpl implements OrgUnitService {
         }
         OrgUnitDetailRes result = new OrgUnitDetailRes();
         BeanUtils.copyProperties(orgUnit, result);
+        return result;
+    }
+
+    @Override
+    public Map<Long, OrgUnitDetailRes> batchGetOrgUnitByIds(List<Long> orgIds) {
+        Map<Long, OrgUnitDetailRes> result = new LinkedHashMap<>();
+        if (orgIds == null || orgIds.isEmpty()) {
+            return result;
+        }
+        List<OrgUnit> orgUnits = orgUnitMapper.selectList(new LambdaQueryWrapper<OrgUnit>()
+            .in(OrgUnit::getOrgId, orgIds));
+        for (OrgUnit orgUnit : orgUnits) {
+            OrgUnitDetailRes detailRes = new OrgUnitDetailRes();
+            BeanUtils.copyProperties(orgUnit, detailRes);
+            result.put(orgUnit.getOrgId(), detailRes);
+        }
         return result;
     }
 

@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="header">
-          <div class="title">企业资质管理</div>
+          <div class="title">资质管理</div>
           <div class="actions">
             <el-button
               type="primary"

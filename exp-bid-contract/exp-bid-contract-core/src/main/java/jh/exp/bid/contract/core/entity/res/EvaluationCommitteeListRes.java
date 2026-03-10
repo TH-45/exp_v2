@@ -70,14 +70,29 @@ public class EvaluationCommitteeListRes {
     private String evaluationDirectorName;
 
     /**
+     * 评标负责人ID
+     */
+    private Long evaluationDirectorId;
+
+    /**
      * 监督人姓名
      */
     private String supervisorName;
 
     /**
+     * 监督人ID
+     */
+    private Long supervisorId;
+
+    /**
      * 创建人姓名
      */
     private String createdByName;
+
+    /**
+     * 创建人ID
+     */
+    private Long createdBy;
 
     /**
      * 创建时间

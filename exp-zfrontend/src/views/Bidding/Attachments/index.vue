@@ -8,7 +8,15 @@
             <el-button type="primary" size="small" :disabled="!canManage" @click="openUpload">
               上传附件
             </el-button>
-            <el-button size="small" :disabled="true">批量下载</el-button>
+            <el-button
+              type="danger"
+              size="small"
+              :disabled="!canManage || selectedRows.length === 0"
+              :loading="deleting"
+              @click="handleBatchDelete"
+            >
+              批量删除
+            </el-button>
           </div>
         </div>
       </template>
@@ -27,7 +35,7 @@
         </el-form-item>
         <el-form-item label="类型">
           <el-select v-model="query.fileType" clearable style="width: 180px">
-            <el-option v-for="t in typeOptions" :key="t.value" :label="t.label" :value="t.value" />
+            <el-option v-for="t in fileTypeOptions" :key="t.value" :label="t.label" :value="t.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="文件名">
@@ -56,7 +64,7 @@
         </el-table-column>
         <el-table-column label="类型" min-width="160">
           <template #default="{ row }">
-            <el-tag :type="typeTagType(row.fileType)">{{ typeText(row.fileType) }}</el-tag>
+            <el-tag>{{ typeText(row.fileType) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="businessName" label="业务名称" min-width="220" />
@@ -66,7 +74,9 @@
           <template #default="{ row }">
             <el-button link size="small" @click="preview(row)" :disabled="true">预览</el-button>
             <el-button link size="small" @click="download(row)">下载</el-button>
-            <el-button link type="danger" size="small" :disabled="true">删除</el-button>
+            <el-button link type="danger" size="small" :disabled="!canManage || deleting" @click="handleDelete(row)">
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -105,7 +115,7 @@
           </el-form-item>
           <el-form-item label="文件类型" required>
             <el-select v-model="uploadForm.fileType" style="width: 100%">
-              <el-option v-for="t in uploadTypeOptions" :key="t.value" :label="t.label" :value="t.value" />
+              <el-option v-for="t in fileTypeOptions" :key="t.value" :label="t.label" :value="t.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="文件">
@@ -134,7 +144,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { UploadFilled } from '@element-plus/icons-vue';
 import type { UploadFile, UploadFiles } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
@@ -145,27 +155,19 @@ import AttachmentBusinessSelector, {
 import {
   queryBiddingAttachmentList,
   uploadBiddingAttachment,
+  deleteBiddingAttachment,
+  batchDeleteBiddingAttachment,
   downloadFile,
   type AttachmentVO,
   type AttachmentBusinessType,
 } from '@/api/bidding/attachments';
 
 const canManage = computed(() => hasPermission('bidding:attachments:manage'));
+type UploadBusinessType = 'TENDER' | 'BID';
 
 const businessTypeOptions: Array<{ label: string; value: AttachmentBusinessType }> = [
   { label: '招标', value: 'TENDER' },
   { label: '投标', value: 'BID' },
-];
-
-const typeOptions: Array<{ label: string; value: string }> = [
-  { label: '招标公告', value: 'TENDER_NOTICE' },
-  { label: '招标文件', value: 'TENDER_DOC' },
-  { label: '答疑/澄清', value: 'CLARIFICATION' },
-  { label: '补遗文件', value: 'ADDENDUM' },
-  { label: '技术标', value: 'TECHNICAL_BID' },
-  { label: '商务标', value: 'COMMERCIAL_BID' },
-  { label: '资格文件', value: 'QUALIFICATION' },
-  { label: '其他', value: 'OTHER' },
 ];
 
 function businessTypeText(t?: string) {
@@ -173,15 +175,7 @@ function businessTypeText(t?: string) {
 }
 
 function typeText(t?: string) {
-  return typeOptions.find((x) => x.value === t)?.label || t;
-}
-
-function typeTagType(t?: string) {
-  if (t === 'TENDER_DOC') return 'success';
-  if (t === 'CLARIFICATION') return 'warning';
-  if (t === 'TECHNICAL_BID' || t === 'COMMERCIAL_BID') return 'info';
-  if (t === 'ADDENDUM') return 'danger';
-  return '';
+  return fileTypeOptions.value.find((x) => x.value === t)?.label || t || '-';
 }
 
 const loading = ref(false);
@@ -215,7 +209,7 @@ async function fetchList() {
 }
 
 onMounted(() => {
-  fetchUploadTypeOptions();
+  fetchFileTypeOptions();
   fetchList();
 });
 
@@ -249,12 +243,57 @@ function handleSelectionChange(rows: AttachmentVO[]) {
 }
 
 function preview(_row: AttachmentVO) {
-  ElMessage.info('预览待接入（示例模式）');
+  ElMessage.info('预览功能待接入');
 }
 
 function download(row: AttachmentVO) {
   const url = downloadFile(row.attachmentId);
   window.open(url, '_blank');
+}
+
+async function handleDelete(row: AttachmentVO) {
+  try {
+    await ElMessageBox.confirm(`确定删除附件「${row.fileName || row.attachmentId}」吗？`, '删除确认', {
+      type: 'warning',
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+    });
+  } catch (_e) {
+    return;
+  }
+  deleting.value = true;
+  try {
+    await deleteBiddingAttachment(Number(row.attachmentId));
+    ElMessage.success('删除成功');
+    fetchList();
+  } finally {
+    deleting.value = false;
+  }
+}
+
+async function handleBatchDelete() {
+  const ids = selectedRows.value.map((x) => Number(x.attachmentId)).filter((x) => Number.isFinite(x));
+  if (ids.length === 0) {
+    ElMessage.warning('请先选择要删除的附件');
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(`确定批量删除选中的 ${ids.length} 个附件吗？`, '批量删除确认', {
+      type: 'warning',
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+    });
+  } catch (_e) {
+    return;
+  }
+  deleting.value = true;
+  try {
+    await batchDeleteBiddingAttachment(ids);
+    ElMessage.success('批量删除成功');
+    fetchList();
+  } finally {
+    deleting.value = false;
+  }
 }
 
 const uploadDialog = reactive({
@@ -263,18 +302,19 @@ const uploadDialog = reactive({
 const uploadFileList = ref<UploadFile[]>([]);
 const selectedFile = ref<File | null>(null);
 const uploading = ref(false);
-const uploadTypeOptions = ref<DictOption[]>([]);
+const deleting = ref(false);
+const fileTypeOptions = ref<DictOption[]>([]);
 const uploadForm = reactive({
-  businessType: 'TENDER' as AttachmentBusinessType,
+  businessType: 'TENDER' as UploadBusinessType,
   boundBusiness: undefined as AttachmentBusinessValue | undefined,
-  fileType: 'OTHER',
+  fileType: '',
 });
 
 function openUpload() {
   uploadDialog.visible = true;
   uploadForm.businessType = 'TENDER';
   uploadForm.boundBusiness = undefined;
-  uploadForm.fileType = 'OTHER';
+  uploadForm.fileType = fileTypeOptions.value[0]?.value || '';
   uploadFileList.value = [];
   selectedFile.value = null;
 }
@@ -283,16 +323,16 @@ function handleUploadBusinessTypeChange() {
   uploadForm.boundBusiness = undefined;
 }
 
-async function fetchUploadTypeOptions() {
+async function fetchFileTypeOptions() {
   try {
     const res = await listDictOptions('Bid_File_Type');
     const options = Array.isArray(res) ? res : Array.isArray((res as any)?.data) ? (res as any).data : [];
-    uploadTypeOptions.value = options;
+    fileTypeOptions.value = options;
     if (options.length > 0) {
       uploadForm.fileType = options[0].value;
     }
   } catch (_e) {
-    uploadTypeOptions.value = [];
+    fileTypeOptions.value = [];
   }
 }
 

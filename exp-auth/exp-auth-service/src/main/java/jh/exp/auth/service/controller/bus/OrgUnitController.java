@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/orgunit")
@@ -53,6 +54,15 @@ public class OrgUnitController {
     @GetMapping("/detail")
     public ApiResponse<OrgUnitDetailRes> detail(@RequestParam Long orgId) {
         OrgUnitDetailRes result = orgUnitService.getOrgUnitById(orgId);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 根据ID批量查询组织详情
+     */
+    @PostMapping("/batch/detail")
+    public ApiResponse<Map<Long, OrgUnitDetailRes>> batchDetail(@RequestBody List<Long> orgIds) {
+        Map<Long, OrgUnitDetailRes> result = orgUnitService.batchGetOrgUnitByIds(orgIds);
         return ApiResponse.success(result);
     }
 

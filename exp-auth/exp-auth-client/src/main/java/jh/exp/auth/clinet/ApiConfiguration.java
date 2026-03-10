@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import jh.exp.auth.clinet.api.bus.AccountService;
 import jh.exp.auth.clinet.api.bus.OrgUnitService;
 import jh.exp.auth.clinet.api.bus.PersonService;
+import jh.exp.auth.clinet.api.bus.PositionService;
 import jh.exp.auth.clinet.api.bus.RoleService;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.constant.ServiceContext;
@@ -63,6 +64,11 @@ public class ApiConfiguration {
     @Bean
     OrgUnitService orgUnitService(HttpServiceProxyFactory authHttpServiceProxyFactory) {
         return authHttpServiceProxyFactory.createClient(OrgUnitService.class);
+    }
+
+    @Bean
+    PositionService positionService(HttpServiceProxyFactory authHttpServiceProxyFactory) {
+        return authHttpServiceProxyFactory.createClient(PositionService.class);
     }
 
 }

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.bid.contract.core.mapper.AwardResultMapper">
+
+    <!--
+      说明：
+      1) 仅查询/更新本域数据表 exp_bid_award_result。
+      2) 跨服务信息（如人员名称、企业名称）由 service 层远程补齐，不在 XML 联查。
+    -->
+
+    <sql id="BaseColumns">
+        award_id,
+        tender_id,
+        winning_bid_id,
+        winning_supplier_id,
+        winning_supplier_name,
+        winning_amount,
+        currency,
+        award_notice_no,
+        award_notice_send_time,
+        contract_sign_deadline,
+        actual_contract_sign_time,
+        award_status,
+        decision_maker_id,
+        decision_time,
+        award_opinion,
+        need_retender,
+        retender_reason,
+        created_by,
+        created_dept_id,
+        created_post_id,
+        created_time,
+        updated_time,
+        remark
+    </sql>
+
+    <select id="selectAwardResultByTenderId" resultType="jh.exp.bid.contract.core.entity.BidAwardResult">
+        SELECT
+            <include refid="BaseColumns"/>
+        FROM exp_bid_award_result
+        WHERE tender_id = #{tenderId}
+        ORDER BY award_id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectAwardResultByBidId" resultType="jh.exp.bid.contract.core.entity.BidAwardResult">
+        SELECT
+            <include refid="BaseColumns"/>
+        FROM exp_bid_award_result
+        WHERE winning_bid_id = #{bidId}
+        ORDER BY award_id DESC
+        LIMIT 1
+    </select>
+
+    <select id="countByTenderId" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_bid_award_result
+        WHERE tender_id = #{tenderId}
+        <if test="excludeAwardId != null">
+            AND award_id != #{excludeAwardId}
+        </if>
+    </select>
+
+    <update id="updateAwardStatus">
+        UPDATE exp_bid_award_result
+        SET award_status = #{awardStatus},
+            updated_time = NOW()
+        WHERE award_id = #{awardId}
+    </update>
+
+</mapper>

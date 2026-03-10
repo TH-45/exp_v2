@@ -2,9 +2,12 @@ package jh.exp.bid.contract.service.service.bus.Impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.clinet.api.bus.OrgUnitService;
 import jh.exp.auth.clinet.api.bus.PersonService;
+import jh.exp.auth.clinet.api.bus.PositionService;
+import jh.exp.auth.core.entity.res.OrgUnitDetailRes;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
-import jh.exp.bid.contract.core.entity.Attachment;
+import jh.exp.auth.core.entity.res.PositionDetailRes;
 import jh.exp.bid.contract.core.entity.req.CreateAttachmentBizReq;
 import jh.exp.bid.contract.core.entity.req.CreateAttachmentReq;
 import jh.exp.bid.contract.core.entity.req.QueryAttachmentReq;
@@ -30,7 +33,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 附件服务实现类
@@ -41,6 +47,8 @@ public class AttachmentServiceImpl implements AttachmentService {
 
     private final AttachmentMapper attachmentMapper;
     private final PersonService personService;
+    private final OrgUnitService orgUnitService;
+    private final PositionService positionService;
     private final StorageService storageService;
 
     @Override
@@ -53,6 +61,7 @@ public class AttachmentServiceImpl implements AttachmentService {
         }
 
         IPage<AttachmentListRes> result = attachmentMapper.selectAttachmentList(page, queryParam);
+        fillAttachmentListNames(result.getRecords());
 
         SimplePageRes<AttachmentListRes> pageRes = new SimplePageRes<>();
         pageRes.setList(result.getRecords());
@@ -68,6 +77,7 @@ public class AttachmentServiceImpl implements AttachmentService {
         if (attachment == null) {
             throw new RuntimeException("附件不存在");
         }
+        fillAttachmentDetailNames(attachment);
         return attachment;
     }
 
@@ -79,8 +89,11 @@ public class AttachmentServiceImpl implements AttachmentService {
         }
         String originalFileName = StringUtils.hasText(file.getOriginalFilename()) ? file.getOriginalFilename() : "unknown.bin";
         ApiResponse<StorageUploadRes> storageRes;
+
         try {
-            storageRes = storageService.upload(new NamedByteArrayResource(file.getBytes(), originalFileName), buildStorageBizReq(biz));
+            NamedByteArrayResource namedByteArrayResource = new NamedByteArrayResource(file.getBytes(), originalFileName);
+            StorageUploadBizReq storageUploadBizReq = buildStorageBizReq(biz);
+            storageRes = storageService.upload(namedByteArrayResource, storageUploadBizReq);
         } catch (Exception e) {
             throw new RuntimeException("调用存储服务上传失败", e);
         }
@@ -117,43 +130,27 @@ public class AttachmentServiceImpl implements AttachmentService {
     private AttachmentDetailRes saveAttachment(CreateAttachmentReq req) {
         CurrentUser currentUser = CurrentUserHolder.get();
         Long personId = Long.valueOf(currentUser.getUserId());
-
-        PersonDetailRes personDetail = personService.getPersonById(personId);
-        if (personDetail == null) {
-            throw new RuntimeException("无法获取当前用户信息");
-        }
+        LocalDateTime uploadTime = LocalDateTime.now();
 
         // 如果是新版本文件，先将旧版本标记为非最新
         if (StringUtils.hasText(req.getVersionNo())) {
             attachmentMapper.updateOldVersionsToNotLatest(req.getBusinessType(), req.getBusinessId(), req.getFileName());
         }
 
-        Attachment attachment = new Attachment();
-        attachment.setBusinessType(req.getBusinessType());
-        attachment.setBusinessId(req.getBusinessId());
-        attachment.setFileType(req.getFileType());
-        attachment.setFileCategory(req.getFileCategory());
-        attachment.setFileName(req.getFileName());
-        attachment.setFilePath(req.getFilePath());
-        attachment.setFileSize(req.getFileSize());
-        attachment.setFileFormat(req.getFileFormat());
-        attachment.setFileMd5(req.getFileMd5());
-        attachment.setVersionNo(req.getVersionNo());
-        attachment.setIsLatest(1);
-        attachment.setUploadUserId(personId);
-        attachment.setUploadTime(LocalDateTime.now());
-        attachment.setDownloadCount(0);
-        attachment.setFileStatus("正常");
-        attachment.setSecurityLevel(StringUtils.hasText(req.getSecurityLevel()) ? req.getSecurityLevel() : "内部");
-        attachment.setRemark(req.getRemark());
-        attachment.setCreatedTime(LocalDateTime.now());
-        attachment.setUpdatedTime(LocalDateTime.now());
-        attachment.setCreatedBy(personId);
-        attachment.setCreatedDeptId(personDetail.getOrgId());
-        attachment.setCreatedPostId(personDetail.getPostId());
-
-        attachmentMapper.insert(attachment);
-        return getAttachmentById(attachment.getAttachmentId());
+        int inserted = attachmentMapper.insertAttachment(req, personId, uploadTime);
+        if (inserted <= 0) {
+            throw new RuntimeException("保存附件失败");
+        }
+        Long attachmentId = attachmentMapper.selectLatestAttachmentId(
+            req.getBusinessType(),
+            req.getBusinessId(),
+            req.getFileName(),
+            personId
+        );
+        if (attachmentId == null) {
+            throw new RuntimeException("附件保存成功但回查失败");
+        }
+        return getAttachmentById(attachmentId);
     }
 
     @Override
@@ -175,61 +172,49 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Override
     @Transactional
     public AttachmentDetailRes updateAttachment(Long attachmentId, CreateAttachmentReq req) {
-        Attachment existingAttachment = attachmentMapper.selectById(attachmentId);
-        if (existingAttachment == null) {
-            throw new RuntimeException("附件不存在");
+        AttachmentDetailRes existingAttachment = getAttachmentById(attachmentId);
+        if (!StringUtils.hasText(req.getBusinessType())) {
+            req.setBusinessType(existingAttachment.getBusinessType());
+        }
+        if (req.getBusinessId() == null) {
+            req.setBusinessId(existingAttachment.getBusinessId());
         }
 
-        // 检查文件名和MD5是否与其他文件冲突
+        // 标准表不支持 MD5 去重，按业务维度+文件名兜底校验
         if (checkFileExists(req.getFileName(), req.getFileMd5(), req.getBusinessType(), req.getBusinessId())) {
-            Attachment conflictAttachment = attachmentMapper.selectOne(
-                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Attachment>()
-                    .eq("file_name", req.getFileName())
-                    .eq("file_md5", req.getFileMd5())
-                    .eq("business_type", req.getBusinessType())
-                    .eq("business_id", req.getBusinessId())
-                    .ne("attachment_id", attachmentId)
-            );
-            if (conflictAttachment != null) {
+            if (!req.getFileName().equals(existingAttachment.getFileName())) {
                 throw new RuntimeException("相同文件已存在");
             }
         }
 
-        Attachment attachment = new Attachment();
-        attachment.setAttachmentId(attachmentId);
-        attachment.setFileType(req.getFileType());
-        attachment.setFileCategory(req.getFileCategory());
-        attachment.setFileName(req.getFileName());
-        attachment.setFilePath(req.getFilePath());
-        attachment.setFileSize(req.getFileSize());
-        attachment.setFileFormat(req.getFileFormat());
-        attachment.setFileMd5(req.getFileMd5());
-        attachment.setVersionNo(req.getVersionNo());
-        attachment.setSecurityLevel(req.getSecurityLevel());
-        attachment.setRemark(req.getRemark());
-        attachment.setUpdatedTime(LocalDateTime.now());
-
-        attachmentMapper.updateById(attachment);
+        int updated = attachmentMapper.updateAttachment(attachmentId, req);
+        if (updated <= 0) {
+            throw new RuntimeException("更新附件失败");
+        }
         return getAttachmentById(attachmentId);
     }
 
     @Override
     @Transactional
     public void deleteAttachment(Long attachmentId) {
-        Attachment attachment = attachmentMapper.selectById(attachmentId);
-        if (attachment == null) {
-            throw new RuntimeException("附件不存在");
-        }
+        AttachmentDetailRes attachment = getAttachmentById(attachmentId);
+        //检查存储的地方是否存在该文件
+
+
+
         if (StringUtils.hasText(attachment.getFilePath())) {
-            StorageDeleteReq deleteReq = new StorageDeleteReq();
-            deleteReq.setObjectKey(attachment.getFilePath());
-            storageService.delete(deleteReq);
+            Boolean flag = storageService.exist(attachment.getFilePath()).getData();
+            if (flag) {
+                StorageDeleteReq deleteReq = new StorageDeleteReq();
+                deleteReq.setObjectKey(attachment.getFilePath());
+                storageService.delete(deleteReq);
+            }
+
+
         }
 
-        // 逻辑删除：更新状态为已删除
-        attachment.setFileStatus("已删除");
-        attachment.setUpdatedTime(LocalDateTime.now());
-        attachmentMapper.updateById(attachment);
+        // 标准表无逻辑删除状态字段，按ID物理删除
+        attachmentMapper.deleteAttachmentById(attachmentId, attachment.getBusinessType());
     }
 
     @Override
@@ -238,42 +223,29 @@ public class AttachmentServiceImpl implements AttachmentService {
         if (attachmentIds == null || attachmentIds.isEmpty()) {
             return;
         }
-        List<Attachment> attachments = attachmentMapper.selectBatchIds(attachmentIds);
-        for (Attachment attachment : attachments) {
-            if (attachment != null && StringUtils.hasText(attachment.getFilePath())) {
-                StorageDeleteReq deleteReq = new StorageDeleteReq();
-                deleteReq.setObjectKey(attachment.getFilePath());
-                storageService.delete(deleteReq);
-            }
+        for (Long attachmentId : attachmentIds) {
+            deleteAttachment(attachmentId);
         }
-        attachmentMapper.batchUpdateFileStatus(attachmentIds, "已删除");
     }
 
     @Override
     @Transactional
     public AttachmentDetailRes updateFileStatus(Long attachmentId, String fileStatus) {
-        attachmentMapper.updateDownloadInfo(attachmentId); // 如果是下载，更新下载信息
-        Attachment attachment = attachmentMapper.selectById(attachmentId);
-        if (attachment != null) {
-            attachment.setFileStatus(fileStatus);
-            attachment.setUpdatedTime(LocalDateTime.now());
-            attachmentMapper.updateById(attachment);
-        }
+        // 标准表无文件状态字段，保留兼容返回
         return getAttachmentById(attachmentId);
     }
 
     @Override
     @Transactional
     public void batchUpdateFileStatus(List<Long> attachmentIds, String fileStatus) {
-        if (attachmentIds == null || attachmentIds.isEmpty()) {
-            return;
-        }
-        attachmentMapper.batchUpdateFileStatus(attachmentIds, fileStatus);
+        // 标准表无文件状态字段，保留空实现
     }
 
     @Override
     public List<AttachmentListRes> getAttachmentsByBusiness(String businessType, Long businessId) {
-        return attachmentMapper.selectAttachmentsByBusiness(businessType, businessId);
+        List<AttachmentListRes> list = attachmentMapper.selectAttachmentsByBusiness(businessType, businessId);
+        fillAttachmentListNames(list);
+        return list;
     }
 
     @Override
@@ -323,6 +295,82 @@ public class AttachmentServiceImpl implements AttachmentService {
             return null;
         }
         return fileName.substring(fileName.lastIndexOf('.') + 1);
+    }
+
+    /**
+     * 姓名信息由服务层批量远程补齐，避免 XML 跨服务联查。
+     */
+    private void fillAttachmentListNames(List<AttachmentListRes> list) {
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        Set<Long> personIds = new HashSet<>();
+        for (AttachmentListRes row : list) {
+            if (row.getUploadUserId() != null) {
+                personIds.add(row.getUploadUserId());
+            }
+            if (row.getCreatedBy() != null) {
+                personIds.add(row.getCreatedBy());
+            }
+        }
+        if (personIds.isEmpty()) {
+            return;
+        }
+        Map<Long, PersonDetailRes> personMap = personService.batchGetPersonByIds(new ArrayList<>(personIds));
+        if (personMap == null || personMap.isEmpty()) {
+            return;
+        }
+        for (AttachmentListRes row : list) {
+            PersonDetailRes uploadPerson = personMap.get(row.getUploadUserId());
+            if (uploadPerson != null) {
+                row.setUploadUserName(uploadPerson.getPersonName());
+            }
+            PersonDetailRes createdPerson = personMap.get(row.getCreatedBy());
+            if (createdPerson != null) {
+                row.setCreatedByName(createdPerson.getPersonName());
+            }
+        }
+    }
+
+    /**
+     * 详情中的人员/组织/岗位名称由服务层远程补齐。
+     */
+    private void fillAttachmentDetailNames(AttachmentDetailRes detail) {
+        if (detail == null) {
+            return;
+        }
+        Set<Long> personIds = new HashSet<>();
+        if (detail.getUploadUserId() != null) {
+            personIds.add(detail.getUploadUserId());
+        }
+        if (detail.getCreatedBy() != null) {
+            personIds.add(detail.getCreatedBy());
+        }
+        if (!personIds.isEmpty()) {
+            Map<Long, PersonDetailRes> personMap = personService.batchGetPersonByIds(new ArrayList<>(personIds));
+            if (personMap != null) {
+                PersonDetailRes uploadPerson = personMap.get(detail.getUploadUserId());
+                if (uploadPerson != null) {
+                    detail.setUploadUserName(uploadPerson.getPersonName());
+                }
+                PersonDetailRes createdPerson = personMap.get(detail.getCreatedBy());
+                if (createdPerson != null) {
+                    detail.setCreatedByName(createdPerson.getPersonName());
+                }
+            }
+        }
+        if (detail.getCreatedDeptId() != null) {
+            Map<Long, OrgUnitDetailRes> orgMap = orgUnitService.batchGetOrgUnitByIds(List.of(detail.getCreatedDeptId()));
+            if (orgMap != null && orgMap.containsKey(detail.getCreatedDeptId())) {
+                detail.setCreatedDeptName(orgMap.get(detail.getCreatedDeptId()).getOrgName());
+            }
+        }
+        if (detail.getCreatedPostId() != null) {
+            Map<Long, PositionDetailRes> postMap = positionService.batchGetPositionByIds(List.of(detail.getCreatedPostId()));
+            if (postMap != null && postMap.containsKey(detail.getCreatedPostId())) {
+                detail.setCreatedPostName(postMap.get(detail.getCreatedPostId()).getPostName());
+            }
+        }
     }
 
     private static class NamedByteArrayResource extends ByteArrayResource {

@@ -3,8 +3,10 @@ package jh.exp.corp.service.service.bus.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.common.core.exception.GatewayBizException;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import jh.exp.corp.core.constant.CorpErrorCode;
 import jh.exp.corp.core.entity.Qualification;
 import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.QualificationDetailRes;
@@ -52,7 +54,7 @@ public class QualificationInternalServiceImpl implements QualificationInternalSe
     public QualificationDetailRes detail(Long qualificationId) {
         Qualification entity = qualificationMapper.selectById(qualificationId);
         if (entity == null) {
-            throw new RuntimeException("资质不存在");
+            throw new GatewayBizException(CorpErrorCode.QUALIFICATION_NOT_FOUND, "资质不存在");
         }
         QualificationDetailRes res = new QualificationDetailRes();
         BeanUtils.copyProperties(entity, res);
@@ -75,7 +77,7 @@ public class QualificationInternalServiceImpl implements QualificationInternalSe
     public QualificationDetailRes update(UpdateQualificationReq req) {
         Qualification old = qualificationMapper.selectById(req.getQualificationId());
         if (old == null) {
-            throw new RuntimeException("资质不存在");
+            throw new GatewayBizException(CorpErrorCode.QUALIFICATION_NOT_FOUND, "资质不存在");
         }
         BeanUtils.copyProperties(req, old);
         old.setUpdatedTime(LocalDateTime.now());
@@ -87,7 +89,7 @@ public class QualificationInternalServiceImpl implements QualificationInternalSe
     @Transactional
     public void delete(DeleteQualificationReq req) {
         if (qualificationMapper.selectById(req.getQualificationId()) == null) {
-            throw new RuntimeException("资质不存在");
+            throw new GatewayBizException(CorpErrorCode.QUALIFICATION_NOT_FOUND, "资质不存在");
         }
         qualificationMapper.deleteById(req.getQualificationId());
     }

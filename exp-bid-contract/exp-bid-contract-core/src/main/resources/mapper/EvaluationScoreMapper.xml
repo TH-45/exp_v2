@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.bid.contract.core.mapper.EvaluationScoreMapper">
+
+    <!--
+      说明：
+      1) 仅查询/更新本域数据表 exp_bid_evaluation_score。
+      2) 跨服务信息由 service 层远程补齐，不在 XML 联查。
+    -->
+
+    <sql id="BaseColumns">
+        score_id,
+        committee_id,
+        bid_id,
+        expert_user_id,
+        score_type,
+        score_item,
+        score_value,
+        weight_percentage,
+        weighted_score,
+        score_comment,
+        score_time,
+        score_status,
+        created_time,
+        updated_time,
+        remark
+    </sql>
+
+    <select id="selectScoresByCommitteeAndBid" resultType="jh.exp.bid.contract.core.entity.BidEvaluationScore">
+        SELECT
+            <include refid="BaseColumns"/>
+        FROM exp_bid_evaluation_score
+        WHERE committee_id = #{committeeId}
+          AND bid_id = #{bidId}
+        ORDER BY score_time DESC, score_id DESC
+    </select>
+
+    <select id="selectScoresByCommitteeId" resultType="jh.exp.bid.contract.core.entity.BidEvaluationScore">
+        SELECT
+            <include refid="BaseColumns"/>
+        FROM exp_bid_evaluation_score
+        WHERE committee_id = #{committeeId}
+        ORDER BY score_time DESC, score_id DESC
+    </select>
+
+    <select id="calculateAverageScore" resultType="java.math.BigDecimal">
+        SELECT COALESCE(ROUND(AVG(score_value), 2), 0)
+        FROM exp_bid_evaluation_score
+        WHERE committee_id = #{committeeId}
+          AND bid_id = #{bidId}
+          AND score_type = #{scoreType}
+    </select>
+
+    <update id="batchUpdateScoreStatus">
+        UPDATE exp_bid_evaluation_score
+        SET score_status = #{scoreStatus},
+            updated_time = NOW()
+        WHERE committee_id = #{committeeId}
+          AND bid_id = #{bidId}
+          AND expert_user_id = #{expertUserId}
+    </update>
+
+    <delete id="deleteByCommitteeId">
+        DELETE FROM exp_bid_evaluation_score
+        WHERE committee_id = #{committeeId}
+    </delete>
+
+</mapper>

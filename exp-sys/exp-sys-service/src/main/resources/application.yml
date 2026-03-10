@@ -1,9 +1,17 @@
 server:
   port: 8081
+  tomcat:
+    # 默认表单 POST 解析上限约 2MB，multipart 场景可能触发 413
+    max-http-form-post-size: 500MB
 
 spring:
   application:
     name: exp-sys
+  servlet:
+    multipart:
+      # 与调用方保持一致，避免服务间转发时在存储服务侧被拦截
+      max-file-size: 500MB
+      max-request-size: 500MB
   jackson:
     default-property-inclusion: non_null
     time-zone: Asia/Shanghai

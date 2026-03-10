@@ -281,7 +281,7 @@ const routes: RouteRecordRaw[] = [
         name: 'CorpInfoQualifications',
         component: () => import('@/views/enterprise/QualificationManagement.vue'),
         meta: {
-          title: '企业资质管理',
+          title: '资质管理',
           icon: 'Medal',
           perms: ['corp:qualification:view'],
         },

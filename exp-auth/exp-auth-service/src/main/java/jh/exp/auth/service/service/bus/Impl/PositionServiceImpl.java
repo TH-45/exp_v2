@@ -11,7 +11,6 @@ import jh.exp.auth.core.entity.OrgPostRel;
 import jh.exp.auth.core.entity.OrgUnit;
 import jh.exp.auth.core.entity.Position;
 import jh.exp.auth.core.entity.req.*;
-import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.auth.core.entity.res.PositionDetailRes;
 import jh.exp.auth.core.entity.res.PositionListRes;
 import jh.exp.auth.core.mapper.OrgUnitMapper;
@@ -40,6 +39,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -115,6 +115,22 @@ public class PositionServiceImpl implements PositionService {
         }
 
         return res;
+    }
+
+    @Override
+    public Map<Long, PositionDetailRes> batchGetPositionByIds(List<Long> postIds) {
+        Map<Long, PositionDetailRes> result = new LinkedHashMap<>();
+        if (postIds == null || postIds.isEmpty()) {
+            return result;
+        }
+        List<Position> positions = positionMapper.selectList(new LambdaQueryWrapper<Position>()
+            .in(Position::getPostId, postIds));
+        for (Position position : positions) {
+            PositionDetailRes res = new PositionDetailRes();
+            BeanUtils.copyProperties(position, res);
+            result.put(position.getPostId(), res);
+        }
+        return result;
     }
 
     @Override
@@ -449,7 +465,8 @@ public class PositionServiceImpl implements PositionService {
         if (orgIds.isEmpty()) {
             return targetOrg.getOrgName();
         }
-        List<OrgUnit> orgUnits = orgUnitMapper.selectBatchIds(orgIds);
+        List<OrgUnit> orgUnits = orgUnitMapper.selectList(new LambdaQueryWrapper<OrgUnit>()
+                .in(OrgUnit::getOrgId, orgIds));
         Map<Long, String> nameMap = new HashMap<>();
         for (OrgUnit unit : orgUnits) {
             nameMap.put(unit.getOrgId(), unit.getOrgName());

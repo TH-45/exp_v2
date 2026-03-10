@@ -12,6 +12,7 @@ import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 
 import java.util.List;
+import java.util.Map;
 
 public interface OrgUnitService {
 
@@ -29,6 +30,11 @@ public interface OrgUnitService {
      * 根据ID查询组织详情
      */
     OrgUnitDetailRes getOrgUnitById(Long orgId);
+
+    /**
+     * 根据ID批量查询组织详情
+     */
+    Map<Long, OrgUnitDetailRes> batchGetOrgUnitByIds(List<Long> orgIds);
 
     /**
      * 创建组织

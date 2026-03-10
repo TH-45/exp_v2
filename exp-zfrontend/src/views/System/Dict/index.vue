@@ -220,6 +220,7 @@
             <el-form-item>
               <el-button type="primary" @click="handleItemSearch">查询</el-button>
               <el-button @click="handleItemReset">重置</el-button>
+              <el-button :loading="copying" :disabled="!itemQuery.dictCode" @click="handleCopyCodes">复制编号</el-button>
             </el-form-item>
           </el-form>
 
@@ -348,6 +349,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
@@ -369,6 +371,8 @@ import {
 } from '@/api/system/dict';
 
 const activeTab = ref<'type' | 'item'>('type');
+const route = useRoute();
+const router = useRouter();
 
 const statusOptions = [
   { label: '启用', value: 'ENABLED' as DictStatus },
@@ -378,6 +382,7 @@ const statusOptions = [
 const typeLoading = ref(false);
 const itemLoading = ref(false);
 const saving = ref(false);
+const copying = ref(false);
 
 const typeQuery = reactive({
   page: 1,
@@ -508,33 +513,21 @@ const mockItems: Record<string, DictItem[]> = {
   ],
 };
 
-// 仅允许通过“设置字典项”或双击类型进入字典项 Tab
-const allowEnterItem = ref(false);
+const TAB_QUERY_KEY = 'tab';
+const DICT_CODE_QUERY_KEY = 'dictCode';
 
 onMounted(() => {
   fetchTypeList();
-  // fetchTypeOptions();
+  fetchTypeOptions();
 });
 
 watch(
-  activeTab,
-  (next) => {
-    if (next === 'item') {
-      allowEnterItem.value = false;
-      if (!typeOptions.value.length) fetchTypeOptions();
-      if (itemQuery.dictCode) fetchItemList();
-    }
+  () => [route.query[TAB_QUERY_KEY], route.query[DICT_CODE_QUERY_KEY]],
+  () => {
+    void syncTabByRouteQuery();
   },
-  { immediate: false },
+  { immediate: true },
 );
-
-// function handleTabBeforeLeave(nextName: string | number) {
-//   if (nextName === 'item' && !allowEnterItem.value) {
-//     ElMessage.warning('请通过“设置字典项”或双击字典类型进入');
-//     return false;
-//   }
-//   return true;
-// }
 
 function statusText(status?: DictStatus) {
   return status === 'DISABLED' ? '停用' : '启用';
@@ -700,8 +693,9 @@ function handleItemSizeChange(size: number) {
 function handleItemTypeChange() {
   itemQuery.page = 1;
   if (itemQuery.dictCode) {
-    fetchItemList();
+    replaceItemRouteQuery(itemQuery.dictCode);
   } else {
+    replaceItemRouteQuery();
     itemTableData.value = [];
     itemTotal.value = 0;
   }
@@ -740,13 +734,137 @@ function openTypeEdit(row: DictType) {
 
 function enterItemByRow(row?: DictType) {
   if (!row?.dictCode) return;
-  itemQuery.dictCode = row.dictCode;
-  itemQuery.keyword = '';
-  itemQuery.status = undefined;
-  itemQuery.page = 1;
-  allowEnterItem.value = true;
+  pushItemRouteQuery(row.dictCode);
+}
+
+function buildItemRouteQuery(dictCode?: string) {
+  const query = { ...route.query } as Record<string, unknown>;
+  query[TAB_QUERY_KEY] = 'item';
+  if (dictCode) {
+    query[DICT_CODE_QUERY_KEY] = dictCode;
+  } else {
+    delete query[DICT_CODE_QUERY_KEY];
+  }
+  return query;
+}
+
+function pushItemRouteQuery(dictCode: string) {
+  router.push({
+    path: route.path,
+    query: buildItemRouteQuery(dictCode),
+  });
+}
+
+function replaceItemRouteQuery(dictCode?: string) {
+  router.replace({
+    path: route.path,
+    query: buildItemRouteQuery(dictCode),
+  });
+}
+
+async function syncTabByRouteQuery() {
+  const tabQuery = route.query[TAB_QUERY_KEY];
+  const dictCodeQuery = route.query[DICT_CODE_QUERY_KEY];
+  const tab = tabQuery === 'item' ? 'item' : 'type';
+  const dictCode = typeof dictCodeQuery === 'string' ? dictCodeQuery : '';
+
+  if (tab === 'type') {
+    activeTab.value = 'type';
+    return;
+  }
+
   activeTab.value = 'item';
+  if (!typeOptions.value.length) {
+    await fetchTypeOptions();
+  }
+
+  if (itemQuery.dictCode !== dictCode) {
+    itemQuery.dictCode = dictCode;
+    itemQuery.keyword = '';
+    itemQuery.status = undefined;
+    itemQuery.page = 1;
+  }
+
+  if (!dictCode) {
+    itemTableData.value = [];
+    itemTotal.value = 0;
+    return;
+  }
   fetchItemList();
+}
+
+function fallbackCopy(text: string) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  const copied = document.execCommand('copy');
+  document.body.removeChild(textarea);
+  if (!copied) {
+    throw new Error('copy failed');
+  }
+}
+
+async function copyToClipboard(text: string) {
+  if (navigator?.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  fallbackCopy(text);
+}
+
+async function listAllDictItems(dictCode: string) {
+  const pageSize = 200;
+  let page = 1;
+  const all: DictItem[] = [];
+
+  while (page <= 20) {
+    const res = await listDictItems({ dictCode, page, pageSize });
+    const { list, total } = normalizePage(res);
+    all.push(...list);
+    if (!list.length || all.length >= total) break;
+    page += 1;
+  }
+  return all;
+}
+
+function formatCopyContent(dictCode: string, dictName: string, dictItems: DictItem[]) {
+  const lines = [
+    `字典类型：${dictCode} ${dictName}`,
+    '字典项：',
+    ...dictItems.map((item) => `- ${item.itemCode || ''} ${item.itemLabel || ''}`.trim()),
+  ];
+  if (!dictItems.length) {
+    lines.push('- （无字典项）');
+  }
+  return lines.join('\n');
+}
+
+async function handleCopyCodes() {
+  if (!itemQuery.dictCode) {
+    ElMessage.warning('请先选择字典类型');
+    return;
+  }
+  copying.value = true;
+  try {
+    let dictItems: DictItem[] = [];
+    try {
+      dictItems = await listAllDictItems(itemQuery.dictCode);
+    } catch {
+      dictItems = itemTableData.value;
+    }
+    const dictType = typeOptions.value.find((type) => type.dictCode === itemQuery.dictCode);
+    const dictName = dictType?.dictName || itemQuery.dictCode;
+    const content = formatCopyContent(itemQuery.dictCode, dictName, dictItems);
+    await copyToClipboard(content);
+    ElMessage.success('复制成功');
+  } finally {
+    copying.value = false;
+  }
 }
 
 function openItemCreate() {

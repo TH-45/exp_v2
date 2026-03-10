@@ -3,8 +3,10 @@ package jh.exp.corp.service.service.bus.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.common.core.exception.GatewayBizException;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import jh.exp.corp.core.constant.CorpErrorCode;
 import jh.exp.corp.core.entity.CompanyContact;
 import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.CompanyContactDetailRes;
@@ -51,7 +53,7 @@ public class CompanyContactInternalServiceImpl implements CompanyContactInternal
     public CompanyContactDetailRes detail(Long contactId) {
         CompanyContact entity = companyContactMapper.selectById(contactId);
         if (entity == null) {
-            throw new RuntimeException("企业联系人不存在");
+            throw new GatewayBizException(CorpErrorCode.CONTACT_NOT_FOUND, "企业联系人不存在");
         }
         CompanyContactDetailRes res = new CompanyContactDetailRes();
         BeanUtils.copyProperties(entity, res);
@@ -72,7 +74,7 @@ public class CompanyContactInternalServiceImpl implements CompanyContactInternal
     public CompanyContactDetailRes update(UpdateCompanyContactReq req) {
         CompanyContact old = companyContactMapper.selectById(req.getContactId());
         if (old == null) {
-            throw new RuntimeException("企业联系人不存在");
+            throw new GatewayBizException(CorpErrorCode.CONTACT_NOT_FOUND, "企业联系人不存在");
         }
         BeanUtils.copyProperties(req, old);
         companyContactMapper.updateById(old);
@@ -83,7 +85,7 @@ public class CompanyContactInternalServiceImpl implements CompanyContactInternal
     @Transactional
     public void delete(DeleteCompanyContactReq req) {
         if (companyContactMapper.selectById(req.getContactId()) == null) {
-            throw new RuntimeException("企业联系人不存在");
+            throw new GatewayBizException(CorpErrorCode.CONTACT_NOT_FOUND, "企业联系人不存在");
         }
         companyContactMapper.deleteById(req.getContactId());
     }

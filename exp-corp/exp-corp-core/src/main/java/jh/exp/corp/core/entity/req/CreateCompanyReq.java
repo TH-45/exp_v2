@@ -9,11 +9,14 @@ public class CreateCompanyReq {
     @NotBlank(message = "企业全称不能为空")
     private String companyName;
     private String companyShortName;
+    @NotBlank(message = "企业类型不能为空")
     private String companyType;
+    @NotBlank(message = "统一社会信用代码不能为空")
     private String unifiedSocialCreditCode;
     private String taxNo;
     private String legalPerson;
     private String regAddress;
+    @NotBlank(message = "办公地址不能为空")
     private String officeAddress;
     private String contactPhone;
     private String contactEmail;

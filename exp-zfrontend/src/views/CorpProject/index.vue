@@ -106,7 +106,7 @@
               <div class="action-content">
                 <el-icon size="48" color="#E6A23C"><Medal /></el-icon>
                 <div class="action-info">
-                  <div class="action-title">企业资质管理</div>
+                  <div class="action-title">资质管理</div>
                   <div class="action-desc">资质证书上传、过期提醒</div>
                 </div>
               </div>

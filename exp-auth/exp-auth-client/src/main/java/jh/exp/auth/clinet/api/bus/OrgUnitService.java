@@ -7,11 +7,14 @@ import jh.exp.auth.core.entity.res.OrgUnitListRes;
 import jh.exp.auth.core.entity.res.OrgUnitTreeRes;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PostExchange;
 
 import java.util.List;
+import java.util.Map;
 
 @HttpExchange("/orgunit")
 public interface OrgUnitService {
@@ -31,6 +34,12 @@ public interface OrgUnitService {
      */
     @GetExchange("/detail")
     OrgUnitDetailRes getOrgUnitById(@RequestParam("orgId") Long orgId);
+
+    /**
+     * 根据ID批量查询组织详情
+     */
+    @PostExchange("/batch/detail")
+    Map<Long, OrgUnitDetailRes> batchGetOrgUnitByIds(@RequestBody List<Long> orgIds);
 
     /**
      * 创建组织
