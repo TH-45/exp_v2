@@ -5,6 +5,10 @@
         <div class="header">
           <div class="title">字典管理</div>
           <div class="actions">
+            <el-button size="small" :loading="exportingJson" @click="handleExportJson">导出 JSON</el-button>
+            <el-button size="small" :loading="exportingExcel" @click="handleExportExcel">导出 Excel</el-button>
+            <el-button size="small" @click="openImportJsonDialog">导入 JSON</el-button>
+            <el-button size="small" @click="openImportExcelDialog">导入 Excel</el-button>
             <el-button
               v-if="activeTab === 'type'"
               type="primary"
@@ -61,6 +65,9 @@
               <el-button type="primary" @click="handleTypeSearch">查询</el-button>
               <el-button @click="handleTypeReset">重置</el-button>
             </el-form-item>
+            <el-form-item v-if="selectedTypes.length > 0" class="selected-tip">
+              <span class="selected-count">已选 {{ selectedTypes.length }} 个类型</span>
+            </el-form-item>
           </el-form>
 
           <!-- 列表区 -->
@@ -70,6 +77,8 @@
               row-key="id"
               border
               style="width: 100%"
+              :row-class-name="typeTableRowClassName"
+              @row-click="handleTypeRowClick"
               @row-dblclick="enterItemByRow"
             >
             <el-table-column prop="dictCode" label="类型编码" min-width="160" />
@@ -220,17 +229,25 @@
             <el-form-item>
               <el-button type="primary" @click="handleItemSearch">查询</el-button>
               <el-button @click="handleItemReset">重置</el-button>
-              <el-button :loading="copying" :disabled="!itemQuery.dictCode" @click="handleCopyCodes">复制编号</el-button>
+            </el-form-item>
+            <el-form-item v-if="selectedTypes.length > 0" class="selected-tip">
+              <span class="selected-count">已选 {{ selectedTypes.length }} 个类型</span>
+            </el-form-item>
+            <el-form-item v-else-if="selectedItems.length > 0" class="selected-tip">
+              <span class="selected-count">已选 {{ selectedItems.length }} 条字典项</span>
             </el-form-item>
           </el-form>
 
           <!-- 列表区 -->
           <el-table
+            ref="itemTableRef"
             v-loading="itemLoading"
             :data="itemTableData"
             row-key="id"
             border
             style="width: 100%"
+            :row-class-name="itemTableRowClassName"
+            @row-click="handleItemRowClick"
             @row-dblclick="handleItemRowDblClick"
           >
             <el-table-column prop="itemCode" label="字典项编码" min-width="160" />
@@ -341,8 +358,54 @@
               <el-button type="primary" :loading="saving" @click="submitItemForm">保存</el-button>
             </template>
           </el-dialog>
+
         </el-tab-pane>
       </el-tabs>
+
+      <!-- 导入 JSON 弹窗 -->
+      <el-dialog
+        v-model="importJsonDialog.visible"
+        title="导入 JSON"
+        width="560px"
+        destroy-on-close
+        draggable
+      >
+        <el-input
+          v-model="importJsonDialog.content"
+          type="textarea"
+          :rows="12"
+          placeholder='请粘贴 JSON 数组，格式如：[{"dictCode":"USER_STATUS","itemCode":"ENABLED","itemValue":"1","itemLabel":"启用","sortNo":1,"status":"ENABLED","remark":""}]'
+        />
+        <template #footer>
+          <el-button @click="importJsonDialog.visible = false">取消</el-button>
+          <el-button type="primary" :loading="importing" @click="submitImportJson">确定导入</el-button>
+        </template>
+      </el-dialog>
+
+      <!-- 导入 Excel 弹窗 -->
+      <el-dialog
+        v-model="importExcelDialog.visible"
+        title="导入 Excel"
+        width="480px"
+        destroy-on-close
+        draggable
+      >
+        <el-upload
+          ref="importExcelRef"
+          :auto-upload="false"
+          :limit="1"
+          accept=".xlsx"
+          :on-change="onImportExcelChange"
+          :on-remove="onImportExcelRemove"
+        >
+          <el-button type="primary" size="small">选择 .xlsx 文件</el-button>
+        </el-upload>
+        <div class="import-tip">支持 .xlsx 格式，列：字典类型编码、字典项编码、字典项值、字典项名称、排序、状态、备注</div>
+        <template #footer>
+          <el-button @click="importExcelDialog.visible = false">取消</el-button>
+          <el-button type="primary" :loading="importing" :disabled="!importExcelDialog.file" @click="submitImportExcel">确定导入</el-button>
+        </template>
+      </el-dialog>
     </el-card>
   </el-config-provider>
 </template>
@@ -358,6 +421,12 @@ import {
   createDictType,
   deleteDictItem,
   deleteDictType,
+  downloadDictExcelHierarchyBlob,
+  getDictTypeDetail,
+  importDictItemsExcel,
+  importDictItemsJson,
+  listAllDictItems,
+  listAllDictItemsForExport,
   listDictItems,
   listDictTypes,
   setDictItemStatus,
@@ -365,6 +434,7 @@ import {
   updateDictItem,
   updateDictType,
   type DictItem,
+  type DictItemImportRow,
   type DictStatus,
   type DictType,
   type PageResult,
@@ -382,7 +452,9 @@ const statusOptions = [
 const typeLoading = ref(false);
 const itemLoading = ref(false);
 const saving = ref(false);
-const copying = ref(false);
+const exportingJson = ref(false);
+const exportingExcel = ref(false);
+const importing = ref(false);
 
 const typeQuery = reactive({
   page: 1,
@@ -415,6 +487,23 @@ const itemDialog = reactive({
   visible: false,
   isEdit: false,
 });
+
+const importJsonDialog = reactive({
+  visible: false,
+  content: '',
+});
+
+const importExcelDialog = reactive({
+  visible: false,
+  file: null as File | null,
+});
+
+const importExcelRef = ref();
+const itemTableRef = ref();
+/** 字典类型表格选中的行（单击选中/取消，支持多选） */
+const selectedTypes = ref<DictType[]>([]);
+/** 字典项表格选中的行（单击选中/取消，支持多选） */
+const selectedItems = ref<DictItem[]>([]);
 
 const typeFormRef = ref<FormInstance>();
 const itemFormRef = ref<FormInstance>();
@@ -640,6 +729,7 @@ function handleTypeSearch() {
   typeQuery.dictCode = typeQuery.dictCode.trim();
   typeQuery.dictName = typeQuery.dictName.trim();
   typeQuery.page = 1;
+  selectedTypes.value = [];
   fetchTypeList();
 }
 
@@ -648,6 +738,7 @@ function handleTypeReset() {
   typeQuery.dictName = '';
   typeQuery.status = undefined;
   typeQuery.page = 1;
+  selectedTypes.value = [];
   fetchTypeList();
 }
 
@@ -665,6 +756,7 @@ function handleTypeSizeChange(size: number) {
 function handleItemSearch() {
   itemQuery.keyword = itemQuery.keyword.trim();
   itemQuery.page = 1;
+  selectedItems.value = [];
   if (!itemQuery.dictCode) {
     ElMessage.warning('请先选择字典类型');
     return;
@@ -676,6 +768,7 @@ function handleItemReset() {
   itemQuery.keyword = '';
   itemQuery.status = undefined;
   itemQuery.page = 1;
+  selectedItems.value = [];
   if (itemQuery.dictCode) fetchItemList();
 }
 
@@ -692,6 +785,7 @@ function handleItemSizeChange(size: number) {
 
 function handleItemTypeChange() {
   itemQuery.page = 1;
+  selectedItems.value = [];
   if (itemQuery.dictCode) {
     replaceItemRouteQuery(itemQuery.dictCode);
   } else {
@@ -793,20 +887,13 @@ async function syncTabByRouteQuery() {
   fetchItemList();
 }
 
-function fallbackCopy(text: string) {
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.style.position = 'fixed';
-  textarea.style.left = '-9999px';
-  textarea.style.top = '-9999px';
-  document.body.appendChild(textarea);
-  textarea.focus();
-  textarea.select();
-  const copied = document.execCommand('copy');
-  document.body.removeChild(textarea);
-  if (!copied) {
-    throw new Error('copy failed');
-  }
+function triggerDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 async function copyToClipboard(text: string) {
@@ -814,56 +901,249 @@ async function copyToClipboard(text: string) {
     await navigator.clipboard.writeText(text);
     return;
   }
-  fallbackCopy(text);
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
 }
 
-async function listAllDictItems(dictCode: string) {
-  const pageSize = 200;
-  let page = 1;
-  const all: DictItem[] = [];
+/** 构建父子结构 [{ dictType, items }, ...] */
+function buildExportHierarchy(
+  types: DictType[],
+  itemsByDictCode: (code: string) => Promise<DictItem[]>,
+): Promise<Array<{ dictType: DictType; items: DictItem[] }>> {
+  return Promise.all(
+    types.map(async (t) => {
+      const items = await itemsByDictCode(t.dictCode);
+      const list = Array.isArray(items) ? items : (items as { data?: DictItem[] })?.data ?? [];
+      return { dictType: t, items: list };
+    }),
+  );
+}
 
-  while (page <= 20) {
-    const res = await listDictItems({ dictCode, page, pageSize });
-    const { list, total } = normalizePage(res);
-    all.push(...list);
-    if (!list.length || all.length >= total) break;
-    page += 1;
+/** JSON 字段说明（追加在导出内容下方） */
+const JSON_FIELD_DESC = `
+
+------------------------------------------
+【字段说明】
+dictType（字典类型）：
+  - id：主键ID
+  - dictCode：字典类型编码（全局唯一）
+  - dictName：字典类型名称
+  - description：描述
+  - status：状态（ENABLED-启用，DISABLED-停用）
+
+items（字典项）：
+  - id：主键ID
+  - dictCode：所属字典类型编码
+  - itemCode：字典项编码
+  - itemValue：字典项值（业务表存储值）
+  - itemLabel：字典项名称
+  - sortNo：排序号
+  - status：状态（ENABLED-启用，DISABLED-停用）
+  - remark：备注
+`;
+
+/** 导出 JSON：父子结构 + 底部字段说明 */
+async function handleExportJson() {
+  exportingJson.value = true;
+  try {
+    let hierarchy: Array<{ dictType: DictType; items: DictItem[] }>;
+    if (selectedTypes.value.length > 0) {
+      hierarchy = await buildExportHierarchy(selectedTypes.value, listAllDictItems);
+      ElMessage.success(`已复制 ${selectedTypes.value.length} 个类型及其 ${hierarchy.reduce((s, h) => s + h.items.length, 0)} 条字典项`);
+    } else if (selectedItems.value.length > 0) {
+      const dictCodes = [...new Set(selectedItems.value.map((i) => i.dictCode))];
+      const typeMap = new Map<string, DictType>();
+      for (const t of typeOptions.value) {
+        typeMap.set(t.dictCode, t);
+      }
+      const typesToFetch = dictCodes.filter((c) => !typeMap.has(c));
+      for (const code of typesToFetch) {
+        const detail = await getDictTypeDetail({ dictCode: code });
+        if (detail && typeof detail === 'object' && 'dictCode' in detail) {
+          typeMap.set(code, detail as DictType);
+        }
+      }
+      const types = dictCodes.map((c) => typeMap.get(c)).filter(Boolean) as DictType[];
+      hierarchy = types.map((t) => ({
+        dictType: t,
+        items: selectedItems.value.filter((i) => i.dictCode === t.dictCode),
+      }));
+      ElMessage.success(`已复制 ${hierarchy.length} 个类型及其 ${selectedItems.value.length} 条字典项`);
+    } else {
+      const list = await listAllDictItemsForExport();
+      const allItems = Array.isArray(list) ? list : (list as { data?: DictItem[] })?.data ?? [];
+      const typeRes = await listDictTypes({ page: 1, pageSize: 999 });
+      const typeList = normalizePage(typeRes).list;
+      const dictCodes = [...new Set(allItems.map((i) => i.dictCode))];
+      hierarchy = dictCodes.map((code) => {
+        const t = typeList.find((x) => x.dictCode === code) || { id: 0, dictCode: code, dictName: code, status: 'ENABLED' } as DictType;
+        return { dictType: t, items: allItems.filter((i) => i.dictCode === code) };
+      });
+      ElMessage.success('已复制到剪贴板');
+    }
+    const jsonStr = JSON.stringify(hierarchy, null, 2) + JSON_FIELD_DESC;
+    await copyToClipboard(jsonStr);
+  } catch {
+    ElMessage.error('复制失败');
+  } finally {
+    exportingJson.value = false;
   }
-  return all;
 }
 
-function formatCopyContent(dictCode: string, dictName: string, dictItems: DictItem[]) {
-  const lines = [
-    `字典类型：${dictCode} ${dictName}`,
-    '字典项：',
-    ...dictItems.map((item) => `- ${item.itemCode || ''} ${item.itemLabel || ''}`.trim()),
-  ];
-  if (!dictItems.length) {
-    lines.push('- （无字典项）');
+/** 导出 Excel：父子结构 + 类型合并行 + 字段说明 */
+async function handleExportExcel() {
+  exportingExcel.value = true;
+  try {
+    let hierarchy: Array<{ dictType: DictType; items: DictItem[] }>;
+    if (selectedTypes.value.length > 0) {
+      hierarchy = await buildExportHierarchy(selectedTypes.value, listAllDictItems);
+      const blob = await downloadDictExcelHierarchyBlob(hierarchy);
+      triggerDownload(blob, `字典项_${Date.now()}.xlsx`);
+      ElMessage.success(`已导出 ${selectedTypes.value.length} 个类型及其 ${hierarchy.reduce((s, h) => s + h.items.length, 0)} 条字典项`);
+    } else if (selectedItems.value.length > 0) {
+      const dictCodes = [...new Set(selectedItems.value.map((i) => i.dictCode))];
+      const typeMap = new Map<string, DictType>();
+      for (const t of typeOptions.value) {
+        typeMap.set(t.dictCode, t);
+      }
+      for (const code of dictCodes.filter((c) => !typeMap.has(c))) {
+        try {
+          const detail = await getDictTypeDetail({ dictCode: code });
+          if (detail && typeof detail === 'object' && 'dictCode' in detail) {
+            typeMap.set(code, detail as DictType);
+          }
+        } catch {
+          typeMap.set(code, { id: 0, dictCode: code, dictName: code, status: 'ENABLED' } as DictType);
+        }
+      }
+      hierarchy = dictCodes.map((c) => ({
+        dictType: typeMap.get(c)!,
+        items: selectedItems.value.filter((i) => i.dictCode === c),
+      }));
+      const blob = await downloadDictExcelHierarchyBlob(hierarchy);
+      triggerDownload(blob, `字典项_${Date.now()}.xlsx`);
+      ElMessage.success(`已导出 ${hierarchy.length} 个类型及其 ${selectedItems.value.length} 条字典项`);
+    } else {
+      const list = await listAllDictItemsForExport();
+      const allItems = Array.isArray(list) ? list : (list as { data?: DictItem[] })?.data ?? [];
+      const typeRes = await listDictTypes({ page: 1, pageSize: 999 });
+      const typeList = normalizePage(typeRes).list;
+      const dictCodes = [...new Set(allItems.map((i) => i.dictCode))];
+      hierarchy = dictCodes.map((code) => {
+        const t = typeList.find((x) => x.dictCode === code) || ({ id: 0, dictCode: code, dictName: code, status: 'ENABLED' } as DictType);
+        return { dictType: t, items: allItems.filter((i) => i.dictCode === code) };
+      });
+      const blob = await downloadDictExcelHierarchyBlob(hierarchy);
+      triggerDownload(blob, `字典项_${Date.now()}.xlsx`);
+      ElMessage.success('导出成功');
+    }
+  } catch {
+    ElMessage.error('导出失败');
+  } finally {
+    exportingExcel.value = false;
   }
-  return lines.join('\n');
 }
 
-async function handleCopyCodes() {
-  if (!itemQuery.dictCode) {
-    ElMessage.warning('请先选择字典类型');
+/** 打开导入 JSON 弹窗：有选中项则预填选中项，便于编辑后导入 */
+function openImportJsonDialog() {
+  if (activeTab.value === 'item' && selectedItems.value.length > 0) {
+    importJsonDialog.content = JSON.stringify(
+      selectedItems.value.map((x) => ({
+        dictCode: x.dictCode,
+        itemCode: x.itemCode,
+        itemValue: x.itemValue,
+        itemLabel: x.itemLabel,
+        sortNo: x.sortNo,
+        status: x.status,
+        remark: x.remark,
+      })),
+      null,
+      2,
+    );
+  } else {
+    importJsonDialog.content = '';
+  }
+  importJsonDialog.visible = true;
+}
+
+async function submitImportJson() {
+  const content = importJsonDialog.content.trim();
+  if (!content) {
+    ElMessage.warning('请粘贴 JSON 内容');
     return;
   }
-  copying.value = true;
+  let rows: DictItemImportRow[];
   try {
-    let dictItems: DictItem[] = [];
-    try {
-      dictItems = await listAllDictItems(itemQuery.dictCode);
-    } catch {
-      dictItems = itemTableData.value;
+    rows = JSON.parse(content);
+  } catch {
+    ElMessage.error('JSON 格式错误');
+    return;
+  }
+  if (!Array.isArray(rows)) {
+    ElMessage.error('请提供 JSON 数组格式');
+    return;
+  }
+  importing.value = true;
+  try {
+    const res = await importDictItemsJson(rows);
+    const msg = `导入完成：成功 ${res.successCount} 条，失败 ${res.failCount} 条`;
+    if (res.failCount > 0 && res.errors?.length) {
+      ElMessage.warning(msg + '\n' + res.errors.slice(0, 5).join('\n') + (res.errors.length > 5 ? '\n...' : ''));
+    } else {
+      ElMessage.success(msg);
     }
-    const dictType = typeOptions.value.find((type) => type.dictCode === itemQuery.dictCode);
-    const dictName = dictType?.dictName || itemQuery.dictCode;
-    const content = formatCopyContent(itemQuery.dictCode, dictName, dictItems);
-    await copyToClipboard(content);
-    ElMessage.success('复制成功');
+    importJsonDialog.visible = false;
+    fetchTypeOptions();
+    if (itemQuery.dictCode) fetchItemList();
+  } catch {
+    ElMessage.error('导入失败');
   } finally {
-    copying.value = false;
+    importing.value = false;
+  }
+}
+
+function openImportExcelDialog() {
+  importExcelDialog.file = null;
+  importExcelDialog.visible = true;
+}
+
+function onImportExcelChange(file: { raw?: File }) {
+  importExcelDialog.file = file?.raw ?? null;
+}
+
+function onImportExcelRemove() {
+  importExcelDialog.file = null;
+}
+
+async function submitImportExcel() {
+  const file = importExcelDialog.file;
+  if (!file) {
+    ElMessage.warning('请选择文件');
+    return;
+  }
+  importing.value = true;
+  try {
+    const res = await importDictItemsExcel(file);
+    const msg = `导入完成：成功 ${res.successCount} 条，失败 ${res.failCount} 条`;
+    if (res.failCount > 0 && res.errors?.length) {
+      ElMessage.warning(msg + '\n' + res.errors.slice(0, 5).join('\n') + (res.errors.length > 5 ? '\n...' : ''));
+    } else {
+      ElMessage.success(msg);
+    }
+    importExcelDialog.visible = false;
+    importExcelDialog.file = null;
+    fetchTypeOptions();
+    if (itemQuery.dictCode) fetchItemList();
+  } catch {
+    ElMessage.error('导入失败');
+  } finally {
+    importing.value = false;
   }
 }
 
@@ -889,6 +1169,37 @@ function openItemEdit(row: DictItem) {
 function handleItemRowDblClick(row: DictItem) {
   if (!canItemUpdate.value) return;
   openItemEdit(row);
+}
+
+/** 单击行：选中/取消，忽略按钮区域点击 */
+function handleTypeRowClick(row: DictType, _column: unknown, event: Event) {
+  if ((event.target as HTMLElement).closest('.el-button') || (event.target as HTMLElement).closest('.el-link')) return;
+  const idx = selectedTypes.value.findIndex((s) => s.id === row.id);
+  if (idx >= 0) {
+    selectedTypes.value = selectedTypes.value.filter((s) => s.id !== row.id);
+  } else {
+    selectedTypes.value = [...selectedTypes.value, row];
+  }
+}
+
+function handleItemRowClick(row: DictItem, _column: unknown, event: Event) {
+  if ((event.target as HTMLElement).closest('.el-button') || (event.target as HTMLElement).closest('.el-link')) return;
+  const idx = selectedItems.value.findIndex((s) => s.id === row.id);
+  if (idx >= 0) {
+    selectedItems.value = selectedItems.value.filter((s) => s.id !== row.id);
+  } else {
+    selectedItems.value = [...selectedItems.value, row];
+  }
+}
+
+/** 字典类型选中行高亮 */
+function typeTableRowClassName({ row }: { row: DictType }) {
+  return selectedTypes.value.some((s) => s.id === row.id) ? 'dict-row-selected' : '';
+}
+
+/** 字典项选中行高亮 */
+function itemTableRowClassName({ row }: { row: DictItem }) {
+  return selectedItems.value.some((s) => s.id === row.id) ? 'dict-row-selected' : '';
 }
 
 async function submitTypeForm() {
@@ -1051,6 +1362,25 @@ function toggleItemStatus(row: DictItem) {
 
   .dialog-form.two-col .full-row {
     grid-column: 1 / span 2;
+  }
+
+  .import-tip {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+  }
+
+  .selected-tip .selected-count {
+    color: var(--el-color-primary);
+    font-weight: 500;
+  }
+
+  /* 字典类型/字典项选中行高亮（单击选中，无多选框） */
+  :deep(.dict-row-selected) {
+    background-color: var(--el-color-primary-light-9) !important;
+  }
+  :deep(.dict-row-selected:hover) {
+    background-color: var(--el-color-primary-light-8) !important;
   }
 }
 </style>

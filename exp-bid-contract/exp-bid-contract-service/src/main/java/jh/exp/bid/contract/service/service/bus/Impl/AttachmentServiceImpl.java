@@ -170,6 +170,84 @@ public class AttachmentServiceImpl implements AttachmentService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<AttachmentDetailRes> uploadAttachments(List<MultipartFile> files, List<CreateAttachmentBizReq> bizList) {
+        // 参数校验：文件必填，且与 biz 一一对应
+        if (files == null || files.isEmpty()) {
+            throw new RuntimeException("上传文件不能为空，至少选择一个文件");
+        }
+        if (bizList == null || bizList.size() != files.size()) {
+            throw new RuntimeException("文件数量与业务参数数量不一致，请保证每个文件对应一份业务参数");
+        }
+        for (int i = 0; i < files.size(); i++) {
+            if (files.get(i) == null || files.get(i).isEmpty()) {
+                throw new RuntimeException("第 " + (i + 1) + " 个文件为空，请重新选择");
+            }
+        }
+
+        List<String> uploadedObjectKeys = new ArrayList<>();
+        List<AttachmentDetailRes> results = new ArrayList<>();
+        try {
+            for (int i = 0; i < files.size(); i++) {
+                MultipartFile file = files.get(i);
+                CreateAttachmentBizReq biz = bizList.get(i);
+                String originalFileName = StringUtils.hasText(file.getOriginalFilename()) ? file.getOriginalFilename() : "unknown.bin";
+
+                // 1. 上传到存储
+                ApiResponse<StorageUploadRes> storageRes;
+                try {
+                    NamedByteArrayResource resource = new NamedByteArrayResource(file.getBytes(), originalFileName);
+                    storageRes = storageService.upload(resource, buildStorageBizReq(biz));
+                } catch (Exception e) {
+                    throw new RuntimeException("第 " + (i + 1) + " 个文件调用存储服务失败: " + originalFileName, e);
+                }
+                if (storageRes == null || !storageRes.isSuccess() || storageRes.getData() == null) {
+                    throw new RuntimeException("第 " + (i + 1) + " 个文件存储响应异常: " + originalFileName + (storageRes != null ? " " + storageRes.getMessage() : ""));
+                }
+                StorageUploadRes uploadRes = storageRes.getData();
+                uploadedObjectKeys.add(uploadRes.getObjectKey());
+
+                // 2. 重复校验：已存在则删存储并抛错
+                if (checkFileExists(originalFileName, uploadRes.getFileMd5(), biz.getBusinessType(), biz.getBusinessId())) {
+                    StorageDeleteReq deleteReq = new StorageDeleteReq();
+                    deleteReq.setObjectKey(uploadRes.getObjectKey());
+                    storageService.delete(deleteReq);
+                    throw new RuntimeException("第 " + (i + 1) + " 个文件与已有文件重复，请勿重复上传: " + originalFileName);
+                }
+
+                // 3. 落库
+                CreateAttachmentReq req = new CreateAttachmentReq();
+                req.setBusinessType(biz.getBusinessType());
+                req.setBusinessId(biz.getBusinessId());
+                req.setFileType(biz.getFileType());
+                req.setFileCategory(biz.getFileCategory());
+                req.setFileName(uploadRes.getFileName());
+                req.setFilePath(uploadRes.getObjectKey());
+                req.setFileSize(uploadRes.getFileSize());
+                req.setFileFormat(extractFileExt(uploadRes.getFileName()));
+                req.setFileMd5(uploadRes.getFileMd5());
+                req.setVersionNo(biz.getVersionNo());
+                req.setSecurityLevel(biz.getSecurityLevel());
+                req.setRemark(biz.getRemark());
+                results.add(saveAttachment(req));
+            }
+            return results;
+        } catch (Exception e) {
+            // 全成全败：补偿删除本批次已上传的存储对象，事务回滚会撤销 DB
+            for (String objectKey : uploadedObjectKeys) {
+                try {
+                    StorageDeleteReq deleteReq = new StorageDeleteReq();
+                    deleteReq.setObjectKey(objectKey);
+                    storageService.delete(deleteReq);
+                } catch (Exception ex) {
+                    // 记录但不再抛，优先保留原始失败原因
+                }
+            }
+            throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
+        }
+    }
+
+    @Override
     @Transactional
     public AttachmentDetailRes updateAttachment(Long attachmentId, CreateAttachmentReq req) {
         AttachmentDetailRes existingAttachment = getAttachmentById(attachmentId);

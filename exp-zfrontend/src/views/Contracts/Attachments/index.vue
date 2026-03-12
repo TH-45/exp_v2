@@ -14,9 +14,9 @@
       </template>
 
       <el-form :inline="true" :model="query" class="search-bar" @submit.prevent>
-        <el-form-item label="类型">
+        <el-form-item label="文件类型">
           <el-select v-model="query.fileType" clearable style="width: 180px">
-            <el-option v-for="t in typeOptions" :key="t.value" :label="t.label" :value="t.value" />
+            <el-option v-for="t in fileTypeOptions" :key="t.value" :label="t.label" :value="t.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="文件名">
@@ -79,20 +79,25 @@
           </el-form-item>
           <el-form-item label="文件类型" required>
             <el-select v-model="uploadForm.fileType" style="width: 100%">
-              <el-option v-for="t in uploadTypeOptions" :key="t.value" :label="t.label" :value="t.value" />
+              <el-option v-for="t in fileTypeOptions" :key="t.value" :label="t.label" :value="t.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="文件">
+          <el-form-item label="文件" required>
             <el-upload
               :auto-upload="false"
-              :limit="1"
+              :limit="20"
+              multiple
               drag
               :file-list="uploadFileList"
               :on-change="handleFileChange"
               :on-remove="handleFileRemove"
             >
               <el-icon><UploadFilled /></el-icon>
-              <div class="el-upload__text">拖拽文件到此处，或 <em>点击选择</em></div>
+              <div class="el-upload__text">拖拽文件到此处，或 <em>点击选择</em>（可多选，至少一个）</div>
+              <template #file="{ file }">
+                <span class="el-upload-list__item-name">{{ file.name }}（{{ formatFileSize(file.size ?? (file.raw as File)?.size) }}）</span>
+                <el-icon class="el-upload-list__item-delete" @click="removeFile(file)"><Delete /></el-icon>
+              </template>
             </el-upload>
           </el-form-item>
         </el-form>
@@ -109,7 +114,7 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage } from 'element-plus';
-import { UploadFilled } from '@element-plus/icons-vue';
+import { UploadFilled, Delete } from '@element-plus/icons-vue';
 import type { UploadFile, UploadFiles } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
 import { listDictOptions, type DictOption } from '@/api/system/dict';
@@ -118,22 +123,19 @@ import AttachmentBusinessSelector, {
 } from '@/components/Selector/AttachmentBusinessSelector.vue';
 import {
   queryBiddingAttachmentList,
-  uploadBiddingAttachment,
+  uploadBiddingAttachments,
   downloadFile,
   type AttachmentVO,
+  type CreateAttachmentBizReq,
 } from '@/api/bidding/attachments';
 
 const canManage = computed(() => hasPermission('contracts:attachments:manage'));
 
-const typeOptions: Array<{ label: string; value: string }> = [
-  { label: '合同正文', value: 'CONTRACT_MAIN' },
-  { label: '补充协议', value: 'SUPPLEMENT' },
-  { label: '扫描件', value: 'SCAN' },
-  { label: '其他', value: 'OTHER' },
-];
+/** 文件类型选项（查询与上传共用，来自字典 Contract_File_Type） */
+const fileTypeOptions = ref<DictOption[]>([]);
 
 function typeText(t?: string) {
-  return typeOptions.find((x) => x.value === t)?.label || t || '-';
+  return fileTypeOptions.value.find((x) => x.value === t)?.label || t || '-';
 }
 
 function typeTagType(t?: string) {
@@ -141,6 +143,15 @@ function typeTagType(t?: string) {
   if (t === 'SUPPLEMENT') return 'warning';
   if (t === 'SCAN') return 'info';
   return '';
+}
+
+/** 格式化文件大小显示 */
+function formatFileSize(bytes?: number): string {
+  if (bytes == null || bytes === 0) return '0 B';
+  const k = 1024;
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${units[i]}`;
 }
 
 const loading = ref(false);
@@ -173,7 +184,7 @@ async function fetchList() {
 }
 
 onMounted(() => {
-  fetchUploadTypeOptions();
+  fetchFileTypeOptions();
   fetchList();
 });
 
@@ -211,9 +222,8 @@ function download(row: AttachmentVO) {
 
 const uploadDialog = reactive({ visible: false });
 const uploadFileList = ref<UploadFile[]>([]);
-const selectedFile = ref<File | null>(null);
+const selectedFiles = ref<File[]>([]);
 const uploading = ref(false);
-const uploadTypeOptions = ref<DictOption[]>([]);
 const uploadForm = reactive({
   boundBusiness: undefined as AttachmentBusinessValue | undefined,
   fileType: 'OTHER',
@@ -222,48 +232,64 @@ const uploadForm = reactive({
 function openUpload() {
   uploadDialog.visible = true;
   uploadForm.boundBusiness = undefined;
-  uploadForm.fileType = 'OTHER';
+  uploadForm.fileType = fileTypeOptions.value[0]?.value ?? '';
   uploadFileList.value = [];
-  selectedFile.value = null;
+  selectedFiles.value = [];
 }
 
-function handleFileChange(file: UploadFile, files: UploadFiles) {
-  uploadFileList.value = files.slice(-1);
-  selectedFile.value = file.raw ?? null;
+function syncSelectedFiles(files: UploadFiles) {
+  selectedFiles.value = files.map((f) => f.raw).filter(Boolean) as File[];
 }
 
-function handleFileRemove() {
-  uploadFileList.value = [];
-  selectedFile.value = null;
+function handleFileChange(_file: UploadFile, files: UploadFiles) {
+  uploadFileList.value = [...files];
+  syncSelectedFiles(files);
 }
 
-async function fetchUploadTypeOptions() {
+function handleFileRemove(_file: UploadFile, files: UploadFiles) {
+  uploadFileList.value = [...files];
+  syncSelectedFiles(files);
+}
+
+function removeFile(file: UploadFile) {
+  const next = uploadFileList.value.filter((f) => f.uid !== file.uid);
+  uploadFileList.value = next;
+  syncSelectedFiles(next);
+}
+
+async function fetchFileTypeOptions() {
   try {
     const res = await listDictOptions('Contract_File_Type');
     const options = Array.isArray(res) ? res : Array.isArray((res as any)?.data) ? (res as any).data : [];
-    uploadTypeOptions.value = options;
+    fileTypeOptions.value = options;
     if (options.length > 0) {
       uploadForm.fileType = options[0].value;
     }
   } catch (_e) {
-    uploadTypeOptions.value = [];
+    fileTypeOptions.value = [];
   }
 }
 
 async function submitUpload() {
   const businessId = Number(uploadForm.boundBusiness?.businessId);
-  if (!uploadForm.fileType || !businessId || !selectedFile.value) {
-    ElMessage.warning('请完整填写绑定业务、文件类型并选择文件');
+  if (!uploadForm.fileType || !businessId) {
+    ElMessage.warning('请完整填写绑定业务、文件类型');
     return;
   }
+  if (!selectedFiles.value.length) {
+    ElMessage.warning('请至少选择一个文件');
+    return;
+  }
+  const biz: CreateAttachmentBizReq = {
+    businessType: 'CONTRACT',
+    businessId,
+    fileType: uploadForm.fileType,
+    fileCategory: uploadForm.fileType,
+  };
+  const bizList: CreateAttachmentBizReq[] = selectedFiles.value.map(() => ({ ...biz }));
   uploading.value = true;
   try {
-    await uploadBiddingAttachment(selectedFile.value, {
-      businessType: 'CONTRACT',
-      businessId,
-      fileType: uploadForm.fileType,
-      fileCategory: uploadForm.fileType,
-    });
+    await uploadBiddingAttachments(selectedFiles.value, bizList);
     ElMessage.success('上传成功');
     uploadDialog.visible = false;
     fetchList();

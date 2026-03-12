@@ -85,6 +85,17 @@ export interface PageResult<T> {
 
 const BASE = '/exp/process/approval';
 
+/** 流程创建请求（统一流程创建接口） */
+export interface ProcessStartReq {
+  procCode: string;
+  busId: string;
+}
+
+/** 发起流程（提交审批时调用） */
+export function startProcess(data: ProcessStartReq) {
+  return request.post<number, number>(`${BASE}/start`, data);
+}
+
 // 获取审批统计信息
 export function getApprovalStats() {
   return request.get<ApprovalStats, ApprovalStats>(`${BASE}/stats`);

@@ -162,11 +162,21 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'contracts/contract/create',
+        name: 'ContractsContractCreate',
+        component: () => import('@/views/Contracts/ContractDraft/index.vue'),
+        meta: {
+          title: '新增合同',
+          icon: 'Document',
+          perms: ['contracts:contract:manage'],
+        },
+      },
+      {
         path: 'contracts/contract/:contractId',
         name: 'ContractsContractDetail',
-        component: () => import('@/views/Contracts/ContractDetail/index.vue'),
+        component: () => import('@/views/Contracts/ContractDraft/index.vue'),
         meta: {
-          title: '合同详情',
+          title: '合同起草/审批/拟签',
           icon: 'Document',
           perms: ['contracts:contract:view'],
         },

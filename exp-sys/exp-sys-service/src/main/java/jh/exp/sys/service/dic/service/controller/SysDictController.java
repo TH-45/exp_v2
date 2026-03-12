@@ -7,6 +7,9 @@ import jh.exp.sys.core.entity.dic.SysDictItem;
 import jh.exp.sys.core.entity.dic.SysDictType;
 import jh.exp.sys.core.req.dic.BatchStatusReq;
 import jh.exp.sys.core.req.dic.DictItemCreateReq;
+import jh.exp.sys.core.req.dic.DictExportHierarchyReq;
+import jh.exp.sys.core.req.dic.DictItemImportRes;
+import jh.exp.sys.core.req.dic.DictItemImportRow;
 import jh.exp.sys.core.req.dic.DictItemQueryReq;
 import jh.exp.sys.core.req.dic.DictItemUpdateReq;
 import jh.exp.sys.core.req.dic.DictTypeCreateReq;
@@ -21,9 +24,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jh.exp.sys.service.dic.service.SysDictApiService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -219,5 +228,65 @@ public class SysDictController {
     @GetMapping("/item/all")
     public ApiResponse<List<SysDictItem>> listAllDictItems(@NotBlank(message = "dictCode 不能为空") @RequestParam("dictCode") String dictCode) {
         return sysDictApiService.listAllDictItems(dictCode);
+    }
+
+    /**
+     * 获取全部字典项（用于 JSON 导出）
+     */
+    @GetMapping("/item/export/all")
+    public ApiResponse<List<SysDictItem>> listAllDictItemsForExport() {
+        return sysDictApiService.listAllDictItemsForExport();
+    }
+
+    /**
+     * 导出字典项为 Excel 文件（GET 导出全部，POST 传入选中项导出指定项）
+     */
+    @GetMapping("/item/export/excel")
+    public ResponseEntity<byte[]> exportDictItemsExcelGet() {
+        return buildExcelResponse(sysDictApiService.exportDictItemsToExcel(null));
+    }
+
+    @PostMapping("/item/export/excel")
+    public ResponseEntity<byte[]> exportDictItemsExcelPost(@RequestBody(required = false) List<SysDictItem> items) {
+        return buildExcelResponse(sysDictApiService.exportDictItemsToExcel(items));
+    }
+
+    /**
+     * 导出字典父子结构为 Excel（类型合并行 + 字段说明 sheet）
+     */
+    @PostMapping("/item/export/excel/hierarchy")
+    public ResponseEntity<byte[]> exportDictHierarchyExcel(@RequestBody List<DictExportHierarchyReq> hierarchy) {
+        byte[] bytes = sysDictApiService.exportDictHierarchyToExcel(hierarchy);
+        String fileName = "字典项_" + System.currentTimeMillis() + ".xlsx";
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
+    }
+
+    private ResponseEntity<byte[]> buildExcelResponse(byte[] bytes) {
+        String fileName = "字典项_" + System.currentTimeMillis() + ".xlsx";
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
+    }
+
+    /**
+     * 批量导入字典项（JSON）
+     */
+    @PostMapping("/item/import/json")
+    public ApiResponse<DictItemImportRes> importDictItemsJson(@Valid @RequestBody List<DictItemImportRow> rows) {
+        return sysDictApiService.importDictItems(rows);
+    }
+
+    /**
+     * 批量导入字典项（Excel）
+     */
+    @PostMapping("/item/import/excel")
+    public ApiResponse<DictItemImportRes> importDictItemsExcel(@RequestParam("file") MultipartFile file) {
+        return sysDictApiService.importDictItemsFromExcel(file);
     }
 }

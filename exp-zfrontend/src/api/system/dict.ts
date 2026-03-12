@@ -139,3 +139,72 @@ export function listDictOptions(dictCode: string) {
     },
   );
 }
+
+/** 获取指定字典类型的全部字典项（用于导出等） */
+export function listAllDictItems(dictCode: string) {
+  return request.get<DictItem[], DictItem[]>(`${BASE}/item/all`, { params: { dictCode } });
+}
+
+/** 获取全部字典项（用于导出） */
+export function listAllDictItemsForExport() {
+  return request.get<DictItem[], DictItem[]>(`${BASE}/item/export/all`);
+}
+
+/** 字典项导入行（JSON/Excel 通用） */
+export interface DictItemImportRow {
+  dictCode: string;
+  itemCode?: string;
+  itemValue: string;
+  itemLabel: string;
+  sortNo?: number;
+  status?: string;
+  remark?: string;
+}
+
+/** 导出结果 */
+export interface DictItemImportRes {
+  successCount: number;
+  failCount: number;
+  errors: string[];
+}
+
+/** 导出 JSON 格式 */
+export function exportDictItemsJson() {
+  return listAllDictItemsForExport();
+}
+
+/** 导出 Excel：父子结构，支持合并行 */
+export interface DictExportHierarchy {
+  dictType: DictType;
+  items: DictItem[];
+}
+
+export function downloadDictExcelBlob(items?: DictItem[]) {
+  if (items && items.length > 0) {
+    return request.post<Blob, Blob>(`${BASE}/item/export/excel`, items, {
+      responseType: 'blob',
+    });
+  }
+  return request.get<Blob, Blob>(`${BASE}/item/export/excel`, {
+    responseType: 'blob',
+  });
+}
+
+/** 导出 Excel（父子结构，字典类型合并行） */
+export function downloadDictExcelHierarchyBlob(hierarchy: DictExportHierarchy[]) {
+  return request.post<Blob, Blob>(`${BASE}/item/export/excel/hierarchy`, hierarchy, {
+    responseType: 'blob',
+  });
+}
+
+/** 导入 JSON */
+export function importDictItemsJson(rows: DictItemImportRow[]) {
+  return request.post<DictItemImportRes, DictItemImportRes>(`${BASE}/item/import/json`, rows);
+}
+
+/** 导入 Excel */
+export function importDictItemsExcel(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return request.post<DictItemImportRes, DictItemImportRes>(`${BASE}/item/import/excel`, formData);
+}

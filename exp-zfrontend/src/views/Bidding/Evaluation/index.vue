@@ -43,13 +43,6 @@
         </el-form-item>
       </el-form>
 
-      <el-alert
-        title="当前阶段无审批流：本页用于录入评分、评审意见、推荐中标人。后续增加审批流时，可在此页增加“提交/审核”动作。"
-        type="info"
-        show-icon
-        class="tip"
-      />
-
       <div class="split-area">
         <!-- 左侧：投标列表与评分 -->
         <el-card class="left" shadow="never">

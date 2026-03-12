@@ -1,6 +1,6 @@
 <template>
   <el-config-provider :locale="zhCn">
-    <el-card>
+    <el-card v-loading="loading">
       <template #header>
         <div class="header">
           <div class="left">
@@ -11,7 +11,21 @@
             </el-tag>
           </div>
           <div class="actions">
-            <el-button size="small" type="primary" :disabled="!canManage" @click="openEdit">
+            <el-button
+              v-if="canSign"
+              size="small"
+              type="primary"
+              :disabled="!canManage"
+              @click="openSignDialog"
+            >
+              操作
+            </el-button>
+            <el-button
+              size="small"
+              type="primary"
+              :disabled="!canManage || !canEdit"
+              @click="openEdit"
+            >
               编辑合同
             </el-button>
             <el-button size="small" :disabled="true">操作记录</el-button>
@@ -24,14 +38,16 @@
         <el-descriptions-item label="合同名称">{{ contract.contractName }}</el-descriptions-item>
         <el-descriptions-item label="供应商">{{ contract.supplierName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="关联项目">{{ contract.projectName || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="合同金额(万)">{{ contract.amount ?? '-' }}</el-descriptions-item>
+        <el-descriptions-item label="合同金额(万)">
+          {{ formatAmount(contract.amountTotal) }}
+        </el-descriptions-item>
         <el-descriptions-item label="签订日期">{{ contract.signDate || '-' }}</el-descriptions-item>
       </el-descriptions>
 
       <el-tabs v-model="activeTab" class="tabs">
         <el-tab-pane label="合同信息" name="base">
           <el-descriptions :column="2" border>
-            <el-descriptions-item label="开始日期">{{ contract.startDate || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="生效日期">{{ contract.effectiveDate || '-' }}</el-descriptions-item>
             <el-descriptions-item label="结束日期">{{ contract.endDate || '-' }}</el-descriptions-item>
             <el-descriptions-item label="备注" :span="2">{{ contract.remark || '-' }}</el-descriptions-item>
           </el-descriptions>
@@ -85,17 +101,46 @@
           </el-table>
         </el-tab-pane>
       </el-tabs>
+
+      <!-- 签订/不签订操作弹窗 -->
+      <el-dialog
+        v-model="signDialog.visible"
+        title="合同签订操作"
+        width="480px"
+        destroy-on-close
+        draggable
+        @close="resetSignForm"
+      >
+        <el-form :model="signForm" label-width="100px">
+          <el-form-item label="操作类型" required>
+            <el-radio-group v-model="signForm.action">
+              <el-radio label="SIGN">签订</el-radio>
+              <el-radio label="UNSIGN">不签订</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="签订意见">
+            <el-input v-model="signForm.opinion" type="textarea" :rows="3" placeholder="请输入签订意见（选填）" />
+          </el-form-item>
+          <el-form-item v-show="signForm.action === 'UNSIGN'" label="是否变更" required>
+            <el-checkbox v-model="signForm.needChange">是，返回合同起草进行变更</el-checkbox>
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="signDialog.visible = false">取消</el-button>
+          <el-button type="primary" :loading="signSaving" @click="submitSign">确认</el-button>
+        </template>
+      </el-dialog>
     </el-card>
   </el-config-provider>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import { ElMessage } from 'element-plus';
 import { hasPermission } from '@/utils/permission';
-
-type ContractStatus = 'DRAFT' | 'PENDING' | 'EFFECTIVE' | 'CHANGED' | 'TERMINATED' | 'ARCHIVED';
+import { getContractDetail, signContract, type ContractStatus } from '@/api/contracts/contract';
 
 const route = useRoute();
 const router = useRouter();
@@ -103,43 +148,59 @@ const router = useRouter();
 const canManage = computed(() => hasPermission('contracts:contract:manage'));
 
 const statusOptions: Array<{ label: string; value: ContractStatus }> = [
-  { label: '草稿', value: 'DRAFT' },
-  { label: '拟签', value: 'PENDING' },
-  { label: '生效', value: 'EFFECTIVE' },
+  { label: '起草中', value: 'DRAFT' },
+  { label: '审核中', value: 'UNDER_REVIEW' },
+  { label: '拟签', value: 'PENDING_SIGN' },
+  { label: '履行中', value: 'EFFECTIVE' },
+  { label: '正常归档', value: 'ARCHIVED' },
+  { label: '异常归档', value: 'ARCHIVED_ABNORMAL' },
   { label: '已变更', value: 'CHANGED' },
-  { label: '终止', value: 'TERMINATED' },
-  { label: '归档', value: 'ARCHIVED' },
+  { label: '已终止', value: 'TERMINATED' },
 ];
 
 function statusText(s: ContractStatus) {
-  return statusOptions.find((x) => x.value === s)?.label || s;
+  return statusOptions.find((x) => x.value === s)?.label || s || '-';
 }
 
 function statusTagType(s: ContractStatus) {
   if (s === 'DRAFT') return 'info';
-  if (s === 'PENDING') return 'warning';
+  if (s === 'UNDER_REVIEW' || s === 'PENDING_SIGN') return 'warning';
   if (s === 'EFFECTIVE') return 'success';
-  if (s === 'CHANGED') return 'warning';
+  if (s === 'ARCHIVED' || s === 'ARCHIVED_ABNORMAL') return 'info';
   if (s === 'TERMINATED') return 'danger';
-  if (s === 'ARCHIVED') return 'info';
   return '';
 }
 
-const activeTab = ref('base');
+function formatAmount(val?: number) {
+  if (val == null) return '-';
+  const n = Number(val);
+  if (!Number.isFinite(n)) return '-';
+  return (n / 10000).toFixed(2);
+}
 
-const contract = reactive({
-  contractId: '',
-  contractCode: '',
-  contractName: '',
-  projectName: '',
-  supplierName: '',
-  amount: 0,
-  status: 'DRAFT' as ContractStatus,
-  signDate: '',
-  startDate: '',
-  endDate: '',
-  remark: '',
-});
+const activeTab = ref('base');
+const loading = ref(false);
+const signSaving = ref(false);
+
+const contract = reactive<{
+  contractId?: string;
+  contractCode?: string;
+  contractName?: string;
+  projectName?: string;
+  supplierName?: string;
+  amountTotal?: number;
+  status?: ContractStatus;
+  signDate?: string;
+  effectiveDate?: string;
+  endDate?: string;
+  remark?: string;
+}>({});
+
+/** 仅起草中可编辑 */
+const canEdit = computed(() => contract.status === 'DRAFT');
+
+/** 仅拟签状态可进行签订/不签订操作 */
+const canSign = computed(() => contract.status === 'PENDING_SIGN');
 
 const paymentList = ref([
   { stage: '第1期', planAmount: 60, planDate: '2025-03-01', paidAmount: 30, status: '部分已付' },
@@ -160,20 +221,87 @@ const logList = ref([
   { time: '2025-02-10 09:00:00', user: '李四', action: '更新条款', remark: '示例' },
 ]);
 
-onMounted(() => {
-  const id = route.params.contractId as string;
-  contract.contractId = id;
-  contract.contractCode = `HT-2025-${String(id).padStart(4, '0')}`;
-  contract.contractName = `示例合同 ${id}`;
-  contract.projectName = `示例招标项目 ${(Number(id) % 6) + 1}`;
-  contract.supplierName = `供应商${String.fromCharCode(65 + (Number(id) % 5))}`;
-  contract.amount = 200 + Number(id);
-  contract.status = statusOptions[Number(id) % statusOptions.length].value;
-  contract.signDate = '2025-02-01';
-  contract.startDate = '2025-02-01';
-  contract.endDate = '2026-02-01';
-  contract.remark = '示例备注';
+const signDialog = reactive({ visible: false });
+const signForm = reactive({
+  action: 'SIGN' as 'SIGN' | 'UNSIGN',
+  opinion: '',
+  needChange: false,
 });
+
+async function fetchDetail() {
+  const id = route.params.contractId as string;
+  if (!id) return;
+  loading.value = true;
+  try {
+    const res = await getContractDetail(id);
+    if (res) {
+      Object.assign(contract, {
+        contractId: String(res.contractId),
+        contractCode: res.contractCode,
+        contractName: res.contractName,
+        projectName: res.projectName,
+        supplierName: res.supplierName,
+        amountTotal: res.amountTotal ?? res.amount,
+        status: res.status as ContractStatus,
+        signDate: res.signDate,
+        effectiveDate: res.effectiveDate,
+        endDate: res.endDate,
+        remark: res.remark,
+      });
+    }
+  } catch (e) {
+    console.error('获取合同详情失败:', e);
+    ElMessage.error((e as Error)?.message || '获取合同详情失败');
+  } finally {
+    loading.value = false;
+  }
+}
+
+function openSignDialog() {
+  signForm.action = 'SIGN';
+  signForm.opinion = '';
+  signForm.needChange = false;
+  signDialog.visible = true;
+}
+
+function resetSignForm() {
+  signForm.action = 'SIGN';
+  signForm.opinion = '';
+  signForm.needChange = false;
+}
+
+async function submitSign() {
+  if (!contract.contractId) return;
+  try {
+    signSaving.value = true;
+    await signContract({
+      contractId: Number(contract.contractId),
+      action: signForm.action,
+      opinion: signForm.opinion?.trim() || undefined,
+      needChange: signForm.action === 'UNSIGN' ? signForm.needChange : undefined,
+    });
+    ElMessage.success(
+      signForm.action === 'SIGN'
+        ? '签订成功，合同已正常归档'
+        : signForm.needChange
+          ? '已返回合同起草，可进行变更'
+          : '已异常归档'
+    );
+    signDialog.visible = false;
+    await fetchDetail();
+  } catch (e) {
+    ElMessage.error((e as Error)?.message || '操作失败');
+  } finally {
+    signSaving.value = false;
+  }
+}
+
+onMounted(() => fetchDetail());
+
+watch(
+  () => route.params.contractId,
+  () => fetchDetail()
+);
 
 function goBack() {
   router.push('/contracts/contract');
@@ -229,5 +357,3 @@ function openEdit() {
   gap: 8px;
 }
 </style>
-
-

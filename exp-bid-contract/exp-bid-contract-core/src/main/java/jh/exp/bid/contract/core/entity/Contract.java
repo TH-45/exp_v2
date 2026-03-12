@@ -113,6 +113,14 @@ public class Contract {
     @Column(name = "archive_time")
     private LocalDateTime archiveTime;
 
+    // 签订人用户ID，关联账号信息表（拟签阶段选择「签订」时记录）
+    @Column(name = "sign_user_id")
+    private Long signUserId;
+
+    // 签订时间（拟签阶段选择「签订」时记录）
+    @Column(name = "sign_time")
+    private LocalDateTime signTime;
+
     // 创建人用户ID，关联账号信息表
     @Column(name = "created_by")
     private Long createdBy;
@@ -124,6 +132,10 @@ public class Contract {
     // 创建人岗位ID，关联岗位管理
     @Column(name = "created_post_id")
     private Long createdPostId;
+
+    /** 业务员人员ID，创建时通过人员选择器选择 */
+    @Column(name = "salesman_person_id")
+    private Long salesmanPersonId;
 
     // 创建时间
     @Column(name = "created_time")

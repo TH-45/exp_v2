@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.bid.contract.core.mapper.ContractMapper">
+
+    <resultMap id="ContractListResultMap" type="jh.exp.bid.contract.core.entity.dto.ContractListDTO">
+        <id property="contractId" column="contract_id"/>
+        <result property="contractCode" column="contract_code"/>
+        <result property="contractName" column="contract_name"/>
+        <result property="contractType" column="contract_type"/>
+        <result property="contractCategory" column="contract_category"/>
+        <result property="tenderId" column="tender_id"/>
+        <result property="bidId" column="bid_id"/>
+        <result property="projectId" column="project_id"/>
+        <result property="projectName" column="project_name"/>
+        <result property="purchaserId" column="purchaser_id"/>
+        <result property="purchaserName" column="purchaser_name"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="supplierName" column="supplier_name"/>
+        <result property="signDate" column="sign_date"/>
+        <result property="effectiveDate" column="effective_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="amountTotal" column="amount_total"/>
+        <result property="currency" column="currency"/>
+        <result property="status" column="status"/>
+        <result property="createdTime" column="created_time"/>
+    </resultMap>
+
+    <!-- 合同表与项目、企业可能分库，仅查合同表，名称由 Service 远程组装 -->
+    <select id="selectContractList" resultMap="ContractListResultMap">
+        SELECT
+            c.contract_id,
+            c.contract_code,
+            c.contract_name,
+            c.contract_type,
+            c.contract_category,
+            c.tender_id,
+            c.bid_id,
+            c.project_id,
+            c.purchaser_id,
+            c.supplier_id,
+            c.sign_date,
+            c.effective_date,
+            c.end_date,
+            c.amount_total,
+            c.currency,
+            c.status,
+            c.created_time
+        FROM exp_contract c
+        <where>
+            <if test="req.contractCode != null and req.contractCode.trim() != ''">
+                AND c.contract_code LIKE CONCAT('%', #{req.contractCode}, '%')
+            </if>
+            <if test="req.contractName != null and req.contractName.trim() != ''">
+                AND c.contract_name LIKE CONCAT('%', #{req.contractName}, '%')
+            </if>
+            <if test="req.projectId != null">
+                AND c.project_id = #{req.projectId}
+            </if>
+            <if test="req.projectIds != null and req.projectIds.size() > 0">
+                AND c.project_id IN
+                <foreach item="id" collection="req.projectIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="req.amountMin != null">
+                AND c.amount_total &gt;= #{req.amountMin}
+            </if>
+            <if test="req.amountMax != null">
+                AND c.amount_total &lt;= #{req.amountMax}
+            </if>
+            <if test="req.signDateStart != null">
+                AND c.sign_date &gt;= #{req.signDateStart}
+            </if>
+            <if test="req.signDateEnd != null">
+                AND c.sign_date &lt;= #{req.signDateEnd}
+            </if>
+            <if test="req.effectiveDateStart != null">
+                AND c.effective_date &gt;= #{req.effectiveDateStart}
+            </if>
+            <if test="req.effectiveDateEnd != null">
+                AND c.effective_date &lt;= #{req.effectiveDateEnd}
+            </if>
+            <if test="req.status != null and req.status.trim() != ''">
+                AND c.status = #{req.status}
+            </if>
+            <if test="req.supplierId != null">
+                AND c.supplier_id = #{req.supplierId}
+            </if>
+            <if test="req.supplierIds != null and req.supplierIds.size() > 0">
+                AND c.supplier_id IN
+                <foreach item="id" collection="req.supplierIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="req.purchaserIds != null and req.purchaserIds.size() > 0">
+                AND c.purchaser_id IN
+                <foreach item="id" collection="req.purchaserIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="req.partnerIds != null and req.partnerIds.size() > 0">
+                AND (c.purchaser_id IN
+                <foreach item="id" collection="req.partnerIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+                OR c.supplier_id IN
+                <foreach item="id" collection="req.partnerIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+                )
+            </if>
+        </where>
+        ORDER BY c.created_time DESC
+    </select>
+
+    <select id="selectContractDetailById" resultMap="ContractListResultMap">
+        SELECT
+            c.contract_id,
+            c.contract_code,
+            c.contract_name,
+            c.contract_type,
+            c.contract_category,
+            c.tender_id,
+            c.bid_id,
+            c.project_id,
+            c.purchaser_id,
+            c.supplier_id,
+            c.sign_date,
+            c.effective_date,
+            c.end_date,
+            c.amount_total,
+            c.currency,
+            c.status,
+            c.created_time
+        FROM exp_contract c
+        WHERE c.contract_id = #{contractId}
+    </select>
+
+    <select id="countByContractCode" resultType="int">
+        SELECT COUNT(1)
+        FROM exp_contract
+        WHERE contract_code = #{contractCode}
+        <if test="excludeContractId != null">
+            AND contract_id != #{excludeContractId}
+        </if>
+    </select>
+
+</mapper>

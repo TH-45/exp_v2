@@ -69,12 +69,25 @@ public class AttachmentController {
     }
 
     /**
-     * 批量上传附件
+     * 批量上传附件（仅元数据，无文件流）
      */
     @PostMapping("/batchUpload")
     //@RequiresPermissions("ATTACHMENT:UPLOAD")
     public ApiResponse<List<AttachmentDetailRes>> batchUpload(@RequestBody List<@Valid CreateAttachmentReq> attachments) {
         List<AttachmentDetailRes> result = attachmentService.batchUploadAttachments(attachments);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 多文件上传：文件必填，每个文件对应一份 biz，全成全败。
+     * 请求：multipart/form-data，parts 为 files（多个）、bizList（JSON 数组）。
+     */
+    @PostMapping(value = "/uploadBatch", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    //@RequiresPermissions("ATTACHMENT:UPLOAD")
+    public ApiResponse<List<AttachmentDetailRes>> uploadBatch(
+            @RequestPart("files") List<MultipartFile> files,
+            @RequestPart("bizList") List<@Valid CreateAttachmentBizReq> bizList) {
+        List<AttachmentDetailRes> result = attachmentService.uploadAttachments(files, bizList);
         return ApiResponse.success(result);
     }
 

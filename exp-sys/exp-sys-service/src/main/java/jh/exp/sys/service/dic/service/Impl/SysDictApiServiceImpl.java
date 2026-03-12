@@ -11,8 +11,12 @@ import jh.exp.sys.core.api.dic.SysDictService;
 import jh.exp.sys.core.entity.dic.SysDictItem;
 import jh.exp.sys.core.entity.dic.SysDictType;
 import jh.exp.sys.core.mapper.dic.SysDictMapper;
+import jh.exp.sys.core.entity.dic.DictExportExcelRow;
 import jh.exp.sys.core.req.dic.BatchStatusReq;
+import jh.exp.sys.core.req.dic.DictExportHierarchyReq;
 import jh.exp.sys.core.req.dic.DictItemCreateReq;
+import jh.exp.sys.core.req.dic.DictItemImportRes;
+import jh.exp.sys.core.req.dic.DictItemImportRow;
 import jh.exp.sys.core.req.dic.DictItemQueryReq;
 import jh.exp.sys.core.req.dic.DictItemUpdateReq;
 import jh.exp.sys.core.req.dic.DictTypeCreateReq;
@@ -25,10 +29,19 @@ import jh.exp.sys.core.resp.dic.DictOptionRes;
 import jh.exp.sys.service.dic.service.SysDictApiService;
 import jh.exp.sys.service.dic.service.SysDictTypeService;
 import lombok.RequiredArgsConstructor;
+import jh.exp.sys.core.entity.dic.DictItemExcelRow;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.alibaba.excel.EasyExcel;
+
+import jh.exp.sys.service.dic.strategy.DictTypeMergeStrategy;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -279,6 +292,121 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         return ApiResponse.success(items);
     }
 
+    @Override
+    public ApiResponse<List<SysDictItem>> listAllDictItemsForExport() {
+        List<SysDictItem> items = sysDictMapper.selectList(
+                Wrappers.lambdaQuery(SysDictItem.class).orderByAsc(SysDictItem::getDictCode, SysDictItem::getSortNo));
+        return ApiResponse.success(items);
+    }
+
+    @Override
+    public ApiResponse<DictItemImportRes> importDictItems(List<DictItemImportRow> rows) {
+        DictItemImportRes res = new DictItemImportRes(0, 0, new ArrayList<>());
+        if (CollectionUtils.isEmpty(rows)) {
+            return ApiResponse.success(res);
+        }
+        for (int i = 0; i < rows.size(); i++) {
+            DictItemImportRow row = rows.get(i);
+            try {
+                saveOrUpdateDictItem(row);
+                res.setSuccessCount(res.getSuccessCount() + 1);
+            } catch (Exception e) {
+                res.setFailCount(res.getFailCount() + 1);
+                res.getErrors().add(String.format("第%d行: %s", i + 1, e.getMessage()));
+            }
+        }
+        return ApiResponse.success(res);
+    }
+
+    @Override
+    public ApiResponse<DictItemImportRes> importDictItemsFromExcel(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("请选择要导入的 Excel 文件");
+        }
+        String name = file.getOriginalFilename();
+        if (name == null || !name.toLowerCase().endsWith(".xlsx")) {
+            throw new RuntimeException("仅支持 .xlsx 格式的 Excel 文件");
+        }
+        List<DictItemImportRow> rows = new ArrayList<>();
+        try (InputStream is = file.getInputStream()) {
+            List<DictItemExcelRow> excelRows = EasyExcel.read(is).head(DictItemExcelRow.class).sheet().doReadSync();
+            for (DictItemExcelRow er : excelRows) {
+                if (isEmpty(er)) continue;
+                DictItemImportRow row = new DictItemImportRow();
+                row.setDictCode(er.getDictCode() != null ? er.getDictCode().trim() : "");
+                row.setItemCode(er.getItemCode() != null ? er.getItemCode().trim() : null);
+                row.setItemValue(er.getItemValue() != null ? er.getItemValue().trim() : "");
+                row.setItemLabel(er.getItemLabel() != null ? er.getItemLabel().trim() : "");
+                row.setSortNo(er.getSortNo());
+                row.setStatus(StringUtils.hasText(er.getStatus()) ? er.getStatus().trim() : CommonConstant.ENABLED_STATUS_STR);
+                row.setRemark(er.getRemark() != null ? er.getRemark().trim() : null);
+                rows.add(row);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("读取 Excel 文件失败: " + e.getMessage());
+        }
+        return importDictItems(rows);
+    }
+
+    /** 按 dictCode + itemCode 判断：存在则更新，不存在则新增 */
+    private void saveOrUpdateDictItem(DictItemImportRow row) {
+        ensureDictTypeExists(row.getDictCode());
+        String itemCode = StringUtils.hasText(row.getItemCode()) ? row.getItemCode() : row.getItemValue();
+        // 先按 dictCode + itemCode 匹配；若 itemCode 为空则按 dictCode + itemValue 匹配
+        SysDictItem existing = sysDictMapper.selectOne(Wrappers.lambdaQuery(SysDictItem.class)
+                .eq(SysDictItem::getDictCode, row.getDictCode())
+                .eq(StringUtils.hasText(itemCode), SysDictItem::getItemCode, itemCode)
+                .eq(!StringUtils.hasText(itemCode), SysDictItem::getItemValue, row.getItemValue()));
+        if (existing != null) {
+            DictItemUpdateReq req = new DictItemUpdateReq();
+            req.setId(existing.getId());
+            req.setDictCode(row.getDictCode());
+            req.setItemCode(itemCode);
+            req.setItemValue(row.getItemValue());
+            req.setItemLabel(row.getItemLabel());
+            req.setSortNo(row.getSortNo() != null ? row.getSortNo() : existing.getSortNo());
+            req.setStatus(StringUtils.hasText(row.getStatus()) ? row.getStatus() : existing.getStatus());
+            req.setRemark(row.getRemark());
+            updateDictItem(req);
+        } else {
+            DictItemCreateReq req = new DictItemCreateReq();
+            req.setDictCode(row.getDictCode());
+            req.setItemCode(itemCode);
+            req.setItemValue(row.getItemValue());
+            req.setItemLabel(row.getItemLabel());
+            req.setSortNo(row.getSortNo() != null ? row.getSortNo() : 0);
+            req.setStatus(StringUtils.hasText(row.getStatus()) ? row.getStatus() : CommonConstant.ENABLED_STATUS_STR);
+            req.setRemark(row.getRemark());
+            createDictItem(req);
+        }
+    }
+
+    private boolean isEmpty(DictItemExcelRow er) {
+        return !StringUtils.hasText(er.getDictCode()) && !StringUtils.hasText(er.getItemValue()) && !StringUtils.hasText(er.getItemLabel());
+    }
+
+    @Override
+    public byte[] exportDictItemsToExcel(List<SysDictItem> items) {
+        List<SysDictItem> list = items != null && !items.isEmpty()
+                ? items
+                : (listAllDictItemsForExport().getData() != null ? listAllDictItemsForExport().getData() : Collections.emptyList());
+        List<DictItemExcelRow> rows = new ArrayList<>();
+        for (SysDictItem item : list) {
+            DictItemExcelRow row = new DictItemExcelRow();
+            row.setDictCode(item.getDictCode());
+            row.setItemCode(item.getItemCode());
+            row.setItemValue(item.getItemValue());
+            row.setItemLabel(item.getItemLabel());
+            row.setSortNo(item.getSortNo());
+            row.setStatus(item.getStatus());
+            row.setRemark(item.getRemark());
+            rows.add(row);
+        }
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        EasyExcel.write(os, DictItemExcelRow.class).sheet("字典项").doWrite(rows);
+        return os.toByteArray();
+    }
+
     private void ensureDictTypeExists(String dictCode) {
         if (sysDictTypeService.getByDictCode(dictCode) == null) {
             throw new RuntimeException("dictCode 不存在：" + dictCode);
@@ -299,6 +427,55 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         if (count != null && count > 0) {
             throw new RuntimeException("字典项编码已存在：" + itemCode);
         }
+    }
+
+    @Override
+    public byte[] exportDictHierarchyToExcel(List<DictExportHierarchyReq> hierarchy) {
+        if (CollectionUtils.isEmpty(hierarchy)) {
+            return exportDictItemsToExcel(null);
+        }
+        List<DictExportExcelRow> rows = new ArrayList<>();
+        for (DictExportHierarchyReq req : hierarchy) {
+            if (req.getDictType() == null || CollectionUtils.isEmpty(req.getItems())) continue;
+            SysDictType t = req.getDictType();
+            for (SysDictItem item : req.getItems()) {
+                DictExportExcelRow row = new DictExportExcelRow();
+                row.setDictCode(t.getDictCode());
+                row.setDictName(t.getDictName());
+                row.setTypeDescription(t.getDescription());
+                row.setTypeStatus(t.getStatus());
+                row.setItemCode(item.getItemCode());
+                row.setItemValue(item.getItemValue());
+                row.setItemLabel(item.getItemLabel());
+                row.setSortNo(item.getSortNo());
+                row.setItemStatus(item.getStatus());
+                row.setRemark(item.getRemark());
+                rows.add(row);
+            }
+        }
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try (var writer = EasyExcel.write(os, DictExportExcelRow.class)
+                .registerWriteHandler(new DictTypeMergeStrategy())
+                .build()) {
+            var sheet1 = EasyExcel.writerSheet(0, "字典数据").build();
+            writer.write(rows, sheet1);
+            List<List<String>> descRows = List.of(
+                    List.of("【字段说明】"),
+                    List.of("字典类型编码", "全局唯一，如 USER_STATUS"),
+                    List.of("字典类型名称", "类型显示名称"),
+                    List.of("类型描述", "可选描述"),
+                    List.of("类型状态", "ENABLED-启用，DISABLED-停用"),
+                    List.of("字典项编码", "字典项编码"),
+                    List.of("字典项值", "业务表存储值"),
+                    List.of("字典项名称", "显示名称"),
+                    List.of("排序", "排序号"),
+                    List.of("项状态", "ENABLED-启用，DISABLED-停用"),
+                    List.of("备注", "可选备注")
+            );
+            var sheet2 = EasyExcel.writerSheet(1, "字段说明").build();
+            writer.write(descRows, sheet2);
+        }
+        return os.toByteArray();
     }
 
     private List<Long> normalizeIds(IdsReq req) {

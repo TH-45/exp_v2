@@ -41,11 +41,32 @@ export function queryBiddingAttachmentList(data: PageQueryInput<QueryAttachmentP
   );
 }
 
+/** 单文件上传（保留兼容） */
 export function uploadBiddingAttachment(file: File, biz: CreateAttachmentBizReq) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('biz', new Blob([JSON.stringify(biz)], { type: 'application/json' }));
   return request.post('/exp/bid/attachment/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
+
+/**
+ * 多文件上传：文件必填，每个文件对应一份 biz，全成全败。
+ * @param files 文件列表（至少一个）
+ * @param bizList 与 files 一一对应的业务参数，长度需等于 files.length
+ */
+export function uploadBiddingAttachments(
+  files: File[],
+  bizList: CreateAttachmentBizReq[],
+) {
+  const formData = new FormData();
+  files.forEach((file) => formData.append('files', file));
+  formData.append(
+    'bizList',
+    new Blob([JSON.stringify(bizList)], { type: 'application/json' }),
+  );
+  return request.post<{ list?: unknown[] }>('/exp/bid/attachment/uploadBatch', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 }

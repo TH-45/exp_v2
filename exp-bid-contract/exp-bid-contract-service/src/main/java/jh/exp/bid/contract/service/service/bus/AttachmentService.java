@@ -32,9 +32,18 @@ public interface AttachmentService {
     AttachmentDetailRes uploadAttachment(MultipartFile file, CreateAttachmentBizReq biz);
 
     /**
-     * 批量上传附件
+     * 批量上传附件（仅元数据，无文件流，供历史接口兼容）
      */
     List<AttachmentDetailRes> batchUploadAttachments(List<CreateAttachmentReq> attachments);
+
+    /**
+     * 多文件上传（文件必填，每个文件对应一份 biz，全成全败；任一失败则回滚并删除已上传的存储对象）
+     *
+     * @param files   文件列表，不可为空且每个文件不可 empty
+     * @param bizList 与 files 一一对应的业务参数列表，files.size() 必须等于 bizList.size()
+     * @return 按顺序的附件详情列表
+     */
+    List<AttachmentDetailRes> uploadAttachments(List<MultipartFile> files, List<CreateAttachmentBizReq> bizList);
 
     /**
      * 更新附件信息
