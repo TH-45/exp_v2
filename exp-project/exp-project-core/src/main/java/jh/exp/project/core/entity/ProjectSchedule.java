@@ -41,6 +41,10 @@ public class ProjectSchedule {
     @Column(name = "parent_schedule_id")
     private Long parentScheduleId;
 
+    // 前置依赖计划ID（执行依赖，不等同于WBS父子）
+    @Column(name = "predecessor_schedule_id")
+    private Long predecessorScheduleId;
+
     // 进度计划名称
     @Column(name = "schedule_name")
     private String scheduleName;

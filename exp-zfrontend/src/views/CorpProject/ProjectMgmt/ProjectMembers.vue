@@ -93,6 +93,7 @@
         border
         style="width: 100%"
         :default-sort="{prop: 'joinDate', order: 'descending'}"
+        @row-dblclick="handleRowDblClick"
       >
         <el-table-column prop="userName" label="姓名" min-width="120" />
         <el-table-column prop="department" label="部门" min-width="120" />
@@ -139,6 +140,7 @@
         v-model="memberDialog.visible"
         :title="memberDialog.isEdit ? '编辑成员' : '添加成员'"
         width="600px"
+        draggable
         destroy-on-close
       >
         <el-form
@@ -159,9 +161,9 @@
             >
               <el-option
                 v-for="user in availableUsers"
-                :key="user.id"
-                :label="`${user.name} (${user.department} - ${user.post})`"
-                :value="user.id"
+                :key="user.personId"
+                :label="`${user.personName} (${user.orgName || '未分配'} - ${user.postName || '未分配'})`"
+                :value="user.personId"
               />
             </el-select>
           </el-form-item>
@@ -228,33 +230,38 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { Plus, Download, User, UserFilled } from '@element-plus/icons-vue';
 import { hasPermission } from '@/utils/permission';
+import { queryPersonList, type ExpPersonVO } from '@/api/system/person';
 import {
-  getProjectMembers,
   addProjectMember,
-  updateProjectMember,
+  getProjectMembers,
   removeProjectMember,
-  getProjectOrgStructure,
+  updateProjectMember,
   type ProjectMemberVO,
-  type ProjectOrgNode
-} from '@/api/project';
+} from '@/api/corpProject/projectMember';
 
 const route = useRoute();
 const loading = ref(false);
 const saving = ref(false);
 
-const projectId = ref(route.params.projectId as string || '');
-const projectName = ref('某某大厦项目');
+function parseProjectId(raw: unknown): number | null {
+  const text = String(raw || '').trim();
+  if (!text || !/^\d+$/.test(text)) {
+    return null;
+  }
+  return Number(text);
+}
 
-// 成员列表
+const projectId = ref<number | null>(parseProjectId(route.params.projectId));
+const projectName = ref('工程项目');
+
 const members = ref<ProjectMemberVO[]>([]);
+const availableUsers = ref<ExpPersonVO[]>([]);
 
-// 组织架构
 const orgStructure = reactive({
   manager: null as ProjectMemberVO | null,
-  departments: [] as any[],
+  departments: [] as Array<{ id: string; userName: string; post: string; members: ProjectMemberVO[] }>,
 });
 
-// 统计信息
 const memberStats = reactive({
   total: 0,
   managers: 0,
@@ -262,20 +269,19 @@ const memberStats = reactive({
   active: 0,
 });
 
-// 弹窗
 const memberDialog = reactive({
   visible: false,
   isEdit: false,
-  editId: '',
+  editId: null as number | null,
 });
 
 const memberFormRef = ref<FormInstance>();
 const memberForm = reactive({
-  userId: '',
+  userId: undefined as number | undefined,
   responsibilities: '',
   joinDate: '',
   leaveDate: '',
-  status: 'ACTIVE' as string,
+  status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
 });
 
 const memberRules: FormRules = {
@@ -285,84 +291,29 @@ const memberRules: FormRules = {
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 };
 
-// 模拟用户数据
-const availableUsers = ref([
-  { id: 'user001', name: '张三', department: '技术部', post: '高级工程师' },
-  { id: 'user002', name: '李四', department: '技术部', post: '工程师' },
-  { id: 'user003', name: '王五', department: '施工部', post: '项目经理' },
-  { id: 'user004', name: '赵六', department: '施工部', post: '施工主管' },
-  { id: 'user005', name: '孙七', department: '质量部', post: '质量工程师' },
-  { id: 'user006', name: '周八', department: '安全部', post: '安全员' },
-]);
-
-// 权限点
-const canView = computed(() => hasPermission('project:member:view'));
 const canUpdate = computed(() => hasPermission('project:member:update'));
 const canDelete = computed(() => hasPermission('project:member:delete'));
 
-// 模拟数据
-const mockMembers: ProjectMemberVO[] = [
-  {
-    id: 'm001',
-    projectId: projectId.value,
-    userId: 'user003',
-    userName: '王五',
-    department: '施工部',
-    post: '项目经理',
-    joinDate: '2024-12-01',
-    responsibilities: '全面负责项目管理工作，包括进度控制、质量管理、安全管理、成本控制等',
-    status: 'ACTIVE',
-    isManager: true,
-  },
-  {
-    id: 'm002',
-    projectId: projectId.value,
-    userId: 'user001',
-    userName: '张三',
-    department: '技术部',
-    post: '高级工程师',
-    joinDate: '2024-12-01',
-    responsibilities: '负责项目技术方案设计、图纸审核、技术难题解决',
-    status: 'ACTIVE',
-    isManager: false,
-  },
-  {
-    id: 'm003',
-    projectId: projectId.value,
-    userId: 'user004',
-    userName: '赵六',
-    department: '施工部',
-    post: '施工主管',
-    joinDate: '2024-12-01',
-    responsibilities: '负责施工现场管理、施工进度控制、施工质量把关',
-    status: 'ACTIVE',
-    isManager: false,
-  },
-  {
-    id: 'm004',
-    projectId: projectId.value,
-    userId: 'user005',
-    userName: '孙七',
-    department: '质量部',
-    post: '质量工程师',
-    joinDate: '2024-12-15',
-    responsibilities: '负责工程质量检测、质量问题整改、质量档案管理',
-    status: 'ACTIVE',
-    isManager: false,
-  },
-];
+async function loadAvailableUsers() {
+  try {
+    const res = await queryPersonList({ pageNum: 1, pageSize: 500 });
+    availableUsers.value = res.list || [];
+  } catch (e) {
+    availableUsers.value = [];
+  }
+}
 
 async function loadMembers() {
-  if (!projectId.value) return;
-
+  if (!projectId.value) {
+    members.value = [];
+    calculateStats();
+    buildOrgStructure();
+    return;
+  }
   loading.value = true;
   try {
     const res = await getProjectMembers(projectId.value);
-    members.value = res.length ? res : mockMembers;
-    calculateStats();
-    buildOrgStructure();
-  } catch (e) {
-    members.value = mockMembers;
+    members.value = res || [];
     calculateStats();
     buildOrgStructure();
   } finally {
@@ -372,38 +323,44 @@ async function loadMembers() {
 
 function calculateStats() {
   memberStats.total = members.value.length;
-  memberStats.active = members.value.filter(m => m.status === 'ACTIVE').length;
-  memberStats.managers = members.value.filter(m => m.isManager).length;
-  memberStats.technicians = members.value.filter(m =>
-    m.post.includes('工程师') || m.post.includes('技术员')
+  memberStats.active = members.value.filter((m) => m.status === 'ACTIVE').length;
+  memberStats.managers = members.value.filter((m) => m.isManager).length;
+  memberStats.technicians = members.value.filter((m) =>
+    (m.post || '').includes('工程师') || (m.post || '').includes('技术员'),
   ).length;
 }
 
 function buildOrgStructure() {
-  const manager = members.value.find(m => m.isManager);
+  const manager = members.value.find((m) => m.isManager);
   orgStructure.manager = manager || null;
 
-  // 按部门分组
-  const deptMap = new Map();
-  members.value.filter(m => !m.isManager).forEach(member => {
-    if (!deptMap.has(member.department)) {
-      deptMap.set(member.department, {
-        id: member.department,
-        userName: `${member.department}主管`,
-        post: '部门主管',
-        members: [],
-      });
-    }
-    deptMap.get(member.department).members.push(member);
-  });
+  const deptMap = new Map<string, { id: string; userName: string; post: string; members: ProjectMemberVO[] }>();
+  members.value
+    .filter((m) => !m.isManager)
+    .forEach((member) => {
+      const deptName = member.department || '未分配部门';
+      if (!deptMap.has(deptName)) {
+        deptMap.set(deptName, {
+          id: deptName,
+          userName: `${deptName}主管`,
+          post: '部门主管',
+          members: [],
+        });
+      }
+      deptMap.get(deptName)!.members.push(member);
+    });
 
   orgStructure.departments = Array.from(deptMap.values());
 }
 
 function openAddDialog() {
+  if (!projectId.value) {
+    ElMessage.warning('请先选择项目');
+    return;
+  }
   memberDialog.isEdit = false;
   memberDialog.visible = true;
-  memberDialog.editId = '';
+  memberDialog.editId = null;
   resetMemberForm();
 }
 
@@ -411,12 +368,15 @@ function editMember(member: ProjectMemberVO) {
   memberDialog.isEdit = true;
   memberDialog.visible = true;
   memberDialog.editId = member.id;
-  Object.assign(memberForm, member);
   memberForm.userId = member.userId;
+  memberForm.responsibilities = member.responsibilities || '';
+  memberForm.joinDate = member.joinDate;
+  memberForm.leaveDate = member.leaveDate || '';
+  memberForm.status = member.status;
 }
 
 function resetMemberForm() {
-  memberForm.userId = '';
+  memberForm.userId = undefined;
   memberForm.responsibilities = '';
   memberForm.joinDate = '';
   memberForm.leaveDate = '';
@@ -424,75 +384,38 @@ function resetMemberForm() {
 }
 
 async function saveMember() {
-  if (!memberFormRef.value) return;
+  if (!memberFormRef.value || !projectId.value) return;
   const valid = await memberFormRef.value.validate();
   if (!valid) return;
 
   saving.value = true;
   try {
-    const formData = {
-      projectId: projectId.value,
-      ...memberForm,
-    };
-
-    if (memberDialog.isEdit) {
-      await updateProjectMember(memberDialog.editId, formData);
-      const index = members.value.findIndex(m => m.id === memberDialog.editId);
-      if (index > -1) {
-        members.value[index] = { ...formData, id: memberDialog.editId };
-      }
+    if (memberDialog.isEdit && memberDialog.editId) {
+      await updateProjectMember({
+        id: memberDialog.editId,
+        userId: memberForm.userId,
+        joinDate: memberForm.joinDate,
+        leaveDate: memberForm.leaveDate || undefined,
+        status: memberForm.status,
+        responsibilities: memberForm.responsibilities,
+      });
       ElMessage.success('编辑成功');
     } else {
-      const newMember = await addProjectMember(formData);
-      const selectedUser = availableUsers.value.find(u => u.id === memberForm.userId);
-      members.value.push({
-        ...formData,
-        id: newMember.id || `m${Date.now()}`,
-        userName: selectedUser?.name || '未知',
-        department: selectedUser?.department || '',
-        post: selectedUser?.post || '',
-        isManager: false,
+      const selectedUser = availableUsers.value.find((u) => u.personId === memberForm.userId);
+      await addProjectMember({
+        projectId: projectId.value,
+        userId: Number(memberForm.userId),
+        orgId: selectedUser?.orgId,
+        postId: selectedUser?.postId,
+        joinDate: memberForm.joinDate,
+        leaveDate: memberForm.leaveDate || undefined,
+        status: memberForm.status,
+        responsibilities: memberForm.responsibilities,
       });
       ElMessage.success('添加成功');
     }
-
     memberDialog.visible = false;
-    calculateStats();
-    buildOrgStructure();
-  } catch (e) {
-    // 模拟前端操作
-    if (memberDialog.isEdit) {
-      const index = members.value.findIndex(m => m.id === memberDialog.editId);
-      if (index > -1) {
-        const selectedUser = availableUsers.value.find(u => u.id === memberForm.userId);
-        members.value[index] = {
-          ...memberForm,
-          id: memberDialog.editId,
-          userName: selectedUser?.name || members.value[index].userName,
-          department: selectedUser?.department || members.value[index].department,
-          post: selectedUser?.post || members.value[index].post,
-          projectId: projectId.value,
-          isManager: members.value[index].isManager,
-        };
-      }
-      ElMessage.success('编辑成功（演示模式）');
-    } else {
-      const selectedUser = availableUsers.value.find(u => u.id === memberForm.userId);
-      members.value.push({
-        ...memberForm,
-        id: `m${Date.now()}`,
-        userName: selectedUser?.name || '未知',
-        department: selectedUser?.department || '',
-        post: selectedUser?.post || '',
-        projectId: projectId.value,
-        isManager: false,
-      });
-      ElMessage.success('添加成功（演示模式）');
-    }
-
-    memberDialog.visible = false;
-    calculateStats();
-    buildOrgStructure();
+    await loadMembers();
   } finally {
     saving.value = false;
   }
@@ -501,59 +424,50 @@ async function saveMember() {
 async function toggleMemberStatus(member: ProjectMemberVO) {
   const action = member.status === 'ACTIVE' ? '离职' : '复职';
   const newStatus = member.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-
-  try {
-    await updateProjectMember(member.id, { status: newStatus });
-    member.status = newStatus;
-    if (newStatus === 'INACTIVE') {
-      member.leaveDate = new Date().toISOString().split('T')[0];
-    }
-    calculateStats();
-    ElMessage.success(`${action}成功`);
-  } catch (e) {
-    member.status = newStatus;
-    if (newStatus === 'INACTIVE') {
-      member.leaveDate = new Date().toISOString().split('T')[0];
-    }
-    calculateStats();
-    ElMessage.success(`${action}成功（演示模式）`);
-  }
+  const leaveDate = newStatus === 'INACTIVE' ? new Date().toISOString().split('T')[0] : '';
+  await updateProjectMember({
+    id: member.id,
+    status: newStatus,
+    leaveDate: leaveDate || undefined,
+  });
+  await loadMembers();
+  ElMessage.success(`${action}成功`);
 }
 
 function removeMember(member: ProjectMemberVO) {
-  ElMessageBox.confirm(`确认移除项目成员「${member.userName}」吗？`, '提示', { type: 'warning' })
+  ElMessageBox.confirm(`确认移除项目成员「${member.userName || ''}」吗？`, '提示', { type: 'warning' })
     .then(async () => {
-      try {
-        await removeProjectMember(member.id);
-        members.value = members.value.filter(m => m.id !== member.id);
-        calculateStats();
-        buildOrgStructure();
-        ElMessage.success('移除成功');
-      } catch (e) {
-        members.value = members.value.filter(m => m.id !== member.id);
-        calculateStats();
-        buildOrgStructure();
-        ElMessage.success('移除成功（演示模式）');
-      }
+      await removeProjectMember(member.id);
+      await loadMembers();
+      ElMessage.success('移除成功');
     })
     .catch(() => {});
+}
+
+function handleRowDblClick(row: ProjectMemberVO) {
+  if (canUpdate.value) {
+    editMember(row);
+  }
 }
 
 function exportMembers() {
   ElMessage.info('导出功能开发中...');
 }
 
-watch(() => route.params.projectId, (newId) => {
-  projectId.value = newId as string || '';
-  if (projectId.value) {
+watch(
+  () => route.params.projectId,
+  (newId) => {
+    projectId.value = parseProjectId(newId);
     loadMembers();
-  }
-});
+  },
+);
 
-onMounted(() => {
-  if (projectId.value) {
-    loadMembers();
+onMounted(async () => {
+  if (!projectId.value) {
+    ElMessage.warning('当前未选择有效项目，请从项目管理进入');
   }
+  await loadAvailableUsers();
+  await loadMembers();
 });
 </script>
 

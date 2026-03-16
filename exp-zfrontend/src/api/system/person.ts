@@ -174,4 +174,64 @@ export function updatePersonPartTimePosts(personId: number, partTimePosts: PartT
   });
 }
 
+export interface ImexTaskSubmitRes {
+  taskId: string;
+}
+
+export interface ImexTaskErrorItem {
+  rowNo: number;
+  errorType: string;
+  message: string;
+}
+
+export interface ImexTaskResult {
+  taskId: string;
+  bizCode: string;
+  taskType: 'IMPORT' | 'EXPORT';
+  status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'PARTIAL_SUCCESS' | 'FAILED';
+  totalRows: number;
+  successRows: number;
+  failedRows: number;
+  errorOverflowCount: number;
+  message: string;
+  exportFileName?: string;
+  downloadable: boolean;
+  errorPreview: ImexTaskErrorItem[];
+}
+
+export function downloadPersonImportTemplate() {
+  return request.get<Blob, Blob>(`${BASE}/imex/template`, {
+    responseType: 'blob',
+  });
+}
+
+export function submitPersonImport(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return request.post<ImexTaskSubmitRes, ImexTaskSubmitRes>(`${BASE}/imex/import`, formData);
+}
+
+export function submitPersonExport(payload: {
+  mode: 'SELECTED' | 'FILTER' | 'ALL';
+  personIds?: number[];
+  personCode?: string;
+  personName?: string;
+  mobile?: string;
+}) {
+  return request.post<ImexTaskSubmitRes, ImexTaskSubmitRes>(`${BASE}/imex/export`, payload);
+}
+
+export function queryPersonImexTask(taskId: string) {
+  return request.get<ImexTaskResult, ImexTaskResult>(`${BASE}/imex/task`, {
+    params: { taskId },
+  });
+}
+
+export function downloadPersonExport(taskId: string) {
+  return request.get<Blob, Blob>(`${BASE}/imex/export/download`, {
+    params: { taskId },
+    responseType: 'blob',
+  });
+}
+
 

@@ -48,8 +48,8 @@
             >
               删除
             </el-button>
-            <el-button size="small" :disabled="true">导入</el-button>
-            <el-button size="small" :disabled="true">导出</el-button>
+            <el-button size="small" @click="openImportDialog" :disabled="!canManage">导入</el-button>
+            <el-button size="small" @click="openExportDialog" :disabled="!canView">导出</el-button>
           </div>
         </div>
 
@@ -484,6 +484,53 @@
       </template>
     </el-dialog>
 
+    <el-dialog
+      v-model="importDialog.visible"
+      title="导入人员"
+      width="520px"
+      destroy-on-close
+      draggable
+    >
+      <div class="import-actions">
+        <el-button size="small" @click="downloadImportTemplateFile">下载导入模板</el-button>
+      </div>
+      <el-upload
+        :auto-upload="false"
+        :limit="1"
+        accept=".xlsx"
+        :on-change="onImportFileChange"
+        :on-remove="onImportFileRemove"
+      >
+        <el-button type="primary" size="small">选择 .xlsx 文件</el-button>
+      </el-upload>
+      <div class="import-tip">仅校验唯一性冲突（如编码重复），失败行跳过，最多展示前100条错误。</div>
+      <template #footer>
+        <el-button @click="importDialog.visible = false">取消</el-button>
+        <el-button type="primary" :loading="imexLoading" :disabled="!importDialog.file" @click="submitImport">提交导入</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="exportDialog.visible"
+      title="导出人员"
+      width="520px"
+      destroy-on-close
+      draggable
+    >
+      <el-radio-group v-model="exportDialog.mode">
+        <el-radio value="SELECTED">导出选中数据</el-radio>
+        <el-radio value="FILTER">按当前筛选条件导出</el-radio>
+        <el-radio value="ALL">导出全部数据</el-radio>
+      </el-radio-group>
+      <div class="import-tip" style="margin-top: 12px;">
+        全量导出会导出所有人员数据，提交后后台异步处理。
+      </div>
+      <template #footer>
+        <el-button @click="exportDialog.visible = false">取消</el-button>
+        <el-button type="primary" :loading="imexLoading" @click="submitExport">提交导出</el-button>
+      </template>
+    </el-dialog>
+
     </el-card>
   </el-config-provider>
 </template>
@@ -491,6 +538,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, computed } from 'vue';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
+import type { UploadFile } from 'element-plus';
 import {
   ArrowDown,
   User,
@@ -513,6 +561,12 @@ import {
   updatePersonPartTimePosts,
   type ExpPersonVO,
   type PersonStatus,
+  downloadPersonImportTemplate,
+  submitPersonImport,
+  submitPersonExport,
+  queryPersonImexTask,
+  downloadPersonExport,
+  type ImexTaskResult,
 
 } from '@/api/system/person';
 import { hasPermission } from '@/utils/permission';
@@ -566,6 +620,15 @@ const query = reactive({
 const tableData = ref<ExpPersonVO[]>([]);
 const total = ref(0);
 const selectedRows = ref<ExpPersonVO[]>([]);
+const imexLoading = ref(false);
+const importDialog = reactive({
+  visible: false,
+  file: null as File | null,
+});
+const exportDialog = reactive({
+  visible: false,
+  mode: 'SELECTED' as 'SELECTED' | 'FILTER' | 'ALL',
+});
 
 // 详细侧边栏
 const detailDrawer = reactive({
@@ -721,6 +784,146 @@ async function fetchList() {
     loading.value = false;
     // 翻页后清空多选
     selectedRows.value = [];
+  }
+}
+
+function openImportDialog() {
+  importDialog.file = null;
+  importDialog.visible = true;
+}
+
+function onImportFileChange(file: UploadFile) {
+  importDialog.file = (file.raw as File) || null;
+}
+
+function onImportFileRemove() {
+  importDialog.file = null;
+}
+
+function openExportDialog() {
+  exportDialog.mode = selectedRows.value.length > 0 ? 'SELECTED' : 'FILTER';
+  exportDialog.visible = true;
+}
+
+function triggerDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function downloadImportTemplateFile() {
+  try {
+    const blob = await downloadPersonImportTemplate();
+    triggerDownload(blob, `人员导入模板_${Date.now()}.xlsx`);
+  } catch {
+    ElMessage.error('模板下载失败');
+  }
+}
+
+async function pollImexTask(taskId: string): Promise<ImexTaskResult> {
+  const maxTry = 120;
+  for (let i = 0; i < maxTry; i++) {
+    const task = await queryPersonImexTask(taskId);
+    if (task.status === 'SUCCESS' || task.status === 'PARTIAL_SUCCESS' || task.status === 'FAILED') {
+      return task;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  throw new Error('任务执行超时');
+}
+
+function buildErrorPreviewText(task: ImexTaskResult) {
+  const lines = (task.errorPreview || []).map((e) => `第${e.rowNo}行 | ${e.errorType} | ${e.message}`);
+  const overflow = task.errorOverflowCount > 0 ? `\n... 其余${task.errorOverflowCount}条未展示` : '';
+  return lines.join('\n') + overflow;
+}
+
+async function copyErrorPreview(task: ImexTaskResult) {
+  const text = buildErrorPreviewText(task);
+  if (!text) return;
+  if (navigator?.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+}
+
+async function submitImport() {
+  if (!importDialog.file) {
+    ElMessage.warning('请选择导入文件');
+    return;
+  }
+  imexLoading.value = true;
+  try {
+    const submitRes = await submitPersonImport(importDialog.file);
+    const task = await pollImexTask(submitRes.taskId);
+    const msg = `导入完成：成功${task.successRows}，失败${task.failedRows}`;
+    if (task.failedRows > 0) {
+      await ElMessageBox.alert(buildErrorPreviewText(task), msg, {
+        confirmButtonText: '复制错误并关闭',
+        callback: async () => {
+          await copyErrorPreview(task);
+        },
+      });
+    } else {
+      ElMessage.success(msg);
+    }
+    importDialog.visible = false;
+    fetchList();
+  } catch (e) {
+    ElMessage.error((e as any)?.message || '导入失败');
+  } finally {
+    imexLoading.value = false;
+  }
+}
+
+async function submitExport() {
+  if (exportDialog.mode === 'SELECTED' && !selectedRows.value.length) {
+    ElMessage.warning('请先选中要导出的数据');
+    return;
+  }
+  if (exportDialog.mode === 'ALL') {
+    await ElMessageBox.confirm('确认导出全部人员数据？', '导出确认', {
+      type: 'warning',
+      confirmButtonText: '确认导出',
+      cancelButtonText: '取消',
+    });
+  }
+
+  imexLoading.value = true;
+  try {
+    const payload = {
+      mode: exportDialog.mode,
+      personIds: exportDialog.mode === 'SELECTED' ? selectedRows.value.map((x) => x.personId) : undefined,
+      personCode: exportDialog.mode === 'FILTER' ? query.personCode : undefined,
+      personName: exportDialog.mode === 'FILTER' ? query.personName : undefined,
+      mobile: exportDialog.mode === 'FILTER' ? query.mobile : undefined,
+    };
+    const submitRes = await submitPersonExport(payload);
+    const task = await pollImexTask(submitRes.taskId);
+    if (!task.downloadable) {
+      throw new Error(task.message || '导出文件未生成');
+    }
+    const blob = await downloadPersonExport(task.taskId);
+    triggerDownload(blob, task.exportFileName || `人员导出_${Date.now()}.xlsx`);
+    ElMessage.success(`导出完成，共${task.successRows}条`);
+    exportDialog.visible = false;
+  } catch (e: any) {
+    if (e?.message !== 'cancel' && e !== 'cancel') {
+      ElMessage.error(e?.message || '导出失败');
+    }
+  } finally {
+    imexLoading.value = false;
   }
 }
 
@@ -1205,6 +1408,16 @@ async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
 
 .search-bar {
   margin-bottom: 12px;
+}
+
+.import-actions {
+  margin-bottom: 12px;
+}
+
+.import-tip {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 
 .pagination {

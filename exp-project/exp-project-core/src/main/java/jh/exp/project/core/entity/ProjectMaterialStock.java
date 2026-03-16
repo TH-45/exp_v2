@@ -57,6 +57,18 @@ public class ProjectMaterialStock {
     @Column(name = "stock_qty", precision = 20, scale = 4)
     private BigDecimal stockQty;
 
+    // 累计到货数量
+    @Column(name = "received_qty", precision = 20, scale = 4)
+    private BigDecimal receivedQty;
+
+    // 参考单价
+    @Column(name = "unit_price", precision = 20, scale = 4)
+    private BigDecimal unitPrice;
+
+    // 供应商名称
+    @Column(name = "supplier_name")
+    private String supplierName;
+
     // 安全库存数量
     @Column(name = "safe_stock_qty", precision = 20, scale = 4)
     private BigDecimal safeStockQty;

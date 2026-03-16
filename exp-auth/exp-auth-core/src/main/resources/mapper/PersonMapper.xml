@@ -75,5 +75,57 @@
         </where>
     </select>
 
+    <select id="selectByPersonCodes" resultType="jh.exp.auth.core.entity.Person">
+        SELECT person_id, person_code, person_name, gender, mobile, email, id_card_no,
+               job_title, org_id, post_id, account_id, status, entry_date, leave_date,
+               is_external, created_by, created_time, updated_time, remark
+        FROM exp_person
+        <where>
+            <if test="codes != null and codes.size() > 0">
+                person_code IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    #{code}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <insert id="batchInsertPersons">
+        INSERT INTO exp_person
+        (person_code, person_name, gender, mobile, email, org_id, post_id, status, created_by, created_time, updated_time, remark)
+        VALUES
+        <foreach item="p" collection="list" separator=",">
+            (#{p.personCode}, #{p.personName}, #{p.gender}, #{p.mobile}, #{p.email},
+             #{p.orgId}, #{p.postId}, #{p.status}, #{p.createdBy}, #{p.createdTime}, #{p.updatedTime}, #{p.remark})
+        </foreach>
+    </insert>
+
+    <select id="selectPersonForExport" resultType="jh.exp.auth.core.entity.res.PersonInfoRes">
+        SELECT p.person_id, p.person_name, p.mobile, p.person_code, p.job_title,
+               p.post_id, pos.post_name, p.org_id, o.org_name, p.account_id, a.account_name, p.gender, p.email, p.status, p.created_time
+        FROM exp_person p
+        LEFT JOIN exp_org_unit o ON p.org_id = o.org_id
+        LEFT JOIN exp_post pos ON p.post_id = pos.post_id
+        LEFT JOIN exp_account a ON p.account_id = a.account_id
+        <where>
+            <if test="personIds != null and personIds.size() > 0">
+                AND p.person_id IN
+                <foreach item="id" collection="personIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="query != null and query.personCode != null and query.personCode.trim() != ''">
+                AND p.person_code LIKE CONCAT('%', #{query.personCode}, '%')
+            </if>
+            <if test="query != null and query.personName != null and query.personName.trim() != ''">
+                AND p.person_name LIKE CONCAT('%', #{query.personName}, '%')
+            </if>
+            <if test="query != null and query.mobile != null and query.mobile.trim() != ''">
+                AND p.mobile LIKE CONCAT('%', #{query.mobile}, '%')
+            </if>
+        </where>
+        ORDER BY p.created_time DESC
+    </select>
+
 
 </mapper>

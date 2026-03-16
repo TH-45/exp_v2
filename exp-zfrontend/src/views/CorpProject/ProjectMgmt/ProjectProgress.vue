@@ -115,6 +115,7 @@
         border
         style="width: 100%"
         :default-sort="{prop: 'plannedStartDate', order: 'ascending'}"
+        @row-dblclick="handleRowDblClick"
       >
         <el-table-column prop="name" label="里程碑名称" min-width="180" />
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
@@ -195,6 +196,7 @@
         v-model="milestoneDialog.visible"
         :title="milestoneDialog.isEdit ? '编辑里程碑' : '添加里程碑'"
         width="700px"
+        draggable
         destroy-on-close
       >
         <el-form
@@ -283,7 +285,7 @@
       </el-dialog>
 
       <!-- 更新进度弹窗 -->
-      <el-dialog v-model="progressDialog.visible" title="更新进度" width="500px">
+      <el-dialog v-model="progressDialog.visible" title="更新进度" width="500px" draggable>
         <el-form :model="progressForm" label-width="100px" @submit.prevent="confirmProgressUpdate">
           <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="当前进度" required>
@@ -348,26 +350,33 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Plus, Download } from '@element-plus/icons-vue';
 import { hasPermission } from '@/utils/permission';
 import {
-  getProjectMilestones,
   createProjectMilestone,
-  updateProjectMilestone,
   deleteProjectMilestone,
-  updateMilestoneProgress,
   getProjectProgress,
+  updateMilestoneProgress,
+  updateProjectMilestone,
   type ProjectMilestoneVO,
-  type ProjectProgressVO
-} from '@/api/project';
+  type ProjectProgressVO,
+} from '@/api/corpProject/projectProgress';
+import { getProjectMembers } from '@/api/corpProject/projectMember';
 
 const route = useRoute();
 const loading = ref(false);
 const saving = ref(false);
 
-const projectId = ref(route.params.projectId as string || '');
-const projectName = ref('某某大厦项目');
+function parseProjectId(raw: unknown): number | null {
+  const text = String(raw || '').trim();
+  if (!text || !/^\d+$/.test(text)) {
+    return null;
+  }
+  return Number(text);
+}
 
-// 进度数据
+const projectId = ref<number | null>(parseProjectId(route.params.projectId));
+const projectName = ref('工程项目');
+
 const progressData = reactive<ProjectProgressVO>({
-  projectId: projectId.value,
+  projectId: projectId.value || 0,
   overallProgress: 0,
   milestones: [],
   delayedMilestones: 0,
@@ -375,24 +384,16 @@ const progressData = reactive<ProjectProgressVO>({
   totalMilestones: 0,
 });
 
-// 时间线月份（模拟）
 const timelineMonths = [
-  '2024-12', '2025-01', '2025-02', '2025-03', '2025-04', '2025-05', '2025-06'
+  '2024-12', '2025-01', '2025-02', '2025-03', '2025-04', '2025-05', '2025-06',
 ];
 
-// 模拟项目成员
-const projectMembers = ref([
-  { id: 'm001', userId: 'user003', userName: '王五' },
-  { id: 'm002', userId: 'user001', userName: '张三' },
-  { id: 'm003', userId: 'user004', userName: '赵六' },
-  { id: 'm004', userId: 'user005', userName: '孙七' },
-]);
+const projectMembers = ref<Array<{ id: number; userId: number; userName?: string }>>([]);
 
-// 里程碑弹窗
 const milestoneDialog = reactive({
   visible: false,
   isEdit: false,
-  editId: '',
+  editId: null as number | null,
 });
 
 const milestoneFormRef = ref<FormInstance>();
@@ -401,8 +402,8 @@ const milestoneForm = reactive({
   description: '',
   plannedStartDate: '',
   plannedEndDate: '',
-  responsiblePersonId: '',
-  predecessorMilestoneId: '',
+  responsiblePersonId: undefined as number | undefined,
+  predecessorMilestoneId: undefined as number | undefined,
 });
 
 const milestoneRules: FormRules = {
@@ -412,10 +413,9 @@ const milestoneRules: FormRules = {
   responsiblePersonId: [{ required: true, message: '请选择负责人', trigger: 'change' }],
 };
 
-// 进度更新弹窗
 const progressDialog = reactive({
   visible: false,
-  milestoneId: '',
+  milestoneId: null as number | null,
 });
 
 const progressForm = reactive({
@@ -425,88 +425,12 @@ const progressForm = reactive({
   remarks: '',
 });
 
-// 计算属性
 const availableMilestones = computed(() =>
-  progressData.milestones.filter(m => m.id !== milestoneDialog.editId)
+  progressData.milestones.filter((m) => m.id !== milestoneDialog.editId),
 );
 
-// 权限点
-const canView = computed(() => hasPermission('project:progress:view'));
 const canUpdate = computed(() => hasPermission('project:progress:update'));
 const canDelete = computed(() => hasPermission('project:progress:delete'));
-
-// 模拟数据
-const mockMilestones: ProjectMilestoneVO[] = [
-  {
-    id: 'ms001',
-    projectId: projectId.value,
-    name: '项目启动',
-    description: '项目正式启动，完成前期准备工作',
-    plannedStartDate: '2024-12-01',
-    plannedEndDate: '2024-12-07',
-    actualStartDate: '2024-12-01',
-    actualEndDate: '2024-12-05',
-    progress: 100,
-    status: 'COMPLETED',
-    responsiblePerson: '王五',
-    responsiblePersonId: 'user003',
-    createTime: '2024-11-25 10:00:00',
-  },
-  {
-    id: 'ms002',
-    projectId: projectId.value,
-    name: '地基施工',
-    description: '完成地基开挖、基础施工',
-    plannedStartDate: '2024-12-08',
-    plannedEndDate: '2025-01-15',
-    actualStartDate: '2024-12-08',
-    progress: 100,
-    status: 'COMPLETED',
-    responsiblePerson: '赵六',
-    responsiblePersonId: 'user004',
-    createTime: '2024-12-01 10:00:00',
-  },
-  {
-    id: 'ms003',
-    projectId: projectId.value,
-    name: '主体施工',
-    description: '完成主体结构施工',
-    plannedStartDate: '2025-01-16',
-    plannedEndDate: '2025-04-30',
-    actualStartDate: '2025-01-16',
-    progress: 75,
-    status: 'ONGOING',
-    responsiblePerson: '赵六',
-    responsiblePersonId: 'user004',
-    createTime: '2025-01-10 10:00:00',
-  },
-  {
-    id: 'ms004',
-    projectId: projectId.value,
-    name: '装饰装修',
-    description: '完成室内装饰装修工程',
-    plannedStartDate: '2025-05-01',
-    plannedEndDate: '2025-07-31',
-    progress: 0,
-    status: 'NOT_STARTED',
-    responsiblePerson: '张三',
-    responsiblePersonId: 'user001',
-    createTime: '2025-01-15 10:00:00',
-  },
-  {
-    id: 'ms005',
-    projectId: projectId.value,
-    name: '竣工验收',
-    description: '完成工程竣工验收',
-    plannedStartDate: '2025-08-01',
-    plannedEndDate: '2025-08-15',
-    progress: 0,
-    status: 'NOT_STARTED',
-    responsiblePerson: '孙七',
-    responsiblePersonId: 'user005',
-    createTime: '2025-01-15 10:00:00',
-  },
-];
 
 function getMilestoneStatusLabel(status: string) {
   const labels = {
@@ -580,37 +504,51 @@ function getTaskBarClass(milestone: ProjectMilestoneVO) {
 }
 
 async function loadProgress() {
-  if (!projectId.value) return;
+  if (!projectId.value) {
+    progressData.projectId = 0;
+    progressData.overallProgress = 0;
+    progressData.milestones = [];
+    progressData.delayedMilestones = 0;
+    progressData.completedMilestones = 0;
+    progressData.totalMilestones = 0;
+    return;
+  }
 
   loading.value = true;
   try {
     const res = await getProjectProgress(projectId.value);
-    Object.assign(progressData, res);
-    if (progressData.milestones.length === 0) {
-      progressData.milestones = mockMilestones;
-      calculateProgressStats();
-    }
-  } catch (e) {
-    progressData.milestones = mockMilestones;
-    calculateProgressStats();
+    progressData.projectId = res.projectId;
+    progressData.overallProgress = Number(res.overallProgress || 0);
+    progressData.milestones = res.milestones || [];
+    progressData.delayedMilestones = Number(res.delayedMilestones || 0);
+    progressData.completedMilestones = Number(res.completedMilestones || 0);
+    progressData.totalMilestones = Number(res.totalMilestones || 0);
   } finally {
     loading.value = false;
   }
 }
 
-function calculateProgressStats() {
-  progressData.totalMilestones = progressData.milestones.length;
-  progressData.completedMilestones = progressData.milestones.filter(m => m.status === 'COMPLETED').length;
-  progressData.delayedMilestones = progressData.milestones.filter(m => m.status === 'DELAYED').length;
-
-  const totalProgress = progressData.milestones.reduce((sum, m) => sum + m.progress, 0);
-  progressData.overallProgress = Math.round(totalProgress / progressData.milestones.length);
+async function loadProjectMembers() {
+  if (!projectId.value) {
+    projectMembers.value = [];
+    return;
+  }
+  const members = await getProjectMembers(projectId.value);
+  projectMembers.value = members.map((m) => ({
+    id: m.id,
+    userId: m.userId,
+    userName: m.userName,
+  }));
 }
 
 function openAddMilestoneDialog() {
+  if (!projectId.value) {
+    ElMessage.warning('请先选择项目');
+    return;
+  }
   milestoneDialog.isEdit = false;
   milestoneDialog.visible = true;
-  milestoneDialog.editId = '';
+  milestoneDialog.editId = null;
   resetMilestoneForm();
 }
 
@@ -618,8 +556,12 @@ function editMilestone(milestone: ProjectMilestoneVO) {
   milestoneDialog.isEdit = true;
   milestoneDialog.visible = true;
   milestoneDialog.editId = milestone.id;
-  Object.assign(milestoneForm, milestone);
+  milestoneForm.name = milestone.name;
+  milestoneForm.description = milestone.description || '';
+  milestoneForm.plannedStartDate = milestone.plannedStartDate;
+  milestoneForm.plannedEndDate = milestone.plannedEndDate;
   milestoneForm.responsiblePersonId = milestone.responsiblePersonId;
+  milestoneForm.predecessorMilestoneId = milestone.predecessorMilestoneId;
 }
 
 function resetMilestoneForm() {
@@ -627,89 +569,43 @@ function resetMilestoneForm() {
   milestoneForm.description = '';
   milestoneForm.plannedStartDate = '';
   milestoneForm.plannedEndDate = '';
-  milestoneForm.responsiblePersonId = '';
-  milestoneForm.predecessorMilestoneId = '';
+  milestoneForm.responsiblePersonId = undefined;
+  milestoneForm.predecessorMilestoneId = undefined;
 }
 
 async function saveMilestone() {
-  if (!milestoneFormRef.value) return;
+  if (!milestoneFormRef.value || !projectId.value) return;
   const valid = await milestoneFormRef.value.validate();
   if (!valid) return;
 
   saving.value = true;
   try {
-    const formData = {
-      projectId: projectId.value,
-      ...milestoneForm,
-    };
-
-    if (milestoneDialog.isEdit) {
-      await updateProjectMilestone(milestoneDialog.editId, formData);
-      const index = progressData.milestones.findIndex(m => m.id === milestoneDialog.editId);
-      if (index > -1) {
-        progressData.milestones[index] = {
-          ...formData,
-          id: milestoneDialog.editId,
-          progress: progressData.milestones[index].progress,
-          status: progressData.milestones[index].status,
-          actualStartDate: progressData.milestones[index].actualStartDate,
-          actualEndDate: progressData.milestones[index].actualEndDate,
-          createTime: progressData.milestones[index].createTime,
-        };
-      }
+    if (milestoneDialog.isEdit && milestoneDialog.editId) {
+      await updateProjectMilestone({
+        id: milestoneDialog.editId,
+        name: milestoneForm.name,
+        description: milestoneForm.description || undefined,
+        plannedStartDate: milestoneForm.plannedStartDate,
+        plannedEndDate: milestoneForm.plannedEndDate,
+        predecessorMilestoneId: milestoneForm.predecessorMilestoneId,
+        responsiblePersonId: Number(milestoneForm.responsiblePersonId),
+      });
       ElMessage.success('编辑成功');
     } else {
-      const newMilestone = await createProjectMilestone(formData);
-      const responsiblePerson = projectMembers.value.find(m => m.userId === milestoneForm.responsiblePersonId);
-      progressData.milestones.push({
-        ...formData,
-        id: newMilestone.id || `ms${Date.now()}`,
-        progress: 0,
-        status: 'NOT_STARTED',
-        responsiblePerson: responsiblePerson?.userName || '未知',
-        createTime: new Date().toISOString(),
+      await createProjectMilestone({
+        projectId: projectId.value,
+        name: milestoneForm.name,
+        description: milestoneForm.description || undefined,
+        plannedStartDate: milestoneForm.plannedStartDate,
+        plannedEndDate: milestoneForm.plannedEndDate,
+        predecessorMilestoneId: milestoneForm.predecessorMilestoneId,
+        responsiblePersonId: Number(milestoneForm.responsiblePersonId),
       });
       ElMessage.success('添加成功');
     }
 
     milestoneDialog.visible = false;
-    calculateProgressStats();
-  } catch (e) {
-    // 模拟前端操作
-    if (milestoneDialog.isEdit) {
-      const index = progressData.milestones.findIndex(m => m.id === milestoneDialog.editId);
-      if (index > -1) {
-        const responsiblePerson = projectMembers.value.find(m => m.userId === milestoneForm.responsiblePersonId);
-        progressData.milestones[index] = {
-          ...milestoneForm,
-          id: milestoneDialog.editId,
-          progress: progressData.milestones[index].progress,
-          status: progressData.milestones[index].status,
-          actualStartDate: progressData.milestones[index].actualStartDate,
-          actualEndDate: progressData.milestones[index].actualEndDate,
-          responsiblePerson: responsiblePerson?.userName || progressData.milestones[index].responsiblePerson,
-          responsiblePersonId: milestoneForm.responsiblePersonId,
-          projectId: projectId.value,
-          createTime: progressData.milestones[index].createTime,
-        };
-      }
-      ElMessage.success('编辑成功（演示模式）');
-    } else {
-      const responsiblePerson = projectMembers.value.find(m => m.userId === milestoneForm.responsiblePersonId);
-      progressData.milestones.push({
-        ...milestoneForm,
-        id: `ms${Date.now()}`,
-        progress: 0,
-        status: 'NOT_STARTED',
-        responsiblePerson: responsiblePerson?.userName || '未知',
-        projectId: projectId.value,
-        createTime: new Date().toISOString(),
-      });
-      ElMessage.success('添加成功（演示模式）');
-    }
-
-    milestoneDialog.visible = false;
-    calculateProgressStats();
+    await loadProgress();
   } finally {
     saving.value = false;
   }
@@ -718,81 +614,63 @@ async function saveMilestone() {
 function updateProgress(milestone: ProjectMilestoneVO) {
   progressDialog.visible = true;
   progressDialog.milestoneId = milestone.id;
-  progressForm.progress = milestone.progress;
+  progressForm.progress = milestone.progress || 0;
   progressForm.actualStartDate = milestone.actualStartDate || '';
   progressForm.actualEndDate = milestone.actualEndDate || '';
   progressForm.remarks = '';
 }
 
 async function confirmProgressUpdate() {
-  try {
-    await updateMilestoneProgress({
-      milestoneId: progressDialog.milestoneId,
-      progress: progressForm.progress,
-      actualStartDate: progressForm.actualStartDate || undefined,
-      actualEndDate: progressForm.actualEndDate || undefined,
-      remarks: progressForm.remarks,
-    });
-
-    const milestone = progressData.milestones.find(m => m.id === progressDialog.milestoneId);
-    if (milestone) {
-      milestone.progress = progressForm.progress;
-      milestone.actualStartDate = progressForm.actualStartDate;
-      milestone.actualEndDate = progressForm.actualEndDate;
-      milestone.status = progressForm.progress >= 100 ? 'COMPLETED' : 'ONGOING';
-    }
-
-    progressDialog.visible = false;
-    calculateProgressStats();
-    ElMessage.success('进度更新成功');
-  } catch (e) {
-    // 模拟前端更新
-    const milestone = progressData.milestones.find(m => m.id === progressDialog.milestoneId);
-    if (milestone) {
-      milestone.progress = progressForm.progress;
-      milestone.actualStartDate = progressForm.actualStartDate;
-      milestone.actualEndDate = progressForm.actualEndDate;
-      milestone.status = progressForm.progress >= 100 ? 'COMPLETED' : 'ONGOING';
-    }
-
-    progressDialog.visible = false;
-    calculateProgressStats();
-    ElMessage.success('进度更新成功（演示模式）');
+  if (!progressDialog.milestoneId) {
+    return;
   }
+  await updateMilestoneProgress({
+    milestoneId: progressDialog.milestoneId,
+    progress: progressForm.progress,
+    actualStartDate: progressForm.actualStartDate || undefined,
+    actualEndDate: progressForm.actualEndDate || undefined,
+    remarks: progressForm.remarks || undefined,
+  });
+  progressDialog.visible = false;
+  await loadProgress();
+  ElMessage.success('进度更新成功');
 }
 
 function deleteMilestone(milestone: ProjectMilestoneVO) {
   ElMessageBox.confirm(`确认删除里程碑「${milestone.name}」吗？`, '提示', { type: 'warning' })
     .then(async () => {
-      try {
-        await deleteProjectMilestone(milestone.id);
-        progressData.milestones = progressData.milestones.filter(m => m.id !== milestone.id);
-        calculateProgressStats();
-        ElMessage.success('删除成功');
-      } catch (e) {
-        progressData.milestones = progressData.milestones.filter(m => m.id !== milestone.id);
-        calculateProgressStats();
-        ElMessage.success('删除成功（演示模式）');
-      }
+      await deleteProjectMilestone(milestone.id);
+      await loadProgress();
+      ElMessage.success('删除成功');
     })
     .catch(() => {});
+}
+
+function handleRowDblClick(row: ProjectMilestoneVO) {
+  if (canUpdate.value) {
+    editMilestone(row);
+  }
 }
 
 function exportProgress() {
   ElMessage.info('导出功能开发中...');
 }
 
-watch(() => route.params.projectId, (newId) => {
-  projectId.value = newId as string || '';
-  if (projectId.value) {
-    loadProgress();
-  }
-});
+watch(
+  () => route.params.projectId,
+  async (newId) => {
+    projectId.value = parseProjectId(newId);
+    await loadProjectMembers();
+    await loadProgress();
+  },
+);
 
-onMounted(() => {
-  if (projectId.value) {
-    loadProgress();
+onMounted(async () => {
+  if (!projectId.value) {
+    ElMessage.warning('当前未选择有效项目，请从项目管理进入');
   }
+  await loadProjectMembers();
+  await loadProgress();
 });
 </script>
 

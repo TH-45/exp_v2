@@ -14,10 +14,6 @@
               <el-icon><Plus /></el-icon>
               添加物料
             </el-button>
-            <el-button size="small" @click="createProcurement" :disabled="!canUpdate">
-              <el-icon><ShoppingCart /></el-icon>
-              批量采购
-            </el-button>
             <el-button size="small" @click="exportMaterials">
               <el-icon><Download /></el-icon>
               导出
@@ -131,8 +127,10 @@
         border
         style="width: 100%"
         :default-sort="{prop: 'lastUpdateTime', order: 'descending'}"
+        @row-dblclick="handleRowDblClick"
       >
         <el-table-column prop="name" label="物料名称" min-width="150" />
+        <el-table-column prop="materialCode" label="物料编码" min-width="120" />
         <el-table-column prop="specification" label="规格型号" min-width="120" />
         <el-table-column prop="unit" label="单位" width="80" />
         <el-table-column label="需求量" min-width="120">
@@ -225,6 +223,7 @@
         v-model="materialDialog.visible"
         :title="materialDialog.isEdit ? '编辑物料' : '添加物料'"
         width="700px"
+        draggable
         destroy-on-close
       >
         <el-form
@@ -237,12 +236,17 @@
         >
           <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-row :gutter="16">
-            <el-col :span="12">
+            <el-col :span="8">
+              <el-form-item label="物料编码" prop="materialCode">
+                <el-input v-model="materialForm.materialCode" placeholder="请输入物料编码" :disabled="materialDialog.isEdit" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
               <el-form-item label="物料名称" prop="name">
                 <el-input v-model="materialForm.name" placeholder="请输入物料名称" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="8">
               <el-form-item label="规格型号" prop="specification">
                 <el-input v-model="materialForm.specification" placeholder="请输入规格型号" />
               </el-form-item>
@@ -294,15 +298,6 @@
                 <el-input v-model="materialForm.supplier" placeholder="请输入供应商名称" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
-              <el-form-item label="状态" prop="status">
-                <el-select v-model="materialForm.status" placeholder="选择状态" style="width: 100%">
-                  <el-option label="正常" value="NORMAL" />
-                  <el-option label="库存不足" value="LOW_STOCK" />
-                  <el-option label="缺货" value="OUT_OF_STOCK" />
-                </el-select>
-              </el-form-item>
-            </el-col>
           </el-row>
         </el-form>
         <template #footer>
@@ -314,7 +309,7 @@
       </el-dialog>
 
       <!-- 入库弹窗 -->
-      <el-dialog v-model="stockDialog.visible" title="物料入库" width="400px">
+      <el-dialog v-model="stockDialog.visible" title="物料入库" width="400px" draggable>
         <el-form :model="stockForm" label-width="100px" @submit.prevent="confirmStockUpdate">
           <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="入库数量" required>
@@ -345,7 +340,7 @@
       </el-dialog>
 
       <!-- 出库弹窗 -->
-      <el-dialog v-model="usageDialog.visible" title="物料出库" width="400px">
+      <el-dialog v-model="usageDialog.visible" title="物料出库" width="400px" draggable>
         <el-form :model="usageForm" label-width="100px" @submit.prevent="confirmMaterialUsage">
           <button type="submit" style="display: none;" aria-hidden="true" tabindex="-1"></button>
           <el-form-item label="出库数量" required>
@@ -383,38 +378,61 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
-import { Plus, Download, ShoppingCart, Box, Check, Warning, Close } from '@element-plus/icons-vue';
+import { Plus, Download, Box, Check, Warning, Close } from '@element-plus/icons-vue';
 import { hasPermission } from '@/utils/permission';
 import {
-  getProjectMaterials,
-  addProjectMaterial,
-  updateProjectMaterial,
+  createProjectMaterial,
   deleteProjectMaterial,
-  updateMaterialStock,
-  createMaterialProcurement,
-  getMaterialStats,
-  type ProjectMaterialVO
-} from '@/api/project';
+  getProjectMaterialDetail,
+  inboundProjectMaterial,
+  outboundProjectMaterial,
+  updateProjectMaterial,
+  type ProjectMaterialVO,
+} from '@/api/corpProject/projectMaterial';
 
 const route = useRoute();
 const loading = ref(false);
 const saving = ref(false);
 
-const projectId = ref(route.params.projectId as string || '');
-const projectName = ref('某某大厦项目');
+function parseProjectId(raw: unknown): number | null {
+  const text = String(raw || '').trim();
+  if (!text || !/^\d+$/.test(text)) {
+    return null;
+  }
+  return Number(text);
+}
 
-// 物料列表
-const materials = ref<ProjectMaterialVO[]>([]);
+const projectId = ref<number | null>(parseProjectId(route.params.projectId));
+const projectName = ref('工程项目');
+
+type MaterialRow = {
+  id: number;
+  projectId: number;
+  materialCode: string;
+  name: string;
+  specification: string;
+  unit: string;
+  requiredQuantity: number;
+  receivedQuantity: number;
+  usedQuantity: number;
+  stockQuantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  supplier?: string;
+  status: 'NORMAL' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+  lastUpdateTime: string;
+};
+
+const allMaterials = ref<MaterialRow[]>([]);
+const materials = ref<MaterialRow[]>([]);
 const total = ref(0);
 
-// 统计信息
 const materialStats = reactive({
   total: 0,
   lowStock: 0,
   outOfStock: 0,
 });
 
-// 查询条件
 const query = reactive({
   name: '',
   specification: '',
@@ -424,37 +442,35 @@ const query = reactive({
   pageSize: 10,
 });
 
-// 弹窗状态
 const materialDialog = reactive({
   visible: false,
   isEdit: false,
-  editId: '',
+  editId: null as number | null,
 });
 
 const materialFormRef = ref<FormInstance>();
 const materialForm = reactive({
+  materialCode: '',
   name: '',
   specification: '',
   unit: '吨',
   requiredQuantity: 0,
   unitPrice: 0,
   supplier: '',
-  status: 'NORMAL' as string,
 });
 
 const materialRules: FormRules = {
+  materialCode: [{ required: true, message: '请输入物料编码', trigger: 'blur' }],
   name: [{ required: true, message: '请输入物料名称', trigger: 'blur' }],
   specification: [{ required: true, message: '请输入规格型号', trigger: 'blur' }],
   unit: [{ required: true, message: '请选择单位', trigger: 'change' }],
   requiredQuantity: [{ required: true, message: '请输入需求总量', trigger: 'blur' }],
   unitPrice: [{ required: true, message: '请输入单价', trigger: 'blur' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 };
 
-// 入库弹窗
 const stockDialog = reactive({
   visible: false,
-  materialId: '',
+  materialId: null as number | null,
 });
 
 const stockForm = reactive({
@@ -462,10 +478,9 @@ const stockForm = reactive({
   remarks: '',
 });
 
-// 出库弹窗
 const usageDialog = reactive({
   visible: false,
-  materialId: '',
+  materialId: null as number | null,
 });
 
 const usageForm = reactive({
@@ -473,94 +488,8 @@ const usageForm = reactive({
   remarks: '',
 });
 
-// 权限点
-const canView = computed(() => hasPermission('project:material:view'));
 const canUpdate = computed(() => hasPermission('project:material:update'));
 const canDelete = computed(() => hasPermission('project:material:delete'));
-
-// 模拟数据
-const mockMaterials: ProjectMaterialVO[] = [
-  {
-    id: 'm001',
-    projectId: projectId.value,
-    name: '钢筋',
-    specification: 'Φ12mm HRB400',
-    unit: '吨',
-    requiredQuantity: 100,
-    receivedQuantity: 80,
-    usedQuantity: 65,
-    stockQuantity: 15,
-    unitPrice: 4500,
-    totalAmount: 450000,
-    supplier: '某某钢材有限公司',
-    status: 'NORMAL',
-    lastUpdateTime: '2025-01-05 14:30:00',
-  },
-  {
-    id: 'm002',
-    projectId: projectId.value,
-    name: '水泥',
-    specification: '425号普通硅酸盐水泥',
-    unit: '吨',
-    requiredQuantity: 200,
-    receivedQuantity: 150,
-    usedQuantity: 148,
-    stockQuantity: 2,
-    unitPrice: 380,
-    totalAmount: 76000,
-    supplier: '某某水泥厂',
-    status: 'LOW_STOCK',
-    lastUpdateTime: '2025-01-04 16:20:00',
-  },
-  {
-    id: 'm003',
-    projectId: projectId.value,
-    name: '砂石料',
-    specification: '混合砂石料 0-20mm',
-    unit: '立方米',
-    requiredQuantity: 500,
-    receivedQuantity: 350,
-    usedQuantity: 320,
-    stockQuantity: 30,
-    unitPrice: 120,
-    totalAmount: 60000,
-    supplier: '某某建材市场',
-    status: 'NORMAL',
-    lastUpdateTime: '2025-01-03 10:15:00',
-  },
-  {
-    id: 'm004',
-    projectId: projectId.value,
-    name: '模板',
-    specification: '钢模板 标准规格',
-    unit: '平方米',
-    requiredQuantity: 2000,
-    receivedQuantity: 1200,
-    usedQuantity: 1100,
-    stockQuantity: 100,
-    unitPrice: 25,
-    totalAmount: 50000,
-    supplier: '某某模板租赁公司',
-    status: 'NORMAL',
-    lastUpdateTime: '2025-01-02 09:45:00',
-  },
-  {
-    id: 'm005',
-    projectId: projectId.value,
-    name: '混凝土',
-    specification: 'C30商品混凝土',
-    unit: '立方米',
-    requiredQuantity: 300,
-    receivedQuantity: 0,
-    usedQuantity: 0,
-    stockQuantity: 0,
-    unitPrice: 450,
-    totalAmount: 135000,
-    supplier: '某某混凝土搅拌站',
-    status: 'OUT_OF_STOCK',
-    lastUpdateTime: '2025-01-01 08:30:00',
-  },
-];
 
 function getStatusLabel(status?: string) {
   const labels = {
@@ -594,49 +523,62 @@ function formatPrice(price: number) {
 }
 
 async function loadMaterials() {
-  if (!projectId.value) return;
+  if (!projectId.value) {
+    materials.value = [];
+    allMaterials.value = [];
+    total.value = 0;
+    materialStats.total = 0;
+    materialStats.lowStock = 0;
+    materialStats.outOfStock = 0;
+    return;
+  }
 
   loading.value = true;
   try {
-    const [materialsRes, statsRes] = await Promise.allSettled([
-      getProjectMaterials(projectId.value),
-      getMaterialStats(projectId.value)
-    ]);
-
-    if (materialsRes.status === 'fulfilled') {
-      materials.value = materialsRes.value.length ? materialsRes.value : mockMaterials;
-      total.value = materials.value.length;
-    } else {
-      materials.value = mockMaterials;
-      total.value = mockMaterials.length;
-    }
-
-    if (statsRes.status === 'fulfilled') {
-      Object.assign(materialStats, statsRes.value);
-    } else {
-      calculateMaterialStats();
-    }
-  } catch (e) {
-    materials.value = mockMaterials;
-    total.value = mockMaterials.length;
-    calculateMaterialStats();
+    const res = await getProjectMaterialDetail(projectId.value);
+    allMaterials.value = (res.materials || []).map((item: ProjectMaterialVO) => ({
+      id: item.id,
+      projectId: item.projectId,
+      materialCode: item.materialCode,
+      name: item.materialName,
+      specification: item.spec,
+      unit: item.unit,
+      requiredQuantity: Number(item.requiredQuantity || 0),
+      receivedQuantity: Number(item.receivedQuantity || 0),
+      usedQuantity: Number(item.usedQuantity || 0),
+      stockQuantity: Number(item.stockQuantity || 0),
+      unitPrice: Number(item.unitPrice || 0),
+      totalAmount: Number(item.totalAmount || 0),
+      supplier: item.supplierName,
+      status: item.status,
+      lastUpdateTime: item.lastUpdateTime || '',
+    }));
+    materialStats.total = Number(res.total || allMaterials.value.length);
+    materialStats.lowStock = Number(res.lowStock || 0);
+    materialStats.outOfStock = Number(res.outOfStock || 0);
+    applyFilter();
   } finally {
     loading.value = false;
   }
 }
 
-function calculateMaterialStats() {
-  materialStats.total = materials.value.length;
-  materialStats.lowStock = materials.value.filter(m =>
-    m.stockQuantity > 0 && m.stockQuantity < m.requiredQuantity * 0.1
-  ).length;
-  materialStats.outOfStock = materials.value.filter(m => m.stockQuantity === 0).length;
+function applyFilter() {
+  const filtered = allMaterials.value.filter((m) => {
+    const okName = !query.name || m.name.includes(query.name);
+    const okSpec = !query.specification || m.specification.includes(query.specification);
+    const okSupplier = !query.supplier || (m.supplier || '').includes(query.supplier);
+    const okStatus = !query.status || m.status === query.status;
+    return okName && okSpec && okSupplier && okStatus;
+  });
+  total.value = filtered.length;
+  const start = (query.page - 1) * query.pageSize;
+  const end = start + query.pageSize;
+  materials.value = filtered.slice(start, end);
 }
 
 function handleSearch() {
   query.page = 1;
-  // 实际应用中应该调用API重新查询
-  loadMaterials();
+  applyFilter();
 }
 
 function handleReset() {
@@ -645,126 +587,90 @@ function handleReset() {
   query.supplier = '';
   query.status = undefined;
   query.page = 1;
-  loadMaterials();
+  applyFilter();
 }
 
 function handleCurrentChange(page: number) {
   query.page = page;
-  loadMaterials();
+  applyFilter();
 }
 
 function handleSizeChange(size: number) {
   query.pageSize = size;
   query.page = 1;
-  loadMaterials();
+  applyFilter();
 }
 
 function openAddMaterialDialog() {
   materialDialog.isEdit = false;
   materialDialog.visible = true;
-  materialDialog.editId = '';
+  materialDialog.editId = null;
   resetMaterialForm();
 }
 
-function editMaterial(material: ProjectMaterialVO) {
+function editMaterial(material: MaterialRow) {
   materialDialog.isEdit = true;
   materialDialog.visible = true;
   materialDialog.editId = material.id;
-  Object.assign(materialForm, material);
+  materialForm.materialCode = material.materialCode;
+  materialForm.name = material.name;
+  materialForm.specification = material.specification;
+  materialForm.unit = material.unit;
+  materialForm.requiredQuantity = material.requiredQuantity;
+  materialForm.unitPrice = material.unitPrice;
+  materialForm.supplier = material.supplier || '';
 }
 
 function resetMaterialForm() {
+  materialForm.materialCode = '';
   materialForm.name = '';
   materialForm.specification = '';
   materialForm.unit = '吨';
   materialForm.requiredQuantity = 0;
   materialForm.unitPrice = 0;
   materialForm.supplier = '';
-  materialForm.status = 'NORMAL';
 }
 
 async function saveMaterial() {
-  if (!materialFormRef.value) return;
+  if (!materialFormRef.value || !projectId.value) return;
   const valid = await materialFormRef.value.validate();
   if (!valid) return;
 
   saving.value = true;
   try {
-    const formData = {
-      projectId: projectId.value,
-      ...materialForm,
-    };
-
-    if (materialDialog.isEdit) {
-      await updateProjectMaterial(materialDialog.editId, formData);
-      const index = materials.value.findIndex(m => m.id === materialDialog.editId);
-      if (index > -1) {
-        materials.value[index] = {
-          ...formData,
-          id: materialDialog.editId,
-          receivedQuantity: materials.value[index].receivedQuantity,
-          usedQuantity: materials.value[index].usedQuantity,
-          stockQuantity: materials.value[index].stockQuantity,
-          totalAmount: formData.requiredQuantity * formData.unitPrice,
-          lastUpdateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        };
-      }
+    if (materialDialog.isEdit && materialDialog.editId) {
+      await updateProjectMaterial({
+        id: materialDialog.editId,
+        materialName: materialForm.name,
+        spec: materialForm.specification,
+        unit: materialForm.unit,
+        requiredQuantity: materialForm.requiredQuantity,
+        unitPrice: materialForm.unitPrice,
+        supplierName: materialForm.supplier || undefined,
+      });
       ElMessage.success('编辑成功');
     } else {
-      const newMaterial = await addProjectMaterial(formData);
-      materials.value.push({
-        ...formData,
-        id: newMaterial.id || `m${Date.now()}`,
-        receivedQuantity: 0,
-        usedQuantity: 0,
-        stockQuantity: 0,
-        totalAmount: formData.requiredQuantity * formData.unitPrice,
-        lastUpdateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      await createProjectMaterial({
+        projectId: projectId.value,
+        materialCode: materialForm.materialCode,
+        materialName: materialForm.name,
+        spec: materialForm.specification,
+        unit: materialForm.unit,
+        requiredQuantity: materialForm.requiredQuantity,
+        unitPrice: materialForm.unitPrice,
+        supplierName: materialForm.supplier || undefined,
       });
       ElMessage.success('添加成功');
     }
 
     materialDialog.visible = false;
-    calculateMaterialStats();
-  } catch (e) {
-    // 模拟前端操作
-    if (materialDialog.isEdit) {
-      const index = materials.value.findIndex(m => m.id === materialDialog.editId);
-      if (index > -1) {
-        materials.value[index] = {
-          ...materialForm,
-          id: materialDialog.editId,
-          receivedQuantity: materials.value[index].receivedQuantity,
-          usedQuantity: materials.value[index].usedQuantity,
-          stockQuantity: materials.value[index].stockQuantity,
-          totalAmount: materialForm.requiredQuantity * materialForm.unitPrice,
-          projectId: projectId.value,
-          lastUpdateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        };
-      }
-      ElMessage.success('编辑成功（演示模式）');
-    } else {
-      materials.value.push({
-        ...materialForm,
-        id: `m${Date.now()}`,
-        receivedQuantity: 0,
-        usedQuantity: 0,
-        stockQuantity: 0,
-        totalAmount: materialForm.requiredQuantity * materialForm.unitPrice,
-        projectId: projectId.value,
-        lastUpdateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      });
-      ElMessage.success('添加成功（演示模式）');
-    }
-
-    materialDialog.visible = false;
-    calculateMaterialStats();
+    await loadMaterials();
   } finally {
     saving.value = false;
   }
 }
 
-function updateStock(material: ProjectMaterialVO) {
+function updateStock(material: MaterialRow) {
   stockDialog.visible = true;
   stockDialog.materialId = material.id;
   stockForm.quantity = 0;
@@ -772,37 +678,19 @@ function updateStock(material: ProjectMaterialVO) {
 }
 
 async function confirmStockUpdate() {
+  if (!stockDialog.materialId) return;
   if (stockForm.quantity <= 0) {
     ElMessage.error('入库数量必须大于0');
     return;
   }
 
-  try {
-    await updateMaterialStock(stockDialog.materialId, stockForm.quantity);
-    const material = materials.value.find(m => m.id === stockDialog.materialId);
-    if (material) {
-      material.receivedQuantity += stockForm.quantity;
-      material.stockQuantity += stockForm.quantity;
-      material.lastUpdateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    }
-    stockDialog.visible = false;
-    calculateMaterialStats();
-    ElMessage.success('入库成功');
-  } catch (e) {
-    // 模拟前端更新
-    const material = materials.value.find(m => m.id === stockDialog.materialId);
-    if (material) {
-      material.receivedQuantity += stockForm.quantity;
-      material.stockQuantity += stockForm.quantity;
-      material.lastUpdateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    }
-    stockDialog.visible = false;
-    calculateMaterialStats();
-    ElMessage.success('入库成功（演示模式）');
-  }
+  await inboundProjectMaterial({ id: stockDialog.materialId, quantity: stockForm.quantity, remarks: stockForm.remarks || undefined });
+  stockDialog.visible = false;
+  await loadMaterials();
+  ElMessage.success('入库成功');
 }
 
-function useMaterial(material: ProjectMaterialVO) {
+function useMaterial(material: MaterialRow) {
   usageDialog.visible = true;
   usageDialog.materialId = material.id;
   usageForm.quantity = 0;
@@ -810,95 +698,43 @@ function useMaterial(material: ProjectMaterialVO) {
 }
 
 async function confirmMaterialUsage() {
+  if (!usageDialog.materialId) return;
   if (usageForm.quantity <= 0) {
     ElMessage.error('出库数量必须大于0');
     return;
   }
 
-  const material = materials.value.find(m => m.id === usageDialog.materialId);
+  const material = allMaterials.value.find((m) => m.id === usageDialog.materialId);
   if (material && usageForm.quantity > material.stockQuantity) {
     ElMessage.error('出库数量不能超过库存量');
     return;
   }
 
-  try {
-    // 这里应该调用出库API，但API中没有定义，暂时使用入库API的相反操作
-    await updateMaterialStock(usageDialog.materialId, -usageForm.quantity);
-    if (material) {
-      material.usedQuantity += usageForm.quantity;
-      material.stockQuantity -= usageForm.quantity;
-      material.lastUpdateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    }
-    usageDialog.visible = false;
-    calculateMaterialStats();
-    ElMessage.success('出库成功');
-  } catch (e) {
-    // 模拟前端更新
-    if (material) {
-      material.usedQuantity += usageForm.quantity;
-      material.stockQuantity -= usageForm.quantity;
-      material.lastUpdateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    }
-    usageDialog.visible = false;
-    calculateMaterialStats();
-    ElMessage.success('出库成功（演示模式）');
-  }
+  await outboundProjectMaterial({
+    id: usageDialog.materialId,
+    quantity: usageForm.quantity,
+    useDate: new Date().toISOString().split('T')[0],
+    remarks: usageForm.remarks || undefined,
+  });
+  usageDialog.visible = false;
+  await loadMaterials();
+  ElMessage.success('出库成功');
 }
 
-function deleteMaterial(material: ProjectMaterialVO) {
+function deleteMaterial(material: MaterialRow) {
   ElMessageBox.confirm(`确认删除物料「${material.name}」吗？`, '提示', { type: 'warning' })
     .then(async () => {
-      try {
-        await deleteProjectMaterial(material.id);
-        materials.value = materials.value.filter(m => m.id !== material.id);
-        calculateMaterialStats();
-        ElMessage.success('删除成功');
-      } catch (e) {
-        materials.value = materials.value.filter(m => m.id !== material.id);
-        calculateMaterialStats();
-        ElMessage.success('删除成功（演示模式）');
-      }
+      await deleteProjectMaterial(material.id);
+      await loadMaterials();
+      ElMessage.success('删除成功');
     })
     .catch(() => {});
 }
 
-function createProcurement() {
-  const lowStockMaterials = materials.value.filter(m =>
-    m.status === 'LOW_STOCK' || m.status === 'OUT_OF_STOCK'
-  );
-
-  if (lowStockMaterials.length === 0) {
-    ElMessage.info('当前没有需要采购的物料');
-    return;
+function handleRowDblClick(row: MaterialRow) {
+  if (canUpdate.value) {
+    editMaterial(row);
   }
-
-  ElMessageBox.confirm(
-    `发现 ${lowStockMaterials.length} 种物料需要采购，是否批量创建采购申请？`,
-    '批量采购',
-    { type: 'info' }
-  ).then(async () => {
-    let successCount = 0;
-    for (const material of lowStockMaterials) {
-      try {
-        await createMaterialProcurement({
-          materialId: material.id,
-          quantity: material.requiredQuantity - material.receivedQuantity,
-          supplier: material.supplier || '待定',
-          expectedDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          remarks: '系统自动生成采购申请',
-        });
-        successCount++;
-      } catch (e) {
-        // 忽略单个失败
-      }
-    }
-
-    if (successCount > 0) {
-      ElMessage.success(`成功创建 ${successCount} 个采购申请`);
-    } else {
-      ElMessage.error('采购申请创建失败');
-    }
-  });
 }
 
 function exportMaterials() {
@@ -906,16 +742,15 @@ function exportMaterials() {
 }
 
 watch(() => route.params.projectId, (newId) => {
-  projectId.value = newId as string || '';
-  if (projectId.value) {
-    loadMaterials();
-  }
+  projectId.value = parseProjectId(newId);
+  loadMaterials();
 });
 
 onMounted(() => {
-  if (projectId.value) {
-    loadMaterials();
+  if (!projectId.value) {
+    ElMessage.warning('当前未选择有效项目，请从项目管理进入');
   }
+  loadMaterials();
 });
 </script>
 

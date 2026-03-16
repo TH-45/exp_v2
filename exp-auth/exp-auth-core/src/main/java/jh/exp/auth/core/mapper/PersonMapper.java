@@ -15,7 +15,6 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
-import java.util.Map;
 
 @Mapper
 public interface PersonMapper extends BaseMapper<Person> {
@@ -38,4 +37,11 @@ public interface PersonMapper extends BaseMapper<Person> {
     PersonDetailRes selectPersonDetailById(@Param("personId") Long personId);
 
     List<PersonDetailRes>batchGetPersonByIds(List<Long> personIds);
+
+    List<Person> selectByPersonCodes(@Param("codes") List<String> codes);
+
+    int batchInsertPersons(@Param("list") List<Person> persons);
+
+    List<PersonInfoRes> selectPersonForExport(@Param("personIds") List<Long> personIds,
+                                              @Param("query") QueryPersonReq query);
 }

@@ -7,13 +7,24 @@ import jh.exp.auth.core.entity.dto.OrgIdAndPersonIdDTO;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.auth.core.entity.res.PersonInfoRes;
+import jh.exp.auth.service.entity.imex.PersonExportTaskReq;
+import jh.exp.auth.service.service.bus.PersonImexService;
 import jh.exp.auth.service.service.bus.PersonService;
 import jh.exp.common.core.api.ApiResponse;
+import jh.exp.common.core.imex.ImexTaskResult;
+import jh.exp.common.core.imex.ImexTaskSubmitRes;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +35,7 @@ import java.util.Map;
 public class PersonController {
 
     private final PersonService personService;
+    private final PersonImexService personImexService;
 
     /**
      * 分页查询人员列表
@@ -141,5 +153,42 @@ public class PersonController {
                                                 @RequestParam(required = false) Long excludePersonId) {
         boolean exists = personService.checkPersonCodeExists(personCode, excludePersonId);
         return ApiResponse.success(exists);
+    }
+
+    @GetMapping("/imex/template")
+    public ResponseEntity<byte[]> downloadImportTemplate() {
+        byte[] bytes = personImexService.downloadImportTemplate();
+        String fileName = "人员导入模板.xlsx";
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
+    }
+
+    @PostMapping("/imex/import")
+    public ApiResponse<ImexTaskSubmitRes> submitImport(@RequestParam("file") MultipartFile file) {
+        return ApiResponse.success(personImexService.submitImportTask(file));
+    }
+
+    @PostMapping("/imex/export")
+    public ApiResponse<ImexTaskSubmitRes> submitExport(@RequestBody(required = false) PersonExportTaskReq req) {
+        return ApiResponse.success(personImexService.submitExportTask(req));
+    }
+
+    @GetMapping("/imex/task")
+    public ApiResponse<ImexTaskResult> queryTask(@RequestParam String taskId) {
+        return ApiResponse.success(personImexService.queryTask(taskId));
+    }
+
+    @GetMapping("/imex/export/download")
+    public ResponseEntity<byte[]> downloadExport(@RequestParam String taskId) {
+        byte[] bytes = personImexService.downloadExportFile(taskId);
+        String fileName = personImexService.queryExportFileName(taskId);
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
+                .contentType(MediaType.parseMediaType(personImexService.queryExportContentType(taskId)))
+                .body(bytes);
     }
 }
