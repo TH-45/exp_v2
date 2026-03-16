@@ -80,4 +80,12 @@ public class CreateContractReq {
     /** 动作*/
     @NotBlank(message = "动作不能为空")
     private String action;
+
+    /**
+     * 流程编码（可选）：
+     * CONTRACT_FUND_OUT（资金流出类合同签订流程）/
+     * CONTRACT_FUND_IN（资金流入类合同签核流程）
+     */
+    @NotBlank(message = "流程编码不能为空")
+    private String procCode;
 }

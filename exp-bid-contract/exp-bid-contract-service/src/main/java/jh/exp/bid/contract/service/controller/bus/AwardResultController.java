@@ -51,6 +51,15 @@ public class AwardResultController {
     }
 
     /**
+     * 根据定标结果ID查询详情
+     */
+    @GetMapping("/detail")
+    public ApiResponse<BidAwardResult> detail(@RequestParam Long awardId) {
+        BidAwardResult result = awardService.getAwardResultById(awardId);
+        return ApiResponse.success(result);
+    }
+
+    /**
      * 根据招标ID查询定标结果
      */
     @GetMapping("/byTender")

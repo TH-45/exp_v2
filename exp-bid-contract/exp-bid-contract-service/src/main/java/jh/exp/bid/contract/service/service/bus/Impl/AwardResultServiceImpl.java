@@ -145,6 +145,16 @@ public class AwardResultServiceImpl implements AwardResultService {
     }
 
     @Override
+    public BidAwardResult getAwardResultById(Long awardId) {
+        BidAwardResult award = awardMapper.selectById(awardId);
+        if (award == null) {
+            throw new RuntimeException("定标结果不存在");
+        }
+        eligibilityService.ensureTenderEligible(award.getTenderId());
+        return award;
+    }
+
+    @Override
     @Transactional
     public BidAwardResult updateAwardStatus(Long awardId, String awardStatus) {
         BidAwardResult existingAward = awardMapper.selectById(awardId);

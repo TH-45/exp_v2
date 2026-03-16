@@ -35,6 +35,11 @@ public interface AwardResultService {
     BidAwardResult getAwardResultByBidId(Long bidId);
 
     /**
+     * 根据定标结果ID查询详情
+     */
+    BidAwardResult getAwardResultById(Long awardId);
+
+    /**
      * 更新定标状态
      */
     BidAwardResult updateAwardStatus(Long awardId, String awardStatus);

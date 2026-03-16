@@ -36,6 +36,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -373,7 +374,7 @@ public class ContractServiceImpl implements ContractService {
             startProcessReq.setBusId(contract.getContractId());
             startProcessReq.setBusType(ProcessConstant.PROCESS_TYPE_CONTRACT);
             startProcessReq.setTitle(req.getContractName()+req.getContractCode());
-            startProcessReq.setProcCode(ProcessConstant.PROCESS_CONTRACT_FUND_OUT);
+            startProcessReq.setProcCode(resolveContractProcCode(req.getProcCode()));
             ApiResponse<Long> res = processApprovalClient.createProcess(startProcessReq);
             if (!res.isSuccess()) {
                 throw new RuntimeException("创建流程实例失败");
@@ -411,8 +412,8 @@ public class ContractServiceImpl implements ContractService {
     @Transactional
     public void updateStatusByProcess(Long contractId, String status) {
         Contract c = contractMapper.selectById(contractId);
-        if (c == null) {
-            return;
+        if(c.getStatus().equals(BidContractConstant.CONTRACT_STATUS_ARCHIVED)){
+            throw new RuntimeException("合同正常已归档,不可修改");
         }
         contractMapper.update(null, new UpdateWrapper<Contract>()
                 .eq("contract_id", contractId)
@@ -508,6 +509,23 @@ public class ContractServiceImpl implements ContractService {
         log.setOperatorDeptId(operatorDeptId);
         log.setOperationTime(LocalDateTime.now());
         contractOperationLogMapper.insert(log);
+    }
+
+    /**
+     * 合同流程编码选择：
+     * 1) 前端显式传入时按传入值；
+     * 2) 未传时默认走资金流出流程，兼容现有业务。
+     */
+    private String resolveContractProcCode(String reqProcCode) {
+        if (!StringUtils.hasText(reqProcCode)) {
+            throw new RuntimeException("合同流程编码不能为空");
+        }
+        String normalized = reqProcCode.trim().toUpperCase(Locale.ROOT);
+        if (ProcessConstant.PROCESS_CONTRACT_FUND_OUT.equals(normalized)
+                || ProcessConstant.PROCESS_CONTRACT_FUND_IN.equals(normalized)) {
+            return normalized;
+        }
+        throw new RuntimeException("不支持的合同流程编码: " + reqProcCode);
     }
 
 }

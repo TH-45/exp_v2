@@ -1,6 +1,7 @@
 package jh.exp.bid.contract.client;
 
 import jh.exp.bid.contract.client.api.ContractClient;
+import jh.exp.bid.contract.client.api.AwardResultClient;
 import jh.exp.common.core.constant.CommonConstant;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,5 +60,11 @@ public class ApiConfiguration {
     ContractClient contractClient(
             @Qualifier("bidContractHttpServiceProxyFactory") HttpServiceProxyFactory bidContractHttpServiceProxyFactory) {
         return bidContractHttpServiceProxyFactory.createClient(ContractClient.class);
+    }
+
+    @Bean
+    AwardResultClient awardResultClient(
+            @Qualifier("bidContractHttpServiceProxyFactory") HttpServiceProxyFactory bidContractHttpServiceProxyFactory) {
+        return bidContractHttpServiceProxyFactory.createClient(AwardResultClient.class);
     }
 }
