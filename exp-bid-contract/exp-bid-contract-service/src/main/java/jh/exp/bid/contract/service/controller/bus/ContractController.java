@@ -40,12 +40,22 @@ public class ContractController {
     }
 
     /**
-     * 创建合同
+     * 更新合同状态
+     * 供流程引擎或内部服务调用，按流程结果更新合同状态（如驳回→起草，通过→拟签）
      */
-    @PostMapping("/create")
-    public ApiResponse<ContractDetailRes> create(@RequestBody @Valid CreateContractReq req) {
-        return ApiResponse.success(contractService.createContract(req));
+    @PostMapping("/updateStatus")
+    public ApiResponse<Void> updateStatus(@RequestBody @Valid UpdateContractStatusReq req) {
+        contractService.updateStatusByProcess(req.getContractId(), req.getStatus());
+        return ApiResponse.success(null);
     }
+
+//    /**
+//     * 创建合同
+//     */
+//    @PostMapping("/create")
+//    public ApiResponse<ContractDetailRes> create(@RequestBody @Valid CreateContractReq req) {
+//        return ApiResponse.success(contractService.createContract(req));
+//    }
 
     /**
      * 更新合同
@@ -64,13 +74,16 @@ public class ContractController {
         return ApiResponse.success(null);
     }
 
+//    =============================================================
+
     /**
-     * 提交审批（内部调用流程创建，保留兼容）
+     * 创建合同业务
      */
-    @PostMapping("/submitForApproval")
-    public ApiResponse<Long> submitForApproval(@RequestBody @Valid SubmitContractApprovalReq req) {
-        Long instanceId = contractService.submitForApproval(req);
-        return ApiResponse.success(instanceId);
+    @PostMapping("/createContractBusiness")
+    public ApiResponse<Long> createContractBusiness(@RequestBody @Valid CreateContractReq req) {
+        Long instanceId =contractService.createContractBusiness(req);
+
+        return ApiResponse.hint(instanceId!=null,instanceId);
     }
 
     /**

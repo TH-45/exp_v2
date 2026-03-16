@@ -226,6 +226,18 @@ public class ProcessDefinitionServiceImpl implements ProcessDefinitionService {
         return listNodes(current.getProcDefId());
     }
 
+    @Override
+    public ProcessDefinitionDetailRes detailByCode(String procDefCode) {
+        if (procDefCode == null || procDefCode.isBlank()) {
+            throw new RuntimeException("流程编号不能为空");
+        }
+        WfProcessDefinition entity = processDefinitionMapper.selectOne(
+                new LambdaQueryWrapper<WfProcessDefinition>()
+                        .eq(WfProcessDefinition::getProcCode, procDefCode)
+        );
+        return detail(entity.getProcDefId());
+    }
+
     private List<NodeRes> listNodes(Long procDefId) {
         return nodeDefinitionMapper.selectList(
                 new LambdaQueryWrapper<WfNodeDefinition>()

@@ -14,9 +14,7 @@ import jh.exp.process.core.entity.res.ApprovalTaskRes;
 import java.util.List;
 
 public interface ApprovalService {
-    Long start(StartProcessReq req);
-
-    ApprovalStatsRes stats();
+    Long create(StartProcessReq req);
 
     SimplePageRes<ApprovalTaskRes> listTasks(SimplePageReq<ApprovalTaskQueryReq> req);
 
@@ -26,7 +24,11 @@ public interface ApprovalService {
 
     void approve(ApprovalActionReq req);
 
+    /** 拒绝：直接关闭实例，不再流转 */
     void reject(ApprovalActionReq req);
+
+    /** 驳回：回到上一节点，由上一个人重新审批，流程继续流转 */
+    void returnToPrev(ApprovalActionReq req);
 
     void batchApprove(ApprovalActionReq req);
 

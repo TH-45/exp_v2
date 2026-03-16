@@ -69,6 +69,12 @@
             <version>1.0.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>jh.exp.process</groupId>
+            <artifactId>exp-process-client</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- Spring Cloud LoadBalancer，用于服务发现和负载均衡 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

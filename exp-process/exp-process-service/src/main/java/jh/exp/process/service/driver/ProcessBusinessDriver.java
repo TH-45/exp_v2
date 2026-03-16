@@ -1,6 +1,10 @@
 package jh.exp.process.service.driver;
 
-public interface ProcessBusinessDriver {
+import jh.exp.process.core.entity.dto.BusParamBase;
+import jh.exp.process.core.entity.dto.BusResBase;
+import jh.exp.process.core.entity.dto.ProcessDriveContext;
+
+public interface ProcessBusinessDriver<T extends BusParamBase> {
 
     /**
      * 是否支持当前 action。
@@ -33,5 +37,12 @@ public interface ProcessBusinessDriver {
      * 引擎动作完成后回调；关键回写要求同事务处理。
      */
     default void afterHandle(ProcessDriveContext ctx) {
+    }
+
+    /**
+     * 获取业务数据
+     */
+    default Object getBusinessData(T busParamBase) {
+        return null;
     }
 }

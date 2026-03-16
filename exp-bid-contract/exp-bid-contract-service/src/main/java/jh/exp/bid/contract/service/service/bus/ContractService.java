@@ -25,7 +25,7 @@ public interface ContractService {
      * 提交审批：将起草中的合同提交至流程引擎，合同状态变更为审核中
      * @return 流程实例ID
      */
-    Long submitForApproval(SubmitContractApprovalReq req);
+    Long createContractBusiness(CreateContractReq req);
 
     /**
      * 流程创建成功后，将合同状态更新为审核中（供前端调用统一流程创建接口成功后调用）

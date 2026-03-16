@@ -58,8 +58,16 @@ public class ApiResponse<T> {
         this.traceId = MDC.get("traceId");
     }
 
+
+
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(true, "0000", "操作成功", data);
+    }
+
+
+    //判断返回逻辑
+    public static <T> ApiResponse<T> hint(boolean condition, T message){
+        return condition ? ApiResponse.success(message) : ApiResponse.fail("9999", "操作失败");
     }
 
     public static <T> ApiResponse<T> success(String message, T data) {

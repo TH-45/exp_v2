@@ -54,4 +54,7 @@ public class ContractDetailRes {
     private String salesmanName;
     private String salesmanPostName;
     private String salesmanMobile;
+
+//    /** 流程实例ID，仅当创建时 action=SUBMIT 时有值 */
+//    private Long instanceId;
 }

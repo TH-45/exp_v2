@@ -45,6 +45,11 @@ public class ProcessDefinitionController {
     public ApiResponse<ProcessDefinitionDetailRes> detail(@RequestParam Long procDefId) {
         return ApiResponse.success(processDefinitionService.detail(procDefId));
     }
+    //根据流程编号获取流程定义详情
+    @GetMapping("/get")
+    public ApiResponse<ProcessDefinitionDetailRes> get(@RequestParam String procDefCode) {
+        return ApiResponse.success(processDefinitionService.detailByCode(procDefCode));
+    }
 
     @PostMapping("/activate")
     public ApiResponse<Void> activate(@RequestParam Long procDefId, @RequestParam Integer isActive) {

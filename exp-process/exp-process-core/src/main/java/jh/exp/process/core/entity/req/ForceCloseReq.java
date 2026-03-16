@@ -7,5 +7,8 @@ import lombok.Data;
 public class ForceCloseReq {
     @NotNull(message = "实例ID不能为空")
     private Long instanceId;
+
     private String reason;
+    @NotNull(message = "请选择动作")
+    private String action;
 }

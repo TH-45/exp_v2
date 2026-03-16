@@ -29,4 +29,6 @@ public interface ProcessDefinitionService {
     void deleteNode(Long nodeId);
 
     List<NodeRes> sortNode(NodeSortReq req);
+
+    ProcessDefinitionDetailRes detailByCode(String procDefCode);
 }

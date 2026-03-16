@@ -1,5 +1,6 @@
 package jh.exp.bid.contract.service.service.bus.Impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -15,7 +16,6 @@ import jh.exp.bid.contract.core.entity.res.ContractListRes;
 import jh.exp.bid.contract.core.mapper.ContractMapper;
 import jh.exp.bid.contract.core.mapper.ContractOperationLogMapper;
 import jh.exp.bid.contract.service.service.bus.ContractService;
-import jh.exp.bid.contract.service.service.support.ProcessApiClient;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
@@ -25,6 +25,9 @@ import jh.exp.corp.client.api.CompanyClientService;
 import jh.exp.corp.core.entity.req.QueryCompanyReq;
 import jh.exp.corp.core.entity.res.CompanyDetailRes;
 import jh.exp.corp.core.entity.res.CompanyListRes;
+import jh.exp.process.client.api.ProcessApprovalClient;
+import jh.exp.process.core.constant.ProcessConstant;
+import jh.exp.process.core.entity.req.StartProcessReq;
 import jh.exp.project.client.api.ProjectClientService;
 import jh.exp.project.core.entity.Project;
 import lombok.RequiredArgsConstructor;
@@ -52,9 +55,10 @@ public class ContractServiceImpl implements ContractService {
     private final ContractMapper contractMapper;
     private final ContractOperationLogMapper contractOperationLogMapper;
     private final PersonService personService;
-    private final ProcessApiClient processApiClient;
+//    private final ProcessFlowSupportService processFlowSupportService;
     private final CompanyClientService companyClientService;
     private final ProjectClientService projectClientService;
+    private final ProcessApprovalClient processApprovalClient;
 
     @Override
     public SimplePageRes<ContractListRes> queryContractList(SimplePageReq<QueryContractReq> req) {
@@ -288,6 +292,8 @@ public class ContractServiceImpl implements ContractService {
         c.setRemark(req.getRemark());
 
         contractMapper.insert(c);
+
+        log.info( "创建合同成功 contractId={}", c.getContractId());
         return getContractById(c.getContractId());
     }
 
@@ -347,24 +353,44 @@ public class ContractServiceImpl implements ContractService {
 
     @Override
     @Transactional
-    public Long submitForApproval(SubmitContractApprovalReq req) {
-        Contract c = contractMapper.selectById(req.getContractId());
-        if (c == null) {
-            throw new RuntimeException("合同不存在");
-        }
-        if (!BidContractConstant.CONTRACT_STATUS_DRAFT.equals(c.getStatus())) {
-            throw new RuntimeException("仅起草中的合同可提交审批");
+    public Long createContractBusiness(CreateContractReq req) {
+        if(BidContractConstant.BID_CONTRACT_OP_SAVE.equals(req.getAction())){
+            createContract(req);
+            return 0L;
+        }else if (BidContractConstant.BID_CONTRACT_OP_SUBMIT.equals(req.getAction())){
+            Contract contract = contractMapper.selectOne(new LambdaQueryWrapper<Contract>()
+                    .eq(Contract::getContractCode, req.getContractCode())
+                    .eq(Contract::getStatus, BidContractConstant.CONTRACT_STATUS_DRAFT)
+                    .last("LIMIT 1"));
+            if (contract == null) {
+                throw new RuntimeException("合同不存在");
+            }
+            if (!BidContractConstant.CONTRACT_STATUS_DRAFT.equals(contract.getStatus())) {
+                throw new RuntimeException("仅起草中的合同可提交审批");
+            }
+            // 调用流程引擎发起审批（通过 exp-process-client）
+            StartProcessReq startProcessReq = new StartProcessReq();
+            startProcessReq.setBusId(contract.getContractId());
+            startProcessReq.setBusType(ProcessConstant.PROCESS_TYPE_CONTRACT);
+            startProcessReq.setTitle(req.getContractName()+req.getContractCode());
+            startProcessReq.setProcCode(ProcessConstant.PROCESS_CONTRACT_FUND_OUT);
+            ApiResponse<Long> res = processApprovalClient.createProcess(startProcessReq);
+            if (!res.isSuccess()) {
+                throw new RuntimeException("创建流程实例失败");
+            }
+            // 更新合同状态
+            contractMapper.update(null, new UpdateWrapper<Contract>()
+                    .eq("contract_id", contract.getContractId())
+                    .set("status", BidContractConstant.CONTRACT_STATUS_UNDER_REVIEW)
+                    .set("updated_time", LocalDateTime.now()));
+            return res.getData();
+
+        }else {
+            log.error("未知操作类型  action={}",  req.getAction());
+            return null;
+
         }
 
-        // 调用流程引擎发起审批
-        Long instanceId = processApiClient.startProcess("contract", String.valueOf(c.getContractId()), req.getProcDefId(), req.getProcCode());
-
-        // 更新合同状态为审核中
-        contractMapper.update(null, new UpdateWrapper<Contract>()
-                .eq("contract_id", c.getContractId())
-                .set("status", BidContractConstant.CONTRACT_STATUS_UNDER_REVIEW)
-                .set("updated_time", LocalDateTime.now()));
-        return instanceId;
     }
 
     @Override

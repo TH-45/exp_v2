@@ -12,9 +12,9 @@
         ref="formRef"
         :model="form"
         :rules="rules"
-        label-width="100px"
-        size="default"
-        class="contract-form compact-form"
+        label-width="90px"
+        size="small"
+        class="contract-form compact-form compact-layout"
         @submit.prevent="handleSubmit"
       >
         <button type="submit" style="display: none" aria-hidden="true" tabindex="-1" />
@@ -39,64 +39,104 @@
                 <el-option v-for="opt in contractCategoryOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
               </el-select>
             </el-form-item>
-            <el-form-item label="关联项目" prop="project">
+            <el-form-item label="关联项目" prop="project" class="selector-field">
               <ProjectSelector v-model="form.project" placeholder="请选择关联项目" />
             </el-form-item>
-            <el-form-item label="甲方" prop="purchaser">
-              <CompanySelector v-model="form.purchaser" placeholder="请选择甲方单位" />
+            <el-form-item label="采购方" prop="purchaser" class="selector-field">
+              <CompanySelector v-model="form.purchaser" placeholder="请选择采购方" />
             </el-form-item>
-            <el-form-item label="供应商/乙方" prop="supplier">
-              <CompanySelector v-model="form.supplier" placeholder="请选择供应商/乙方" />
+            <el-form-item label="供应商" prop="supplier" class="selector-field">
+              <CompanySelector v-model="form.supplier" placeholder="请选择供应商" />
             </el-form-item>
           </div>
         </div>
 
-        <!-- 金额与日期 -->
+        <!-- 金额与日期（金额类字段缩短，日期保持适中） -->
         <div class="form-section">
           <div class="section-title">金额与日期</div>
-          <div class="form-grid">
-            <el-form-item label="合同金额(万)" prop="amount">
-              <el-input-number v-model="form.amount" :min="0" :max="999999999" :precision="2" style="width: 100%" />
+          <div class="form-grid form-grid-amount">
+            <el-form-item label="合同金额(万)" prop="amount" class="amount-field">
+              <el-input-number v-model="form.amount" :min="0" :max="999999999" :precision="2" size="small" @change="calcTaxFields" />
             </el-form-item>
-            <el-form-item label="不含税金额(万)" prop="amountWithoutTax">
-              <el-input-number v-model="form.amountWithoutTax" :min="0" :max="999999999" :precision="2" style="width: 100%" placeholder="选填" />
+            <el-form-item label="含税">
+              <el-checkbox v-model="form.isTaxIncluded" @change="onTaxIncludedChange">
+                含税
+              </el-checkbox>
             </el-form-item>
-            <el-form-item label="税率(%)" prop="taxRate">
-              <el-input-number v-model="form.taxRate" :min="0" :max="100" :precision="2" style="width: 100%" placeholder="选填" />
+            <el-form-item label="税率(%)" prop="taxRate" class="amount-field">
+              <el-select
+                v-model="form.taxRate"
+                placeholder="请选择"
+                clearable
+                :disabled="!form.isTaxIncluded"
+              >
+                <el-option v-for="opt in taxRateOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+              </el-select>
             </el-form-item>
-            <el-form-item label="币种" prop="currency">
-              <el-select v-model="form.currency" placeholder="请选择币种" style="width: 100%">
+            <el-form-item label="不含税金额(万)" class="amount-field">
+              <el-input
+                :model-value="displayAmountWithoutTax"
+                readonly
+                placeholder="自动计算"
+                size="small"
+              />
+            </el-form-item>
+            <el-form-item label="税率金额(万)" class="amount-field">
+              <el-input
+                :model-value="displayTaxAmount"
+                readonly
+                placeholder="自动计算"
+                size="small"
+              />
+            </el-form-item>
+            <el-form-item label="币种" prop="currency" class="amount-field">
+              <el-select v-model="form.currency" placeholder="请选择币种">
                 <el-option label="人民币" value="CNY" />
                 <el-option label="美元" value="USD" />
                 <el-option label="欧元" value="EUR" />
               </el-select>
             </el-form-item>
-            <el-form-item label="签订日期" prop="signDate">
-              <el-date-picker v-model="form.signDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" placeholder="选填" />
+            <el-form-item label="拟定签订日期" prop="signDate" class="date-field">
+              <el-date-picker
+                v-model="form.signDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="请选择"
+                :disabled-date="disabledDateForSign"
+              />
             </el-form-item>
-            <el-form-item label="生效日期" prop="effectiveDate">
-              <el-date-picker v-model="form.effectiveDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" placeholder="选填" />
+            <el-form-item label="生效日期" prop="effectiveDate" class="date-field">
+              <el-date-picker
+                v-model="form.effectiveDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="请选择"
+                :disabled-date="(d: Date) => disabledDateForEffective(d, form.signDate)"
+              />
             </el-form-item>
-            <el-form-item label="结束日期" prop="endDate">
-              <el-date-picker v-model="form.endDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" placeholder="选填" />
+            <el-form-item label="结束日期" prop="endDate" class="date-field">
+              <el-date-picker
+                v-model="form.endDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="选填"
+                :disabled-date="(d: Date) => disabledDateForEnd(d, form.effectiveDate)"
+              />
             </el-form-item>
           </div>
         </div>
 
-        <!-- 付款与结算 -->
+        <!-- 付款与结算（结算方式在上，付款条件在下支持多行） -->
         <div class="form-section">
           <div class="section-title">付款与结算</div>
           <div class="form-grid">
-            <el-form-item label="付款条件" prop="payTerms" class="full-width">
-              <el-input v-model="form.payTerms" type="textarea" :rows="2" placeholder="如：预付款+进度款+尾款" />
-            </el-form-item>
-            <el-form-item label="结算方式" prop="settleMode">
-              <el-select v-model="form.settleMode" placeholder="请选择结算方式" clearable style="width: 100%">
-                <el-option label="按月结算" value="MONTHLY" />
-                <el-option label="按节点结算" value="MILESTONE" />
-                <el-option label="一次性结算" value="ONCE" />
-                <el-option label="其他" value="OTHER" />
+            <el-form-item label="结算方式" prop="settleMode" required class="settle-field">
+              <el-select v-model="form.settleMode" placeholder="请选择结算方式" clearable>
+                <el-option v-for="opt in settleModeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
               </el-select>
+            </el-form-item>
+            <el-form-item label="付款条件" prop="payTerms" class="full-width">
+              <el-input v-model="form.payTerms" type="textarea" :rows="2" placeholder="如：预付款+进度款+尾款" size="small" />
             </el-form-item>
           </div>
         </div>
@@ -133,11 +173,21 @@
         </div>
 
         <!-- 备注 -->
-        <div class="form-section form-section-last">
+        <div class="form-section">
           <div class="section-title">备注</div>
           <el-form-item prop="remark">
-            <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="请输入备注信息（选填）" />
+            <el-input v-model="form.remark" type="textarea" :rows="1" placeholder="请输入备注信息（选填）" size="small" />
           </el-form-item>
+        </div>
+
+        <!-- 业务员（必填） -->
+        <div class="form-section form-section-last">
+          <div class="section-title">业务员信息</div>
+          <div class="form-grid">
+            <el-form-item label="业务员" prop="salesman" class="selector-field">
+              <PersonSelector v-model="form.salesman" placeholder="请选择业务员" />
+            </el-form-item>
+          </div>
         </div>
 
         <!-- 提交 -->
@@ -151,7 +201,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
 import { UploadFilled, Delete } from '@element-plus/icons-vue';
@@ -162,15 +212,26 @@ import { uploadBiddingAttachments, type CreateAttachmentBizReq } from '@/api/bid
 import { listDictOptions, type DictOption } from '@/api/system/dict';
 import type { CompanySelectorValue } from '@/api/enterprise/company';
 import type { ProjectVO } from '@/api/corpProject/project';
+import type { ExpPersonVO } from '@/api/system/person';
 import ProjectSelector from '@/components/Selector/ProjectSelector.vue';
 import CompanySelector from '@/components/Selector/CompanySelector.vue';
+import PersonSelector from '@/components/Selector/PersonSelector.vue';
 
 const router = useRouter();
 const formRef = ref<FormInstance>();
 const saving = ref(false);
 
+/** 常规税率选项（%） */
+const taxRateOptions: DictOption[] = [
+  { label: '3%', value: '3' },
+  { label: '6%', value: '6' },
+  { label: '9%', value: '9' },
+  { label: '13%', value: '13' },
+];
+
 const contractTypeOptions = ref<DictOption[]>([]);
 const contractCategoryOptions = ref<DictOption[]>([]);
+const settleModeOptions = ref<DictOption[]>([]);
 const fileTypeOptions = ref<DictOption[]>([]);
 
 const form = reactive({
@@ -182,8 +243,8 @@ const form = reactive({
   purchaser: undefined as CompanySelectorValue | undefined,
   supplier: undefined as CompanySelectorValue | undefined,
   amount: 0,
-  amountWithoutTax: undefined as number | undefined,
-  taxRate: undefined as number | undefined,
+  taxRate: undefined as string | undefined,
+  isTaxIncluded: false,
   currency: 'CNY',
   signDate: '',
   effectiveDate: '',
@@ -191,13 +252,99 @@ const form = reactive({
   payTerms: '',
   settleMode: '',
   remark: '',
+  salesman: undefined as ExpPersonVO | undefined,
 });
+
+/** 不含税金额显示（含税时自动计算） */
+const displayAmountWithoutTax = computed(() => {
+  if (!form.isTaxIncluded || !form.taxRate || form.amount <= 0) return '';
+  const rate = Number(form.taxRate) / 100;
+  return (form.amount / (1 + rate)).toFixed(2);
+});
+
+/** 税率金额显示 */
+const displayTaxAmount = computed(() => {
+  if (!form.isTaxIncluded || !form.taxRate || form.amount <= 0) return '';
+  const rate = Number(form.taxRate) / 100;
+  const withoutTax = form.amount / (1 + rate);
+  return (form.amount - withoutTax).toFixed(2);
+});
+
+function calcTaxFields() {
+  /* 计算由 computed 处理 */
+}
+
+function onTaxIncludedChange() {
+  if (!form.isTaxIncluded) form.taxRate = undefined;
+}
+
+function disabledDateForSign() {
+  return false;
+}
+
+function disabledDateForEffective(d: Date, signDate: string | null) {
+  if (!signDate) return false;
+  const sign = new Date(signDate);
+  sign.setHours(0, 0, 0, 0);
+  const target = new Date(d);
+  target.setHours(0, 0, 0, 0);
+  return target.getTime() <= sign.getTime();
+}
+
+function disabledDateForEnd(d: Date, effectiveDate: string | null) {
+  if (!effectiveDate) return false;
+  const eff = new Date(effectiveDate);
+  eff.setHours(0, 0, 0, 0);
+  const target = new Date(d);
+  target.setHours(0, 0, 0, 0);
+  return target.getTime() <= eff.getTime();
+}
 
 const rules: FormRules = {
   contractCode: [{ required: true, message: '请输入合同编号', trigger: 'blur' }],
   contractName: [{ required: true, message: '请输入合同名称', trigger: 'blur' }],
-  supplier: [{ required: true, message: '请选择供应商/乙方', trigger: 'change' }],
+  contractType: [{ required: true, message: '请选择合同类型', trigger: 'change' }],
+  contractCategory: [{ required: true, message: '请选择合同类别', trigger: 'change' }],
+  purchaser: [{ required: true, message: '请选择采购方', trigger: 'change' }],
+  supplier: [{ required: true, message: '请选择供应商', trigger: 'change' }],
   amount: [{ required: true, message: '请输入合同金额', trigger: 'change' }],
+  currency: [{ required: true, message: '请选择币种', trigger: 'change' }],
+  signDate: [{ required: true, message: '请选择拟定签订日期', trigger: 'change' }],
+  effectiveDate: [
+    { required: true, message: '请选择生效日期', trigger: 'change' },
+    {
+      validator: (_rule, val, cb) => {
+        if (val && form.signDate && val <= form.signDate) {
+          cb(new Error('生效日期须大于拟定签订日期'));
+        } else {
+          cb();
+        }
+      },
+      trigger: 'change',
+    },
+  ],
+  endDate: [
+    {
+      validator: (_rule, val, cb) => {
+        if (val && form.effectiveDate && val <= form.effectiveDate) {
+          cb(new Error('结束日期须大于生效日期'));
+        } else {
+          cb();
+        }
+      },
+      trigger: 'change',
+    },
+  ],
+  settleMode: [{ required: true, message: '请选择结算方式', trigger: 'change' }],
+  salesman: [
+    {
+      validator: (_rule, v, cb) => {
+        if (!v?.personId) cb(new Error('请选择业务员'));
+        else cb();
+      },
+      trigger: 'change',
+    },
+  ],
 };
 
 const uploadForm = reactive({ fileType: 'CONTRACT_MAIN' });
@@ -282,6 +429,27 @@ async function loadDictOptions() {
       { label: '其他', value: 'OTHER' },
     ];
   }
+  // 结算方式从字典 settlement_type 获取
+  for (const code of ['settlement_type', 'Settlement_Type']) {
+    try {
+      const res = await listDictOptions(code);
+      const opts = Array.isArray(res) ? res : Array.isArray((res as { data?: DictOption[] })?.data) ? (res as { data?: DictOption[] }).data : [];
+      if (opts.length) {
+        settleModeOptions.value = opts;
+        break;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  if (settleModeOptions.value.length === 0) {
+    settleModeOptions.value = [
+      { label: '按月结算', value: 'MONTHLY' },
+      { label: '按节点结算', value: 'MILESTONE' },
+      { label: '一次性结算', value: 'ONCE' },
+      { label: '其他', value: 'OTHER' },
+    ];
+  }
   if (uploadForm.fileType === 'CONTRACT_MAIN' && fileTypeOptions.value[0]) {
     uploadForm.fileType = fileTypeOptions.value[0].value;
   }
@@ -291,11 +459,24 @@ async function handleSubmit() {
   if (!formRef.value) return;
   const valid = await formRef.value.validate();
   if (!valid) return;
+  // 日期逻辑校验（提交时二次确认）
+  if (form.effectiveDate && form.signDate && form.effectiveDate <= form.signDate) {
+    ElMessage.warning('生效日期须大于拟定签订日期');
+    return;
+  }
+  if (form.endDate && form.effectiveDate && form.endDate <= form.effectiveDate) {
+    ElMessage.warning('结束日期须大于生效日期');
+    return;
+  }
   saving.value = true;
   try {
     const amountTotal = Math.round((form.amount || 0) * 10000);
-    const amountWithoutTax = form.amountWithoutTax != null ? Math.round(form.amountWithoutTax * 10000) : undefined;
-    const taxRateDefault = form.taxRate != null ? (form.taxRate / 100) : undefined;
+    let amountWithoutTax: number | undefined;
+    if (form.isTaxIncluded && form.taxRate && form.amount > 0) {
+      const rate = Number(form.taxRate) / 100;
+      amountWithoutTax = Math.round((form.amount / (1 + rate)) * 10000);
+    }
+    const taxRateDefault = form.taxRate != null ? Number(form.taxRate) / 100 : undefined;
 
     const req: CreateContractReq = {
       contractCode: form.contractCode,
@@ -315,6 +496,7 @@ async function handleSubmit() {
       payTerms: form.payTerms || undefined,
       settleMode: form.settleMode || undefined,
       remark: form.remark || undefined,
+      salesmanPersonId: form.salesman?.personId,
     };
 
     const res = await createContract(req);
@@ -360,11 +542,11 @@ onMounted(() => loadDictOptions());
 
 /* 紧凑表单：缩小间距 */
 .contract-form.compact-form :deep(.el-form-item) {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 .form-section {
-  margin-bottom: 14px;
-  padding-bottom: 14px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 .form-section-last {
@@ -374,19 +556,51 @@ onMounted(() => loadDictOptions());
 }
 .section-title {
   font-weight: 600;
-  font-size: 13px;
-  margin-bottom: 10px;
-  padding-left: 8px;
+  font-size: 12px;
+  margin-bottom: 6px;
+  padding-left: 6px;
   border-left: 3px solid var(--el-color-primary);
   color: var(--el-text-color-primary);
 }
-.form-grid {
+/* 紧凑布局：4列网格，一屏展示更多内容 */
+.contract-form.compact-layout .form-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px 18px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px 12px;
+}
+.compact-layout .form-grid :deep(.el-form-item) {
+  margin-bottom: 6px;
 }
 .form-grid .full-width {
   grid-column: 1 / -1;
+}
+
+/* 关联项目、采购方、供应商、业务员：限制宽度 */
+.compact-layout .form-grid .selector-field :deep(.el-form-item__content) {
+  max-width: 160px;
+}
+
+/* 金额与日期：金额类字段缩短 */
+.compact-layout .form-grid-amount .amount-field :deep(.el-form-item__content) {
+  max-width: 130px;
+}
+.compact-layout .form-grid-amount .amount-field :deep(.el-input-number),
+.compact-layout .form-grid-amount .amount-field :deep(.el-input),
+.compact-layout .form-grid-amount .amount-field :deep(.el-select) {
+  width: 100%;
+  max-width: 130px;
+}
+.compact-layout .form-grid-amount .date-field :deep(.el-form-item__content) {
+  max-width: 150px;
+}
+.compact-layout .form-grid-amount .date-field :deep(.el-date-editor) {
+  width: 100%;
+  max-width: 150px;
+}
+
+/* 结算方式：适中宽度 */
+.compact-layout .form-grid .settle-field :deep(.el-form-item__content) {
+  max-width: 160px;
 }
 
 /* 附件区：文件类型与上传同行 */
@@ -403,12 +617,12 @@ onMounted(() => loadDictOptions());
   margin-bottom: 0 !important;
 }
 .compact-upload :deep(.el-upload-dragger) {
-  padding: 16px;
+  padding: 12px;
   width: 100%;
 }
 .compact-upload :deep(.el-icon--upload) {
-  font-size: 36px;
-  margin-bottom: 6px;
+  font-size: 28px;
+  margin-bottom: 4px;
 }
 .compact-upload :deep(.el-upload__text) {
   font-size: 12px;

@@ -76,4 +76,8 @@ public class CreateContractReq {
 
     /** 业务员人员ID，通过人员选择器选择 */
     private Long salesmanPersonId;
+
+    /** 动作*/
+    @NotBlank(message = "动作不能为空")
+    private String action;
 }

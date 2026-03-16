@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.process.core.mapper.WfTaskMapper">
+
+    <!-- 根据 taskId 一次查询 task、instance、definition 关联信息 -->
+    <select id="selectTaskContextByTaskId" resultType="jh.exp.process.core.entity.dto.TaskContextDTO">
+        SELECT t.task_id   AS taskId,
+               i.instance_id AS instanceId,
+               i.bus_id      AS busId,
+               i.status      AS instanceStatus,
+               d.bus_type    AS busType,
+               d.proc_code   AS procCode
+        FROM wf_task t
+                 INNER JOIN wf_instance i ON t.instance_id = i.instance_id
+                 INNER JOIN wf_process_definition d ON i.proc_def_id = d.proc_def_id
+        WHERE t.task_id = #{taskId}
+    </select>
+
+    <!-- 审批处理：task + instance 一次查询，条件下沉到 SQL -->
+    <select id="selectTaskHandleContext" resultType="jh.exp.process.core.entity.dto.TaskHandleContextDTO">
+        SELECT t.task_id       AS taskId,
+               t.instance_id   AS instanceId,
+               t.node_id       AS nodeId,
+               t.candidate_type AS candidateType,
+               t.candidate_id  AS candidateId,
+               t.handler_id    AS handlerId,
+               t.action       AS action,
+               t.opinion       AS opinion,
+               t.is_done       AS isDone,
+               t.create_time   AS createTime,
+               t.finish_time   AS finishTime,
+               i.proc_def_id   AS instanceProcDefId,
+               i.bus_id        AS instanceBusId,
+               i.starter_id    AS instanceStarterId,
+               i.start_time    AS instanceStartTime,
+               i.end_time      AS instanceEndTime,
+               i.status        AS instanceStatus,
+               i.closed_by     AS instanceClosedBy,
+               i.close_reason  AS instanceCloseReason,
+               i.title         AS instanceTitle
+        FROM wf_task t
+                 INNER JOIN wf_instance i ON t.instance_id = i.instance_id
+        WHERE t.task_id = #{taskId}
+          AND t.is_done = 0
+          AND i.status = 'APPROVING'
+    </select>
+
+    <!-- 待办：过滤条件下沉到 SQL -->
+    <select id="selectTodoPage" resultType="jh.exp.process.core.entity.WfTask">
+        SELECT t.task_id, t.instance_id, t.node_id, t.candidate_type, t.candidate_id,
+               t.handler_id, t.action, t.opinion, t.is_done, t.create_time, t.finish_time
+        FROM wf_task t
+        INNER JOIN wf_instance i ON t.instance_id = i.instance_id
+        INNER JOIN wf_process_definition d ON i.proc_def_id = d.proc_def_id
+        <where>
+            AND t.is_done = 0
+            AND t.candidate_id = #{personId}
+            <if test="query != null and query.busType != null and query.busType.trim() != ''">
+                AND d.bus_type = #{query.busType}
+            </if>
+            <if test="query != null and query.status != null and query.status.trim() != ''">
+                AND i.status = #{query.status}
+            </if>
+            <if test="query != null and query.instanceId != null and query.instanceId.trim() != ''">
+                AND i.instance_id = #{query.instanceId}
+            </if>
+            <if test="query != null and query.instanceTitle != null and query.instanceTitle.trim() != ''">
+                AND i.title LIKE CONCAT('%', #{query.instanceTitle}, '%')
+            </if>
+        </where>
+        ORDER BY t.create_time DESC
+    </select>
+
+    <!-- 已办：过滤条件下沉到 SQL -->
+    <select id="selectDonePage" resultType="jh.exp.process.core.entity.WfTask">
+        SELECT t.task_id, t.instance_id, t.node_id, t.candidate_type, t.candidate_id,
+               t.handler_id, t.action, t.opinion, t.is_done, t.create_time, t.finish_time
+        FROM wf_task t
+        INNER JOIN wf_instance i ON t.instance_id = i.instance_id
+        INNER JOIN wf_process_definition d ON i.proc_def_id = d.proc_def_id
+        <where>
+            AND t.is_done = 1
+            AND t.handler_id = #{personId}
+            <if test="query != null and query.busType != null and query.busType.trim() != ''">
+                AND d.bus_type = #{query.busType}
+            </if>
+            <if test="query != null and query.status != null and query.status.trim() != ''">
+                AND i.status = #{query.status}
+            </if>
+            <if test="query != null and query.instanceId != null and query.instanceId.trim() != ''">
+                AND i.instance_id = #{query.instanceId}
+            </if>
+            <if test="query != null and query.instanceTitle != null and query.instanceTitle.trim() != ''">
+                AND i.title LIKE CONCAT('%', #{query.instanceTitle}, '%')
+            </if>
+        </where>
+        ORDER BY t.finish_time DESC
+    </select>
+
+</mapper>

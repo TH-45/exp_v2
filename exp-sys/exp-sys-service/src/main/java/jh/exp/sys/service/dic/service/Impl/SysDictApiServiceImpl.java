@@ -348,6 +348,47 @@ public class SysDictApiServiceImpl implements SysDictApiService {
         return importDictItems(rows);
     }
 
+    @Override
+    public ApiResponse<DictItemImportRes> importDictItemsFromHierarchy(List<DictExportHierarchyReq> hierarchy) {
+        if (CollectionUtils.isEmpty(hierarchy)) {
+            return ApiResponse.success(new DictItemImportRes(0, 0, new ArrayList<>()));
+        }
+        List<DictItemImportRow> rows = new ArrayList<>();
+        for (DictExportHierarchyReq req : hierarchy) {
+            if (req.getDictType() == null || CollectionUtils.isEmpty(req.getItems())) continue;
+            SysDictType t = req.getDictType();
+            String dictCode = StringUtils.hasText(t.getDictCode()) ? t.getDictCode().trim() : null;
+            if (!StringUtils.hasText(dictCode)) continue;
+            // 若字典类型不存在则自动创建
+            ensureDictTypeExistsOrCreate(t);
+            for (SysDictItem item : req.getItems()) {
+                DictItemImportRow row = new DictItemImportRow();
+                row.setDictCode(dictCode);
+                row.setItemCode(item.getItemCode() != null ? item.getItemCode().trim() : null);
+                row.setItemValue(item.getItemValue() != null ? item.getItemValue().trim() : "");
+                row.setItemLabel(item.getItemLabel() != null ? item.getItemLabel().trim() : "");
+                row.setSortNo(item.getSortNo());
+                row.setStatus(StringUtils.hasText(item.getStatus()) ? item.getStatus() : CommonConstant.ENABLED_STATUS_STR);
+                row.setRemark(item.getRemark());
+                rows.add(row);
+            }
+        }
+        return importDictItems(rows);
+    }
+
+    /** 若字典类型不存在则创建 */
+    private void ensureDictTypeExistsOrCreate(SysDictType dictType) {
+        if (sysDictTypeService.getByDictCode(dictType.getDictCode()) != null) {
+            return;
+        }
+        DictTypeCreateReq createReq = new DictTypeCreateReq();
+        createReq.setDictCode(dictType.getDictCode());
+        createReq.setDictName(StringUtils.hasText(dictType.getDictName()) ? dictType.getDictName() : dictType.getDictCode());
+        createReq.setStatus(StringUtils.hasText(dictType.getStatus()) ? dictType.getStatus() : CommonConstant.ENABLED_STATUS_STR);
+        createReq.setDescription(dictType.getDescription());
+        createDictType(createReq);
+    }
+
     /** 按 dictCode + itemCode 判断：存在则更新，不存在则新增 */
     private void saveOrUpdateDictItem(DictItemImportRow row) {
         ensureDictTypeExists(row.getDictCode());

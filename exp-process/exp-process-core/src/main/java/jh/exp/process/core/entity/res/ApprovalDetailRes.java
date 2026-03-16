@@ -6,14 +6,28 @@ import java.util.List;
 
 @Data
 public class ApprovalDetailRes {
+    /** 任务 ID */
     private Long taskId;
+    /** 流程实例 ID */
     private Long instanceId;
+    /** 业务类型 */
     private String busType;
-    private String busId;
+    /** 业务 ID */
+    private Long busId;
+    /** 状态 */
     private String status;
+    /** 当前节点 */
     private String currentNode;
+    /** 发起人 ID */
     private Long starterId;
+    /** 业务数据 */
     private Object businessData;
+    /** 审批历史列表 */
     private List<ApprovalHistoryRes> approvalHistory;
+    /** 附件列表 */
     private List<AttachmentRes> attachments;
+
+    /** 任务标题 */
+    private String title;
+
 }

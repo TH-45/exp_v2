@@ -931,14 +931,14 @@ const JSON_FIELD_DESC = `
 ------------------------------------------
 【字段说明】
 dictType（字典类型）：
-  - id：主键ID
+  - id：主键ID 数据表自动插入
   - dictCode：字典类型编码（全局唯一）
   - dictName：字典类型名称
   - description：描述
   - status：状态（ENABLED-启用，DISABLED-停用）
 
 items（字典项）：
-  - id：主键ID
+  - id：主键ID 数据表自动插入
   - dictCode：所属字典类型编码
   - itemCode：字典项编码
   - itemValue：字典项值（业务表存储值）

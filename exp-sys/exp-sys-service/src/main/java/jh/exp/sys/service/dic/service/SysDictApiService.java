@@ -70,6 +70,12 @@ public interface SysDictApiService {
     ApiResponse<DictItemImportRes> importDictItems(List<DictItemImportRow> rows);
 
     /**
+     * 批量导入字典项（JSON 父子结构）
+     * 支持 { dictType, items }[] 格式，若字典类型不存在则自动创建
+     */
+    ApiResponse<DictItemImportRes> importDictItemsFromHierarchy(List<DictExportHierarchyReq> hierarchy);
+
+    /**
      * 批量导入字典项（Excel）
      */
     ApiResponse<DictItemImportRes> importDictItemsFromExcel(MultipartFile file);

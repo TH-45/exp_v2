@@ -2,6 +2,20 @@ package jh.exp.bid.contract.core.constant;
 
 public class BidContractConstant {
 
+
+
+
+
+    /**
+     * 合同操作-保存
+     */
+    public static final String BID_CONTRACT_OP_SAVE = "SAVE";
+    /**
+     * 合同操作-提交
+     */
+    public static final String BID_CONTRACT_OP_SUBMIT = "SUBMIT";
+
+
     /**
      * 负责人
      */

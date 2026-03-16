@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jh.exp.process.core.mapper.WfInstanceMapper">
+
+    <!-- 我发起/已关闭：真分页，过滤条件下沉到 SQL -->
+    <select id="selectStartedPage" resultType="jh.exp.process.core.entity.WfInstance">
+        SELECT i.instance_id, i.proc_def_id, i.bus_id, i.starter_id, i.start_time,
+               i.end_time, i.status, i.closed_by, i.close_reason, i.title
+        FROM wf_instance i
+        INNER JOIN wf_process_definition d ON i.proc_def_id = d.proc_def_id
+        <where>
+            AND i.starter_id = #{userId}
+            <!-- 已关闭 tab 时强制 status=CLOSED；我发起 tab 时可用 query.status 过滤 -->
+            <if test="instanceStatus != null and instanceStatus.trim() != ''">
+                AND i.status = #{instanceStatus}
+            </if>
+            <if test="(instanceStatus == null or instanceStatus == '') and query != null and query.status != null and query.status.trim() != ''">
+                AND i.status = #{query.status}
+            </if>
+            <if test="query != null and query.busType != null and query.busType.trim() != ''">
+                AND d.bus_type = #{query.busType}
+            </if>
+            <if test="query != null and query.instanceId != null and query.instanceId.trim() != ''">
+                AND i.instance_id = #{query.instanceId}
+            </if>
+            <if test="query != null and query.instanceTitle != null and query.instanceTitle.trim() != ''">
+                AND i.title LIKE CONCAT('%', #{query.instanceTitle}, '%')
+            </if>
+        </where>
+        ORDER BY i.start_time DESC
+    </select>
+
+</mapper>

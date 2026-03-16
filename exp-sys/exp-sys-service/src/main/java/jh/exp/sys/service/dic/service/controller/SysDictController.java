@@ -19,6 +19,9 @@ import jh.exp.sys.core.req.dic.DictTypeUpdateReq;
 import jh.exp.sys.core.req.dic.IdsReq;
 import jh.exp.sys.core.req.dic.StatusReq;
 import jh.exp.sys.core.resp.dic.DictOptionRes;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -47,6 +50,7 @@ import java.util.Map;
 public class SysDictController {
 
     private final SysDictApiService sysDictApiService;
+    private final ObjectMapper objectMapper;
 
     /**
      * 分页查询字典类型列表
@@ -276,9 +280,23 @@ public class SysDictController {
 
     /**
      * 批量导入字典项（JSON）
+     * 支持两种格式：
+     * 1. 扁平格式：[{ dictCode, itemCode, itemValue, itemLabel, ... }, ...]
+     * 2. 父子结构：[{ dictType: { dictCode, dictName, ... }, items: [{ dictCode, itemCode, itemValue, itemLabel, ... }, ...] }, ...]
      */
     @PostMapping("/item/import/json")
-    public ApiResponse<DictItemImportRes> importDictItemsJson(@Valid @RequestBody List<DictItemImportRow> rows) {
+    public ApiResponse<DictItemImportRes> importDictItemsJson(@RequestBody JsonNode body) {
+        if (body == null || !body.isArray() || body.size() == 0) {
+            return sysDictApiService.importDictItems(List.of());
+        }
+        JsonNode first = body.get(0);
+        // 判断是否为父子结构：首元素包含 dictType 和 items
+        boolean isHierarchy = first != null && first.has("dictType") && first.has("items");
+        if (isHierarchy) {
+            List<DictExportHierarchyReq> hierarchy = objectMapper.convertValue(body, new TypeReference<List<DictExportHierarchyReq>>() {});
+            return sysDictApiService.importDictItemsFromHierarchy(hierarchy);
+        }
+        List<DictItemImportRow> rows = objectMapper.convertValue(body, new TypeReference<List<DictItemImportRow>>() {});
         return sysDictApiService.importDictItems(rows);
     }
 
