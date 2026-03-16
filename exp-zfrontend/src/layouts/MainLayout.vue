@@ -210,7 +210,7 @@
                   </div>
                 </div>
 
-                <el-dropdown-item>
+                <el-dropdown-item @click="goProfile">
                   <el-icon><User /></el-icon>
                   个人信息
                 </el-dropdown-item>
@@ -426,6 +426,10 @@ const goHome = () => {
 const handleLogout = () => {
   userStore.logout();
   router.replace('/login');
+};
+
+const goProfile = () => {
+  router.push('/profile');
 };
 
 // 获取用户名的首字符（支持中英文）

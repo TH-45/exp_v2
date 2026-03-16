@@ -2,6 +2,7 @@ package jh.exp.gateway.auth.client;
 
 import jh.exp.common.core.auth.dto.LoginRequest;
 import jh.exp.common.core.auth.dto.LoginUserInfo;
+import jh.exp.common.core.auth.dto.ProfileDetailResult;
 import jh.exp.common.core.auth.dto.ProfileResult;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,6 +31,12 @@ public interface AuthInternalHttpClient {
      */
     @GetExchange("/profile")
     Mono<ProfileResult> profile(@RequestParam("userId") String userId);
+
+    /**
+     * 根据 userId 获取个人中心详细信息（人员/账号/组织）。
+     */
+    @GetExchange("/profile/detail")
+    Mono<ProfileDetailResult> profileDetail(@RequestParam("userId") String userId);
 }
 
 

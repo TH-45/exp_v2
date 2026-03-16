@@ -65,6 +65,14 @@
             style="width: 160px"
           />
         </el-form-item>
+        <el-form-item label="人员编码">
+          <el-input
+            v-model="query.personCode"
+            placeholder="请输入人员编码"
+            clearable
+            style="width: 160px"
+          />
+        </el-form-item>
         <el-form-item label="手机号">
           <el-input
             v-model="query.mobile"
@@ -297,6 +305,7 @@ const tableRef = ref();
 const query = reactive({
   accountName: '',
   personName: '',
+  personCode: '',
   mobile: '',
   pageNum: 1,
   pageSize: 10,
@@ -367,6 +376,9 @@ async function fetchList() {
     if (query.personName.trim()) {
       searchParams.queryParam.personName = query.personName.trim();
     }
+    if (query.personCode.trim()) {
+      searchParams.queryParam.personCode = query.personCode.trim();
+    }
     if (query.mobile.trim()) {
       searchParams.queryParam.mobile = query.mobile.trim();
     }
@@ -374,6 +386,7 @@ async function fetchList() {
     // 从searchParams中移除单独的搜索字段，只保留queryParam中的
     delete (searchParams as any).accountName;
     delete (searchParams as any).personName;
+    delete (searchParams as any).personCode;
     delete (searchParams as any).mobile;
 
     console.log('Fetching account list with params:', searchParams);
@@ -450,6 +463,7 @@ onMounted(() => {
 function handleSearch() {
   query.accountName = (query.accountName || '').trim();
   query.personName = (query.personName || '').trim();
+  query.personCode = (query.personCode || '').trim();
   query.mobile = (query.mobile || '').trim();
   query.pageNum = 1;
   fetchList();
@@ -458,6 +472,7 @@ function handleSearch() {
 function handleReset() {
   query.accountName = '';
   query.personName = '';
+  query.personCode = '';
   query.mobile = '';
   query.pageNum = 1;
   query.queryParam = {};

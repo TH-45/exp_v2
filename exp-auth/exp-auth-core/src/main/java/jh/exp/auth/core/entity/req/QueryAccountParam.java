@@ -12,6 +12,8 @@ public class QueryAccountParam {
     private String accountName;
     //账号人姓名
     private String personName;;
+    //人员编码
+    private String personCode;
     //手机号
     private String mobile;
 }

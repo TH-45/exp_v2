@@ -212,7 +212,7 @@
       destroy-on-close
       custom-class="person-detail-drawer"
     >
-      <div v-if="detailDrawer.person" class="person-detail">
+      <div v-if="detailDrawer.person" v-loading="detailLoading" class="person-detail">
         <!-- 基础信息 -->
         <el-card class="info-card" shadow="never" style="flex-shrink: 0;">
           <template #header>
@@ -270,6 +270,23 @@
                 <div class="org-content">
                   <div class="org-label">主岗位</div>
                   <div class="org-value">{{ detailDrawer.person.postName || '未分配' }}</div>
+                </div>
+              </div>
+              <div class="org-item">
+                <el-icon><User /></el-icon>
+                <div class="org-content">
+                  <div class="org-label">登录账号</div>
+                  <div class="org-value">
+                    {{ detailDrawer.person.accountName || '未绑定' }}
+                    <span class="account-meta">ID: {{ detailDrawer.person.accountId || '-' }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="org-item">
+                <el-icon><User /></el-icon>
+                <div class="org-content">
+                  <div class="org-label">账号显示名</div>
+                  <div class="org-value">{{ detailDrawer.person.accountDisplay || '未设置' }}</div>
                 </div>
               </div>
             </div>
@@ -487,6 +504,7 @@ import {
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import {
   queryPersonList,
+  getPersonDetail,
   createPerson,
   updatePerson,
   deletePerson,
@@ -554,6 +572,7 @@ const detailDrawer = reactive({
   visible: false,
   person: null as ExpPersonVO | null,
 });
+const detailLoading = ref(false);
 
 // 兼职岗位相关
 const savingPartTime = ref(false);
@@ -797,34 +816,58 @@ function generatePersonCode() {
 }
 
 // 详细功能
-function handleDetail(row: ExpPersonVO) {
-  detailDrawer.person = row;
-  // 初始化兼职岗位数据
-  selectedPartTimeOrg1.value = row.partTimeOrgId1 ? {
-    orgId: row.partTimeOrgId1,
-    orgName: row.partTimeOrgName1 || '',
+function initPartTimeSelections(person: ExpPersonVO) {
+  selectedPartTimeOrg1.value = person.partTimeOrgId1 ? {
+    orgId: person.partTimeOrgId1,
+    orgName: person.partTimeOrgName1 || '',
     orgCode: '',
     children: []
   } : undefined;
-  selectedPartTimePost1.value = row.partTimePostId1;
+  selectedPartTimePost1.value = person.partTimePostId1;
 
-  selectedPartTimeOrg2.value = row.partTimeOrgId2 ? {
-    orgId: row.partTimeOrgId2,
-    orgName: row.partTimeOrgName2 || '',
+  selectedPartTimeOrg2.value = person.partTimeOrgId2 ? {
+    orgId: person.partTimeOrgId2,
+    orgName: person.partTimeOrgName2 || '',
     orgCode: '',
     children: []
   } : undefined;
-  selectedPartTimePost2.value = row.partTimePostId2;
+  selectedPartTimePost2.value = person.partTimePostId2;
 
-  // 如果已有组织，加载对应的岗位列表
   if (selectedPartTimeOrg1.value) {
     loadPartTimePosts(1, selectedPartTimeOrg1.value.orgId);
   }
   if (selectedPartTimeOrg2.value) {
     loadPartTimePosts(2, selectedPartTimeOrg2.value.orgId);
   }
+}
 
+function mergePersonDetail(base: ExpPersonVO, detail: ExpPersonVO): ExpPersonVO {
+  const merged: ExpPersonVO = { ...base };
+  (Object.keys(detail) as (keyof ExpPersonVO)[]).forEach((key) => {
+    const value = detail[key];
+    if (value !== undefined && value !== null) {
+      merged[key] = value as any;
+    }
+  });
+  return merged;
+}
+
+async function handleDetail(row: ExpPersonVO) {
+  detailDrawer.person = row;
+  initPartTimeSelections(row);
   detailDrawer.visible = true;
+  detailLoading.value = true;
+  try {
+    const detail = await getPersonDetail(row.personId);
+    // 详情接口未返回的列表扩展字段（如兼职岗位）沿用行数据，避免抽屉功能回退。
+    const mergedDetail = mergePersonDetail(row, detail);
+    detailDrawer.person = mergedDetail;
+    initPartTimeSelections(mergedDetail);
+  } catch (e) {
+    ElMessage.error((e as any)?.message || '获取人员详情失败');
+  } finally {
+    detailLoading.value = false;
+  }
 }
 
 // 兼职岗位组织选择处理
@@ -1281,15 +1324,14 @@ async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
   }
 
   .org-section {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+
     .org-item {
       display: flex;
       align-items: flex-start;
       gap: 8px;
-      margin-bottom: 12px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
 
       .el-icon {
         color: #c0c4cc;
@@ -1310,6 +1352,13 @@ async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
           font-size: 14px;
           color: #606266;
           font-weight: 500;
+
+          .account-meta {
+            margin-left: 8px;
+            color: #909399;
+            font-weight: 400;
+            font-size: 12px;
+          }
         }
       }
     }

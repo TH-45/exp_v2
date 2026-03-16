@@ -5,6 +5,7 @@ import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.QualificationAttachmentDetailRes;
 import jh.exp.corp.core.entity.res.QualificationAttachmentListRes;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface QualificationAttachmentInternalService {
     SimplePageRes<QualificationAttachmentListRes> list(SimplePageReq<QueryQualificationAttachmentReq> req);
@@ -18,4 +19,8 @@ public interface QualificationAttachmentInternalService {
     void delete(DeleteQualificationAttachmentReq req);
 
     void batchDelete(BatchDeleteQualificationAttachmentReq req);
+
+    QualificationAttachmentDetailRes upload(Long qualificationId, MultipartFile file);
+
+    byte[] download(Long attachmentId);
 }

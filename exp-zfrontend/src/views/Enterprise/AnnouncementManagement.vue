@@ -37,7 +37,7 @@
           <el-select v-model="query.status" clearable placeholder="全部" style="width: 120px">
             <el-option label="草稿" value="DRAFT" />
             <el-option label="已发布" value="PUBLISHED" />
-            <el-option label="已归档" value="ARCHIVED" />
+            <el-option label="已撤回" value="WITHDRAWN" />
           </el-select>
         </el-form-item>
         <el-form-item label="发布日期">
@@ -109,7 +109,7 @@
                 link
                 type="success"
                 size="small"
-                @click="publishAnnouncement(row)"
+                @click="handlePublish(row)"
                 :disabled="!canUpdate"
               >
                 发布
@@ -119,10 +119,10 @@
                 link
                 type="warning"
                 size="small"
-                @click="archiveAnnouncement(row)"
+                @click="handleWithdraw(row)"
                 :disabled="!canUpdate"
               >
-                归档
+                撤回
               </el-button>
               <el-button link type="danger" size="small" @click="handleDelete(row)" :disabled="!canDelete">
                 删除
@@ -152,6 +152,7 @@
         :title="editDialog.isEdit ? '编辑公告' : '发布公告'"
         width="900px"
         destroy-on-close
+        draggable
       >
         <el-form
           ref="formRef"
@@ -245,11 +246,11 @@
             <div class="attachments-list">
               <div
                 v-for="attachment in detailDrawer.data.attachments"
-                :key="attachment"
+                :key="attachment.attachmentId"
                 class="attachment-item"
               >
                 <el-link type="primary" @click="downloadAttachment(attachment)">
-                  {{ attachment }}
+                  {{ attachment.fileName }}
                 </el-link>
               </div>
             </div>
@@ -272,9 +273,12 @@ import {
   createAnnouncement,
   updateAnnouncement,
   deleteAnnouncement,
-  publishAnnouncement,
-  archiveAnnouncement,
-  type AnnouncementVO
+  publishAnnouncement as publishAnnouncementApi,
+  withdrawAnnouncement as withdrawAnnouncementApi,
+  uploadAnnouncementAttachment,
+  downloadAnnouncementAttachment,
+  type AnnouncementVO,
+  type NoticeAttachmentVO,
 } from '@/api/corp.ts';
 
 const loading = ref(false);
@@ -300,13 +304,13 @@ const editDialog = reactive({
 const formRef = ref<FormInstance>();
 const uploadRef = ref();
 const fileList = ref<any[]>([]);
+const newFiles = ref<File[]>([]);
 
 const form = reactive({
   id: '',
   title: '',
   type: 'NOTICE' as string,
   content: '',
-  attachments: [] as File[],
 });
 
 const rules: FormRules = {
@@ -320,97 +324,41 @@ const detailDrawer = reactive({
   data: null as AnnouncementVO | null,
 });
 
-// 权限点
 const canView = computed(() => hasPermission('corp:announcement:view'));
 const canCreate = computed(() => hasPermission('corp:announcement:create'));
 const canUpdate = computed(() => hasPermission('corp:announcement:update'));
 const canDelete = computed(() => hasPermission('corp:announcement:delete'));
 
-// 模拟数据
-const mockAnnouncements: AnnouncementVO[] = [
-  {
-    id: 'a001',
-    title: '春节放假通知',
-    type: 'NOTICE',
-    content: '根据国家法定节假日安排和公司年度工作计划，现将2025年春节放假安排通知如下：\n\n一、放假时间\n2025年1月29日至2025年2月4日放假，共7天。\n\n二、调休安排\n2025年1月26日（星期日）上班，2025年2月8日（星期六）上班。\n\n三、工作要求\n各部门要妥善安排好春节期间的值班工作，确保各项工作正常运转。',
-    publisher: '管理员',
-    publishTime: '2025-01-15 09:00:00',
-    status: 'PUBLISHED',
-    readCount: 156,
-  },
-  {
-    id: 'a002',
-    title: '公司考勤管理制度',
-    type: 'POLICY',
-    content: '第一章 总则\n\n第一条 为规范公司员工考勤管理，维护正常的工作秩序，根据国家有关法律法规，结合公司实际情况，制定本制度。\n\n第二条 本制度适用于公司全体员工。\n\n第二章 工作时间\n\n第三条 公司实行标准工时制，每周工作5天，每天工作8小时。',
-    publisher: '人力资源部',
-    publishTime: '2025-01-10 14:30:00',
-    status: 'PUBLISHED',
-    readCount: 89,
-    attachments: ['考勤管理制度.pdf'],
-  },
-  {
-    id: 'a003',
-    title: '项目投标资格预审通知',
-    type: 'NOTICE',
-    content: '兹定于2025年2月1日进行"某某商业广场"项目的投标资格预审工作，具体安排如下：\n\n一、预审时间：2025年2月1日 上午9:00-11:30\n\n二、预审地点：公司会议室A\n\n三、参加人员：项目经理、技术负责人、商务负责人\n\n请相关人员提前准备好资质文件和相关资料，按时参加。',
-    publisher: '招标办',
-    publishTime: '2025-01-20 16:00:00',
-    status: 'DRAFT',
-    readCount: 0,
-  },
-];
-
 function getTypeLabel(type?: string) {
-  const labels = {
-    NOTICE: '公告',
-    POLICY: '制度',
-  };
+  const labels = { NOTICE: '公告', POLICY: '制度' };
   return labels[type as keyof typeof labels] || type;
 }
 
 function getTypeTagType(type?: string) {
-  const types = {
-    NOTICE: 'primary',
-    POLICY: 'success',
-  };
+  const types = { NOTICE: 'primary', POLICY: 'success' };
   return types[type as keyof typeof types] || 'info';
 }
 
 function getStatusLabel(status?: string) {
-  const labels = {
-    DRAFT: '草稿',
-    PUBLISHED: '已发布',
-    ARCHIVED: '已归档',
-  };
+  const labels = { DRAFT: '草稿', PUBLISHED: '已发布', WITHDRAWN: '已撤回' };
   return labels[status as keyof typeof labels] || status;
 }
 
 function getStatusTagType(status?: string) {
-  const types = {
-    DRAFT: 'info',
-    PUBLISHED: 'success',
-    ARCHIVED: 'warning',
-  };
+  const types = { DRAFT: 'info', PUBLISHED: 'success', WITHDRAWN: 'warning' };
   return types[status as keyof typeof types] || 'info';
 }
 
 async function fetchList() {
-  // 更新发布日期查询条件
   if (publishDateRange.value && publishDateRange.value.length === 2) {
-    query.publishStartDate = publishDateRange.value[0];
-    query.publishEndDate = publishDateRange.value[1];
+    (query as any).publishStartDate = publishDateRange.value[0];
+    (query as any).publishEndDate = publishDateRange.value[1];
   }
-
   loading.value = true;
   try {
     const res = await listAnnouncements(query);
-    const list = (res.records || res.list || res.rows || []) as AnnouncementVO[];
-    tableData.value = list.length ? list : mockAnnouncements;
-    total.value = Number(res.total ?? tableData.value.length) || 0;
-  } catch (e) {
-    tableData.value = mockAnnouncements;
-    total.value = mockAnnouncements.length;
+    tableData.value = (res.records || []) as AnnouncementVO[];
+    total.value = Number(res.total ?? 0) || 0;
   } finally {
     loading.value = false;
   }
@@ -447,11 +395,16 @@ function openCreateDialog() {
   resetForm();
 }
 
-function openEditDialog(row: AnnouncementVO) {
+async function openEditDialog(row: AnnouncementVO) {
   editDialog.isEdit = true;
   editDialog.visible = true;
-  Object.assign(form, row);
-  fileList.value = row.attachments?.map(name => ({ name, url: name })) || [];
+  const detail = await getAnnouncementDetail(row.id);
+  form.id = detail.id;
+  form.title = detail.title;
+  form.type = detail.type;
+  form.content = detail.content;
+  fileList.value = (detail.attachments || []).map((a) => ({ name: a.fileName, url: a.filePath }));
+  newFiles.value = [];
 }
 
 function resetForm() {
@@ -459,23 +412,21 @@ function resetForm() {
   form.title = '';
   form.type = 'NOTICE';
   form.content = '';
-  form.attachments = [];
   fileList.value = [];
+  newFiles.value = [];
   if (uploadRef.value) {
     uploadRef.value.clearFiles();
   }
 }
 
 function handleFileChange(file: any) {
-  form.attachments.push(file.raw);
-  fileList.value.push(file);
+  if (file?.raw) {
+    newFiles.value.push(file.raw as File);
+  }
 }
 
 function handleFileRemove(file: any) {
-  const index = form.attachments.findIndex(f => f.name === file.name);
-  if (index > -1) {
-    form.attachments.splice(index, 1);
-  }
+  newFiles.value = newFiles.value.filter((f) => f.name !== file.name);
 }
 
 async function submitForm() {
@@ -485,70 +436,58 @@ async function submitForm() {
 
   saving.value = true;
   try {
+    let noticeId = form.id;
     if (editDialog.isEdit) {
       await updateAnnouncement(form.id, form);
       ElMessage.success('编辑成功');
     } else {
-      await createAnnouncement(form);
+      const created = await createAnnouncement(form);
+      noticeId = created.id;
       ElMessage.success('发布成功');
     }
+
+    if (noticeId && newFiles.value.length > 0) {
+      await Promise.all(newFiles.value.map((file) => uploadAnnouncementAttachment(noticeId, file)));
+    }
     editDialog.visible = false;
-    fetchList();
-  } catch (e) {
-    ElMessage.success(editDialog.isEdit ? '编辑成功（演示模式）' : '发布成功（演示模式）');
-    editDialog.visible = false;
-    fetchList();
+    await fetchList();
   } finally {
     saving.value = false;
   }
 }
 
-function openDetail(row: AnnouncementVO) {
+async function openDetail(row: AnnouncementVO) {
   detailDrawer.visible = true;
-  detailDrawer.data = row;
+  detailDrawer.data = await getAnnouncementDetail(row.id);
 }
 
-async function publishAnnouncement(row: AnnouncementVO) {
-  try {
-    await publishAnnouncement(row.id);
-    ElMessage.success('发布成功');
-    fetchList();
-  } catch (e) {
-    ElMessage.success('发布成功（演示模式）');
-    fetchList();
-  }
+async function handlePublish(row: AnnouncementVO) {
+  await publishAnnouncementApi(row.id);
+  ElMessage.success('发布成功');
+  fetchList();
 }
 
-async function archiveAnnouncement(row: AnnouncementVO) {
-  try {
-    await archiveAnnouncement(row.id);
-    ElMessage.success('归档成功');
-    fetchList();
-  } catch (e) {
-    ElMessage.success('归档成功（演示模式）');
-    fetchList();
-  }
+async function handleWithdraw(row: AnnouncementVO) {
+  await withdrawAnnouncementApi(row.id);
+  ElMessage.success('撤回成功');
+  fetchList();
 }
 
 function handleDelete(row: AnnouncementVO) {
   ElMessageBox.confirm(`确认删除${getTypeLabel(row.type)}「${row.title}」吗？`, '提示', { type: 'warning' })
     .then(async () => {
-      try {
-        await deleteAnnouncement(row.id);
-        ElMessage.success('删除成功');
-        fetchList();
-      } catch (e) {
-        tableData.value = tableData.value.filter((r) => r.id !== row.id);
-        total.value = tableData.value.length;
-        ElMessage.success('删除成功（演示模式）');
-      }
+      await deleteAnnouncement(row.id);
+      ElMessage.success('删除成功');
+      fetchList();
     })
     .catch(() => {});
 }
 
-function downloadAttachment(attachment: string) {
-  // 模拟下载
-  ElMessage.info(`下载文件：${attachment}`);
+function downloadAttachment(attachment: NoticeAttachmentVO) {
+  const link = document.createElement('a');
+  link.href = downloadAnnouncementAttachment(attachment.attachmentId, attachment.fileName);
+  link.download = attachment.fileName;
+  link.click();
 }
 
 function exportAnnouncements() {

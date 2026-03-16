@@ -7,6 +7,7 @@ import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.QualificationDetailRes;
 import jh.exp.corp.core.entity.res.QualificationListRes;
+import jh.exp.corp.core.entity.res.QualificationStatsRes;
 import jh.exp.corp.service.service.bus.QualificationInternalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -49,5 +50,10 @@ public class QualificationController {
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteQualificationReq req) {
         qualificationInternalService.batchDelete(req);
         return ApiResponse.success(null);
+    }
+
+    @GetMapping("/stats")
+    public ApiResponse<QualificationStatsRes> stats() {
+        return ApiResponse.success(qualificationInternalService.stats());
     }
 }

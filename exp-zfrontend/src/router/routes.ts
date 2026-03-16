@@ -28,6 +28,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '仪表盘', icon: 'House' },
       },
       {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('@/views/Profile/index.vue'),
+        meta: { title: '个人信息' },
+      },
+      {
         path: 'system/user',
         name: 'SystemUser',
         component: () => import('@/views/System/User/index.vue'),

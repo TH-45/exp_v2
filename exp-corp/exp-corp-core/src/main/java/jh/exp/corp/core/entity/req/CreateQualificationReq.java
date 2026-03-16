@@ -1,14 +1,12 @@
 package jh.exp.corp.core.entity.req;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
 public class CreateQualificationReq {
-    @NotNull(message = "companyId不能为空")
     private Long companyId;
     private String qualificationCode;
     @NotBlank(message = "qualificationName不能为空")

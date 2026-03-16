@@ -37,6 +37,7 @@ public interface AccountMapper extends BaseMapper<Account> {
     IPage<AccountListRes> selectAccountList(IPage<AccountListRes> page,
                                             @Param("accountName") String accountName,
                                             @Param("personName") String personName,
+                                            @Param("personCode") String personCode,
                                             @Param("mobile") String mobile);
 
     /**

@@ -183,6 +183,7 @@
         :title="editDialog.isEdit ? '编辑资质' : '上传资质'"
         width="800px"
         destroy-on-close
+        draggable
       >
         <el-form
           ref="formRef"
@@ -335,6 +336,7 @@ import {
   updateQualification,
   deleteQualification,
   getQualificationsStats,
+  uploadQualificationAttachment,
   type QualificationVO
 } from '@/api/corp.ts';
 
@@ -398,54 +400,6 @@ const canCreate = computed(() => hasPermission('corp:qualification:create'));
 const canUpdate = computed(() => hasPermission('corp:qualification:update'));
 const canDelete = computed(() => hasPermission('corp:qualification:delete'));
 
-// 模拟数据
-const mockQualifications: QualificationVO[] = [
-  {
-    id: 'q001',
-    name: '建筑工程施工总承包壹级资质',
-    category: '施工资质',
-    certificateNumber: 'JZ2024001',
-    issuingAuthority: '住房和城乡建设部',
-    issueDate: '2024-01-15',
-    expiryDate: '2029-01-14',
-    status: 'VALID',
-    relatedProjects: ['某某大厦项目', '商业广场项目'],
-  },
-  {
-    id: 'q002',
-    name: '工程设计建筑行业甲级资质',
-    category: '设计资质',
-    certificateNumber: 'SJ2024002',
-    issuingAuthority: '住房和城乡建设部',
-    issueDate: '2024-02-01',
-    expiryDate: '2029-01-31',
-    status: 'VALID',
-    relatedProjects: ['某某大厦项目'],
-  },
-  {
-    id: 'q003',
-    name: '安全生产许可证',
-    category: '安全资质',
-    certificateNumber: 'AQ2024003',
-    issuingAuthority: '应急管理部',
-    issueDate: '2024-03-01',
-    expiryDate: '2025-02-28',
-    status: 'EXPIRING',
-    relatedProjects: [],
-  },
-  {
-    id: 'q004',
-    name: '环保工程专项资质',
-    category: '环保资质',
-    certificateNumber: 'HB2024004',
-    issuingAuthority: '生态环境部',
-    issueDate: '2023-06-01',
-    expiryDate: '2024-12-31',
-    status: 'EXPIRED',
-    relatedProjects: [],
-  },
-];
-
 function getStatusLabel(status?: string) {
   const labels = {
     VALID: '有效',
@@ -498,10 +452,9 @@ async function fetchStats() {
     const res = await getQualificationsStats();
     Object.assign(qualificationStats, res);
   } catch (e) {
-    // 使用模拟数据
-    qualificationStats.valid = mockQualifications.filter(q => q.status === 'VALID').length;
-    qualificationStats.expiring = mockQualifications.filter(q => q.status === 'EXPIRING').length;
-    qualificationStats.expired = mockQualifications.filter(q => q.status === 'EXPIRED').length;
+    qualificationStats.valid = 0;
+    qualificationStats.expiring = 0;
+    qualificationStats.expired = 0;
   }
 }
 
@@ -515,12 +468,8 @@ async function fetchList() {
   loading.value = true;
   try {
     const res = await listQualifications(query);
-    const list = (res.records || res.list || res.rows || []) as QualificationVO[];
-    tableData.value = list.length ? list : mockQualifications;
-    total.value = Number(res.total ?? tableData.value.length) || 0;
-  } catch (e) {
-    tableData.value = mockQualifications;
-    total.value = mockQualifications.length;
+    tableData.value = (res.records || []) as QualificationVO[];
+    total.value = Number(res.total ?? 0) || 0;
   } finally {
     loading.value = false;
   }
@@ -596,18 +545,18 @@ async function submitForm() {
 
   saving.value = true;
   try {
+    let savedId = form.id;
     if (editDialog.isEdit) {
       await updateQualification(form.id, form);
       ElMessage.success('编辑成功');
     } else {
-      await createQualification(form);
+      const created = await createQualification(form);
+      savedId = created.id;
       ElMessage.success('上传成功');
     }
-    editDialog.visible = false;
-    fetchList();
-    fetchStats();
-  } catch (e) {
-    ElMessage.success(editDialog.isEdit ? '编辑成功（演示模式）' : '上传成功（演示模式）');
+    if (form.attachment && savedId) {
+      await uploadQualificationAttachment(savedId, form.attachment);
+    }
     editDialog.visible = false;
     fetchList();
     fetchStats();
@@ -616,9 +565,10 @@ async function submitForm() {
   }
 }
 
-function openDetail(row: QualificationVO) {
+async function openDetail(row: QualificationVO) {
+  const detail = await getQualificationDetail(row.id);
   detailDrawer.visible = true;
-  detailDrawer.data = row;
+  detailDrawer.data = detail;
 }
 
 function downloadCertificate(row: QualificationVO) {
@@ -626,7 +576,7 @@ function downloadCertificate(row: QualificationVO) {
     // 创建下载链接
     const link = document.createElement('a');
     link.href = row.attachmentUrl;
-    link.download = `${row.name}.pdf`;
+    link.download = row.attachmentName || `${row.name}.pdf`;
     link.click();
     ElMessage.success('开始下载证书');
   } else {
@@ -637,17 +587,10 @@ function downloadCertificate(row: QualificationVO) {
 function handleDelete(row: QualificationVO) {
   ElMessageBox.confirm(`确认删除资质「${row.name}」吗？`, '提示', { type: 'warning' })
     .then(async () => {
-      try {
-        await deleteQualification(row.id);
-        ElMessage.success('删除成功');
-        fetchList();
-        fetchStats();
-      } catch (e) {
-        tableData.value = tableData.value.filter((r) => r.id !== row.id);
-        total.value = tableData.value.length;
-        ElMessage.success('删除成功（演示模式）');
-        fetchStats();
-      }
+      await deleteQualification(row.id);
+      ElMessage.success('删除成功');
+      fetchList();
+      fetchStats();
     })
     .catch(() => {});
 }

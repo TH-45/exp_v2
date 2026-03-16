@@ -34,6 +34,8 @@ export interface ExpPersonVO {
   roleName?: string;
   roleIds?: string;      // 角色ID，逗号分隔
   roleNames?: string;    // 角色名称，逗号分隔
+  accountName?: string;  // 登录账号
+  accountDisplay?: string; // 账号显示名
 
   // 兼职岗位字段
   partTimeOrgId1?: number;    // 兼职组织1 ID

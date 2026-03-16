@@ -4,6 +4,7 @@ import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.auth.dto.LoginRequest;
 import jh.exp.common.core.auth.dto.LoginResult;
 import jh.exp.common.core.auth.dto.LoginUserInfo;
+import jh.exp.common.core.auth.dto.ProfileDetailResult;
 import jh.exp.common.core.auth.dto.ProfileResult;
 import jh.exp.gateway.auth.client.AuthInternalHttpClient;
 import jh.exp.gateway.service.auth.service.JwtTokenService;
@@ -84,6 +85,19 @@ public class AuthController {
         }
         return Mono.fromCallable(() -> jwtTokenService.parseToken(token))
                 .flatMap(payload -> authInternalClient.profile(payload.userId())
+                        .map(ApiResponse::success))
+                .onErrorResume(ex -> Mono.just(ApiResponse.fail("AUTH_INVALID_TOKEN", messageOrDefault(ex, "登录状态失效"))));
+    }
+
+    @GetMapping("/profile/detail")
+    public Mono<ApiResponse<ProfileDetailResult>> profileDetail(ServerHttpRequest request) {
+        HttpHeaders headers = request.getHeaders();
+        String token = jwtTokenService.resolveToken(headers);
+        if (!StringUtils.hasText(token)) {
+            return Mono.just(ApiResponse.fail("AUTH_UNAUTHORIZED", "请先登录"));
+        }
+        return Mono.fromCallable(() -> jwtTokenService.parseToken(token))
+                .flatMap(payload -> authInternalClient.profileDetail(payload.userId())
                         .map(ApiResponse::success))
                 .onErrorResume(ex -> Mono.just(ApiResponse.fail("AUTH_INVALID_TOKEN", messageOrDefault(ex, "登录状态失效"))));
     }

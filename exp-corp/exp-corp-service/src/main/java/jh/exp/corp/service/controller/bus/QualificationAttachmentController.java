@@ -9,7 +9,16 @@ import jh.exp.corp.core.entity.res.QualificationAttachmentDetailRes;
 import jh.exp.corp.core.entity.res.QualificationAttachmentListRes;
 import jh.exp.corp.service.service.bus.QualificationAttachmentInternalService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("qualification-attachment")
@@ -50,5 +59,25 @@ public class QualificationAttachmentController {
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteQualificationAttachmentReq req) {
         qualificationAttachmentInternalService.batchDelete(req);
         return ApiResponse.success(null);
+    }
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<QualificationAttachmentDetailRes> upload(@RequestPart("file") MultipartFile file,
+                                                                @RequestParam("qualificationId") Long qualificationId) {
+        return ApiResponse.success(qualificationAttachmentInternalService.upload(qualificationId, file));
+    }
+
+    @GetMapping("/downloadStream")
+    public ResponseEntity<Resource> downloadStream(@RequestParam("attachmentId") Long attachmentId,
+                                                   @RequestParam(value = "fileName", required = false) String fileName) {
+        byte[] bytes = qualificationAttachmentInternalService.download(attachmentId);
+        String safeName = fileName == null || fileName.isBlank() ? ("qualification_attachment_" + attachmentId) : fileName;
+        ByteArrayResource resource = new ByteArrayResource(bytes);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(safeName, StandardCharsets.UTF_8).build().toString())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(bytes.length)
+                .body(resource);
     }
 }

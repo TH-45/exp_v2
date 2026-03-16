@@ -5,22 +5,16 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
+import jh.exp.auth.core.constant.AuthConstant;
 import jh.exp.auth.core.entity.Account;
 import jh.exp.auth.core.entity.Person;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.AccountDetailRes;
 import jh.exp.auth.core.entity.res.AccountListRes;
 import jh.exp.auth.core.entity.res.AccountRoleRes;
-import jh.exp.auth.service.service.bus.AccountService;
-import jh.exp.auth.core.constant.AuthConstant;
-
-
-
-
-
 import jh.exp.auth.core.mapper.AccountMapper;
 import jh.exp.auth.core.mapper.PersonMapper;
-
+import jh.exp.auth.service.service.bus.AccountService;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
 import jh.exp.common.core.req.SimplePageReq;
@@ -59,6 +53,7 @@ public class AccountServiceImpl implements AccountService {
         IPage<AccountListRes> result = accountMapper.selectAccountList(page,
                 queryParam.getAccountName(),
                 queryParam.getPersonName(),
+                queryParam.getPersonCode(),
                 queryParam.getMobile());
 
         // 转换为统一的响应格式
@@ -168,7 +163,7 @@ public class AccountServiceImpl implements AccountService {
         for (Long accountId : req.getAccountIds()) {
             Account account = accountMapper.selectById(accountId);
             if (account == null) {
-                throw new RuntimeException("账号ID " + accountId + " 不存在");
+                throw new RuntimeException("账号 ID " + accountId + " 不存在");
             }
             // TODO: 检查账号是否有相关联的业务数据
         }

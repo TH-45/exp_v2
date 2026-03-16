@@ -15,9 +15,9 @@
 
     <packaging>pom</packaging>
     <modules>
-        <module>exp-process-service</module>
         <module>exp-process-core</module>
         <module>exp-process-client</module>
+        <module>exp-process-service</module>
     </modules>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

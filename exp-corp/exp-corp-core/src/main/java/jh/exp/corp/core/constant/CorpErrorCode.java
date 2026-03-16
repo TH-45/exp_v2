@@ -15,4 +15,8 @@ public final class CorpErrorCode {
     public static final String QUALIFICATION_NOT_FOUND = "CORP_QUALIFICATION_NOT_FOUND";
 
     public static final String ATTACHMENT_NOT_FOUND = "CORP_ATTACHMENT_NOT_FOUND";
+
+    public static final String NOTICE_NOT_FOUND = "CORP_NOTICE_NOT_FOUND";
+
+    public static final String CURRENT_COMPANY_NOT_FOUND = "CORP_CURRENT_COMPANY_NOT_FOUND";
 }

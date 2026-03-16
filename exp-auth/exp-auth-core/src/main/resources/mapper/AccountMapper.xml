@@ -23,6 +23,9 @@
             <if test="personName != null and personName.trim() != ''">
                 AND p.person_name LIKE CONCAT('%', #{personName}, '%')
             </if>
+            <if test="personCode != null and personCode.trim() != ''">
+                AND p.person_code LIKE CONCAT('%', #{personCode}, '%')
+            </if>
             <if test="mobile != null and mobile.trim() != ''">
                 AND a.mobile LIKE CONCAT('%', #{mobile}, '%')
             </if>

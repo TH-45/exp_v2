@@ -5,6 +5,7 @@ import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.QualificationDetailRes;
 import jh.exp.corp.core.entity.res.QualificationListRes;
+import jh.exp.corp.core.entity.res.QualificationStatsRes;
 
 public interface QualificationInternalService {
     SimplePageRes<QualificationListRes> list(SimplePageReq<QueryQualificationReq> req);
@@ -18,4 +19,6 @@ public interface QualificationInternalService {
     void delete(DeleteQualificationReq req);
 
     void batchDelete(BatchDeleteQualificationReq req);
+
+    QualificationStatsRes stats();
 }

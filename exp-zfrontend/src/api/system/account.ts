@@ -52,6 +52,7 @@ export interface QueryAccountParams {
   queryParam: {
     accountName?: string;
     accountDisplay?: string;
+    personCode?: string;
     mobile?: string;
   };
 }

@@ -3,6 +3,7 @@ package jh.exp.auth.service.controller;
 import jh.exp.auth.service.service.LoginAuthService;
 import jh.exp.common.core.auth.dto.LoginRequest;
 import jh.exp.common.core.auth.dto.LoginUserInfo;
+import jh.exp.common.core.auth.dto.ProfileDetailResult;
 import jh.exp.common.core.auth.dto.ProfileResult;
 import jh.exp.auth.service.service.ProfileService;
 import jakarta.validation.Valid;
@@ -39,6 +40,11 @@ public class InternalAuthController {
     @GetMapping("/profile")
     public ProfileResult profile(@RequestParam("userId") String userId) {
         return profileService.getProfile(userId);
+    }
+
+    @GetMapping("/profile/detail")
+    public ProfileDetailResult profileDetail(@RequestParam("userId") String userId) {
+        return profileService.getProfileDetail(userId);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

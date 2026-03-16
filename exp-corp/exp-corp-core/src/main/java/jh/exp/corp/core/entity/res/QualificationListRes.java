@@ -11,6 +11,8 @@ public class QualificationListRes {
     private String qualificationCode;
     private String qualificationName;
     private String qualificationType;
+    private String issueOrg;
+    private LocalDate issueDate;
     private LocalDate validTo;
     private String status;
     private Integer attachFlag;
