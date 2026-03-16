@@ -11,10 +11,7 @@ import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.corp.core.constant.CorpErrorCode;
 import jh.exp.corp.core.entity.Notice;
 import jh.exp.corp.core.entity.NoticeAttachment;
-import jh.exp.corp.core.entity.req.CreateNoticeReq;
-import jh.exp.corp.core.entity.req.DeleteNoticeReq;
-import jh.exp.corp.core.entity.req.NoticeActionReq;
-import jh.exp.corp.core.entity.req.UpdateNoticeReq;
+import jh.exp.corp.core.entity.req.*;
 import jh.exp.corp.core.entity.res.NoticeAttachmentRes;
 import jh.exp.corp.core.entity.res.NoticeDetailRes;
 import jh.exp.corp.core.entity.res.NoticeListRes;
@@ -51,9 +48,9 @@ public class NoticeInternalServiceImpl implements NoticeInternalService {
     private final StorageService storageService;
 
     @Override
-    public SimplePageRes<NoticeListRes> list(SimplePageReq<jh.exp.corp.core.entity.req.QueryNoticeReq> req) {
-        jh.exp.corp.core.entity.req.QueryNoticeReq query =
-                req.getQueryParam() == null ? new jh.exp.corp.core.entity.req.QueryNoticeReq() : req.getQueryParam();
+    public SimplePageRes<NoticeListRes> list(SimplePageReq<QueryNoticeReq> req) {
+        QueryNoticeReq query =
+                req.getQueryParam() == null ? new QueryNoticeReq() : req.getQueryParam();
         Page<Notice> page = new Page<>(req.getPageNum(), req.getPageSize());
         LambdaQueryWrapper<Notice> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StringUtils.hasText(query.getTitle()), Notice::getTitle, query.getTitle())
@@ -202,10 +199,16 @@ public class NoticeInternalServiceImpl implements NoticeInternalService {
     }
 
     private LocalDateTime parseDateStart(String dateText) {
+        if (!StringUtils.hasText(dateText)) {
+            return null;
+        }
         return LocalDate.parse(dateText).atStartOfDay();
     }
 
     private LocalDateTime parseDateEnd(String dateText) {
+        if (!StringUtils.hasText(dateText)) {
+            return null;
+        }
         return LocalDate.parse(dateText).atTime(LocalTime.MAX);
     }
 }
