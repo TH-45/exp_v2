@@ -21,11 +21,11 @@ export interface ApprovalTaskQuery {
 }
 
 export interface ApprovalTask {
-  taskId: number;
+  taskId?: number;
   instanceId: number;
   title: string;
   busType: string;
-  busId: string;
+  busId: number | string;
   starterId: number;
   startTime: string;
   currentNode: string;
@@ -68,6 +68,8 @@ export interface Attachment {
 
 export interface ApprovalAction {
   taskId: number;
+  /** 审批动作：AGREE-同意，REJECT-拒绝/驳回 */
+  action?: string;
   comments?: string;
   attachments?: Array<{
     name: string;
@@ -85,18 +87,20 @@ export interface PageResult<T> {
 
 const BASE = '/exp/process/approval';
 
-/** 流程创建请求（统一流程创建接口） */
+/** 流程创建请求（统一流程创建接口，与后端 StartProcessReq 对齐） */
 export interface ProcessStartReq {
   procCode: string;
-  busId: string;
+  busId: number;
+  busType?: string;
+  title?: string;
 }
 
-/** 发起流程（提交审批时调用） */
+/** 发起流程（提交审批时调用，后端路径 /approval/create） */
 export function startProcess(data: ProcessStartReq) {
-  return request.post<number, number>(`${BASE}/start`, data);
+  return request.post<number, number>(`${BASE}/create`, data);
 }
 
-// 获取审批统计信息
+/** 获取审批统计信息（待办/已办/我发起/已关闭数量） */
 export function getApprovalStats() {
   return request.get<ApprovalStats, ApprovalStats>(`${BASE}/stats`);
 }
@@ -111,14 +115,20 @@ export function getApprovalDetail(taskId: number) {
   return request.get<ApprovalDetail, ApprovalDetail>(`${BASE}/detail`, { params: { taskId } });
 }
 
-// 审批操作
+/** 审批操作（同意：action=AGREE，驳回：action=REJECT，统一走 /approve） */
 export function approveTask(data: ApprovalAction) {
-  return request.post<void, void>(`${BASE}/approve`, data);
+  return request.post<void, void>(`${BASE}/approve`, {
+    ...data,
+    action: data.action || 'AGREE',
+  });
 }
 
-// 驳回审批
+/** 驳回审批（统一走 /approve，action=REJECT） */
 export function rejectTask(data: ApprovalAction) {
-  return request.post<void, void>(`${BASE}/reject`, data);
+  return request.post<void, void>(`${BASE}/approve`, {
+    ...data,
+    action: 'REJECT',
+  });
 }
 
 // 批量审批
@@ -136,7 +146,7 @@ export function getApprovalHistory(taskId: number) {
   return request.get<ApprovalHistory[], ApprovalHistory[]>(`${BASE}/history`, { params: { taskId } });
 }
 
-// 强制关闭（仅发起人）
+/** 强制关闭流程（仅发起人） */
 export function forceCloseInstance(data: { instanceId: number; reason?: string }) {
   return request.post<void, void>(`${BASE}/force-close`, data);
 }

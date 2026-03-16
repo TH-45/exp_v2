@@ -207,7 +207,11 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
 import { UploadFilled, Delete } from '@element-plus/icons-vue';
 import type { UploadFile, UploadFiles } from 'element-plus';
 import { useRouter } from 'vue-router';
-import { createContract, type CreateContractReq } from '@/api/contracts/contract';
+import {
+  createContractBusiness,
+  queryContractList,
+  type CreateContractReq,
+} from '@/api/contracts/contract';
 import { uploadBiddingAttachments, type CreateAttachmentBizReq } from '@/api/bidding/attachments';
 import { listDictOptions, type DictOption } from '@/api/system/dict';
 import type { CompanySelectorValue } from '@/api/enterprise/company';
@@ -481,8 +485,8 @@ async function handleSubmit() {
     const req: CreateContractReq = {
       contractCode: form.contractCode,
       contractName: form.contractName,
-      contractType: form.contractType || undefined,
-      contractCategory: form.contractCategory || undefined,
+      contractType: form.contractType!,
+      contractCategory: form.contractCategory!,
       projectId: form.project?.projectId,
       purchaserId: form.purchaser?.companyId,
       supplierId: form.supplier!.companyId,
@@ -497,10 +501,17 @@ async function handleSubmit() {
       settleMode: form.settleMode || undefined,
       remark: form.remark || undefined,
       salesmanPersonId: form.salesman?.personId,
+      action: 'SAVE',
     };
 
-    const res = await createContract(req);
-    const contractId = res?.contractId ? Number(res.contractId) : (res as { contractId?: number })?.contractId;
+    await createContractBusiness(req);
+    const listRes = await queryContractList({
+      pageNum: 1,
+      pageSize: 1,
+      contractCode: form.contractCode,
+    });
+    const first = listRes?.list?.[0] ?? listRes?.records?.[0];
+    const contractId = first ? Number((first as { contractId?: string }).contractId) : undefined;
 
     if (selectedFiles.value.length > 0 && contractId) {
       const biz: CreateAttachmentBizReq = {

@@ -9,6 +9,6 @@ public class ForceCloseReq {
     private Long instanceId;
 
     private String reason;
-    @NotNull(message = "请选择动作")
+    /** 动作，默认 CLOSE */
     private String action;
 }

@@ -173,6 +173,16 @@
           <el-form-item label="合同名称" prop="contractName">
             <el-input v-model="form.contractName" placeholder="请输入合同名称" />
           </el-form-item>
+          <el-form-item v-if="!editDialog.isEdit" label="合同类型" prop="contractType" required>
+            <el-select v-model="form.contractType" placeholder="请选择" clearable style="width: 100%">
+              <el-option v-for="opt in contractTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item v-if="!editDialog.isEdit" label="合同类别" prop="contractCategory" required>
+            <el-select v-model="form.contractCategory" placeholder="请选择" clearable style="width: 100%">
+              <el-option v-for="opt in contractCategoryOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+            </el-select>
+          </el-form-item>
           <el-form-item label="关联项目" prop="project">
             <ProjectSelector v-model="form.project" placeholder="请选择关联项目" />
           </el-form-item>
@@ -248,10 +258,10 @@ import { hasPermission } from '@/utils/permission';
 import {
   queryContractList,
   getContractDetail,
-  createContract,
+  createContractBusiness,
   updateContract,
   deleteContract,
-  submitContractForApproval,
+  updateContractStatusAfterProcessStart,
   signContract,
   type ContractVO,
   type ContractStatus,
@@ -270,6 +280,9 @@ const canManage = computed(() => hasPermission('contracts:contract:manage'));
 
 /** 合作方类型字典（Partner_Type：1-甲方，2-供应商） */
 const partnerTypeOptions = ref<DictOption[]>([]);
+/** 合同类型、合同类别（用于新增弹窗必填） */
+const contractTypeOptions = ref<DictOption[]>([]);
+const contractCategoryOptions = ref<DictOption[]>([]);
 
 async function loadPartnerTypeOptions() {
   try {
@@ -280,6 +293,43 @@ async function loadPartnerTypeOptions() {
       { label: '甲方', value: '1' },
       { label: '供应商', value: '2' },
     ];
+  }
+}
+
+async function loadContractTypeAndCategoryOptions() {
+  for (const code of ['Contract_Type', 'contract_type']) {
+    try {
+      const res = await listDictOptions(code);
+      const opts = Array.isArray(res) ? res : (res as { data?: DictOption[] })?.data ?? [];
+      if (opts.length) {
+        contractTypeOptions.value = opts;
+        break;
+      }
+    } catch {
+      contractTypeOptions.value = [
+        { label: '工程合同', value: 'ENGINEERING' },
+        { label: '采购合同', value: 'PURCHASE' },
+        { label: '服务合同', value: 'SERVICE' },
+      ];
+      break;
+    }
+  }
+  for (const code of ['Contract_Category', 'contract_category']) {
+    try {
+      const res = await listDictOptions(code);
+      const opts = Array.isArray(res) ? res : (res as { data?: DictOption[] })?.data ?? [];
+      if (opts.length) {
+        contractCategoryOptions.value = opts;
+        break;
+      }
+    } catch {
+      contractCategoryOptions.value = [
+        { label: '框架合同', value: 'FRAMEWORK' },
+        { label: '一次性合同', value: 'ONCE' },
+        { label: '分包合同', value: 'SUBCONTRACT' },
+      ];
+      break;
+    }
   }
 }
 
@@ -465,7 +515,7 @@ async function deleteById(row: ContractVO) {
   }
 }
 
-/** 提交审批：确认后调用接口 */
+/** 提交审批：确认后调用接口（需先拉取详情构建完整 CreateContractReq） */
 async function handleSubmitApproval(row: ContractVO) {
   if (!row?.contractId || row.status !== 'DRAFT') return;
   try {
@@ -479,10 +529,33 @@ async function handleSubmitApproval(row: ContractVO) {
       }
     );
     loading.value = true;
-    await submitContractForApproval({
-      contractId: Number(row.contractId),
-      procCode: (route.query.startProcCode as string) || undefined,
-    });
+    const detail = await getContractDetail(row.contractId);
+    const d = detail as Record<string, unknown>;
+    const submitReq: CreateContractReq = {
+      contractCode: String(d.contractCode ?? ''),
+      contractName: String(d.contractName ?? ''),
+      contractType: String(d.contractType ?? ''),
+      contractCategory: String(d.contractCategory ?? ''),
+      tenderId: d.tenderId != null ? Number(d.tenderId) : undefined,
+      bidId: d.bidId != null ? Number(d.bidId) : undefined,
+      projectId: d.projectId != null ? Number(d.projectId) : undefined,
+      purchaserId: d.purchaserId != null ? Number(d.purchaserId) : undefined,
+      supplierId: Number(d.supplierId ?? 0),
+      amountTotal: Number(d.amountTotal ?? d.amount ?? 0),
+      amountWithoutTax: d.amountWithoutTax != null ? Number(d.amountWithoutTax) : undefined,
+      taxRateDefault: d.taxRateDefault != null ? Number(d.taxRateDefault) : undefined,
+      currency: (d.currency as string) ?? 'CNY',
+      signDate: (d.signDate as string) ?? undefined,
+      effectiveDate: (d.effectiveDate as string) ?? undefined,
+      endDate: (d.endDate as string) ?? undefined,
+      payTerms: (d.payTerms as string) ?? undefined,
+      settleMode: (d.settleMode as string) ?? undefined,
+      remark: (d.remark as string) ?? undefined,
+      salesmanPersonId: d.salesmanPersonId != null ? Number(d.salesmanPersonId) : undefined,
+      action: 'SUBMIT',
+    };
+    await createContractBusiness(submitReq);
+    await updateContractStatusAfterProcessStart(Number(row.contractId));
     ElMessage.success('已提交审批');
     await fetchList();
   } catch (err: unknown) {
@@ -559,6 +632,8 @@ const form = reactive({
   contractId: '',
   contractCode: '',
   contractName: '',
+  contractType: '',
+  contractCategory: '',
   project: undefined as ProjectVO | undefined,
   supplier: undefined as CompanySelectorValue | undefined,
   amount: 0,
@@ -582,6 +657,8 @@ function openEdit(isEdit: boolean, row?: ContractVO) {
     form.contractId = String(row.contractId);
     form.contractCode = row.contractCode || '';
     form.contractName = row.contractName || '';
+    form.contractType = (row as { contractType?: string }).contractType || '';
+    form.contractCategory = (row as { contractCategory?: string }).contractCategory || '';
     form.project = row.projectId && row.projectName ? { projectId: Number(row.projectId), projectName: row.projectName } : undefined;
     form.supplier = row.supplierId && row.supplierName ? { companyId: Number(row.supplierId), companyName: row.supplierName } : undefined;
     form.amount = Number((row.amountTotal ?? row.amount ?? 0)) / 10000 || 0;
@@ -594,6 +671,8 @@ function openEdit(isEdit: boolean, row?: ContractVO) {
     form.contractId = '';
     form.contractCode = '';
     form.contractName = '';
+    form.contractType = contractTypeOptions.value[0]?.value ?? '';
+    form.contractCategory = contractCategoryOptions.value[0]?.value ?? '';
     form.project = undefined;
     form.supplier = undefined;
     form.amount = 0;
@@ -630,9 +709,17 @@ async function submitForm() {
       await updateContract(req);
       ElMessage.success('保存成功');
     } else {
+      const ct = form.contractType || contractTypeOptions.value[0]?.value;
+      const cc = form.contractCategory || contractCategoryOptions.value[0]?.value;
+      if (!ct || !cc) {
+        ElMessage.warning('请选择合同类型和合同类别');
+        return;
+      }
       const req: CreateContractReq = {
         contractCode: form.contractCode,
         contractName: form.contractName,
+        contractType: ct,
+        contractCategory: cc,
         projectId: form.project?.projectId,
         purchaserId: undefined,
         supplierId: form.supplier!.companyId,
@@ -642,8 +729,9 @@ async function submitForm() {
         effectiveDate: form.effectiveDate || undefined,
         endDate: form.endDate || undefined,
         remark: form.remark || undefined,
+        action: 'SAVE',
       };
-      await createContract(req);
+      await createContractBusiness(req);
       ElMessage.success('新增成功');
     }
     editDialog.visible = false;
@@ -657,6 +745,7 @@ async function submitForm() {
 
 onMounted(() => {
   loadPartnerTypeOptions();
+  loadContractTypeAndCategoryOptions();
   fetchList();
 });
 

@@ -31,6 +31,10 @@ export interface ContractVO {
   endDate?: string;
   startDate?: string; // 兼容
   createdTime?: string;
+  /** 业务员人员ID */
+  salesmanPersonId?: number;
+  /** 业务员姓名 */
+  salesmanName?: string;
 }
 
 export interface PageResult<T> {
@@ -66,8 +70,8 @@ export interface QueryContractParams {
 export interface CreateContractReq {
   contractCode: string;
   contractName: string;
-  contractType?: string;
-  contractCategory?: string;
+  contractType: string;
+  contractCategory: string;
   tenderId?: number;
   bidId?: number;
   projectId?: number;
@@ -85,6 +89,8 @@ export interface CreateContractReq {
   remark?: string;
   /** 业务员人员ID，创建时通过人员选择器选择 */
   salesmanPersonId?: number;
+  /** 动作：SAVE-保存，SUBMIT-提交审批 */
+  action: 'SAVE' | 'SUBMIT';
 }
 
 export interface UpdateContractReq {
@@ -124,9 +130,9 @@ export function getContractDetail(contractId: number | string) {
   return request.get<ContractVO, ContractVO>(`${BASE}/detail`, { params: { contractId } });
 }
 
-/** 创建合同 */
-export function createContract(data: CreateContractReq) {
-  return request.post<ContractVO, ContractVO>(`${BASE}/create`, data);
+/** 创建合同业务（保存与提交统一入口，action: SAVE-保存，SUBMIT-提交审批） */
+export function createContractBusiness(data: CreateContractReq) {
+  return request.post<number, number>(`${BASE}/createContractBusiness`, data);
 }
 
 /** 更新合同 */
@@ -137,11 +143,6 @@ export function updateContract(data: UpdateContractReq) {
 /** 删除合同 */
 export function deleteContract(contractId: number | string) {
   return request.post<void, void>(`${BASE}/delete`, null, { params: { contractId } });
-}
-
-/** 提交审批（内部调用流程创建，保留兼容） */
-export function submitContractForApproval(data: { contractId: number; procDefId?: number; procCode?: string }) {
-  return request.post<number, number>(`${BASE}/submitForApproval`, data);
 }
 
 /** 流程创建成功后，将合同状态更新为审核中 */

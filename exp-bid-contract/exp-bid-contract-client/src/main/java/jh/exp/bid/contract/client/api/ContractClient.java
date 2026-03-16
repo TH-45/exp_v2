@@ -1,11 +1,13 @@
 package jh.exp.bid.contract.client.api;
 
+import feign.Body;
 import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.ContractDetailRes;
 import jh.exp.bid.contract.core.entity.res.ContractListRes;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -24,7 +26,7 @@ public interface ContractClient {
      * @return 合同列表分页结果
      */
     @PostExchange("/list")
-    ApiResponse<SimplePageRes<ContractListRes>> list(SimplePageReq<QueryContractReq> req);
+    ApiResponse<SimplePageRes<ContractListRes>> list(@RequestBody SimplePageReq<QueryContractReq> req);
 
     /**
      * 根据ID查询合同详情
@@ -42,7 +44,7 @@ public interface ContractClient {
      * @return 更新后的合同详情
      */
     @PostExchange("/update")
-    ApiResponse<ContractDetailRes> update(UpdateContractReq req);
+    ApiResponse<ContractDetailRes> update(@RequestBody UpdateContractReq req);
 
     /**
      * 更新合同状态
@@ -70,7 +72,7 @@ public interface ContractClient {
      * @return 流程实例ID
      */
     @PostExchange("/createContractBusiness")
-    ApiResponse<Long> createContractBusiness(CreateContractReq req);
+    ApiResponse<Long> createContractBusiness(@RequestBody CreateContractReq req);
 
     /**
      * 流程创建成功后，将合同状态更新为审核中
@@ -103,5 +105,5 @@ public interface ContractClient {
      * @return 操作结果
      */
     @PostExchange("/sign")
-    ApiResponse<Void> sign(SignContractReq req);
+    ApiResponse<Void> sign(@RequestBody SignContractReq req);
 }

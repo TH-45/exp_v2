@@ -1,7 +1,9 @@
 package jh.exp.process.client.api;
 
+import feign.Body;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.process.core.entity.req.StartProcessReq;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
@@ -14,9 +16,9 @@ public interface ProcessApprovalClient {
     /**
      * 发起流程
      *
-     * @param req 发起流程请求（busId 业务id 必填，busCategory业务类别、busType业务类型）
-     * @return 流程实例ID
+     * @param req 发起流程请求（busId 业务 id 必填，busCategory 业务类别、busType 业务类型）
+     * @return 流程实例 ID
      */
     @PostExchange("/create")
-    ApiResponse<Long> createProcess(StartProcessReq req);
+    ApiResponse<Long> createProcess(@RequestBody StartProcessReq req);
 }

@@ -177,12 +177,20 @@ async function openDetail(row: ApprovalTask) {
 }
 
 async function quickApprove(row: ApprovalTask) {
+  if (!row.taskId) {
+    ElMessage.warning('当前记录暂无任务，无法审批');
+    return;
+  }
   await approveTask({ taskId: row.taskId, comments: '同意' });
   ElMessage.success('已同意');
   await refreshAll();
 }
 
 async function quickReject(row: ApprovalTask) {
+  if (!row.taskId) {
+    ElMessage.warning('当前记录暂无任务，无法驳回');
+    return;
+  }
   await rejectTask({ taskId: row.taskId, comments: '驳回' });
   ElMessage.success('已驳回');
   await refreshAll();

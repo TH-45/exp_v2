@@ -228,15 +228,16 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
 import {
   getContractDetail,
-  createContract,
+  createContractBusiness,
   updateContract,
+  queryContractList,
   signContract,
   updateContractStatusAfterProcessStart,
   type CreateContractReq,
   type UpdateContractReq,
   type ContractStatus,
 } from '@/api/contracts/contract';
-import { startProcess, approveTask, rejectTask, listApprovalTasks } from '@/api/approval';
+import { approveTask, rejectTask, listApprovalTasks } from '@/api/approval';
 import { uploadBiddingAttachments, type CreateAttachmentBizReq } from '@/api/bidding/attachments';
 import { listDictOptions, type DictOption } from '@/api/system/dict';
 import type { CompanySelectorValue } from '@/api/enterprise/company';
@@ -255,8 +256,6 @@ import UnsignContractDialog from '@/components/Contract/UnsignContractDialog.vue
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-
-const PROC_CODE = 'FUND_OUT_CONTRACT_SIGN';
 
 const contractId = computed(() => {
   const id = route.params.contractId;
@@ -534,12 +533,13 @@ async function fetchDetail(overrideId?: number) {
     form.payTerms = (res as { payTerms?: string }).payTerms || '';
     form.settleMode = (res as { settleMode?: string }).settleMode || '';
     form.remark = (res as { remark?: string }).remark || '';
-    form.salesman = (res as { salesmanPersonId?: number; salesmanName?: string }).salesmanPersonId
-      ? {
-          personId: (res as { salesmanPersonId?: number }).salesmanPersonId!,
-          personName: (res as { salesmanName?: string }).salesmanName || '',
-          personCode: '',
-        } as ExpPersonVO
+    // 业务员回显：兼容 camelCase / snake_case，确保 personId 为 number 类型
+    const raw = res as Record<string, unknown>;
+    const salesmanPersonId = raw.salesmanPersonId ?? raw.salesman_person_id;
+    const salesmanName = raw.salesmanName ?? raw.salesman_name;
+    const sid = salesmanPersonId != null && salesmanPersonId !== '' ? Number(salesmanPersonId) : undefined;
+    form.salesman = sid != null && !Number.isNaN(sid) && sid > 0
+      ? { personId: sid, personName: String(salesmanName ?? ''), personCode: '' } as ExpPersonVO
       : undefined;
   } catch (e) {
     ElMessage.error((e as Error)?.message || '获取合同详情失败');
@@ -762,8 +762,8 @@ async function handleSave() {
       const req: CreateContractReq = {
         contractCode: form.contractCode,
         contractName: form.contractName,
-        contractType: form.contractType || undefined,
-        contractCategory: form.contractCategory || undefined,
+        contractType: form.contractType!,
+        contractCategory: form.contractCategory!,
         projectId: form.project?.projectId,
         purchaserId: form.purchaser?.companyId,
         supplierId: form.supplier!.companyId,
@@ -778,10 +778,18 @@ async function handleSave() {
         settleMode: form.settleMode || undefined,
         remark: form.remark || undefined,
         salesmanPersonId: form.salesman?.personId,
+        action: 'SAVE',
       };
-      const res = await createContract(req);
-      const id = res?.contractId ? Number(res.contractId) : (res as { contractId?: number })?.contractId;
+      await createContractBusiness(req);
       ElMessage.success('保存成功');
+      // 保存返回 0，通过 contractCode 查询获取新合同 ID 并跳转
+      const listRes = await queryContractList({
+        pageNum: 1,
+        pageSize: 1,
+        contractCode: form.contractCode,
+      });
+      const first = listRes?.list?.[0] ?? listRes?.records?.[0];
+      const id = first ? Number((first as { contractId?: string }).contractId) : undefined;
       if (id) router.replace(`/contracts/contract/${id}`);
     }
     await fetchDetail();
@@ -806,7 +814,7 @@ async function handleSubmitApproval() {
   submitting.value = true;
   try {
     let id = contractId.value;
-    // 未保存时先保存（创建或更新），再提交
+    // 未保存时先保存（创建），再提交
     if (!id) {
       const amountTotal = Math.round((form.amount || 0) * 10000);
       let amountWithoutTax: number | undefined;
@@ -815,11 +823,11 @@ async function handleSubmitApproval() {
         amountWithoutTax = Math.round((form.amount / (1 + rate)) * 10000);
       }
       const taxRateDefault = form.taxRate != null ? Number(form.taxRate) / 100 : undefined;
-      const req: CreateContractReq = {
+      const saveReq: CreateContractReq = {
         contractCode: form.contractCode,
         contractName: form.contractName,
-        contractType: form.contractType || undefined,
-        contractCategory: form.contractCategory || undefined,
+        contractType: form.contractType!,
+        contractCategory: form.contractCategory!,
         projectId: form.project?.projectId,
         purchaserId: form.purchaser?.companyId,
         supplierId: form.supplier!.companyId,
@@ -834,16 +842,46 @@ async function handleSubmitApproval() {
         settleMode: form.settleMode || undefined,
         remark: form.remark || undefined,
         salesmanPersonId: form.salesman?.personId,
+        action: 'SAVE',
       };
-      const res = await createContract(req);
-      id = res?.contractId ? Number(res.contractId) : (res as { contractId?: number })?.contractId;
+      await createContractBusiness(saveReq);
+      const listRes = await queryContractList({
+        pageNum: 1,
+        pageSize: 1,
+        contractCode: form.contractCode,
+      });
+      const first = listRes?.list?.[0] ?? listRes?.records?.[0];
+      id = first ? Number((first as { contractId?: string }).contractId) : undefined;
       if (id) {
         router.replace(`/contracts/contract/${id}`);
         await fetchDetail(id);
       }
     }
     if (id) {
-      await startProcess({ procCode: PROC_CODE, busId: String(id) });
+      const submitReq: CreateContractReq = {
+        contractCode: form.contractCode,
+        contractName: form.contractName,
+        contractType: form.contractType!,
+        contractCategory: form.contractCategory!,
+        projectId: form.project?.projectId,
+        purchaserId: form.purchaser?.companyId,
+        supplierId: form.supplier!.companyId,
+        amountTotal: Math.round((form.amount || 0) * 10000),
+        amountWithoutTax: form.isTaxIncluded && form.taxRate && form.amount > 0
+          ? Math.round((form.amount / (1 + Number(form.taxRate) / 100)) * 10000)
+          : undefined,
+        taxRateDefault: form.taxRate != null ? Number(form.taxRate) / 100 : undefined,
+        currency: form.currency,
+        signDate: form.signDate || undefined,
+        effectiveDate: form.effectiveDate || undefined,
+        endDate: form.endDate || undefined,
+        payTerms: form.payTerms || undefined,
+        settleMode: form.settleMode || undefined,
+        remark: form.remark || undefined,
+        salesmanPersonId: form.salesman?.personId,
+        action: 'SUBMIT',
+      };
+      await createContractBusiness(submitReq);
       await updateContractStatusAfterProcessStart(id);
       ElMessage.success('已提交审批');
       await fetchDetail();

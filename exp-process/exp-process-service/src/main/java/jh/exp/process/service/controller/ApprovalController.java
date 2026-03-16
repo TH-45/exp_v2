@@ -45,6 +45,14 @@ public class ApprovalController {
     }
 
     /**
+     * 统计：待办/已办/我发起/已关闭 数量
+     */
+    @GetMapping("/stats")
+    public ApiResponse<ApprovalStatsRes> stats() {
+        return ApiResponse.success(approvalService.getStats());
+    }
+
+    /**
      * 查询任务
      * @param req
      * @return
@@ -102,7 +110,7 @@ public class ApprovalController {
     @PostMapping("/force-close")
     public ApiResponse<Void> forceClose(@RequestBody @Valid ForceCloseReq req) {
         ProcessDriveReq driveReq = new ProcessDriveReq();
-        driveReq.setAction(req.getAction());
+        driveReq.setAction(req.getAction() != null ? req.getAction() : ProcessConstant.ACTION_CLOSE);
         driveReq.setInstanceId(req.getInstanceId());
         driveReq.setReason(req.getReason());
         processCommandDriver.execute(driveReq);

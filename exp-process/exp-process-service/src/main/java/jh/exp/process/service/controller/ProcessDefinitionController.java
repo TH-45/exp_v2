@@ -57,6 +57,13 @@ public class ProcessDefinitionController {
         return ApiResponse.success(null);
     }
 
+    /** 删除流程定义（无实例时方可删除） */
+    @PostMapping("/delete")
+    public ApiResponse<Void> delete(@RequestParam Long procDefId) {
+        processDefinitionService.deleteDefinition(procDefId);
+        return ApiResponse.success(null);
+    }
+
     @PostMapping("/copy")
     public ApiResponse<ProcessDefinitionDetailRes> copy(@RequestBody @Valid ProcessDefinitionCopyReq req) {
         return ApiResponse.success(processDefinitionService.copy(req));

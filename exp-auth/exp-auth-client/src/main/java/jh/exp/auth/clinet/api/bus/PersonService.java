@@ -5,6 +5,7 @@ import jh.exp.auth.core.entity.dto.OrgIdAndPersonIdDTO;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.auth.core.entity.res.PersonInfoRes;
+import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,9 +43,10 @@ public interface PersonService {
 
     /**
      * 根据ID查询人员详情
+     * 注意：服务端返回 ApiResponse 包装，调用方需通过 resp.getData() 获取 PersonDetailRes
      */
     @GetExchange("/detail")
-    PersonDetailRes getPersonById(@RequestParam("personId") Long personId);
+    ApiResponse<PersonDetailRes> getPersonById(@RequestParam("personId") Long personId);
 
     /**
      * 批量查询人员详情

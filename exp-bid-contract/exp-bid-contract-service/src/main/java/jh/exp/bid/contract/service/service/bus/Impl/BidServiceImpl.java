@@ -242,7 +242,8 @@ public class BidServiceImpl implements BidService {
         Long personId = currentUser.getUserId();
 
         // 通过认证服务查询人员详细信息，获取部门和岗位信息
-        PersonDetailRes personDetail = personService.getPersonById(personId);
+        ApiResponse<PersonDetailRes> personResp = personService.getPersonById(personId);
+        PersonDetailRes personDetail = (personResp != null && personResp.isSuccess()) ? personResp.getData() : null;
 
         if (personDetail == null) {
             throw new RuntimeException("无法获取当前用户信息");
@@ -642,7 +643,8 @@ public class BidServiceImpl implements BidService {
             throw new RuntimeException("投标信息不存在");
         }
 
-        PersonDetailRes salesman = personService.getPersonById(req.getSalesmanId());
+        ApiResponse<PersonDetailRes> salesmanResp = personService.getPersonById(req.getSalesmanId());
+        PersonDetailRes salesman = (salesmanResp != null && salesmanResp.isSuccess()) ? salesmanResp.getData() : null;
         if (salesman == null) {
             throw new RuntimeException("业务员信息不存在");
         }
@@ -680,7 +682,8 @@ public class BidServiceImpl implements BidService {
         if (personId == null || personId <= 0) {
             throw new RuntimeException(errMsg);
         }
-        PersonDetailRes person = personService.getPersonById(personId);
+        ApiResponse<PersonDetailRes> resp = personService.getPersonById(personId);
+        PersonDetailRes person = (resp != null && resp.isSuccess()) ? resp.getData() : null;
         if (person == null || person.getPersonId() == null) {
             throw new RuntimeException(errMsg);
         }

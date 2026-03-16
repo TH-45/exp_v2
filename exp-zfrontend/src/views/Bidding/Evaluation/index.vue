@@ -44,12 +44,20 @@
       </el-form>
 
       <div class="split-area">
-        <!-- 左侧：投标列表与评分 -->
+        <!-- 投标列表（主区域） -->
         <el-card class="left" shadow="never">
           <template #header>
             <div class="card-title">投标列表</div>
           </template>
-          <el-table v-loading="loading" :data="bidList" row-key="bidId" border style="width: 100%" @row-click="selectBid">
+          <el-table
+            v-loading="loading"
+            :data="bidList"
+            row-key="bidId"
+            border
+            style="width: 100%"
+            @row-click="selectBid"
+            @row-dblclick="openOpinionDialog"
+          >
             <el-table-column prop="bidderName" label="投标人" min-width="200" />
             <el-table-column prop="amount" label="报价(万)" min-width="120" />
             <el-table-column label="评分" min-width="120">
@@ -65,90 +73,107 @@
                 </el-button>
               </template>
             </el-table-column>
+            <el-table-column label="操作" min-width="120">
+              <template #default="{ row }">
+                <el-button link size="small" @click.stop="openOpinionDialog(row)">评审意见</el-button>
+              </template>
+            </el-table-column>
           </el-table>
         </el-card>
-
-        <!-- 右侧：评审意见 -->
-        <el-card class="right" shadow="never">
-          <template #header>
-            <div class="card-title">评审意见</div>
-          </template>
-
-          <el-form :model="evaluation" label-width="120px" class="eval-form">
-            <el-form-item label="当前投标人">
-              <el-input :model-value="currentBid?.bidderName || '-'" disabled />
-            </el-form-item>
-            <el-form-item label="综合评分">
-              <el-input-number v-model="evaluation.score" :min="0" :max="100" :disabled="!canManage" />
-            </el-form-item>
-            <el-form-item label="评审意见">
-              <el-input v-model="evaluation.comment" type="textarea" :rows="6" :disabled="!canManage" placeholder="请输入评审意见" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" size="small" :disabled="!canManage || !currentBid" @click="applyToBid">
-                应用到当前投标
-              </el-button>
-              <el-button size="small" :disabled="true">上传评标附件</el-button>
-            </el-form-item>
-          </el-form>
-
-          <el-divider />
-
-          <el-descriptions :column="1" border>
-            <el-descriptions-item label="推荐中标人">
-              {{ winnerName }}
-            </el-descriptions-item>
-            <el-descriptions-item label="最高评分">
-              {{ bestScore }}
-            </el-descriptions-item>
-          </el-descriptions>
-
-          <el-divider />
-
-          <el-form :model="processForm" label-width="120px">
-            <el-form-item label="审批动作">
-              <el-radio-group v-model="processForm.action">
-                <el-radio label="APPROVE">通过</el-radio>
-                <el-radio label="REJECT">驳回</el-radio>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item v-if="processForm.action === 'REJECT'" label="驳回原因码">
-              <el-select v-model="processForm.rejectReasonCode" style="width: 260px">
-                <el-option label="文档补正（默认回退RESULT_CONFIRMED）" value="DOC_FIX" />
-                <el-option label="需复评（回退SCORING）" value="SCORE_REWORK" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="审批意见">
-              <el-input
-                v-model="processForm.opinion"
-                type="textarea"
-                :rows="3"
-                placeholder="请输入审批意见"
-              />
-            </el-form-item>
-            <el-form-item>
-              <el-button
-                type="success"
-                size="small"
-                :disabled="!canManage"
-                :loading="decisionLoading"
-                @click="submitDecision('APPROVE')"
-              >
-                审批通过
-              </el-button>
-              <el-button
-                type="warning"
-                size="small"
-                :disabled="!canManage"
-                :loading="decisionLoading"
-                @click="submitDecision('REJECT')"
-              >
-                审批驳回
-              </el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
       </div>
+
+      <!-- 推荐中标信息（保留在主页面） -->
+      <el-card shadow="never" class="summary-card">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="推荐中标人">
+            {{ winnerName }}
+          </el-descriptions-item>
+          <el-descriptions-item label="最高评分">
+            {{ bestScore }}
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-card>
+
+      <!-- 审批动作区域（保留在主页面底部） -->
+      <el-card shadow="never" class="approval-card">
+        <el-form :model="processForm" label-width="120px">
+          <el-form-item label="审批动作">
+            <el-radio-group v-model="processForm.action">
+              <el-radio label="APPROVE">通过</el-radio>
+              <el-radio label="REJECT">驳回</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item v-if="processForm.action === 'REJECT'" label="驳回原因码">
+            <el-select v-model="processForm.rejectReasonCode" style="width: 260px">
+              <el-option label="文档补正（默认回退RESULT_CONFIRMED）" value="DOC_FIX" />
+              <el-option label="需复评（回退SCORING）" value="SCORE_REWORK" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="审批意见">
+            <el-input
+              v-model="processForm.opinion"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入审批意见"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              type="success"
+              size="small"
+              :disabled="!canManage"
+              :loading="decisionLoading"
+              @click="submitDecision('APPROVE')"
+            >
+              审批通过
+            </el-button>
+            <el-button
+              type="warning"
+              size="small"
+              :disabled="!canManage"
+              :loading="decisionLoading"
+              @click="submitDecision('REJECT')"
+            >
+              审批驳回
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+
+      <!-- 评审意见弹窗 -->
+      <el-dialog
+        v-model="opinionDialogVisible"
+        :title="`评审意见 - ${currentBid?.bidderName || '-'}`"
+        width="640px"
+        destroy-on-close
+        draggable
+      >
+        <el-form :model="evaluation" label-width="120px" class="eval-form">
+          <el-form-item label="当前投标人">
+            <el-input :model-value="currentBid?.bidderName || '-'" disabled />
+          </el-form-item>
+          <el-form-item label="综合评分">
+            <el-input-number v-model="evaluation.score" :min="0" :max="100" :disabled="!canManage" />
+          </el-form-item>
+          <el-form-item label="评审意见">
+            <el-input
+              v-model="evaluation.comment"
+              type="textarea"
+              :rows="6"
+              :disabled="!canManage"
+              placeholder="请输入评审意见"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="opinionDialogVisible = false">取 消</el-button>
+            <el-button type="primary" :disabled="!canManage || !currentBid" @click="handleApplyOpinion">
+              应用到当前投标
+            </el-button>
+          </span>
+        </template>
+      </el-dialog>
     </el-card>
   </el-config-provider>
 </template>
@@ -212,6 +237,8 @@ const processForm = reactive({
   rejectReasonCode: 'DOC_FIX',
   opinion: '',
 });
+
+const opinionDialogVisible = ref(false);
 
 const winnerName = computed(() => bidList.value.find((b) => b.isWinner)?.bidderName || '-');
 const bestScore = computed(() => {
@@ -305,11 +332,21 @@ function selectBid(row: EvalBidRow) {
   evaluation.comment = row.comment || '';
 }
 
+function openOpinionDialog(row: EvalBidRow) {
+  selectBid(row);
+  opinionDialogVisible.value = true;
+}
+
 function applyToBid() {
   if (!currentBid.value) return;
   currentBid.value.score = evaluation.score;
   currentBid.value.comment = evaluation.comment;
   ElMessage.success('已应用到当前投标');
+}
+
+function handleApplyOpinion() {
+  applyToBid();
+  opinionDialogVisible.value = false;
 }
 
 function setWinner(row: EvalBidRow) {
@@ -456,9 +493,7 @@ async function submitDecision(action: 'APPROVE' | 'REJECT') {
 }
 
 .split-area {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 12px;
+  display: block;
 }
 
 .card-title {
@@ -472,6 +507,14 @@ async function submitDecision(action: 'APPROVE' | 'REJECT') {
 
 .eval-form {
   max-width: 680px;
+}
+
+.summary-card {
+  margin-top: 12px;
+}
+
+.approval-card {
+  margin-top: 12px;
 }
 </style>
 

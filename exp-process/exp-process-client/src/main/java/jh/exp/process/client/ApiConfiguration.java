@@ -1,6 +1,9 @@
 package jh.exp.process.client;
 
+import cn.hutool.json.JSONUtil;
+import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.constant.CommonConstant;
+import jh.exp.common.core.constant.ServiceContext;
 import jh.exp.process.client.api.ProcessApprovalClient;
 import jh.exp.process.client.api.ProcessDefinitionClient;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -49,6 +52,11 @@ public class ApiConfiguration {
                                 request.getHeaders().set(CommonConstant.AUTH_HEADER_NAME, auth);
                             }
                         }
+                    }
+                    // 透传当前用户信息，供流程服务 CurrentUserFilter 解析并填充 CurrentUserHolder
+                    Object currentUser = CurrentUserHolder.get();
+                    if (currentUser != null) {
+                        request.getHeaders().set(ServiceContext.REQUEST_SOURCE_HEADER, JSONUtil.toJsonStr(currentUser));
                     }
                     return execution.execute(request, body);
                 })

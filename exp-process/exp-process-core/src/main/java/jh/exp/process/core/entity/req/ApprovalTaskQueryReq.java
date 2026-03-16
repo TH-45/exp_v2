@@ -24,4 +24,9 @@ public class ApprovalTaskQueryReq {
      * 状态
      */
     private String status;
+
+    /**
+     * 关键词（流程名/业务ID，前端传入，映射到 instanceTitle 模糊查询）
+     */
+    private String keyword;
 }

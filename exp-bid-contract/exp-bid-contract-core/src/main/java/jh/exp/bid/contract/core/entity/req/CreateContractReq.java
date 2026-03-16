@@ -24,9 +24,11 @@ public class CreateContractReq {
     private String contractName;
 
     /** 合同类型 */
+    @NotBlank(message = "合同类型不能为空")
     private String contractType;
 
     /** 合同类别 */
+    @NotBlank(message = "合同类别不能为空")
     private String contractCategory;
 
     /** 招标ID */
@@ -81,11 +83,4 @@ public class CreateContractReq {
     @NotBlank(message = "动作不能为空")
     private String action;
 
-    /**
-     * 流程编码（可选）：
-     * CONTRACT_FUND_OUT（资金流出类合同签订流程）/
-     * CONTRACT_FUND_IN（资金流入类合同签核流程）
-     */
-    @NotBlank(message = "流程编码不能为空")
-    private String procCode;
 }

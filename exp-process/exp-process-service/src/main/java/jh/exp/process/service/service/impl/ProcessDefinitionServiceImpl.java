@@ -3,10 +3,14 @@ package jh.exp.process.service.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.clinet.api.bus.PersonService;
+import jh.exp.auth.core.entity.res.PersonDetailRes;
+import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
+import jh.exp.process.core.entity.WfInstance;
 import jh.exp.process.core.entity.WfNodeDefinition;
 import jh.exp.process.core.entity.WfProcessDefinition;
 import jh.exp.process.core.entity.req.NodeSaveReq;
@@ -17,6 +21,7 @@ import jh.exp.process.core.entity.req.ProcessDefinitionSaveReq;
 import jh.exp.process.core.entity.res.NodeRes;
 import jh.exp.process.core.entity.res.ProcessDefinitionDetailRes;
 import jh.exp.process.core.entity.res.ProcessDefinitionListRes;
+import jh.exp.process.core.mapper.WfInstanceMapper;
 import jh.exp.process.core.mapper.WfNodeDefinitionMapper;
 import jh.exp.process.core.mapper.WfProcessDefinitionMapper;
 import jh.exp.process.service.service.ProcessDefinitionService;
@@ -26,7 +31,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +41,8 @@ public class ProcessDefinitionServiceImpl implements ProcessDefinitionService {
 
     private final WfProcessDefinitionMapper processDefinitionMapper;
     private final WfNodeDefinitionMapper nodeDefinitionMapper;
+    private final WfInstanceMapper instanceMapper;
+    private final PersonService personService;
 
     @Override
     @Transactional
@@ -118,6 +127,25 @@ public class ProcessDefinitionServiceImpl implements ProcessDefinitionService {
 
     @Override
     @Transactional
+    public void deleteDefinition(Long procDefId) {
+        WfProcessDefinition entity = processDefinitionMapper.selectById(procDefId);
+        if (entity == null) {
+            throw new RuntimeException("流程定义不存在");
+        }
+        // 存在流程实例时不允许删除（保留审批追溯）
+        long instanceCount = instanceMapper.selectCount(
+                new LambdaQueryWrapper<WfInstance>().eq(WfInstance::getProcDefId, procDefId));
+        if (instanceCount > 0) {
+            throw new RuntimeException("该流程已有关联的审批实例，无法删除");
+        }
+        // 级联删除节点
+        nodeDefinitionMapper.delete(new LambdaQueryWrapper<WfNodeDefinition>()
+                .eq(WfNodeDefinition::getProcDefId, procDefId));
+        processDefinitionMapper.deleteById(procDefId);
+    }
+
+    @Override
+    @Transactional
     public ProcessDefinitionDetailRes copy(ProcessDefinitionCopyReq req) {
         WfProcessDefinition source = processDefinitionMapper.selectById(req.getSourceProcDefId());
         if (source == null) {
@@ -168,6 +196,10 @@ public class ProcessDefinitionServiceImpl implements ProcessDefinitionService {
         if (req.getNodeId() == null) {
             entity = new WfNodeDefinition();
             BeanUtils.copyProperties(req, entity);
+            // 办理人类型已废弃，前端不传时默认 USER（人员选择器）
+            if (entity.getAssigneeType() == null || entity.getAssigneeType().isBlank()) {
+                entity.setAssigneeType("USER");
+            }
             entity.setCreatedTime(now);
             entity.setUpdatedTime(now);
             nodeDefinitionMapper.insert(entity);
@@ -179,13 +211,25 @@ public class ProcessDefinitionServiceImpl implements ProcessDefinitionService {
             entity.setNodeName(req.getNodeName());
             entity.setSortNo(req.getSortNo());
             entity.setApproveType(req.getApproveType());
-            entity.setAssigneeType(req.getAssigneeType());
+            // 办理人类型已废弃，前端不传时默认 USER（人员选择器）
+            entity.setAssigneeType(req.getAssigneeType() != null && !req.getAssigneeType().isBlank()
+                    ? req.getAssigneeType() : "USER");
             entity.setAssigneeId(req.getAssigneeId());
             entity.setUpdatedTime(now);
             nodeDefinitionMapper.updateById(entity);
         }
         NodeRes res = new NodeRes();
         BeanUtils.copyProperties(entity, res);
+        // 填充审批人显示名称
+        if (res.getAssigneeId() != null && !res.getAssigneeId().isBlank()) {
+            try {
+                Long pid = Long.parseLong(res.getAssigneeId().trim());
+                ApiResponse<PersonDetailRes> pResp = personService.getPersonById(pid);
+                PersonDetailRes p = (pResp != null && pResp.isSuccess()) ? pResp.getData() : null;
+                res.setAssigneeDisplayName(p != null ? p.getPersonName() : null);
+            } catch (NumberFormatException ignored) {
+            }
+        }
         return res;
     }
 
@@ -239,14 +283,41 @@ public class ProcessDefinitionServiceImpl implements ProcessDefinitionService {
     }
 
     private List<NodeRes> listNodes(Long procDefId) {
-        return nodeDefinitionMapper.selectList(
+        List<WfNodeDefinition> nodes = nodeDefinitionMapper.selectList(
                 new LambdaQueryWrapper<WfNodeDefinition>()
                         .eq(WfNodeDefinition::getProcDefId, procDefId)
                         .orderByAsc(WfNodeDefinition::getSortNo)
-        ).stream().map(item -> {
+        );
+        List<NodeRes> resList = nodes.stream().map(item -> {
             NodeRes res = new NodeRes();
             BeanUtils.copyProperties(item, res);
             return res;
         }).toList();
+
+        // 批量查询审批人姓名（assigneeId 为人员 ID 时）
+        List<Long> personIds = new ArrayList<>();
+        for (WfNodeDefinition n : nodes) {
+            if (n.getAssigneeId() != null && !n.getAssigneeId().isBlank()) {
+                try {
+                    personIds.add(Long.parseLong(n.getAssigneeId().trim()));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        Map<Long, PersonDetailRes> personMap = personIds.isEmpty() ? Map.of()
+                : personService.batchGetPersonByIds(personIds);
+
+        for (int i = 0; i < resList.size(); i++) {
+            NodeRes res = resList.get(i);
+            if (res.getAssigneeId() != null && !res.getAssigneeId().isBlank()) {
+                try {
+                    Long pid = Long.parseLong(res.getAssigneeId().trim());
+                    PersonDetailRes p = personMap.get(pid);
+                    res.setAssigneeDisplayName(p != null ? p.getPersonName() : null);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return resList;
     }
 }

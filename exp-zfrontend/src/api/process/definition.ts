@@ -7,8 +7,10 @@ export interface ProcessNode {
   nodeName: string;
   sortNo: number;
   approveType: string;
-  assigneeType: 'ROLE' | 'POST' | 'USER';
+  assigneeType?: 'ROLE' | 'POST' | 'USER';
   assigneeId: string;
+  /** 审批人显示名称（后端批量查人员后返回） */
+  assigneeDisplayName?: string;
 }
 
 export interface ProcessDefinition {
@@ -57,6 +59,11 @@ export function saveProcessDefinition(data: ProcessDefinition) {
 
 export function activateProcessDefinition(procDefId: number, isActive: number) {
   return request.post<void, void>(`${BASE}/activate?procDefId=${procDefId}&isActive=${isActive}`);
+}
+
+/** 删除流程定义（无实例时方可删除） */
+export function deleteProcessDefinition(procDefId: number) {
+  return request.post<void, void>(`${BASE}/delete?procDefId=${procDefId}`);
 }
 
 export function copyProcessDefinition(data: { sourceProcDefId: number; newProcCode: string; newProcName: string }) {

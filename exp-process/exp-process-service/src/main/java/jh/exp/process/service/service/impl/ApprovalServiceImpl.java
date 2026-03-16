@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jh.exp.auth.clinet.api.bus.PersonService;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
+import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
 import jh.exp.common.core.req.SimplePageReq;
@@ -33,7 +33,6 @@ import jh.exp.process.core.mapper.WfNodeDefinitionMapper;
 import jh.exp.process.core.mapper.WfProcessDefinitionMapper;
 import jh.exp.process.core.mapper.WfTaskAttachmentMapper;
 import jh.exp.process.core.mapper.WfTaskMapper;
-import jh.exp.process.core.util.ParseBusinessDataUtil;
 import jh.exp.process.service.driver.ProcessBusinessDriver;
 import jh.exp.process.service.driver.ProcessBusinessDriverRegistry;
 import jh.exp.process.service.service.ApprovalService;
@@ -88,12 +87,38 @@ public class ApprovalServiceImpl implements ApprovalService {
 
 
     @Override
+    public ApprovalStatsRes getStats() {
+        CurrentUser currentUser = requireCurrentUser();
+        PersonDetailRes person = getCurrentPerson(currentUser.getUserId());
+        ApprovalStatsRes res = new ApprovalStatsRes();
+        res.setTodoCount(0L);
+        res.setDoneCount(0L);
+        res.setStartedCount(0L);
+        res.setClosedCount(0L);
+        if (person == null || person.getPersonId() == null) {
+            return res;
+        }
+        ApprovalTaskQueryReq emptyQuery = new ApprovalTaskQueryReq();
+        SimplePageReq<ApprovalTaskQueryReq> pageReq = new SimplePageReq<>(1, 1, null, emptyQuery);
+        res.setTodoCount(buildTodoPage(pageReq, emptyQuery, person).getTotal());
+        res.setDoneCount(buildDonePage(pageReq, emptyQuery, person).getTotal());
+        res.setStartedCount(buildStartedPage(pageReq, emptyQuery, currentUser.getUserId(), null).getTotal());
+        res.setClosedCount(buildStartedPage(pageReq, emptyQuery, currentUser.getUserId(), ProcessConstant.INSTANCE_CLOSED).getTotal());
+        return res;
+    }
+
+    @Override
     public SimplePageRes<ApprovalTaskRes> listTasks(SimplePageReq<ApprovalTaskQueryReq> req) {
         req.pageDefault();
         CurrentUser currentUser = requireCurrentUser();
         PersonDetailRes person = getCurrentPerson(currentUser.getUserId());
         ApprovalTaskQueryReq query = req.getQueryParam() == null ? new ApprovalTaskQueryReq() : req.getQueryParam();
-        String tab = query.getTab() == null ? ProcessConstant.DIRECTION_TODO : query.getTab();
+        // 前端 keyword 映射到 instanceTitle 模糊查询
+        if (query.getKeyword() != null && !query.getKeyword().isBlank()
+                && (query.getInstanceTitle() == null || query.getInstanceTitle().isBlank())) {
+            query.setInstanceTitle(query.getKeyword());
+        }
+        String tab = normalizeTab(query.getTab());
 
         // 待办/已办绑定人员ID；我发起/已关闭绑定用户ID
         if (ProcessConstant.DIRECTION_TODO.equalsIgnoreCase(tab)) {
@@ -480,6 +505,12 @@ public class ApprovalServiceImpl implements ApprovalService {
         );
         Map<Long, List<WfTask>> taskGroupMap = allTodoTasks.stream().collect(Collectors.groupingBy(WfTask::getInstanceId));
 
+        // 无待办的实例需取任意任务ID供详情查看，批量查询所有任务后按 instanceId 分组取每个实例最后一条
+        List<WfTask> allTasks = taskMapper.selectList(
+                new LambdaQueryWrapper<WfTask>().in(WfTask::getInstanceId, instanceIds).orderByDesc(WfTask::getFinishTime));
+        Map<Long, Long> instanceToTaskIdMap = allTasks.stream()
+                .collect(Collectors.toMap(WfTask::getInstanceId, WfTask::getTaskId, (a, b) -> a));
+
         Set<Long> defIds = instances.stream().map(WfInstance::getProcDefId).collect(Collectors.toSet());
         Map<Long, WfProcessDefinition> defMap = defIds.isEmpty() ? Map.of() :
                 processDefinitionMapper.selectList(new LambdaQueryWrapper<WfProcessDefinition>().in(WfProcessDefinition::getProcDefId, defIds))
@@ -507,10 +538,12 @@ public class ApprovalServiceImpl implements ApprovalService {
 
             List<WfTask> currentTasks = taskGroupMap.get(instance.getInstanceId());
             if (currentTasks != null && !currentTasks.isEmpty()) {
+                row.setTaskId(currentTasks.get(0).getTaskId());
                 row.setCurrentNode(nodeNameMap.getOrDefault(currentTasks.get(0).getNodeId(), "未知节点"));
                 row.setCurrentHandler(currentTasks.stream().map(WfTask::getCandidateId).distinct().collect(Collectors.joining(", ")));
             } else {
                 row.setCurrentNode(ProcessConstant.INSTANCE_COMPLETED.equals(instance.getStatus()) ? "流程已结束" : "-");
+                row.setTaskId(instanceToTaskIdMap.get(instance.getInstanceId()));
             }
             return row;
         }).toList();
@@ -661,6 +694,15 @@ public class ApprovalServiceImpl implements ApprovalService {
         taskMapper.insert(task);
     }
 
+    /** 前端 tab 值（todo/done/started/closed）转后端常量（TODO/DONE/START/CLOSE） */
+    private String normalizeTab(String tab) {
+        if (tab == null || tab.isBlank()) return ProcessConstant.DIRECTION_TODO;
+        String t = tab.trim().toUpperCase();
+        if ("STARTED".equals(t)) return ProcessConstant.DIRECTION_START;
+        if ("CLOSED".equals(t)) return ProcessConstant.DIRECTION_CLOSE;
+        return t;
+    }
+
     private CurrentUser requireCurrentUser() {
         CurrentUser currentUser = CurrentUserHolder.get();
         if (currentUser == null || currentUser.getUserId() == null) {
@@ -671,7 +713,8 @@ public class ApprovalServiceImpl implements ApprovalService {
 
     private PersonDetailRes getCurrentPerson(Long userId) {
         try {
-            return personService.getPersonById(userId);
+            ApiResponse<PersonDetailRes> resp = personService.getPersonById(userId);
+            return (resp != null && resp.isSuccess()) ? resp.getData() : null;
         } catch (Exception ex) {
             return null;
         }

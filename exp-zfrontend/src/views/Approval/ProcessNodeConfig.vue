@@ -25,9 +25,12 @@
     <el-table :data="draftNodes" row-key="draftKey" border @row-dblclick="openNodeDialog">
       <el-table-column prop="sortNo" label="序号" width="80" />
       <el-table-column prop="nodeName" label="节点名称" min-width="180" />
-      <el-table-column prop="approveType" label="审批类型" width="120" />
-      <el-table-column prop="assigneeType" label="办理人类型" width="120" />
-      <el-table-column prop="assigneeId" label="办理对象" min-width="180" />
+      <el-table-column label="审批类型" width="120">
+        <template #default="{ row }">{{ approveTypeLabel(row.approveType) }}</template>
+      </el-table-column>
+      <el-table-column label="审批人" min-width="180">
+        <template #default="{ row }">{{ row.assigneeDisplayName || row.assigneeId || '-' }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="260" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="openNodeDialog(row)">编辑</el-button>
@@ -39,23 +42,18 @@
     </el-table>
 
     <el-dialog v-model="nodeDialog.visible" :title="nodeDialog.isEdit ? '编辑节点' : '新增节点'" width="620px" draggable destroy-on-close>
-      <el-form :model="nodeForm" label-width="100px">
-        <el-form-item label="节点名称"><el-input v-model="nodeForm.nodeName" /></el-form-item>
-        <el-form-item label="审批类型">
-          <el-select v-model="nodeForm.approveType" style="width: 100%">
-            <el-option label="或签（OR）" value="OR" />
-            <el-option label="会签（AND）" value="AND" />
+      <el-form ref="nodeFormRef" :model="nodeForm" :rules="nodeRules" label-width="100px">
+        <el-form-item label="节点名称" prop="nodeName" required>
+          <el-input v-model="nodeForm.nodeName" placeholder="请输入节点名称" />
+        </el-form-item>
+        <el-form-item label="审批类型" prop="approveType" required>
+          <el-select v-model="nodeForm.approveType" placeholder="请选择审批类型" style="width: 100%">
+            <el-option label="单签" value="OR" />
+            <el-option label="会签" value="AND" />
           </el-select>
         </el-form-item>
-        <el-form-item label="办理人类型">
-          <el-select v-model="nodeForm.assigneeType" style="width: 100%">
-            <el-option label="角色" value="ROLE" />
-            <el-option label="岗位" value="POST" />
-            <el-option label="用户" value="USER" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="办理对象">
-          <el-input v-model="nodeForm.assigneeId" placeholder="ROLE=roleCode, POST=postCode, USER=userId" />
+        <el-form-item label="审批人" prop="assigneePerson" required>
+          <PersonSelector v-model="nodeForm.assigneePerson" placeholder="请选择审批人" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -70,7 +68,10 @@
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { onBeforeRouteLeave, useRoute } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import type { FormInstance, FormRules } from 'element-plus';
 import { deleteProcessNode, getProcessDefinitionDetail, saveProcessNode, type ProcessNode } from '@/api/process/definition';
+import type { ExpPersonVO } from '@/api/system/person';
+import PersonSelector from '@/components/Selector/PersonSelector.vue';
 
 const route = useRoute();
 const procDefId = Number(route.query.procDefId || 0);
@@ -81,16 +82,39 @@ let draftSeed = 1;
 
 type DraftNode = ProcessNode & { draftKey: string };
 
+const nodeFormRef = ref<FormInstance>();
 const nodeDialog = reactive({ visible: false, isEdit: false, editIndex: -1 });
-const nodeForm = reactive<DraftNode>({
+const nodeForm = reactive<DraftNode & { assigneePerson?: ExpPersonVO }>({
   procDefId,
   draftKey: '',
   nodeName: '',
   sortNo: 1,
   approveType: 'OR',
-  assigneeType: 'ROLE',
+  assigneeType: 'USER',
   assigneeId: '',
+  assigneePerson: undefined,
 });
+
+const nodeRules: FormRules = {
+  nodeName: [{ required: true, message: '请输入节点名称', trigger: 'blur' }],
+  approveType: [{ required: true, message: '请选择审批类型', trigger: 'change' }],
+  assigneePerson: [
+    {
+      validator: (_rule, _val, cb) => {
+        if (!nodeForm.assigneePerson?.personId) cb(new Error('请选择审批人'));
+        else cb();
+      },
+      trigger: 'change',
+    },
+  ],
+};
+
+/** 审批类型 value 转中文 */
+function approveTypeLabel(value?: string) {
+  if (value === 'OR') return '单签';
+  if (value === 'AND') return '会签';
+  return value ?? '-';
+}
 
 const originalNodes = ref<DraftNode[]>([]);
 const draftNodes = ref<DraftNode[]>([]);
@@ -168,8 +192,10 @@ function openNodeDialog(row?: DraftNode) {
     nodeForm.nodeName = '';
     nodeForm.sortNo = draftNodes.value.length + 1;
     nodeForm.approveType = 'OR';
-    nodeForm.assigneeType = 'ROLE';
+    nodeForm.assigneeType = 'USER';
     nodeForm.assigneeId = '';
+    nodeForm.assigneePerson = undefined;
+    nodeForm.assigneeDisplayName = undefined;
     return;
   }
   nodeDialog.isEdit = true;
@@ -180,17 +206,26 @@ function openNodeDialog(row?: DraftNode) {
   nodeForm.nodeName = row.nodeName;
   nodeForm.sortNo = row.sortNo;
   nodeForm.approveType = row.approveType;
-  nodeForm.assigneeType = row.assigneeType as any;
+  nodeForm.assigneeType = 'USER';
   nodeForm.assigneeId = row.assigneeId;
+  // 从 assigneeId + assigneeDisplayName 构造 PersonSelector 所需对象
+  nodeForm.assigneePerson =
+    row.assigneeId && row.assigneeId.trim()
+      ? {
+          personId: Number(row.assigneeId),
+          personCode: '',
+          personName: row.assigneeDisplayName ?? '',
+          gender: 'M',
+          status: 'ONJOB',
+        }
+      : undefined;
 }
 
-function submitNode() {
-  if (!nodeForm.nodeName?.trim()) {
-    ElMessage.warning('节点名称不能为空');
-    return;
-  }
-  if (!nodeForm.assigneeId?.trim()) {
-    ElMessage.warning('办理对象不能为空');
+async function submitNode() {
+  await nodeFormRef.value?.validate();
+  const person = nodeForm.assigneePerson;
+  if (!person?.personId) {
+    ElMessage.warning('请选择审批人');
     return;
   }
   const data: DraftNode = {
@@ -200,8 +235,9 @@ function submitNode() {
     nodeName: nodeForm.nodeName.trim(),
     sortNo: nodeForm.sortNo,
     approveType: nodeForm.approveType,
-    assigneeType: nodeForm.assigneeType,
-    assigneeId: nodeForm.assigneeId.trim(),
+    assigneeType: 'USER',
+    assigneeId: String(person.personId),
+    assigneeDisplayName: person.personName,
   };
   if (nodeDialog.isEdit && nodeDialog.editIndex > -1) {
     draftNodes.value.splice(nodeDialog.editIndex, 1, data);
@@ -262,7 +298,7 @@ async function saveAll() {
         nodeName: node.nodeName,
         sortNo: node.sortNo,
         approveType: node.approveType,
-        assigneeType: node.assigneeType,
+        assigneeType: 'USER',
         assigneeId: node.assigneeId,
       });
     }

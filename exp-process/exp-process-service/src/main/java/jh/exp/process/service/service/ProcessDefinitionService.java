@@ -22,6 +22,9 @@ public interface ProcessDefinitionService {
 
     void setActive(Long procDefId, Integer isActive);
 
+    /** 删除流程定义（无实例时方可删除，级联删除节点） */
+    void deleteDefinition(Long procDefId);
+
     ProcessDefinitionDetailRes copy(ProcessDefinitionCopyReq req);
 
     NodeRes saveNode(NodeSaveReq req);

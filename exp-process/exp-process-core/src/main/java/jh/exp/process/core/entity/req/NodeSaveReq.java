@@ -20,9 +20,9 @@ public class NodeSaveReq {
     @NotBlank(message = "审批类型不能为空")
     private String approveType;
 
-    @NotBlank(message = "办理人类型不能为空")
+    /** 办理人类型（已废弃，前端不传时默认 USER） */
     private String assigneeType;
 
-    @NotBlank(message = "办理对象不能为空")
+    @NotBlank(message = "审批人不能为空")
     private String assigneeId;
 }

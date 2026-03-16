@@ -2,8 +2,8 @@ package jh.exp.bid.contract.service.service.bus.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jh.exp.auth.clinet.api.bus.PersonService;
-
 import jh.exp.auth.core.entity.res.PersonDetailRes;
+import jh.exp.common.core.api.ApiResponse;
 import jh.exp.bid.contract.core.constant.BidContractConstant;
 import jh.exp.bid.contract.core.entity.BidAwardResult;
 import jh.exp.bid.contract.core.entity.Bid;
@@ -53,7 +53,8 @@ public class AwardResultServiceImpl implements AwardResultService {
         CurrentUser currentUser = CurrentUserHolder.get();
         Long personId = Long.valueOf(currentUser.getUserId());
 
-        PersonDetailRes personDetail = personService.getPersonById(personId);
+        ApiResponse<PersonDetailRes> personResp = personService.getPersonById(personId);
+        PersonDetailRes personDetail = (personResp != null && personResp.isSuccess()) ? personResp.getData() : null;
         if (personDetail == null) {
             throw new RuntimeException("无法获取当前用户信息");
         }

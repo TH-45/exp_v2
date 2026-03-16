@@ -224,7 +224,8 @@ public class ContractServiceImpl implements ContractService {
         // 提单人信息（创建人，当前登录人，不可修改）
         if (c.getCreatedBy() != null) {
             try {
-                PersonDetailRes creator = personService.getPersonById(c.getCreatedBy());
+                ApiResponse<PersonDetailRes> creatorResp = personService.getPersonById(c.getCreatedBy());
+                PersonDetailRes creator = (creatorResp != null && creatorResp.isSuccess()) ? creatorResp.getData() : null;
                 if (creator != null) {
                     res.setCreatorName(creator.getPersonName());
                     res.setCreatorPostName(creator.getPostName());
@@ -234,18 +235,20 @@ public class ContractServiceImpl implements ContractService {
                 log.warn("获取提单人信息失败 createdBy={}", c.getCreatedBy(), e);
             }
         }
-        // 业务员信息
+        // 业务员信息：BeanUtils.copyProperties 已复制 salesmanPersonId，此处补充姓名等展示信息
         if (c.getSalesmanPersonId() != null) {
+            res.setSalesmanPersonId(c.getSalesmanPersonId()); // 确保返回，避免前端回显为空
             try {
-                PersonDetailRes salesman = personService.getPersonById(c.getSalesmanPersonId());
+                ApiResponse<PersonDetailRes> salesmanResp = personService.getPersonById(c.getSalesmanPersonId());
+                PersonDetailRes salesman = (salesmanResp != null && salesmanResp.isSuccess()) ? salesmanResp.getData() : null;
                 if (salesman != null) {
-                    res.setSalesmanPersonId(salesman.getPersonId());
                     res.setSalesmanName(salesman.getPersonName());
                     res.setSalesmanPostName(salesman.getPostName());
                     res.setSalesmanMobile(salesman.getMobile());
                 }
             } catch (Exception e) {
                 log.warn("获取业务员信息失败 salesmanPersonId={}", c.getSalesmanPersonId(), e);
+                // 人员服务异常时仍返回 salesmanPersonId，前端可至少显示 ID
             }
         }
         return res;
@@ -258,7 +261,8 @@ public class ContractServiceImpl implements ContractService {
             throw new RuntimeException("合同编号已存在");
         }
         CurrentUser user = CurrentUserHolder.get();
-        PersonDetailRes person = personService.getPersonById(user.getUserId());
+        ApiResponse<PersonDetailRes> personResp = personService.getPersonById(user.getUserId());
+        PersonDetailRes person = (personResp != null && personResp.isSuccess()) ? personResp.getData() : null;
         if (person == null) {
             throw new RuntimeException("无法获取当前用户信息");
         }
@@ -374,7 +378,7 @@ public class ContractServiceImpl implements ContractService {
             startProcessReq.setBusId(contract.getContractId());
             startProcessReq.setBusType(ProcessConstant.PROCESS_TYPE_CONTRACT);
             startProcessReq.setTitle(req.getContractName()+req.getContractCode());
-            startProcessReq.setProcCode(resolveContractProcCode(req.getProcCode()));
+            startProcessReq.setProcCode(resolveContractProcCode(req.getContractCategory()));
             ApiResponse<Long> res = processApprovalClient.createProcess(startProcessReq);
             if (!res.isSuccess()) {
                 throw new RuntimeException("创建流程实例失败");
@@ -412,8 +416,11 @@ public class ContractServiceImpl implements ContractService {
     @Transactional
     public void updateStatusByProcess(Long contractId, String status) {
         Contract c = contractMapper.selectById(contractId);
-        if(c.getStatus().equals(BidContractConstant.CONTRACT_STATUS_ARCHIVED)){
-            throw new RuntimeException("合同正常已归档,不可修改");
+        if (c == null) {
+            throw new RuntimeException("合同不存在");
+        }
+        if (BidContractConstant.CONTRACT_STATUS_ARCHIVED.equals(c.getStatus())) {
+            throw new RuntimeException("合同正常已归档，不可修改");
         }
         contractMapper.update(null, new UpdateWrapper<Contract>()
                 .eq("contract_id", contractId)
@@ -446,7 +453,8 @@ public class ContractServiceImpl implements ContractService {
             throw new RuntimeException("仅拟签状态的合同可进行签订/不签订操作");
         }
         CurrentUser user = CurrentUserHolder.get();
-        PersonDetailRes person = personService.getPersonById(user.getUserId());
+        ApiResponse<PersonDetailRes> personResp = personService.getPersonById(user.getUserId());
+        PersonDetailRes person = (personResp != null && personResp.isSuccess()) ? personResp.getData() : null;
         if (person == null) {
             throw new RuntimeException("无法获取当前用户信息");
         }
@@ -521,8 +529,7 @@ public class ContractServiceImpl implements ContractService {
             throw new RuntimeException("合同流程编码不能为空");
         }
         String normalized = reqProcCode.trim().toUpperCase(Locale.ROOT);
-        if (ProcessConstant.PROCESS_CONTRACT_FUND_OUT.equals(normalized)
-                || ProcessConstant.PROCESS_CONTRACT_FUND_IN.equals(normalized)) {
+        if (ProcessConstant.PROCESS_CONTRACT_FUND_OUT.equals(normalized) || ProcessConstant.PROCESS_CONTRACT_FUND_IN.equals(normalized)) {
             return normalized;
         }
         throw new RuntimeException("不支持的合同流程编码: " + reqProcCode);

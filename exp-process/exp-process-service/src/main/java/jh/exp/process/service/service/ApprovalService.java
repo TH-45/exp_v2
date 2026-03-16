@@ -16,6 +16,9 @@ import java.util.List;
 public interface ApprovalService {
     Long create(StartProcessReq req);
 
+    /** 待办/已办/我发起/已关闭 数量统计 */
+    ApprovalStatsRes getStats();
+
     SimplePageRes<ApprovalTaskRes> listTasks(SimplePageReq<ApprovalTaskQueryReq> req);
 
     ApprovalDetailRes detail(Long taskId);

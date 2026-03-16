@@ -287,7 +287,8 @@ public class TenderServiceImpl implements TenderService {
 
         CurrentUser currentUser = CurrentUserHolder.get();
         Long CreatedById = currentUser.getUserId();
-        PersonDetailRes personDetail = personService.getPersonById(CreatedById);
+        ApiResponse<PersonDetailRes> personResp = personService.getPersonById(CreatedById);
+        PersonDetailRes personDetail = (personResp != null && personResp.isSuccess()) ? personResp.getData() : null;
         if (personDetail == null) {
             throw new RuntimeException("无法获取当前用户信息");
         }
@@ -550,7 +551,8 @@ public class TenderServiceImpl implements TenderService {
 
     private PersonDetailRes getPersonOrThrow(Long personId, String scene) {
         try {
-            PersonDetailRes person = personService.getPersonById(personId);
+            ApiResponse<PersonDetailRes> resp = personService.getPersonById(personId);
+            PersonDetailRes person = (resp != null && resp.isSuccess()) ? resp.getData() : null;
             if (person == null) {
                 log.error("调用auth人员详情返回空，scene={}, personId={}", scene, personId);
                 throw new RuntimeException("查询人员信息失败");
@@ -604,7 +606,8 @@ public class TenderServiceImpl implements TenderService {
             throw new RuntimeException("招标信息不存在");
         }
 
-        PersonDetailRes salesman = personService.getPersonById(req.getSalesmanId());
+        ApiResponse<PersonDetailRes> salesmanResp = personService.getPersonById(req.getSalesmanId());
+        PersonDetailRes salesman = (salesmanResp != null && salesmanResp.isSuccess()) ? salesmanResp.getData() : null;
         if (salesman == null) {
             throw new RuntimeException("业务员信息不存在");
         }

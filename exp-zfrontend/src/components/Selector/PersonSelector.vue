@@ -15,13 +15,14 @@
       </template>
     </el-input>
 
-    <!-- 人员选择弹窗 -->
+    <!-- 人员选择弹窗：append-to-body 避免被父级表单校验错误样式影响 -->
     <el-dialog
       v-model="dialogVisible"
       title="选择人员"
       width="800px"
       destroy-on-close
       draggable
+      append-to-body
     >
       <!-- 搜索区 -->
       <div class="search-bar">

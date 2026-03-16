@@ -11,4 +11,6 @@ public class NodeRes {
     private String approveType;
     private String assigneeType;
     private String assigneeId;
+    /** 审批人显示名称（人员选择器选中的姓名，用于列表展示） */
+    private String assigneeDisplayName;
 }
