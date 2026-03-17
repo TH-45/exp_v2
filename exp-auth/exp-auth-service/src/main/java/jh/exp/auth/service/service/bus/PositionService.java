@@ -48,6 +48,9 @@ public interface PositionService {
     //根据组织ID查询岗位
     SimplePageRes<PositionListRes> queryPositions(SimplePageReq<QueryPositionByOrgReq> req);
 
+    //根据岗位ID查询同组织岗位（仅主组织）
+    List<PositionListRes> querySiblingPositionsByPostId(Long postId);
+
     //检查岗位编码是否存在
     boolean checkPostCodeExists(String postCode, Long excludePostId);
 

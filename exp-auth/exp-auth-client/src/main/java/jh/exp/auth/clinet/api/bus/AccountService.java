@@ -4,71 +4,83 @@ import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.AccountDetailRes;
 import jh.exp.auth.core.entity.res.AccountListRes;
 import jh.exp.auth.core.entity.res.AccountRoleRes;
+import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
 import java.util.List;
+import java.util.Map;
 
 @HttpExchange("/account")
 public interface AccountService {
     /**
      * 分页查询账号列表
      */
-    SimplePageRes<AccountListRes> queryAccountList(SimplePageReq<QueryAccountParam> req);
+    @PostExchange("/list")
+    SimplePageRes<AccountListRes> queryAccountList(@RequestBody SimplePageReq<QueryAccountParam> req);
 
     /**
-     * 根据ID查询账号详情
+     * 根据 ID 查询账号详情
      */
-    @GetMapping("/detail/{accountId}")
-    AccountDetailRes getAccountById(Long accountId);
+    @GetExchange("/detail")
+    ApiResponse<AccountDetailRes> getAccountById(@RequestParam Long accountId);
 
     /**
      * 创建账号
      */
-    AccountDetailRes createAccount(CreateAccountReq req);
+    @PostExchange("/create")
+    AccountDetailRes createAccount(@RequestBody CreateAccountReq req);
 
     /**
      * 更新账号
      */
-    AccountDetailRes updateAccount(UpdateAccountReq req);
+    @PostExchange("/update")
+    AccountDetailRes updateAccount(@RequestBody UpdateAccountReq req);
 
     /**
      * 删除账号
      */
-    void deleteAccount(Long accountId);
+    @PostExchange("/delete")
+    void deleteAccount(@RequestBody DeleteAccountReq req);
 
     /**
      * 批量删除账号
      */
-    void batchDeleteAccounts(BatchDeleteAccountReq req);
+    @PostExchange("/batchDelete")
+    void batchDeleteAccounts(@RequestBody BatchDeleteAccountReq req);
 
     /**
      * 更改账号状态
      */
-    AccountDetailRes updateAccountStatus(AccountStatusReq req);
+    @PostExchange("/status")
+    AccountDetailRes updateAccountStatus(@RequestBody AccountStatusReq req);
 
     /**
      * 批量更改账号状态
      */
-    void batchUpdateAccountStatus(BatchAccountStatusReq req);
+    @PostExchange("/batchStatus")
+    void batchUpdateAccountStatus(@RequestBody BatchAccountStatusReq req);
 
     /**
      * 重置密码（支持批量）
      */
-    void resetPassword(ResetPasswordReq req);
+    @PostExchange("/resetPassword")
+    void resetPassword(@RequestBody ResetPasswordReq req);
 
     /**
      * 检查账号名称是否存在
      */
-    boolean checkAccountNameExists(String accountName, Long excludeAccountId);
+    @GetExchange("/checkAccountName")
+    boolean checkAccountNameExists(@RequestParam String accountName, @RequestParam(required = false) Long excludeAccountId);
 
     /**
      * 获取账号角色信息
      */
     @PostExchange("/roles")
-    List<AccountRoleRes> getAccountRoles(@RequestBody List<Long> accountIds);
+    ApiResponse<List<AccountRoleRes>> getAccountRoles(@RequestBody Map<String, List<Long>> req);
 }

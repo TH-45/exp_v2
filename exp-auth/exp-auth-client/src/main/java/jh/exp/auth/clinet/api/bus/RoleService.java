@@ -6,8 +6,11 @@ import jh.exp.auth.core.entity.res.RoleDetailRes;
 import jh.exp.auth.core.entity.res.RoleListRes;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PostExchange;
 
 import java.util.List;
 
@@ -17,52 +20,62 @@ public interface RoleService {
     /**
      * 分页查询角色列表
      */
-    SimplePageRes<RoleListRes> queryRoleList(SimplePageReq<QueryRoleReq> req);
+    @PostExchange("/list")
+    SimplePageRes<RoleListRes> queryRoleList(@RequestBody SimplePageReq<QueryRoleReq> req);
 
     /**
      * 根据ID查询角色详情
      */
-    @PostMapping("/detail")
-    RoleDetailRes getRoleById(Long roleId);
+    @GetExchange("/detail")
+    RoleDetailRes getRoleById(@RequestParam("roleId") Long roleId);
 
     /**
      * 创建角色
      */
-    RoleDetailRes createRole(CreateRoleReq req);
+    @PostExchange("/create")
+    RoleDetailRes createRole(@RequestBody CreateRoleReq req);
 
     /**
      * 更新角色
      */
-    RoleDetailRes updateRole(UpdateRoleReq req);
+    @PostExchange("/update")
+    RoleDetailRes updateRole(@RequestBody UpdateRoleReq req);
 
     /**
      * 删除角色
      */
-    void deleteRole(Long roleId);
+    @PostExchange("/delete")
+    void deleteRole(@RequestBody DeleteRoleReq req);
 
     /**
      * 批量删除角色
      */
-    void batchDeleteRoles(BatchDeleteRoleReq req);
+    @PostExchange("/batchDelete")
+    void batchDeleteRoles(@RequestBody BatchDeleteRoleReq req);
 
     /**
      * 更改角色状态
      */
-    RoleDetailRes updateRoleStatus(RoleStatusReq req);
+    @PostExchange("/status")
+    RoleDetailRes updateRoleStatus(@RequestBody RoleStatusReq req);
 
     /**
      * 批量更改角色状态
      */
-    void batchUpdateRoleStatus(BatchRoleStatusReq req);
+    @PostExchange("/batchStatus")
+    void batchUpdateRoleStatus(@RequestBody BatchRoleStatusReq req);
 
     /**
      * 检查角色编码是否存在
      */
-    boolean checkRoleCodeExists(String roleCode, Long excludeRoleId);
+    @GetExchange("/checkRoleCode")
+    boolean checkRoleCodeExists(@RequestParam("roleCode") String roleCode,
+                                @RequestParam(value = "excludeRoleId", required = false) Long excludeRoleId);
 
     /**
      * 获取所有启用的角色
      */
+    @GetExchange("/enabledList")
     List<RoleListRes> getAllEnabledRoles();
 
 }

@@ -15,7 +15,8 @@ export interface ApprovalTaskQuery {
   tab: WorkbenchTab;
   pageNum: number;
   pageSize: number;
-  keyword?: string;
+  instanceId?: string;
+  instanceTitle?: string;
   busType?: string;
   status?: InstanceStatus;
 }
@@ -41,9 +42,11 @@ export interface ApprovalDetail {
   status: InstanceStatus;
   currentNode: string;
   starterId: number;
+  starterName?: string;
   businessData?: unknown;
   approvalHistory: ApprovalHistory[];
   attachments: Attachment[];
+  title?: string;
 }
 
 export interface ApprovalHistory {
@@ -51,7 +54,9 @@ export interface ApprovalHistory {
   nodeId: number;
   nodeName: string;
   action: string;
+  actionLabel?: string;
   handlerId: number;
+  handlerName?: string;
   opinion?: string;
   isDone: number;
   createTime: string;
@@ -68,7 +73,7 @@ export interface Attachment {
 
 export interface ApprovalAction {
   taskId: number;
-  /** 审批动作：AGREE-同意，REJECT-拒绝/驳回 */
+  /** 审批动作：AGREE-同意，REJECT-不同意，RETURN-驳回上一个审批人 */
   action?: string;
   comments?: string;
   attachments?: Array<{
@@ -114,8 +119,13 @@ export function listApprovalTasks(params: PageQueryInput<ApprovalTaskQuery>) {
 export function getApprovalDetail(taskId: number) {
   return request.get<ApprovalDetail, ApprovalDetail>(`${BASE}/detail`, { params: { taskId } });
 }
+ 
+// 按流程实例获取审批详情（流程基础信息页使用）
+export function getApprovalInstanceDetail(instanceId: number) {
+  return request.get<ApprovalDetail, ApprovalDetail>(`${BASE}/instance-detail`, { params: { instanceId } });
+}
 
-/** 审批操作（同意：action=AGREE，驳回：action=REJECT，统一走 /approve） */
+/** 审批操作（统一走 /approve） */
 export function approveTask(data: ApprovalAction) {
   return request.post<void, void>(`${BASE}/approve`, {
     ...data,
@@ -123,12 +133,25 @@ export function approveTask(data: ApprovalAction) {
   });
 }
 
-/** 驳回审批（统一走 /approve，action=REJECT） */
-export function rejectTask(data: ApprovalAction) {
+/** 不同意审批（统一走 /approve，action=REJECT） */
+export function disagreeTask(data: ApprovalAction) {
   return request.post<void, void>(`${BASE}/approve`, {
     ...data,
     action: 'REJECT',
   });
+}
+
+/** 驳回上一个审批人（统一走 /approve，action=RETURN） */
+export function returnTask(data: ApprovalAction) {
+  return request.post<void, void>(`${BASE}/approve`, {
+    ...data,
+    action: 'RETURN',
+  });
+}
+
+/** 兼容旧调用：历史命名 rejectTask，实际表示不同意 */
+export function rejectTask(data: ApprovalAction) {
+  return disagreeTask(data);
 }
 
 // 批量审批

@@ -33,5 +33,6 @@ export const START_CENTER_REGISTRY: StartCenterEntry[] = [
 ];
 
 export function findStartEntry(busType: string) {
-  return START_CENTER_REGISTRY.find((x) => x.busType === busType);
+  const target = String(busType || '').trim().toUpperCase();
+  return START_CENTER_REGISTRY.find((x) => String(x.busType || '').trim().toUpperCase() === target);
 }

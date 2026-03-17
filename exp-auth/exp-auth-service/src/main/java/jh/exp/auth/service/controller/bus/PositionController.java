@@ -122,6 +122,15 @@ public class PositionController {
         return ApiResponse.success(result);
     }
 
+    /**
+     * 根据岗位ID查询同组织岗位（仅主组织）
+     */
+    @GetMapping("/listByPostId")
+    public ApiResponse<List<PositionListRes>> listByPostId(@RequestParam Long postId) {
+        List<PositionListRes> result = positionService.querySiblingPositionsByPostId(postId);
+        return ApiResponse.success(result);
+    }
+
 
 
     /**

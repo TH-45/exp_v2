@@ -9,6 +9,7 @@ import jh.exp.auth.clinet.api.bus.OrgUnitService;
 import jh.exp.auth.clinet.api.bus.PersonService;
 import jh.exp.auth.core.entity.dto.OrgIdAndPersonIdDTO;
 import jh.exp.auth.core.entity.req.PersonFlagReq;
+import jh.exp.auth.core.entity.res.AccountDetailRes;
 import jh.exp.auth.core.entity.res.OrgUnitDetailRes;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.constant.BidContractConstant;
@@ -490,7 +491,8 @@ public class TenderServiceImpl implements TenderService {
         }
 
         try {
-            Object accountDetail = accountService.getAccountById(userId);
+            ApiResponse<AccountDetailRes> accountResp = accountService.getAccountById(userId);
+            Object accountDetail = (accountResp != null && accountResp.isSuccess()) ? accountResp.getData() : null;
             if (accountDetail != null) {
                 return true;
             }
@@ -568,7 +570,8 @@ public class TenderServiceImpl implements TenderService {
 
     private OrgUnitDetailRes getOrgUnitOrThrow(Long orgId, String scene) {
         try {
-            OrgUnitDetailRes org = orgUnitService.getOrgUnitById(orgId);
+            ApiResponse<OrgUnitDetailRes> resp = orgUnitService.getOrgUnitById(orgId);
+            OrgUnitDetailRes org = (resp != null && resp.isSuccess()) ? resp.getData() : null;
             if (org == null) {
                 log.error("调用auth组织详情返回空，scene={}, orgId={}", scene, orgId);
                 throw new RuntimeException("查询组织信息失败");

@@ -14,7 +14,6 @@ import jh.exp.process.core.entity.res.ApprovalDetailRes;
 import jh.exp.process.core.entity.res.ApprovalHistoryRes;
 import jh.exp.process.core.entity.res.ApprovalStatsRes;
 import jh.exp.process.core.entity.res.ApprovalTaskRes;
-import jh.exp.process.core.entity.res.ProcessDriveRes;
 import jh.exp.process.service.driver.ProcessCommandDriver;
 import jh.exp.process.service.service.ApprovalService;
 import lombok.RequiredArgsConstructor;
@@ -71,6 +70,14 @@ public class ApprovalController {
     @GetMapping("/detail")
     public ApiResponse<ApprovalDetailRes> detail(@RequestParam Long taskId) {
         return ApiResponse.success(approvalService.detail(taskId));
+    }
+    
+    /**
+     * 按流程实例查询详情
+     */
+    @GetMapping("/instance-detail")
+    public ApiResponse<ApprovalDetailRes> instanceDetail(@RequestParam Long instanceId) {
+        return ApiResponse.success(approvalService.detailByInstance(instanceId));
     }
 
     /**

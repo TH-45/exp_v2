@@ -1459,19 +1459,19 @@ async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
 :deep(.person-detail-drawer) {
   border-radius: 12px 0 0 12px;
   overflow: hidden;
-  top: 12.5% !important;
-  height: 75% !important;
+  top: 8% !important;
+  height: 84% !important;
 }
 
 .person-detail {
-  padding: 16px;
+  padding: 12px;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .info-card {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   border-radius: 8px;
 
   .card-header {
@@ -1582,7 +1582,8 @@ async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-top: 4px;
 
   .post-row {
     display: flex;
@@ -1612,7 +1613,7 @@ async function changeStatus(row: ExpPersonVO, newStatus: PersonStatus) {
 
 .drawer-footer {
   margin-top: auto;
-  padding: 16px 0;
+  padding: 12px 0;
   border-top: 1px solid #ebeef5;
   display: flex;
   justify-content: center;

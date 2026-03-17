@@ -7,6 +7,7 @@ import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.project.core.entity.Project;
 import jh.exp.project.core.entity.req.BatchDeleteByIdsReq;
 import jh.exp.project.core.entity.req.DeleteByIdReq;
+import jh.exp.project.core.entity.res.ProjectStatsRes;
 import jh.exp.project.service.service.bus.ProjectInternalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -61,5 +62,10 @@ public class ProjectController {
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteByIdsReq req) {
         service.batchDelete(req);
         return ApiResponse.success(null);
+    }
+
+    @GetMapping("/stats")
+    public ApiResponse<ProjectStatsRes> stats() {
+        return ApiResponse.success(service.stats());
     }
 }

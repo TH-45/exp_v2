@@ -58,7 +58,7 @@
         :data="tableData"
         border
         style="width: 100%"
-        height="400px"
+        height="300px"
         @row-click="handleRowClick"
         :empty-text="loading ? '加载中...' : '暂无数据'"
       >

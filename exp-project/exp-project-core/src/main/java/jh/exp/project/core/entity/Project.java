@@ -1,6 +1,7 @@
 package jh.exp.project.core.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.Column;
@@ -9,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -117,4 +119,9 @@ public class Project {
     // 备注
     @Column(name = "remark")
     private String remark;
+
+    // 项目负责人名称（非持久化字段）
+    @Transient
+    @TableField(exist = false)
+    private String managerName;
 }

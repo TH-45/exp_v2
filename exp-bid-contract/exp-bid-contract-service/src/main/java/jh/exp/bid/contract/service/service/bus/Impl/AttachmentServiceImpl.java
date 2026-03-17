@@ -438,13 +438,15 @@ public class AttachmentServiceImpl implements AttachmentService {
             }
         }
         if (detail.getCreatedDeptId() != null) {
-            Map<Long, OrgUnitDetailRes> orgMap = orgUnitService.batchGetOrgUnitByIds(List.of(detail.getCreatedDeptId()));
+            ApiResponse<Map<Long, OrgUnitDetailRes>> orgResp = orgUnitService.batchGetOrgUnitByIds(List.of(detail.getCreatedDeptId()));
+            Map<Long, OrgUnitDetailRes> orgMap = (orgResp != null && orgResp.isSuccess()) ? orgResp.getData() : null;
             if (orgMap != null && orgMap.containsKey(detail.getCreatedDeptId())) {
                 detail.setCreatedDeptName(orgMap.get(detail.getCreatedDeptId()).getOrgName());
             }
         }
         if (detail.getCreatedPostId() != null) {
-            Map<Long, PositionDetailRes> postMap = positionService.batchGetPositionByIds(List.of(detail.getCreatedPostId()));
+            ApiResponse<Map<Long, PositionDetailRes>> postResp = positionService.batchGetPositionByIds(List.of(detail.getCreatedPostId()));
+            Map<Long, PositionDetailRes> postMap = (postResp != null && postResp.isSuccess()) ? postResp.getData() : null;
             if (postMap != null && postMap.containsKey(detail.getCreatedPostId())) {
                 detail.setCreatedPostName(postMap.get(detail.getCreatedPostId()).getPostName());
             }

@@ -8,6 +8,12 @@
     @close="handleClose"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+      <el-form-item label="审批结果" prop="action" required>
+        <el-radio-group v-model="form.action">
+          <el-radio label="AGREE">同意</el-radio>
+          <el-radio label="REJECT">不同意</el-radio>
+        </el-radio-group>
+      </el-form-item>
       <el-form-item label="审批意见模板" prop="template">
         <el-select
           v-model="form.template"
@@ -41,7 +47,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue';
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
+import { type FormInstance, type FormRules } from 'element-plus';
 
 /** 审批意见模板（写死） */
 const APPROVAL_OPINION_TEMPLATES = [
@@ -59,7 +65,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:modelValue', v: boolean): void;
-  (e: 'confirm', payload: { taskId: number; comments: string }): void;
+  (e: 'confirm', payload: { taskId: number; action: 'AGREE' | 'REJECT'; comments: string }): void;
 }
 
 const props = defineProps<Props>();
@@ -70,12 +76,25 @@ const loading = ref(false);
 const formRef = ref<FormInstance>();
 
 const form = reactive({
+  action: 'AGREE' as 'AGREE' | 'REJECT',
   template: '',
   comments: '',
 });
 
 const rules: FormRules = {
-  comments: [{ required: true, message: '请输入审批意见', trigger: 'blur' }],
+  action: [{ required: true, message: '请选择审批结果', trigger: 'change' }],
+  comments: [
+    {
+      validator: (_rule, value, cb) => {
+        if (form.action === 'REJECT' && !String(value || '').trim()) {
+          cb(new Error('不同意时审批意见不能为空'));
+          return;
+        }
+        cb();
+      },
+      trigger: 'blur',
+    },
+  ],
 };
 
 watch(
@@ -83,6 +102,7 @@ watch(
   (v) => {
     visible.value = v;
     if (v) {
+      form.action = 'AGREE';
       form.template = '';
       form.comments = '';
     }
@@ -105,7 +125,7 @@ async function handleConfirm() {
   await formRef.value.validate();
   loading.value = true;
   try {
-    emit('confirm', { taskId: props.taskId, comments: form.comments.trim() });
+    emit('confirm', { taskId: props.taskId, action: form.action, comments: form.comments.trim() });
     visible.value = false;
   } finally {
     loading.value = false;

@@ -16,6 +16,7 @@ import jh.exp.project.core.entity.res.ProjectMemberRes;
 import jh.exp.project.core.mapper.ProjectMapper;
 import jh.exp.project.core.mapper.ProjectStaffAssignMapper;
 import jh.exp.project.service.service.bus.ProjectMemberMgmtInternalService;
+import jh.exp.common.core.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -275,7 +276,8 @@ public class ProjectMemberMgmtInternalServiceImpl implements ProjectMemberMgmtIn
             return Collections.emptyMap();
         }
         try {
-            Map<Long, OrgUnitDetailRes> map = orgUnitService.batchGetOrgUnitByIds(new ArrayList<>(ids));
+            ApiResponse<Map<Long, OrgUnitDetailRes>> resp = orgUnitService.batchGetOrgUnitByIds(new ArrayList<>(ids));
+            Map<Long, OrgUnitDetailRes> map = (resp != null && resp.isSuccess()) ? resp.getData() : null;
             return map == null ? Collections.emptyMap() : map;
         } catch (Exception ex) {
             log.error("批量查询组织信息失败, ids={}", ids, ex);
@@ -288,7 +290,8 @@ public class ProjectMemberMgmtInternalServiceImpl implements ProjectMemberMgmtIn
             return Collections.emptyMap();
         }
         try {
-            Map<Long, PositionDetailRes> map = positionService.batchGetPositionByIds(new ArrayList<>(ids));
+            ApiResponse<Map<Long, PositionDetailRes>> resp = positionService.batchGetPositionByIds(new ArrayList<>(ids));
+            Map<Long, PositionDetailRes> map = (resp != null && resp.isSuccess()) ? resp.getData() : null;
             return map == null ? Collections.emptyMap() : map;
         } catch (Exception ex) {
             log.error("批量查询岗位信息失败, ids={}", ids, ex);

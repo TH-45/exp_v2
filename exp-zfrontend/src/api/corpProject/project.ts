@@ -35,6 +35,8 @@ export interface ProjectVO {
   actualEndDate?: string;
   /** 项目负责人（人员ID） */
   managerPersonId?: number;
+  /** 项目负责人姓名（后端扩展字段） */
+  managerName?: string;
   /** 项目负责人账号（冗余） */
   managerAccountId?: number;
   /** 项目归属组织/项目部 */
@@ -69,6 +71,8 @@ export interface ProjectListQueryParam {
   customerCompanyId?: number;
   /** 项目负责人人员ID */
   managerPersonId?: number;
+  /** 项目负责人姓名（模糊） */
+  managerName?: string;
   /** 归属组织/项目部ID */
   orgId?: number;
   /** 开始日期-起（用于区间） */
@@ -91,6 +95,15 @@ export type ProjectCreateDTO = Omit<
 export interface ProjectUpdateDTO extends ProjectVO {
   /** 主键ID，更新时必填 */
   projectId: number;
+}
+
+export interface ProjectStats {
+  totalProjects: number;
+  ongoingProjects: number;
+  completedProjects: number;
+  delayedProjects: number;
+  totalBudget: number;
+  totalCost: number;
 }
 
 const BASE = '/exp/project/project';
@@ -157,4 +170,11 @@ export function deleteProject(id: number) {
  */
 export function batchDeleteProject(ids: number[]) {
   return request.post<unknown, unknown>(`${BASE}/batchDelete`, { ids });
+}
+
+/**
+ * 项目统计数据
+ */
+export function getProjectStats() {
+  return request.get<ProjectStats, ProjectStats>(`${BASE}/stats`);
 }

@@ -219,7 +219,7 @@ import {
   Upload,
   Document
 } from '@element-plus/icons-vue';
-import { getProjectStats, type ProjectStats } from '@/api/project';
+import { getProjectStats, type ProjectStats } from '@/api/corpProject/project';
 import { getCorpInfoStats, type CorpInfoStats } from '@/api/corp';
 
 const router = useRouter();

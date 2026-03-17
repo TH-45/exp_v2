@@ -238,6 +238,15 @@
                   >
                     停用
                   </el-button>
+                  <el-button
+                    link
+                    type="danger"
+                    size="small"
+                    @click="confirmDeletePost(row)"
+                    :disabled="!canDelete || row.isSystem === 1"
+                  >
+                    删除
+                  </el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -418,6 +427,7 @@
         :title="orgDialog.isEdit ? '修改组织' : '新增组织'"
         width="720px"
         destroy-on-close
+        draggable
       >
         <el-form
           ref="orgFormRef"
@@ -549,9 +559,11 @@ import { onMounted, reactive, ref, computed, onBeforeUnmount, nextTick } from 'v
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Plus, Edit, Delete, Search } from '@element-plus/icons-vue';
 import {
   fetchOrgTree,
+  getOrgDetail,
   queryOrgPosts,
   createPost,
   updatePost,
+  deletePost,
   createOrg,
   deleteOrg,
   type OrgNode,
@@ -706,7 +718,6 @@ const orgRules: FormRules = {
   orgName: [{ required: true, message: '请输入组织名称', trigger: 'blur' }],
   orgType: [{ required: true, message: '请选择组织类型', trigger: 'change' }],
   parentOrgId: [{ required: true, message: '请选择上级组织', trigger: 'change' }],
-  managerPersonId: [{ required: true, message: '请选择负责人员', trigger: 'change' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 };
 
@@ -724,6 +735,7 @@ const parentOrgDialog = reactive({
 // 权限控制
 const canCreate = computed(() => hasPermission('system:post:create'));
 const canUpdate = computed(() => hasPermission('system:post:update'));
+const canDelete = computed(() => hasPermission('system:post:delete'));
 const canOrgStatus = computed(() => hasPermission('system:orgPost:status'));
 
 onMounted(() => {
@@ -1123,6 +1135,28 @@ function rowToggleStatus(row: PostVO) {
     });
 }
 
+function confirmDeletePost(row: PostVO) {
+  if (!canDelete.value) return;
+  if (row.isSystem === 1) {
+    ElMessage.warning('系统内置岗位不允许删除');
+    return;
+  }
+  ElMessageBox.confirm(
+    `确认删除岗位「${row.postName}」吗？删除后不可恢复。`,
+    '删除确认',
+    {
+      confirmButtonText: '确定删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--danger',
+    }
+  ).then(async () => {
+    await deletePost(row.postId);
+    ElMessage.success('删除成功');
+    fetchTable();
+  }).catch(() => {});
+}
+
 function batchToggleRelStatus() {
   if (!selectedRows.value.length) return;
   const hasDisabled = selectedRows.value.some((r) => r.status !== 'ENABLED');
@@ -1292,22 +1326,48 @@ function showAddOrgDialog(node?: OrgNode) {
 }
 
 // 显示编辑组织对话框
-function showEditOrgDialog(node: OrgNode) {
+async function showEditOrgDialog(node: OrgNode) {
   orgDialog.isEdit = true;
   orgDialog.visible = true;
-  
-  // 回显数据 - TODO: 需要调用后端接口获取完整数据
+
+  // 先回显树节点已有信息，避免弹窗空白
   orgForm.orgId = node.orgId;
   orgForm.orgCode = node.orgCode || '';
   orgForm.orgName = node.orgName;
-  orgForm.orgType = 'OTHER'; // TODO: 从后端获取
-  orgForm.parentOrgId = undefined; // TODO: 从后端获取
+  orgForm.orgType = 'OTHER';
+  orgForm.parentOrgId = undefined;
   orgForm.parentOrgName = '';
   orgForm.managerPersonId = undefined;
   orgForm.managerName = '';
   orgForm.status = 'ENABLED';
   orgForm.remark = '';
   selectedManager.value = undefined;
+
+  try {
+    const detail = await getOrgDetail(node.orgId);
+    const resolvedOrgType = ['COMPANY', 'DEPT', 'PROJECT', 'OTHER'].includes(detail.orgType || '')
+      ? (detail.orgType as 'COMPANY' | 'DEPT' | 'PROJECT' | 'OTHER')
+      : 'OTHER';
+    const resolvedStatus = detail.status === 'DISABLED' ? 'DISABLED' : 'ENABLED';
+    orgForm.orgCode = detail.orgCode || orgForm.orgCode;
+    orgForm.orgName = detail.orgName || orgForm.orgName;
+    orgForm.orgType = resolvedOrgType;
+    orgForm.parentOrgId = detail.parentOrgId;
+    orgForm.managerPersonId = detail.managerPersonId;
+    orgForm.managerName = detail.managerName || '';
+    orgForm.status = resolvedStatus;
+    orgForm.remark = detail.remark || '';
+
+    // 通过组织树反查上级组织名称，保证上级组织可回显
+    if (detail.parentOrgId) {
+      const parent = getAllTreeNodes(orgTree.value).find((item) => item.orgId === detail.parentOrgId);
+      orgForm.parentOrgName = parent?.orgName || '';
+    } else {
+      orgForm.parentOrgName = '';
+    }
+  } catch (e) {
+    console.error('获取组织详情失败:', e);
+  }
 }
 
 // 打开上级组织选择器

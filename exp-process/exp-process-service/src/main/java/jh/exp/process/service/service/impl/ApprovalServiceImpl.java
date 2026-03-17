@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.clinet.api.bus.AccountService;
 import jh.exp.auth.clinet.api.bus.PersonService;
+import jh.exp.auth.core.entity.res.AccountDetailRes;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.auth.CurrentUserHolder;
@@ -54,6 +56,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     private final WfInstanceMapper instanceMapper;
     private final WfTaskMapper taskMapper;
     private final WfTaskAttachmentMapper taskAttachmentMapper;
+    private final AccountService accountService;
     private final PersonService personService;
     private final ProcessBusinessDriverRegistry driverRegistry;
 
@@ -61,6 +64,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     @Transactional
     public Long create(StartProcessReq req) {
         CurrentUser currentUser = requireCurrentUser();
+        Long currentPersonId = requirePersonIdByAccountId(currentUser.getUserId());
         // 查询流程定义
         WfProcessDefinition definition = resolveDefinition(req);
         //获取首节点配置
@@ -73,7 +77,7 @@ public class ApprovalServiceImpl implements ApprovalService {
         WfInstance instance = new WfInstance();
         instance.setProcDefId(definition.getProcDefId());
         instance.setBusId(req.getBusId());
-        instance.setStarterId(currentUser.getUserId());
+        instance.setStarterId(currentPersonId);
         instance.setStartTime(now);
         instance.setStatus(ProcessConstant.INSTANCE_APPROVING);
         instance.setTitle(req.getTitle());
@@ -89,7 +93,8 @@ public class ApprovalServiceImpl implements ApprovalService {
     @Override
     public ApprovalStatsRes getStats() {
         CurrentUser currentUser = requireCurrentUser();
-        PersonDetailRes person = getCurrentPerson(currentUser.getUserId());
+        Long currentPersonId = requirePersonIdByAccountId(currentUser.getUserId());
+        PersonDetailRes person = getPersonByPersonId(currentPersonId);
         ApprovalStatsRes res = new ApprovalStatsRes();
         res.setTodoCount(0L);
         res.setDoneCount(0L);
@@ -102,8 +107,8 @@ public class ApprovalServiceImpl implements ApprovalService {
         SimplePageReq<ApprovalTaskQueryReq> pageReq = new SimplePageReq<>(1, 1, null, emptyQuery);
         res.setTodoCount(buildTodoPage(pageReq, emptyQuery, person).getTotal());
         res.setDoneCount(buildDonePage(pageReq, emptyQuery, person).getTotal());
-        res.setStartedCount(buildStartedPage(pageReq, emptyQuery, currentUser.getUserId(), null).getTotal());
-        res.setClosedCount(buildStartedPage(pageReq, emptyQuery, currentUser.getUserId(), ProcessConstant.INSTANCE_CLOSED).getTotal());
+        res.setStartedCount(buildStartedPage(pageReq, emptyQuery, currentPersonId, null).getTotal());
+        res.setClosedCount(buildStartedPage(pageReq, emptyQuery, currentPersonId, ProcessConstant.INSTANCE_CLOSED).getTotal());
         return res;
     }
 
@@ -111,7 +116,8 @@ public class ApprovalServiceImpl implements ApprovalService {
     public SimplePageRes<ApprovalTaskRes> listTasks(SimplePageReq<ApprovalTaskQueryReq> req) {
         req.pageDefault();
         CurrentUser currentUser = requireCurrentUser();
-        PersonDetailRes person = getCurrentPerson(currentUser.getUserId());
+        Long currentPersonId = requirePersonIdByAccountId(currentUser.getUserId());
+        PersonDetailRes person = getPersonByPersonId(currentPersonId);
         ApprovalTaskQueryReq query = req.getQueryParam() == null ? new ApprovalTaskQueryReq() : req.getQueryParam();
         // 前端 keyword 映射到 instanceTitle 模糊查询
         if (query.getKeyword() != null && !query.getKeyword().isBlank()
@@ -129,10 +135,10 @@ public class ApprovalServiceImpl implements ApprovalService {
             return buildDonePage(req, query, person);
         } else if (ProcessConstant.DIRECTION_START.equalsIgnoreCase(tab)) {
             // 我发起：全部实例
-            return buildStartedPage(req, query, currentUser.getUserId(), null);
+            return buildStartedPage(req, query, currentPersonId, null);
         } else {
             // 我关闭：仅已关闭实例
-            return buildStartedPage(req, query, currentUser.getUserId(), ProcessConstant.INSTANCE_CLOSED);
+            return buildStartedPage(req, query, currentPersonId, ProcessConstant.INSTANCE_CLOSED);
         }
     }
 
@@ -142,6 +148,28 @@ public class ApprovalServiceImpl implements ApprovalService {
         if (task == null) {
             throw new RuntimeException("任务不存在");
         }
+        return buildDetail(task, task.getInstanceId());
+    }
+    
+    @Override
+    public ApprovalDetailRes detailByInstance(Long instanceId) {
+        WfInstance instance = instanceMapper.selectById(instanceId);
+        if (instance == null) {
+            throw new RuntimeException("流程实例不存在");
+        }
+        WfTask task = taskMapper.selectOne(
+                new LambdaQueryWrapper<WfTask>()
+                        .eq(WfTask::getInstanceId, instanceId)
+                        .orderByDesc(WfTask::getTaskId)
+                        .last("limit 1")
+        );
+        if (task == null) {
+            throw new RuntimeException("流程任务不存在");
+        }
+        return buildDetail(task, instanceId);
+    }
+    
+    private ApprovalDetailRes buildDetail(WfTask task, Long instanceId) {
         WfInstance instance = instanceMapper.selectById(task.getInstanceId());
         if (instance == null) {
             throw new RuntimeException("流程实例不存在");
@@ -149,9 +177,10 @@ public class ApprovalServiceImpl implements ApprovalService {
         WfNodeDefinition node = nodeDefinitionMapper.selectById(task.getNodeId());
 
         WfProcessDefinition definition = processDefinitionMapper.selectById(instance.getProcDefId());
-        ProcessBusinessDriver handler= driverRegistry.route(definition.getBusType(), definition.getProcCode());
+        ProcessBusinessDriver<?> handler = driverRegistry.route(definition.getBusType(), definition.getProcCode());
         //获取业务数据
-        Object businessData = handler.getBusinessData(new BusParamBase(instance.getBusId()));
+        @SuppressWarnings("unchecked")
+        Object businessData = ((ProcessBusinessDriver<BusParamBase>) handler).getBusinessData(new BusParamBase(instance.getBusId()));
 
         ApprovalDetailRes res = new ApprovalDetailRes();
         res.setTaskId(task.getTaskId());
@@ -161,8 +190,9 @@ public class ApprovalServiceImpl implements ApprovalService {
         res.setStatus(instance.getStatus());
         res.setCurrentNode(node == null ? "-" : node.getNodeName());
         res.setStarterId(instance.getStarterId());
+        res.setStarterName(resolvePersonName(instance.getStarterId()));
         res.setBusinessData(businessData);
-        res.setApprovalHistory(history(taskId));
+        res.setApprovalHistory(historyByInstanceId(instanceId));
         res.setAttachments(listAttachments(task.getTaskId()));
         res.setTitle(instance.getTitle());
         return res;
@@ -173,12 +203,17 @@ public class ApprovalServiceImpl implements ApprovalService {
         // 1. 获取基础任务信息
         WfTask currentTask = taskMapper.selectById(taskId);
         if (currentTask == null) return List.of();
+        return historyByInstanceId(currentTask.getInstanceId());
+    }
+    
+    private List<ApprovalHistoryRes> historyByInstanceId(Long instanceId) {
+        if (instanceId == null) return List.of();
 
         // 2. 一次性查出该流程实例下所有的任务记录（包含已办、驳回、待办）
         // 按时间升序，这样返回给前端的就是一个完整的审批链路
         List<WfTask> allTasks = taskMapper.selectList(
                 new LambdaQueryWrapper<WfTask>()
-                        .eq(WfTask::getInstanceId, currentTask.getInstanceId())
+                        .eq(WfTask::getInstanceId, instanceId)
                         .orderByAsc(WfTask::getCreateTime)
         );
         if (allTasks.isEmpty()) return List.of();
@@ -205,6 +240,11 @@ public class ApprovalServiceImpl implements ApprovalService {
         }
 
         // 5. 组装结果：保留每一条任务记录
+        Set<Long> handlerIds = allTasks.stream()
+                .map(WfTask::getHandlerId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, String> personNameMap = batchQueryPersonName(handlerIds);
         Map<Long, String> finalNodeMap = nodeMap;
         return allTasks.stream().map(taskItem -> {
             ApprovalHistoryRes res = new ApprovalHistoryRes();
@@ -213,6 +253,8 @@ public class ApprovalServiceImpl implements ApprovalService {
             // 核心：即便同一个节点 nodeId 出现了多次，
             // 这里依然能通过 Map 拿到它对应的节点名称
             res.setNodeName(finalNodeMap.getOrDefault(taskItem.getNodeId(), "-"));
+            res.setHandlerName(personNameMap.getOrDefault(taskItem.getHandlerId(), "-"));
+            res.setActionLabel(resolveActionLabel(taskItem.getAction(), taskItem.getIsDone()));
 
             // 注意：建议在 ApprovalHistoryRes 中保留 taskItem 的审批意见、处理结果等字段
             // 这样前端才能区分哪一条是“驳回”，哪一条是“通过”
@@ -282,11 +324,12 @@ public class ApprovalServiceImpl implements ApprovalService {
     @Transactional
     public void forceClose(ForceCloseReq req) {
         CurrentUser currentUser = requireCurrentUser();
+        Long currentPersonId = requirePersonIdByAccountId(currentUser.getUserId());
         WfInstance instance = instanceMapper.selectById(req.getInstanceId());
         if (instance == null) {
             throw new RuntimeException("实例不存在");
         }
-        if (!Objects.equals(instance.getStarterId(), currentUser.getUserId())) {
+        if (!Objects.equals(instance.getStarterId(), currentPersonId)) {
             throw new RuntimeException("仅发起人可强制关闭");
         }
         // 仅审批中的实例可被发起人强制关闭
@@ -298,7 +341,7 @@ public class ApprovalServiceImpl implements ApprovalService {
         LocalDateTime now = LocalDateTime.now();
         instance.setStatus(ProcessConstant.INSTANCE_CLOSED);
         instance.setEndTime(now);
-        instance.setClosedBy(currentUser.getUserId());
+        instance.setClosedBy(currentPersonId);
         instance.setCloseReason(req.getReason());
         instanceMapper.updateById(instance);
 
@@ -309,7 +352,7 @@ public class ApprovalServiceImpl implements ApprovalService {
                         .eq(WfTask::getIsDone, 0)
                         .set(WfTask::getIsDone, 1)
                         .set(WfTask::getAction, ProcessConstant.ACTION_CLOSE)
-                        .set(WfTask::getHandlerId, currentUser.getUserId())
+                        .set(WfTask::getHandlerId, currentPersonId)
                         .set(WfTask::getOpinion, req.getReason())
                         .set(WfTask::getFinishTime, now)
         );
@@ -317,12 +360,15 @@ public class ApprovalServiceImpl implements ApprovalService {
 
     private void doHandle(Long taskId, String action, String comments, List<ApprovalActionReq.AttachmentItem> attachments) {
         CurrentUser currentUser = requireCurrentUser();
-        PersonDetailRes person = getCurrentPerson(currentUser.getUserId());
+        Long currentPersonId = requirePersonIdByAccountId(currentUser.getUserId());
 
         // 一次查询下沉到 XML：task + instance，条件 is_done=0 且 status=APPROVING
         TaskHandleContextDTO ctx = taskMapper.selectTaskHandleContext(taskId);
         if (ctx == null) {
             throw new RuntimeException("任务不存在或当前不可处理");
+        }
+        if (ctx.getCandidateId() == null || !Objects.equals(ctx.getCandidateId().trim(), String.valueOf(currentPersonId))) {
+            throw new RuntimeException("当前登录人不是该审批任务候选人，禁止操作");
         }
         WfTask task = buildTaskFromHandleContext(ctx);
         WfInstance instance = buildInstanceFromHandleContext(ctx);
@@ -333,7 +379,7 @@ public class ApprovalServiceImpl implements ApprovalService {
         task.setIsDone(1);
         task.setAction(action);
         task.setOpinion(comments);
-        task.setHandlerId(currentUser.getUserId());
+        task.setHandlerId(currentPersonId);
         task.setFinishTime(now);
         taskMapper.updateById(task);
         saveAttachments(task.getTaskId(), attachments, currentUser.getUserId());
@@ -359,7 +405,7 @@ public class ApprovalServiceImpl implements ApprovalService {
             // 拒绝：直接关闭实例，不再流转
             instance.setStatus(ProcessConstant.INSTANCE_REJECTED);
             instance.setEndTime(now);
-            instance.setClosedBy(currentUser.getUserId());
+            instance.setClosedBy(currentPersonId);
             instance.setCloseReason(comments);
             instanceMapper.updateById(instance);
             return;
@@ -374,7 +420,7 @@ public class ApprovalServiceImpl implements ApprovalService {
             if (shouldClose) {
                 instance.setStatus(ProcessConstant.INSTANCE_CLOSED);
                 instance.setEndTime(now);
-                instance.setClosedBy(currentUser.getUserId());
+                instance.setClosedBy(currentPersonId);
                 instance.setCloseReason(comments);
                 instanceMapper.updateById(instance);
                 return;
@@ -456,7 +502,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     }
 
     /**
-     * 待办任务真分页（candidate_id 绑定人员ID）
+     * 待办任务（candidate_id 绑定人员ID）
      */
     private SimplePageRes<ApprovalTaskRes> buildTodoPage(SimplePageReq<ApprovalTaskQueryReq> req,
                                                          ApprovalTaskQueryReq query, PersonDetailRes person) {
@@ -605,32 +651,6 @@ public class ApprovalServiceImpl implements ApprovalService {
         }).toList();
     }
 
-    private ApprovalTaskRes toTaskRes(WfTask task) {
-        ApprovalTaskRes row = new ApprovalTaskRes();
-        row.setTaskId(task.getTaskId());
-        row.setInstanceId(task.getInstanceId());
-        row.setIsDone(task.getIsDone());
-
-        WfInstance instance = instanceMapper.selectById(task.getInstanceId());
-        if (instance != null) {
-            row.setBusId(instance.getBusId());
-            row.setStarterId(instance.getStarterId());
-            row.setStartTime(instance.getStartTime());
-            row.setStatus(instance.getStatus());
-            row.setTitle(instance.getTitle());
-            WfProcessDefinition definition = processDefinitionMapper.selectById(instance.getProcDefId());
-            if (definition != null) {
-                row.setBusType(definition.getBusType());
-
-            }
-        }
-        WfNodeDefinition node = nodeDefinitionMapper.selectById(task.getNodeId());
-        row.setCurrentNode(node == null ? "-" : node.getNodeName());
-        return row;
-    }
-
-
-
     private WfProcessDefinition resolveDefinition(StartProcessReq req) {
         if(req==null||req.getBusType().isBlank()){
             throw new RuntimeException("流程类型不存在");
@@ -711,13 +731,87 @@ public class ApprovalServiceImpl implements ApprovalService {
         return currentUser;
     }
 
-    private PersonDetailRes getCurrentPerson(Long userId) {
+    /**
+     * 通过当前账号ID解析人员ID，确保流程引擎只落人员ID。
+     */
+    private Long requirePersonIdByAccountId(Long accountId) {
+        ApiResponse<AccountDetailRes> resp = accountService.getAccountById(accountId);
+        AccountDetailRes account = (resp != null && resp.isSuccess()) ? resp.getData() : null;
+        if (account == null || account.getPersonId() == null) {
+            throw new RuntimeException("当前账号未绑定人员，无法发起/办理流程");
+        }
+        return account.getPersonId();
+    }
+
+    private PersonDetailRes getPersonByPersonId(Long personId) {
         try {
-            ApiResponse<PersonDetailRes> resp = personService.getPersonById(userId);
+            ApiResponse<PersonDetailRes> resp = personService.getPersonById(personId);
             return (resp != null && resp.isSuccess()) ? resp.getData() : null;
         } catch (Exception ex) {
             return null;
         }
+    }
+    
+    private String resolvePersonName(Long personId) {
+        if (personId == null) {
+            return "-";
+        }
+        PersonDetailRes person = getPersonByPersonId(personId);
+        if (person == null || person.getPersonName() == null || person.getPersonName().isBlank()) {
+            return "-";
+        }
+        return person.getPersonName();
+    }
+    
+    private Map<Long, String> batchQueryPersonName(Set<Long> personIds) {
+        if (personIds == null || personIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            Map<Long, PersonDetailRes> personMap = personService.batchGetPersonByIds(new ArrayList<>(personIds));
+            if (personMap == null || personMap.isEmpty()) {
+                return Map.of();
+            }
+            return personMap.entrySet().stream()
+                    .filter(e -> e.getKey() != null)
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> {
+                                PersonDetailRes p = e.getValue();
+                                String name = p == null ? null : p.getPersonName();
+                                return (name == null || name.isBlank()) ? "-" : name;
+                            },
+                            (a, b) -> a
+                    ));
+        } catch (Exception ex) {
+            return Map.of();
+        }
+    }
+    
+    private String resolveActionLabel(String action, Integer isDone) {
+        if (action == null || action.isBlank()) {
+            return "-";
+        }
+        String act = action.trim().toUpperCase();
+        if (ProcessConstant.ACTION_AGREE.equals(act)) {
+            return "通过";
+        }
+        if (ProcessConstant.ACTION_REJECT.equals(act)) {
+            return "不同意";
+        }
+        if (ProcessConstant.ACTION_RETURN.equals(act)) {
+            return "驳回";
+        }
+        if (ProcessConstant.ACTION_CLOSE.equals(act)) {
+            return "关闭";
+        }
+        if (ProcessConstant.ACTION_APPROVE.equals(act)) {
+            return Integer.valueOf(1).equals(isDone) ? "已提交" : "审批中";
+        }
+        if (ProcessConstant.ACTION_CREATE.equals(act)) {
+            return "创建";
+        }
+        return act;
     }
 
 

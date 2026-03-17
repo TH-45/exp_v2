@@ -10,7 +10,6 @@ import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.service.annotation.DeleteExchange;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
@@ -24,11 +23,7 @@ public interface PersonService {
      * 分页查询人员列表
      */
     @PostExchange("/list")
-    SimplePageRes<PersonInfoRes> queryPersonInfo(SimplePageReq<QueryPersonReq> personReq);
-
-    @PostExchange("/update-status")
-    void updatePersonStatus(@RequestParam("personId") Long personId, @RequestParam("status") String status);
-
+    ApiResponse<SimplePageRes<PersonInfoRes>> queryPersonInfo(@RequestBody SimplePageReq<QueryPersonReq> personReq);
 
     /**
      * 业务接口-批量查询组织的部门负责人/人员信息
@@ -77,30 +72,30 @@ public interface PersonService {
     /**
      * 删除人员
      */
-    @DeleteExchange("/delete")
-    void deletePerson(@RequestParam("personId") Long personId);
+    @PostExchange("/delete")
+    void deletePerson(@RequestBody DeletePersonReq req);
 
     /**
      * 批量删除人员
      */
-    @PostExchange("/batch-delete")
+    @PostExchange("/batchDelete")
     void batchDeletePersons(@RequestBody BatchDeletePersonReq req);
 
     /**
      * 更改人员状态
      */
-    @PostExchange("/update-status-by-req")
+    @PostExchange("/status")
     PersonDetailRes updatePersonStatus(@RequestBody PersonStatusReq req);
 
     /**
      * 批量更改人员状态
      */
-    @PostExchange("/batch-update-status")
+    @PostExchange("/batchStatus")
     void batchUpdatePersonStatus(@RequestBody BatchPersonStatusReq req);
 
     /**
      * 检查人员工号是否存在
      */
-    @GetExchange("/check-code-exists")
+    @GetExchange("/checkPersonCode")
     boolean checkPersonCodeExists(@RequestParam("personCode") String personCode, @RequestParam(value = "excludePersonId", required = false) Long excludePersonId);
 }

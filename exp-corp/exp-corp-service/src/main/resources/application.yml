@@ -46,3 +46,11 @@ logging:
     root: info
     com.exp: debug
 
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath*:mapper/*.xml
+  # 使用数据库自增主键，避免全局默认的雪花算法覆盖实体上的 IdType.AUTO
+  global-config:
+    db-config:
+      id-type: auto

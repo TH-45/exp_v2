@@ -15,7 +15,7 @@
               <el-button type="primary" size="small" :loading="saving" @click="handleSave">保存</el-button>
               <el-button size="small" :loading="submitting" @click="handleSubmitApproval">提交审批</el-button>
             </template>
-            <template v-else-if="mode === 'approval'">
+            <template v-else-if="canOperateApproval">
               <ApprovalActionBar @approve="openApprovalDialog" @reject="openRejectDialog" />
             </template>
             <template v-else-if="mode === 'sign'">
@@ -31,18 +31,25 @@
           <div class="section-title">基本信息</div>
           <div class="form-grid">
             <el-form-item label="合同编号" required>
-              <el-input v-model="form.contractCode" placeholder="请输入合同编号" :readonly="isReadonly" size="small" />
+              <el-input v-model="form.contractCode" placeholder="请输入合同编号" :readonly="isReadonly" size="small" style="width: 80%"/>
             </el-form-item>
             <el-form-item label="合同名称" required>
-              <el-input v-model="form.contractName" placeholder="请输入合同名称" :readonly="isReadonly" size="small" />
+              <el-input v-model="form.contractName" placeholder="请输入合同名称" :readonly="isReadonly" size="small" style="width: 80%"/>
             </el-form-item>
             <el-form-item label="合同类型" required>
-              <el-select v-model="form.contractType" placeholder="请选择" clearable style="width: 100%" size="small" :disabled="isReadonly">
+              <el-select v-model="form.contractType" placeholder="请选择" clearable style="width: 80%" size="small" :disabled="isReadonly">
                 <el-option v-for="opt in contractTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
               </el-select>
             </el-form-item>
             <el-form-item label="合同类别" required>
-              <el-select v-model="form.contractCategory" placeholder="请选择" clearable style="width: 100%" size="small" :disabled="isReadonly">
+              <el-select
+                v-model="form.contractCategory"
+                placeholder="请选择"
+                clearable
+                style="width: 80%"
+                size="small"
+                :disabled="isReadonly || isProcessCategoryLocked"
+              >
                 <el-option v-for="opt in contractCategoryOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
               </el-select>
             </el-form-item>
@@ -112,7 +119,7 @@
                 value-format="YYYY-MM-DD"
                 size="small"
                 :disabled="isReadonly"
-                :disabled-date="(d) => disabledDateForSign(d, null)"
+                :disabled-date="(d: Date) => disabledDateForSign(d, null)"
               />
             </el-form-item>
             <el-form-item label="生效日期" required class="date-field">
@@ -122,7 +129,7 @@
                 value-format="YYYY-MM-DD"
                 size="small"
                 :disabled="isReadonly"
-                :disabled-date="(d) => disabledDateForEffective(d, form.signDate)"
+                :disabled-date="(d: Date) => disabledDateForEffective(d, form.signDate)"
               />
             </el-form-item>
             <el-form-item label="结束日期" class="date-field">
@@ -132,7 +139,7 @@
                 value-format="YYYY-MM-DD"
                 size="small"
                 :disabled="isReadonly"
-                :disabled-date="(d) => disabledDateForEnd(d, form.effectiveDate)"
+                :disabled-date="(d: Date) => disabledDateForEnd(d, form.effectiveDate)"
               />
             </el-form-item>
           </div>
@@ -237,7 +244,7 @@ import {
   type UpdateContractReq,
   type ContractStatus,
 } from '@/api/contracts/contract';
-import { approveTask, rejectTask, listApprovalTasks } from '@/api/approval';
+import { approveTask, disagreeTask, returnTask } from '@/api/approval';
 import { uploadBiddingAttachments, type CreateAttachmentBizReq } from '@/api/bidding/attachments';
 import { listDictOptions, type DictOption } from '@/api/system/dict';
 import type { CompanySelectorValue } from '@/api/enterprise/company';
@@ -261,6 +268,8 @@ const contractId = computed(() => {
   const id = route.params.contractId;
   return id && id !== 'create' ? Number(id) : undefined;
 });
+const startMode = computed(() => String(route.query.startMode || '').trim());
+const startProcCode = computed(() => String(route.query.startProcCode || '').trim().toUpperCase());
 
 const loading = ref(false);
 const saving = ref(false);
@@ -319,10 +328,18 @@ const mode = computed<'draft' | 'approval' | 'sign'>(() => {
   return 'draft';
 });
 
-const isReadonly = computed(() => mode.value !== 'draft');
+const PROCESS_LOCKED_CONTRACT_CATEGORY_CODES = new Set(['CONTRACT_FUND_OUT', 'CONTRACT_FUND_IN']);
+const isProcessCategoryLocked = computed(
+  () => startMode.value === 'process-start' && PROCESS_LOCKED_CONTRACT_CATEGORY_CODES.has(startProcCode.value)
+);
+
+const isTodoEntry = computed(() => String(route.query.from || '').toLowerCase() === 'todo');
+const canOperateApproval = computed(() => mode.value === 'approval' && isTodoEntry.value);
+const isReadonly = computed(() => mode.value !== 'draft' || isTodoEntry.value);
 
 const pageTitle = computed(() => {
-  if (mode.value === 'approval') return '合同审批';
+  if (canOperateApproval.value) return '合同审批';
+  if (mode.value === 'approval') return '合同详情';
   if (mode.value === 'sign') return '合同拟签';
   return contractId.value ? '合同起草' : '新增合同';
 });
@@ -423,6 +440,12 @@ function statusTagType(s?: ContractStatus) {
   return 'info';
 }
 
+function applyProcessCategoryPreset() {
+  if (!isProcessCategoryLocked.value) return;
+  // 约定：字典 value 与 procCode 一致，直接写死为流程编码
+  form.contractCategory = startProcCode.value;
+}
+
 async function loadDictOptions() {
   for (const code of ['Contract_Type', 'contract_type']) {
     try {
@@ -482,23 +505,11 @@ async function loadDictOptions() {
 }
 
 async function resolveTaskId(overrideId?: number) {
-  if (currentTaskId.value) return;
+  const taskId = Number(route.query.taskId || 0);
+  currentTaskId.value = taskId > 0 ? taskId : undefined;
   const id = overrideId ?? contractId.value;
-  if (!id || detail.status !== 'UNDER_REVIEW') return;
-  try {
-    const res = await listApprovalTasks({
-      tab: 'todo',
-      pageNum: 1,
-      pageSize: 20,
-      keyword: String(id),
-    });
-    const task = (res?.list ?? []).find(
-      (t) => t.busId === String(id) && t.isDone === 0
-    );
-    if (task) currentTaskId.value = task.taskId;
-  } catch {
-    // ignore
-  }
+  if (!id || !canOperateApproval.value || currentTaskId.value) return;
+  ElMessage.warning('缺少任务ID，请从审批/待办中心进入办理');
 }
 
 async function fetchDetail(overrideId?: number) {
@@ -507,34 +518,34 @@ async function fetchDetail(overrideId?: number) {
   loading.value = true;
   try {
     const res = await getContractDetail(id);
+    const raw = res as unknown as Record<string, unknown>;
     Object.assign(detail, res);
-    form.contractCode = res.contractCode || '';
-    form.contractName = res.contractName || '';
-    form.contractType = res.contractType || '';
-    form.contractCategory = res.contractCategory || '';
-    form.project = res.projectId && (res as { projectName?: string }).projectName
-      ? { projectId: Number(res.projectId), projectName: (res as { projectName?: string }).projectName }
+    form.contractCode = String(raw.contractCode ?? '');
+    form.contractName = String(raw.contractName ?? '');
+    form.contractType = String(raw.contractType ?? '');
+    form.contractCategory = String(raw.contractCategory ?? '');
+    form.project = raw.projectId && raw.projectName
+      ? { projectId: Number(raw.projectId), projectName: String(raw.projectName || '') }
       : undefined;
-    form.purchaser = res.purchaserId && (res as { purchaserName?: string }).purchaserName
-      ? { companyId: Number(res.purchaserId), companyName: (res as { purchaserName?: string }).purchaserName }
+    form.purchaser = raw.purchaserId && raw.purchaserName
+      ? { companyId: Number(raw.purchaserId), companyName: String(raw.purchaserName || '') }
       : undefined;
-    form.supplier = res.supplierId && (res as { supplierName?: string }).supplierName
-      ? { companyId: Number(res.supplierId), companyName: (res as { supplierName?: string }).supplierName }
+    form.supplier = raw.supplierId && raw.supplierName
+      ? { companyId: Number(raw.supplierId), companyName: String(raw.supplierName || '') }
       : undefined;
-    form.amount = Number((res.amountTotal ?? (res as { amount?: number }).amount ?? 0)) / 10000 || 0;
-    form.amountWithoutTax = res.amountWithoutTax != null ? Number(res.amountWithoutTax) / 10000 : undefined;
-    const taxPct = res.taxRateDefault != null ? Number(res.taxRateDefault) * 100 : undefined;
+    form.amount = Number(raw.amountTotal ?? raw.amount ?? 0) / 10000 || 0;
+    form.amountWithoutTax = raw.amountWithoutTax != null ? Number(raw.amountWithoutTax) / 10000 : undefined;
+    const taxPct = raw.taxRateDefault != null ? Number(raw.taxRateDefault) * 100 : undefined;
     form.taxRate = taxPct != null ? String(Math.round(taxPct * 100) / 100) : undefined;
     form.isTaxIncluded = !!form.taxRate;
-    form.currency = (res as { currency?: string }).currency || 'CNY';
-    form.signDate = (res as { signDate?: string }).signDate || '';
-    form.effectiveDate = (res as { effectiveDate?: string }).effectiveDate || '';
-    form.endDate = (res as { endDate?: string }).endDate || '';
-    form.payTerms = (res as { payTerms?: string }).payTerms || '';
-    form.settleMode = (res as { settleMode?: string }).settleMode || '';
-    form.remark = (res as { remark?: string }).remark || '';
+    form.currency = String(raw.currency ?? 'CNY');
+    form.signDate = String(raw.signDate ?? '');
+    form.effectiveDate = String(raw.effectiveDate ?? '');
+    form.endDate = String(raw.endDate ?? '');
+    form.payTerms = String(raw.payTerms ?? '');
+    form.settleMode = String(raw.settleMode ?? '');
+    form.remark = String(raw.remark ?? '');
     // 业务员回显：兼容 camelCase / snake_case，确保 personId 为 number 类型
-    const raw = res as Record<string, unknown>;
     const salesmanPersonId = raw.salesmanPersonId ?? raw.salesman_person_id;
     const salesmanName = raw.salesmanName ?? raw.salesman_name;
     const sid = salesmanPersonId != null && salesmanPersonId !== '' ? Number(salesmanPersonId) : undefined;
@@ -575,13 +586,21 @@ function openUnsignDialog() {
   unsignDialogVisible.value = true;
 }
 
-async function handleApprovalConfirm(payload: { taskId: number; comments: string }) {
+async function handleApprovalConfirm(payload: { taskId: number; action: 'AGREE' | 'REJECT'; comments: string }) {
   try {
-    await approveTask({ taskId: payload.taskId, comments: payload.comments });
+    if (payload.action === 'REJECT' && !payload.comments.trim()) {
+      ElMessage.warning('不同意时审批意见不能为空');
+      return;
+    }
+    if (payload.action === 'REJECT') {
+      await disagreeTask({ taskId: payload.taskId, comments: payload.comments });
+    } else {
+      await approveTask({ taskId: payload.taskId, comments: payload.comments });
+    }
     ElMessage.success('流转成功');
     await fetchDetail();
     if (detail.status !== 'UNDER_REVIEW' && detail.status !== 'PENDING_SIGN') {
-      router.push('/contracts/contract');
+      router.push(isTodoEntry.value ? '/approval' : '/contracts/contract');
     }
   } catch (e) {
     ElMessage.error((e as Error)?.message || '审批失败');
@@ -590,10 +609,10 @@ async function handleApprovalConfirm(payload: { taskId: number; comments: string
 
 async function handleRejectConfirm(payload: { taskId: number; comments: string }) {
   try {
-    await rejectTask({ taskId: payload.taskId, comments: payload.comments });
+    await returnTask({ taskId: payload.taskId, comments: payload.comments });
     ElMessage.success('驳回成功');
     await fetchDetail();
-    router.push('/contracts/contract');
+    router.push('/approval');
   } catch (e) {
     ElMessage.error((e as Error)?.message || '驳回失败');
   }
@@ -894,11 +913,12 @@ async function handleSubmitApproval() {
 }
 
 function goBack() {
-  router.push('/contracts/contract');
+  router.push(isTodoEntry.value ? '/approval' : '/contracts/contract');
 }
 
 onMounted(async () => {
   await loadDictOptions();
+  applyProcessCategoryPreset();
   currentTaskId.value = Number(route.query.taskId) || undefined;
   if (contractId.value) {
     await fetchDetail();
@@ -908,6 +928,10 @@ onMounted(async () => {
 watch(
   () => route.params.contractId,
   () => fetchDetail()
+);
+watch(
+  () => route.query.startProcCode,
+  () => applyProcessCategoryPreset()
 );
 </script>
 
@@ -990,6 +1014,7 @@ watch(
 .compact-layout .form-grid .selector-field :deep(.el-input),
 .compact-layout .form-grid .selector-field :deep(.selector-input) {
   max-width: 160px;
+  max-height: 25px;
 }
 
 /* 金额与日期：金额类字段缩短 */
@@ -1017,5 +1042,11 @@ watch(
 
 .readonly-text {
   color: var(--el-text-color-regular);
+}
+.field-tip {
+  margin-top: 4px;
+  color: var(--el-color-warning);
+  font-size: 12px;
+  line-height: 1.2;
 }
 </style>

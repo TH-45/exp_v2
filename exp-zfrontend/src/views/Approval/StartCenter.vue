@@ -69,13 +69,12 @@ async function loadData() {
 }
 
 function goCreate(def: ProcessDefinition) {
-  const entry = findStartEntry(def.busType);
-  if (!entry) {
-    ElMessage.warning(`业务类型 ${def.busType} 暂未配置创建入口`);
+  if (!def.busType || !def.procCode) {
+    ElMessage.warning('流程定义缺少 busType 或 procCode，无法发起');
     return;
   }
   router.push({
-    path: entry.createPath,
+    path: '/approval/start-dispatch',
     query: {
       startProcCode: def.procCode,
       startProcName: def.procName,

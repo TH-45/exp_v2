@@ -6,6 +6,7 @@ import jh.exp.common.core.res.SimplePageRes;
 import jh.exp.project.core.entity.Project;
 import jh.exp.project.core.entity.req.BatchDeleteByIdsReq;
 import jh.exp.project.core.entity.req.DeleteByIdReq;
+import jh.exp.project.core.entity.res.ProjectStatsRes;
 
 import java.util.List;
 import java.util.Map;
@@ -24,4 +25,6 @@ public interface ProjectInternalService {
     void batchDelete(BatchDeleteByIdsReq req);
 
     ApiResponse<Map<Long,Project>> batchGetProjectByIds(List<Long> projectIds);
+
+    ProjectStatsRes stats();
 }

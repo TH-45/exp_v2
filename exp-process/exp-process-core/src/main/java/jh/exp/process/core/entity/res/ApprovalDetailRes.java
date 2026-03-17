@@ -20,6 +20,8 @@ public class ApprovalDetailRes {
     private String currentNode;
     /** 发起人 ID */
     private Long starterId;
+    /** 发起人姓名 */
+    private String starterName;
     /** 业务数据 */
     private Object businessData;
     /** 审批历史列表 */

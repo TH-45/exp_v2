@@ -48,11 +48,10 @@ request.interceptors.response.use(
       res &&
       typeof res === 'object' &&
       'success' in res &&
-      'code' in res &&
-      'data' in res
+      'code' in res
     ) {
       if (res.success) {
-        return res.data;
+        return (res as ApiResponse<unknown>).data;
       }
       messageError(res.message || '请求失败');
       return Promise.reject(new Error(res.message || '请求失败'));

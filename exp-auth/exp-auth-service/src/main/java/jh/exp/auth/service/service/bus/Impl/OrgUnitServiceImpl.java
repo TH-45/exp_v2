@@ -140,6 +140,10 @@ public class OrgUnitServiceImpl implements OrgUnitService {
         // 创建组织实体
         OrgUnit orgUnit = new OrgUnit();
         BeanUtils.copyProperties(req, orgUnit);
+        // 负责人为选填：未传或非法值统一按空处理
+        if (orgUnit.getManagerPersonId() != null && orgUnit.getManagerPersonId() <= 0) {
+            orgUnit.setManagerPersonId(null);
+        }
         orgUnit.setStatus("ENABLED");
         if (orgUnit.getSortNo() == null) {
             orgUnit.setSortNo(0);
@@ -194,6 +198,10 @@ public class OrgUnitServiceImpl implements OrgUnitService {
         // 更新组织信息
         OrgUnit orgUnit = new OrgUnit();
         BeanUtils.copyProperties(req, orgUnit);
+        // 负责人为选填：未传或非法值统一按空处理
+        if (orgUnit.getManagerPersonId() != null && orgUnit.getManagerPersonId() <= 0) {
+            orgUnit.setManagerPersonId(null);
+        }
         orgUnit.setUpdatedTime(LocalDateTime.now());
 
         orgUnitMapper.updateById(orgUnit);

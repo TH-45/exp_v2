@@ -21,8 +21,21 @@
     </el-tabs>
 
     <el-form :inline="true" :model="query" class="search-bar" @submit.prevent>
-      <el-form-item label="关键词">
-        <el-input v-model="query.keyword" clearable placeholder="流程名/业务ID" style="width: 220px" />
+      <el-form-item label="流程实例ID">
+        <el-input v-model="query.instanceId" clearable placeholder="请输入流程实例ID" style="width: 180px" />
+      </el-form-item>
+      <el-form-item label="流程标题">
+        <el-input v-model="query.instanceTitle" clearable placeholder="请输入流程标题" style="width: 220px" />
+      </el-form-item>
+      <el-form-item label="业务类型">
+        <el-select v-model="query.busType" clearable placeholder="请选择业务类型" style="width: 180px">
+          <el-option v-for="opt in busTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="流程状态">
+        <el-select v-model="query.status" clearable placeholder="请选择流程状态" style="width: 150px">
+          <el-option v-for="opt in statusOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+        </el-select>
       </el-form-item>
       <el-form-item><el-button type="primary" @click="handleSearch">查询</el-button></el-form-item>
     </el-form>
@@ -39,7 +52,6 @@
             {{ query.tab === 'todo' ? '办理' : '查看' }}
           </el-button>
           <el-button v-if="query.tab === 'todo'" link type="success" @click="quickApprove(row)">同意</el-button>
-          <el-button v-if="query.tab === 'todo'" link type="danger" @click="quickReject(row)">驳回</el-button>
           <el-button v-if="query.tab === 'started' && row.status === 'RUNNING'" link type="warning" @click="openCloseDialog(row)">
             强制关闭
           </el-button>
@@ -111,26 +123,38 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { useRouter } from 'vue-router';
+import { listDictOptions, type DictOption } from '@/api/system/dict';
 import {
   approveTask,
   forceCloseInstance,
-  getApprovalDetail,
   getApprovalStats,
   listApprovalTasks,
-  rejectTask,
+  returnTask,
   type ApprovalDetail,
   type ApprovalStats,
   type ApprovalTask,
   type WorkbenchTab,
 } from '@/api/approval';
 
+const router = useRouter();
 const loading = ref(false);
 const tableData = ref<ApprovalTask[]>([]);
 const total = ref(0);
 const stats = reactive<ApprovalStats>({ todoCount: 0, doneCount: 0, startedCount: 0, closedCount: 0 });
+const busTypeOptions = ref<DictOption[]>([]);
+const statusOptions: Array<{ label: string; value: string }> = [
+  { label: '审批中', value: 'APPROVING' },
+  { label: '已完成', value: 'COMPLETED' },
+  { label: '已拒绝', value: 'REJECTED' },
+  { label: '已关闭', value: 'CLOSED' },
+];
 const query = reactive({
   tab: 'todo' as WorkbenchTab,
-  keyword: '',
+  instanceId: '',
+  instanceTitle: '',
+  busType: '',
+  status: '',
   pageNum: 1,
   pageSize: 10,
 });
@@ -144,6 +168,15 @@ const closeDialog = reactive({ visible: false, instanceId: 0, reason: '' });
 
 async function fetchStats() {
   Object.assign(stats, await getApprovalStats());
+}
+
+async function loadBusTypeOptions() {
+  try {
+    const res = await listDictOptions('Business_Type');
+    busTypeOptions.value = Array.isArray(res) ? res : (res as { data?: DictOption[] })?.data ?? [];
+  } catch {
+    busTypeOptions.value = [];
+  }
 }
 
 async function fetchList() {
@@ -168,12 +201,20 @@ async function handleSearch() {
 }
 
 async function openDetail(row: ApprovalTask) {
-  if (!row.taskId) {
-    ElMessage.warning('当前记录暂无任务详情');
+  const instanceId = Number(row.instanceId || 0);
+  if (!instanceId) {
+    ElMessage.warning('当前记录缺少流程实例ID');
     return;
   }
-  detailDialog.visible = true;
-  detailDialog.data = await getApprovalDetail(row.taskId);
+  await router.push({
+    path: `/approval/instance/${instanceId}`,
+    query: {
+      tab: query.tab,
+      taskId: row.taskId ? String(row.taskId) : '',
+      busType: String(row.busType || ''),
+      busId: String(row.busId || ''),
+    },
+  });
 }
 
 async function quickApprove(row: ApprovalTask) {
@@ -183,16 +224,6 @@ async function quickApprove(row: ApprovalTask) {
   }
   await approveTask({ taskId: row.taskId, comments: '同意' });
   ElMessage.success('已同意');
-  await refreshAll();
-}
-
-async function quickReject(row: ApprovalTask) {
-  if (!row.taskId) {
-    ElMessage.warning('当前记录暂无任务，无法驳回');
-    return;
-  }
-  await rejectTask({ taskId: row.taskId, comments: '驳回' });
-  ElMessage.success('已驳回');
   await refreshAll();
 }
 
@@ -211,7 +242,7 @@ async function handleReject() {
     ElMessage.warning('驳回意见不能为空');
     return;
   }
-  await rejectTask({ taskId: detailDialog.data.taskId, comments: actionForm.comments });
+  await returnTask({ taskId: detailDialog.data.taskId, comments: actionForm.comments });
   ElMessage.success('驳回成功');
   detailDialog.visible = false;
   actionForm.comments = '';
@@ -235,7 +266,10 @@ async function refreshAll() {
   await Promise.all([fetchStats(), fetchList()]);
 }
 
-onMounted(refreshAll);
+onMounted(async () => {
+  await loadBusTypeOptions();
+  await refreshAll();
+});
 </script>
 
 <style scoped lang="scss">

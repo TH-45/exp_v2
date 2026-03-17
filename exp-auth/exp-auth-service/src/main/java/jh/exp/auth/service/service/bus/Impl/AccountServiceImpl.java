@@ -25,8 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -39,22 +44,24 @@ public class AccountServiceImpl implements AccountService {
 //    private final PersonService personService;
 
     @Override
+    @Transactional
     public SimplePageRes<AccountListRes> queryAccountList(SimplePageReq<QueryAccountParam> req) {
-        // 创建分页对象
-        Page<AccountListRes> page = new Page<>(req.getPageNum(), req.getPageSize());
-
         QueryAccountParam queryParam = req.getQueryParam();
         // 如果前端没有传递查询参数，创建一个默认的空对象
         if (queryParam == null) {
             queryParam = new QueryAccountParam();
         }
 
-        // 使用MyBatis-Plus自动分页查询
-        IPage<AccountListRes> result = accountMapper.selectAccountList(page,
-                queryParam.getAccountName(),
-                queryParam.getPersonName(),
-                queryParam.getPersonCode(),
-                queryParam.getMobile());
+        IPage<AccountListRes> result = queryAccountPage(req, queryParam);
+
+        // 规则：查询列表时，若 INIT 账号对应人员不存在或已离职，则删除并重查当前页
+        if (!CollectionUtils.isEmpty(result.getRecords())) {
+            List<Long> invalidInitAccountIds = collectInvalidInitAccountIds(result.getRecords());
+            if (!CollectionUtils.isEmpty(invalidInitAccountIds)) {
+                accountMapper.deleteBatchIds(invalidInitAccountIds);
+                result = queryAccountPage(req, queryParam);
+            }
+        }
 
         // 转换为统一的响应格式
         SimplePageRes<AccountListRes> pageRes = new SimplePageRes<>();
@@ -63,6 +70,51 @@ public class AccountServiceImpl implements AccountService {
         pageRes.setPage(result.getCurrent());
         pageRes.setSize(result.getSize());
         return pageRes;
+    }
+
+    private IPage<AccountListRes> queryAccountPage(SimplePageReq<QueryAccountParam> req, QueryAccountParam queryParam) {
+        Page<AccountListRes> page = new Page<>(req.getPageNum(), req.getPageSize());
+        return accountMapper.selectAccountList(page,
+                queryParam.getAccountName(),
+                queryParam.getPersonName(),
+                queryParam.getPersonCode(),
+                queryParam.getMobile());
+    }
+
+    private List<Long> collectInvalidInitAccountIds(List<AccountListRes> records) {
+        Set<Long> initPersonIds = new HashSet<>();
+        List<Long> invalidAccountIds = new ArrayList<>();
+        for (AccountListRes row : records) {
+            if (!AuthConstant.INIT.equals(row.getStatus())) {
+                continue;
+            }
+            if (row.getPersonId() == null) {
+                invalidAccountIds.add(row.getAccountId());
+                continue;
+            }
+            initPersonIds.add(row.getPersonId());
+        }
+
+        if (initPersonIds.isEmpty()) {
+            return invalidAccountIds;
+        }
+
+        List<Person> personList = personMapper.selectBatchIds(initPersonIds);
+        Map<Long, String> personStatusMap = new HashMap<>();
+        for (Person person : personList) {
+            personStatusMap.put(person.getPersonId(), person.getStatus());
+        }
+
+        for (AccountListRes row : records) {
+            if (!AuthConstant.INIT.equals(row.getStatus()) || row.getPersonId() == null) {
+                continue;
+            }
+            String personStatus = personStatusMap.get(row.getPersonId());
+            if (personStatus == null || AuthConstant.LEAVE.equals(personStatus)) {
+                invalidAccountIds.add(row.getAccountId());
+            }
+        }
+        return invalidAccountIds;
     }
 
     @Override

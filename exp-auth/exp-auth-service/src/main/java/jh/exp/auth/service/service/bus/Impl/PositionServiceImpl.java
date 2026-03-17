@@ -11,11 +11,12 @@ import jh.exp.auth.core.entity.OrgPostRel;
 import jh.exp.auth.core.entity.OrgUnit;
 import jh.exp.auth.core.entity.Position;
 import jh.exp.auth.core.entity.req.*;
+import jh.exp.auth.core.entity.Account;
 import jh.exp.auth.core.entity.res.PositionDetailRes;
 import jh.exp.auth.core.entity.res.PositionListRes;
+import jh.exp.auth.core.mapper.AccountMapper;
 import jh.exp.auth.core.mapper.OrgUnitMapper;
 import jh.exp.auth.core.mapper.RoleMapper;
-import jh.exp.auth.service.service.bus.PersonService;
 import jh.exp.auth.service.service.bus.PositionService;
 
 
@@ -57,7 +58,7 @@ public class PositionServiceImpl implements PositionService {
     private  OrgUnitMapper orgUnitMapper;
 
     @Autowired
-    private PersonService  personService;
+    private AccountMapper accountMapper;
 
     @Autowired
     private RoleMapper roleMapper;
@@ -102,8 +103,15 @@ public class PositionServiceImpl implements PositionService {
         if (createdBy==null||createdBy==0){
             res.setCreatedByName("system");
         }else{
-            String accountName = personService.getPersonById(createdBy).getAccountName();
-            res.setCreatedByName(accountName);
+            // createdBy 存储的是账号ID，需按账号表查询创建人信息
+            Account creator = accountMapper.selectById(createdBy);
+            if (creator == null) {
+                throw new RuntimeException("创建人账号不存在");
+            }
+            String createdByName = StringUtils.hasText(creator.getAccountDisplay())
+                    ? creator.getAccountDisplay()
+                    : creator.getAccountName();
+            res.setCreatedByName(createdByName);
         }
 
         Long defaultRoleId = position.getDefaultRoleId();
@@ -345,6 +353,23 @@ public class PositionServiceImpl implements PositionService {
 
 
         return new SimplePageRes<>(iPage.getTotal(), iPage.getCurrent(), iPage.getSize(), iPage.getRecords());
+    }
+
+    @Override
+    public List<PositionListRes> querySiblingPositionsByPostId(Long postId) {
+        if (postId == null) {
+            return List.of();
+        }
+        // 只取岗位主组织关系，符合账号场景“同组织岗位”口径
+        OrgPostRel orgPostRel = orgPostRelMapper.selectOne(new LambdaQueryWrapper<OrgPostRel>()
+                .eq(OrgPostRel::getPostId, postId)
+                .eq(OrgPostRel::getIsPrimary, 1)
+                .eq(OrgPostRel::getStatus, CommonConstant.ENABLED_STATUS_STR)
+                .last("LIMIT 1"));
+        if (orgPostRel == null || orgPostRel.getOrgId() == null) {
+            return List.of();
+        }
+        return positionMapper.selectPositionListByOrg(orgPostRel.getOrgId(), CommonConstant.ENABLED_STATUS_STR);
     }
 
     @Override

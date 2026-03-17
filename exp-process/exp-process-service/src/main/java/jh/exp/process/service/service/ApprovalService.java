@@ -22,6 +22,11 @@ public interface ApprovalService {
     SimplePageRes<ApprovalTaskRes> listTasks(SimplePageReq<ApprovalTaskQueryReq> req);
 
     ApprovalDetailRes detail(Long taskId);
+    
+    /**
+     * 按流程实例查询详情（用于统一流程详情页）
+     */
+    ApprovalDetailRes detailByInstance(Long instanceId);
 
     List<ApprovalHistoryRes> history(Long taskId);
 

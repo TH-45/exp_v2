@@ -8,6 +8,18 @@ export interface OrgNode {
   children?: OrgNode[];
 }
 
+export interface OrgDetailVO {
+  orgId: number;
+  parentOrgId?: number;
+  orgCode: string;
+  orgName: string;
+  orgType?: string;
+  managerPersonId?: number;
+  managerName?: string;
+  status?: 'ENABLED' | 'DISABLED';
+  remark?: string;
+}
+
 export type PostStatus = 'ENABLED' | 'DISABLED';
 export type RelStatus = 'ENABLED' | 'DISABLED';
 
@@ -62,6 +74,11 @@ export function fetchOrgTree(params?: { orgCode?: string; orgName?: string }) {
   return request.get<OrgNode[], OrgNode[]>(`${BASE_ORG_POST}/tree`, { params });
 }
 
+// 组织详情
+export function getOrgDetail(orgId: number) {
+  return request.get<OrgDetailVO, OrgDetailVO>(`${BASE_ORG_POST}/detail`, { params: { orgId } });
+}
+
 // 查询某组织的岗位列表（关联信息）
 export function queryOrgPosts(
     input: PageQueryInput<{
@@ -83,6 +100,13 @@ export function queryOrgPosts(
   );
 }
 
+// 根据岗位ID查询同组织岗位（用于账号关联人员后加载岗位下拉）
+export function queryPostsByPostId(postId: number) {
+  return request.get<PostVO[], PostVO[]>(`${BASE_POST}/listByPostId`, {
+    params: { postId },
+  });
+}
+
 
 // 新增岗位字典
 export function createPost(data: Partial<PostVO>) {
@@ -92,6 +116,11 @@ export function createPost(data: Partial<PostVO>) {
 // 编辑岗位字典
 export function updatePost(data: Partial<PostVO>) {
   return request.post<PostVO, PostVO>(`${BASE_POST}/update`, data);
+}
+
+// 删除岗位（单删）
+export function deletePost(postId: number) {
+  return request.post<null, null>(`${BASE_POST}/delete`, { postId });
 }
 
 // 批量启用/停用岗位字典

@@ -250,12 +250,30 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'approval/instance/:instanceId',
+        name: 'ApprovalInstanceDetail',
+        component: () => import('@/views/Approval/InstanceDetail/index.vue'),
+        meta: {
+          title: '流程详情',
+          perms: ['approval:task:view'],
+        },
+      },
+      {
         path: 'approval/start-center',
         name: 'ApprovalStartCenter',
         component: () => import('@/views/Approval/StartCenter.vue'),
         meta: {
           title: '流程发起中心',
           icon: 'Grid',
+          perms: ['process:start:view'],
+        },
+      },
+      {
+        path: 'approval/start-dispatch',
+        name: 'ApprovalStartDispatch',
+        component: () => import('@/views/Approval/StartDispatch.vue'),
+        meta: {
+          title: '流程路由分发',
           perms: ['process:start:view'],
         },
       },
@@ -279,27 +297,6 @@ const routes: RouteRecordRaw[] = [
           title: '企业信息与工程项目',
           icon: 'OfficeBuilding',
           perms: ['corp:info:view'],
-        },
-      },
-      // 企业信息管理
-      {
-        path: 'enterprise/announcements',
-        name: 'CorpInfoAnnouncements',
-        component: () => import('@/views/enterprise/AnnouncementManagement.vue'),
-        meta: {
-          title: '制度与公告',
-          icon: 'Document',
-          perms: ['corp:announcement:view'],
-        },
-      },
-      {
-        path: 'enterprise/qualifications',
-        name: 'CorpInfoQualifications',
-        component: () => import('@/views/enterprise/QualificationManagement.vue'),
-        meta: {
-          title: '资质管理',
-          icon: 'Medal',
-          perms: ['corp:qualification:view'],
         },
       },
       {

@@ -70,6 +70,7 @@
         border
         style="width: 100%"
         :default-sort="{prop: 'createTime', order: 'descending'}"
+        @row-dblclick="handleRowDblClick"
       >
         <el-table-column prop="name" label="项目名称" min-width="200">
           <template #default="{ row }">
@@ -176,6 +177,7 @@
         v-model="editDialog.visible"
         :title="editDialog.isEdit ? '编辑项目' : '新建项目'"
         width="900px"
+        draggable
         destroy-on-close
       >
         <el-form
@@ -206,9 +208,9 @@
                 <el-select v-model="form.managerId" placeholder="选择项目负责人" style="width: 100%">
                   <el-option
                     v-for="user in availableUsers"
-                    :key="user.id"
-                    :label="user.name"
-                    :value="user.id"
+                    :key="user.personId"
+                    :label="user.personName"
+                    :value="user.personId"
                   />
                 </el-select>
               </el-form-item>
@@ -350,17 +352,40 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Plus, Download } from '@element-plus/icons-vue';
 import { hasPermission } from '@/utils/permission';
 import {
-  listProjects,
+  listProject,
   getProjectDetail,
   createProject,
   updateProject,
   deleteProject,
-  type ProjectVO
-} from '@/api/project';
+  type ProjectVO,
+  type ProjectCreateDTO,
+  type ProjectUpdateDTO,
+} from '@/api/corpProject/project';
+import { queryPersonList, type ExpPersonVO } from '@/api/system/person';
 
 const router = useRouter();
 const loading = ref(false);
 const saving = ref(false);
+
+type ProjectTableRow = {
+  id: number;
+  name: string;
+  code: string;
+  description?: string;
+  manager: string;
+  managerId?: number;
+  department: string;
+  startDate: string;
+  plannedEndDate: string;
+  status: string;
+  progress: number;
+  budget: number;
+  address: string;
+  clientName?: string;
+  contractAmount?: number;
+  createTime: string;
+  updateTime: string;
+};
 
 const query = reactive({
   keyword: '',
@@ -371,7 +396,7 @@ const query = reactive({
 });
 
 const dateRange = ref<string[]>([]);
-const tableData = ref<ProjectVO[]>([]);
+const tableData = ref<ProjectTableRow[]>([]);
 const total = ref(0);
 
 const editDialog = reactive({
@@ -385,7 +410,7 @@ const form = reactive({
   name: '',
   code: '',
   description: '',
-  managerId: '',
+  managerId: undefined as number | undefined,
   department: '',
   startDate: '',
   plannedEndDate: '',
@@ -400,96 +425,24 @@ const rules: FormRules = {
   name: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
   code: [{ required: true, message: '请输入项目编码', trigger: 'blur' }],
   managerId: [{ required: true, message: '请选择项目负责人', trigger: 'change' }],
-  department: [{ required: true, message: '请输入负责部门', trigger: 'blur' }],
   startDate: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
   plannedEndDate: [{ required: true, message: '请选择计划完成日期', trigger: 'change' }],
   budget: [{ required: true, message: '请输入项目预算', trigger: 'blur' }],
-  address: [{ required: true, message: '请输入项目地址', trigger: 'blur' }],
   status: [{ required: true, message: '请选择项目状态', trigger: 'change' }],
 };
 
 const detailDrawer = reactive({
   visible: false,
-  data: null as ProjectVO | null,
+  data: null as ProjectTableRow | null,
 });
 
-// 模拟用户数据（实际应该从API获取）
-const availableUsers = ref([
-  { id: 'user001', name: '张三' },
-  { id: 'user002', name: '李四' },
-  { id: 'user003', name: '王五' },
-  { id: 'user004', name: '赵六' },
-]);
+const availableUsers = ref<ExpPersonVO[]>([]);
 
 // 权限点
 const canView = computed(() => hasPermission('project:project:view'));
 const canCreate = computed(() => hasPermission('project:project:create'));
 const canUpdate = computed(() => hasPermission('project:project:update'));
 const canDelete = computed(() => hasPermission('project:project:delete'));
-
-// 模拟数据
-const mockProjects: ProjectVO[] = [
-  {
-    id: 'p001',
-    name: '某某大厦项目',
-    code: 'XMDS2024001',
-    description: '某某市中心商务大厦建设项目',
-    manager: '张三',
-    managerId: 'user001',
-    department: '工程部',
-    startDate: '2024-12-01',
-    plannedEndDate: '2025-11-30',
-    status: 'ONGOING',
-    progress: 75,
-    budget: 5000,
-    actualCost: 3200,
-    address: '某某市中心区',
-    clientName: '某某地产有限公司',
-    contractAmount: 4800,
-    createTime: '2024-11-01 10:00:00',
-    updateTime: '2025-01-05 14:30:00',
-  },
-  {
-    id: 'p002',
-    name: '商业广场项目',
-    code: 'SYGC2024002',
-    description: '某某商业广场扩建工程',
-    manager: '李四',
-    managerId: 'user002',
-    department: '工程部',
-    startDate: '2024-10-15',
-    plannedEndDate: '2025-09-30',
-    status: 'ONGOING',
-    progress: 45,
-    budget: 8000,
-    actualCost: 3600,
-    address: '某某市商业区',
-    clientName: '某某商业集团',
-    contractAmount: 7500,
-    createTime: '2024-09-15 09:00:00',
-    updateTime: '2025-01-03 16:20:00',
-  },
-  {
-    id: 'p003',
-    name: '住宅小区项目',
-    code: 'ZZXQ2024003',
-    description: '某某花园住宅小区建设',
-    manager: '王五',
-    managerId: 'user003',
-    department: '工程部',
-    startDate: '2024-08-01',
-    plannedEndDate: '2025-07-31',
-    status: 'COMPLETED',
-    progress: 100,
-    budget: 3000,
-    actualCost: 2950,
-    address: '某某市新区',
-    clientName: '某某房地产开发有限公司',
-    contractAmount: 2900,
-    createTime: '2024-07-01 08:30:00',
-    updateTime: '2025-01-01 17:45:00',
-  },
-];
 
 function getStatusLabel(status?: string) {
   const labels = {
@@ -525,22 +478,82 @@ function formatAmount(amount: number) {
   return new Intl.NumberFormat('zh-CN').format(amount);
 }
 
-async function fetchList() {
-  // 更新日期查询条件
-  if (dateRange.value && dateRange.value.length === 2) {
-    query.startDate = dateRange.value[0];
-    query.endDate = dateRange.value[1];
-  }
+function mapToTableRow(item: ProjectVO): ProjectTableRow {
+  return {
+    id: Number(item.projectId || 0),
+    name: item.projectName || '',
+    code: item.projectCode || '',
+    description: item.remark || '',
+    manager: item.managerName || '',
+    managerId: item.managerPersonId,
+    department: String(item.orgId || ''),
+    startDate: item.startDate || '',
+    plannedEndDate: item.planEndDate || '',
+    status: item.projectStatus || 'PLANNING',
+    progress: 0,
+    budget: Number(item.budgetAmount || 0),
+    address: '',
+    clientName: '',
+    contractAmount: 0,
+    createTime: item.createdTime || '',
+    updateTime: item.updatedTime || '',
+  };
+}
 
+function mapToCreateReq(): ProjectCreateDTO {
+  return {
+    projectCode: form.code,
+    projectName: form.name,
+    projectStatus: form.status,
+    managerPersonId: form.managerId,
+    startDate: form.startDate,
+    planEndDate: form.plannedEndDate,
+    budgetAmount: form.budget,
+    remark: form.description,
+  };
+}
+
+function mapToUpdateReq(): ProjectUpdateDTO {
+  return {
+    projectId: Number(form.id),
+    projectCode: form.code,
+    projectName: form.name,
+    projectStatus: form.status,
+    managerPersonId: form.managerId,
+    startDate: form.startDate,
+    planEndDate: form.plannedEndDate,
+    budgetAmount: form.budget,
+    remark: form.description,
+  };
+}
+
+async function loadAvailableUsers() {
+  try {
+    const res = await queryPersonList({ pageNum: 1, pageSize: 500 });
+    availableUsers.value = res.list || [];
+  } catch (e) {
+    availableUsers.value = [];
+  }
+}
+
+async function fetchList() {
   loading.value = true;
   try {
-    const res = await listProjects(query);
-    const list = (res.records || res.list || res.rows || []) as ProjectVO[];
-    tableData.value = list.length ? list : mockProjects;
-    total.value = Number(res.total ?? tableData.value.length) || 0;
+    const res = await listProject({
+      pageNum: query.page,
+      pageSize: query.pageSize,
+      projectName: query.keyword || undefined,
+      projectStatus: query.status || undefined,
+      managerName: query.manager || undefined,
+      startDateFrom: dateRange.value?.[0] || undefined,
+      startDateTo: dateRange.value?.[1] || undefined,
+    });
+    const list = (res.list || []) as ProjectVO[];
+    tableData.value = list.map(mapToTableRow);
+    total.value = Number(res.total ?? 0);
   } catch (e) {
-    tableData.value = mockProjects;
-    total.value = mockProjects.length;
+    tableData.value = [];
+    total.value = 0;
   } finally {
     loading.value = false;
   }
@@ -577,11 +590,22 @@ function openCreateDialog() {
   resetForm();
 }
 
-function openEditDialog(row: ProjectVO) {
+function openEditDialog(row: ProjectTableRow) {
   editDialog.isEdit = true;
   editDialog.visible = true;
-  Object.assign(form, row);
+  form.id = String(row.id);
+  form.name = row.name;
+  form.code = row.code;
+  form.description = row.description || '';
   form.managerId = row.managerId;
+  form.department = row.department || '';
+  form.startDate = row.startDate;
+  form.plannedEndDate = row.plannedEndDate;
+  form.budget = row.budget || 0;
+  form.address = row.address || '';
+  form.clientName = row.clientName || '';
+  form.contractAmount = Number(row.contractAmount || 0);
+  form.status = row.status || 'PLANNING';
 }
 
 function resetForm() {
@@ -589,7 +613,7 @@ function resetForm() {
   form.name = '';
   form.code = '';
   form.description = '';
-  form.managerId = '';
+  form.managerId = undefined;
   form.department = '';
   form.startDate = '';
   form.plannedEndDate = '';
@@ -608,41 +632,44 @@ async function submitForm() {
   saving.value = true;
   try {
     if (editDialog.isEdit) {
-      await updateProject(form.id, form);
+      await updateProject(mapToUpdateReq());
       ElMessage.success('编辑成功');
     } else {
-      await createProject(form);
+      await createProject(mapToCreateReq());
       ElMessage.success('创建成功');
     }
     editDialog.visible = false;
     fetchList();
   } catch (e) {
-    ElMessage.success(editDialog.isEdit ? '编辑成功（演示模式）' : '创建成功（演示模式）');
-    editDialog.visible = false;
-    fetchList();
+    ElMessage.error(editDialog.isEdit ? '编辑失败' : '创建失败');
   } finally {
     saving.value = false;
   }
 }
 
-function openDetail(row: ProjectVO) {
+async function openDetail(row: ProjectTableRow) {
   detailDrawer.visible = true;
-  detailDrawer.data = row;
+  try {
+    const detail = await getProjectDetail(row.id);
+    detailDrawer.data = mapToTableRow(detail);
+  } catch (e) {
+    detailDrawer.data = row;
+  }
 }
 
-function goToProjectMembers(row: ProjectVO) {
+function goToProjectMembers(row: ProjectTableRow) {
   router.push(`/corp-project/project-mgmt/members/${row.id}`);
 }
 
-function goToProjectProgress(row: ProjectVO) {
+function goToProjectProgress(row: ProjectTableRow) {
   router.push(`/corp-project/project-mgmt/progress/${row.id}`);
 }
 
-function goToProjectMaterials(row: ProjectVO) {
+function goToProjectMaterials(row: ProjectTableRow) {
   router.push(`/corp-project/project-mgmt/materials/${row.id}`);
 }
 
-function handleDelete(row: ProjectVO) {
+function handleDelete(row: ProjectTableRow) {
   ElMessageBox.confirm(`确认删除项目「${row.name}」吗？此操作不可恢复。`, '提示', { type: 'warning' })
     .then(async () => {
       try {
@@ -650,12 +677,20 @@ function handleDelete(row: ProjectVO) {
         ElMessage.success('删除成功');
         fetchList();
       } catch (e) {
-        tableData.value = tableData.value.filter((r) => r.id !== row.id);
-        total.value = tableData.value.length;
-        ElMessage.success('删除成功（演示模式）');
+        ElMessage.error('删除失败');
       }
     })
     .catch(() => {});
+}
+
+function handleRowDblClick(row: ProjectTableRow) {
+  if (canUpdate.value) {
+    openEditDialog(row);
+    return;
+  }
+  if (canView.value) {
+    openDetail(row);
+  }
 }
 
 function exportProjects() {
@@ -663,6 +698,7 @@ function exportProjects() {
 }
 
 onMounted(() => {
+  loadAvailableUsers();
   fetchList();
 });
 </script>

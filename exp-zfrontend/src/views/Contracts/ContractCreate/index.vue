@@ -24,10 +24,10 @@
           <div class="section-title">基本信息</div>
           <div class="form-grid">
             <el-form-item label="合同编号" prop="contractCode">
-              <el-input v-model="form.contractCode" placeholder="请输入合同编号" maxlength="100" show-word-limit />
+              <el-input v-model="form.contractCode" placeholder="请输入合同编号" maxlength="80" show-word-limit />
             </el-form-item>
             <el-form-item label="合同名称" prop="contractName">
-              <el-input v-model="form.contractName" placeholder="请输入合同名称" maxlength="200" show-word-limit />
+              <el-input v-model="form.contractName" placeholder="请输入合同名称" maxlength="80" show-word-limit />
             </el-form-item>
             <el-form-item label="合同类型" prop="contractType">
               <el-select v-model="form.contractType" placeholder="请选择合同类型" clearable style="width: 100%">

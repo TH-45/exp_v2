@@ -5,6 +5,7 @@ import jh.exp.auth.clinet.api.bus.AccountService;
 import jh.exp.auth.core.constant.AuthConstant;
 
 import jh.exp.auth.core.entity.res.AccountRoleRes;
+import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
 import jh.exp.common.core.constant.CommonConstant;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.baomidou.mybatisplus.extension.toolkit.Db.removeById;
 
@@ -66,7 +68,12 @@ public class SysDictServiceImpl implements SysDictService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteDictItem(Long id) {
         CurrentUser currentUser = CurrentUserHolder.get();
-        List<AccountRoleRes> accountRoles = accountService.getAccountRoles(List.of(currentUser.getUserId()));
+        ApiResponse<List<AccountRoleRes>> roleResp = accountService.getAccountRoles(
+                Map.of("accountIds", List.of(currentUser.getUserId()))
+        );
+        List<AccountRoleRes> accountRoles = (roleResp != null && roleResp.isSuccess() && roleResp.getData() != null)
+                ? roleResp.getData()
+                : List.of();
         List<String> roleCodes = accountRoles.stream().map(AccountRoleRes::getRoleCode).toList();
         if (!roleCodes.contains(AuthConstant.ADMIN)) {
             throw new RuntimeException("非管理员角色不允许删除字典项");

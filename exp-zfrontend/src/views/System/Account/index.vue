@@ -92,7 +92,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
-        row-key="accountId"
+        :row-key="getAccountRowKey"
         border
         style="width: 100%"
         @selection-change="handleSelectionChange"
@@ -280,7 +280,7 @@ import { hasPermission } from '@/utils/permission';
 import { generateAccountName } from '@/utils/account';
 import PersonSelector from '@/components/Selector/PersonSelector.vue';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
-import { queryOrgPosts } from '@/api/system/post';
+import { queryOrgPosts, queryPostsByPostId } from '@/api/system/post';
 import {
   queryAccountList,
   createUser,
@@ -295,6 +295,8 @@ import {
 } from '@/api/system/account';
 import type { ExpPersonVO } from '@/api/system/person';
 import type { OrgNode, PostVO } from '@/api/system/post';
+
+type AccountRow = AccountVO & { __rowKey: string };
 
 const loading = ref(false);
 const saving = ref(false);
@@ -313,9 +315,13 @@ const query = reactive({
   queryParam: {} as any,
 });
 
-const tableData = ref<AccountVO[]>([]);
+const tableData = ref<AccountRow[]>([]);
 const total = ref(0);
-const selectedRows = ref<AccountVO[]>([]);
+const selectedRows = ref<AccountRow[]>([]);
+
+function getAccountRowKey(row: AccountRow) {
+  return row.__rowKey;
+}
 
 // 账号管理权限开关 - 可通过注释/uncomment 来切换权限检查逻辑
 // 方案1：使用严格的管理权限（推荐用于生产环境）
@@ -439,7 +445,11 @@ async function fetchList() {
         }
       }
 
-      tableData.value = accounts;
+      tableData.value = (accounts as AccountVO[]).map((account, index) => ({
+        ...account,
+        // 保证每行唯一键稳定，避免同键导致多行联动选中
+        __rowKey: `${account.accountId ?? 'na'}-${account.personId ?? 'np'}-${index}`,
+      }));
     } else {
       tableData.value = [];
       total.value = 0;
@@ -490,11 +500,11 @@ function handleSizeChange(size: number) {
   fetchList();
 }
 
-function handleSelectionChange(rows: AccountVO[]) {
+function handleSelectionChange(rows: AccountRow[]) {
   selectedRows.value = rows;
 }
 
-function handleRowClick(row: AccountVO) {
+function handleRowClick(row: AccountRow) {
   // 使用表格的toggleRowSelection方法切换选中状态
   tableRef.value?.toggleRowSelection(row);
 }
@@ -576,10 +586,27 @@ async function loadPostOptions(orgId: number) {
       orgId,
       includeChildren: false, // 不包括子组织
     };
-    const posts = await queryOrgPosts(params);
-    postOptions.value = posts || [];
+    const postsRes = await queryOrgPosts(params as any);
+    const posts = Array.isArray((postsRes as any)?.list)
+      ? (postsRes as any).list
+      : (Array.isArray(postsRes) ? postsRes : []);
+    postOptions.value = posts;
   } catch (e) {
     console.error('加载岗位选项失败:', e);
+    postOptions.value = [];
+  }
+}
+
+// 根据岗位ID加载同组织岗位，若无结果则返回空数组
+async function loadPostOptionsByPostId(postId: number) {
+  try {
+    const postsRes = await queryPostsByPostId(postId);
+    const posts = Array.isArray((postsRes as any)?.list)
+      ? (postsRes as any).list
+      : (Array.isArray(postsRes) ? postsRes : []);
+    postOptions.value = posts || [];
+  } catch (e) {
+    console.error('按岗位加载岗位选项失败:', e);
     postOptions.value = [];
   }
 }
@@ -616,8 +643,17 @@ function handlePersonChange(person: ExpPersonVO | undefined) {
     };
     form.postId = person.postId;
 
-    // 加载岗位选项
-    loadPostOptions(person.orgId);
+    // 优先按人员岗位查询同组织岗位；缺失岗位时降级按组织查询
+    if (person.postId) {
+      loadPostOptionsByPostId(person.postId).then(() => {
+        const matched = postOptions.value.some((p) => p.postId === person.postId);
+        form.postId = matched ? person.postId : undefined;
+      });
+    } else {
+      // 人员岗位为空时保留原有按组织查询行为
+      loadPostOptions(person.orgId);
+      form.postId = undefined;
+    }
   }
 }
 
@@ -731,8 +767,10 @@ async function handleEdit(row: AccountVO) {
       };
     }
 
-    // 如果有组织ID，加载岗位选项
-    if (detailData.orgId) {
+    // 编辑回显岗位：优先按岗位ID加载同组织岗位，保障当前岗位名称能正确回显
+    if (detailData.postId) {
+      await loadPostOptionsByPostId(detailData.postId);
+    } else if (detailData.orgId) {
       await loadPostOptions(detailData.orgId);
     }
 
@@ -913,8 +951,12 @@ async function linkPerson() {
 
     // 直接使用接口返回的数据更新表格中的对应项
     const index = tableData.value.findIndex(item => item.accountId === account.accountId);
-    if (index !== -1) {
-      tableData.value[index] = updatedAccount;
+    const currentRow = index >= 0 ? tableData.value[index] : undefined;
+    if (currentRow) {
+      tableData.value[index] = {
+        ...(updatedAccount as AccountVO),
+        __rowKey: currentRow.__rowKey,
+      };
     }
   } catch (error) {
     ElMessage.error('关联人员失败');
