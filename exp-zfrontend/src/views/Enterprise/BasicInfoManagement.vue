@@ -395,7 +395,7 @@ async function fetchList() {
       companyName: query.companyName || undefined,
       companyType: query.companyType || undefined,
       status: query.status || undefined,
-    });
+    }, { skipErrorToast: true });
     const parsed = parsePageResult(res);
     tableData.value = parsed.list;
     total.value = parsed.total;
@@ -445,7 +445,7 @@ function openEditDialog(row: CompanyListVO) {
   editDialog.isEdit = true;
   editDialog.visible = true;
   loading.value = true;
-  getCompanyDetail(id)
+  getCompanyDetail(id, { skipErrorToast: true })
     .then((detail) => {
       Object.assign(form, detail);
       form.companyId = id;
@@ -497,7 +497,7 @@ async function submitForm() {
         website: form.website,
         status: form.status,
         remark: form.remark,
-      });
+      }, { skipErrorToast: true });
       ElMessage.success('保存成功');
     } else {
       await createCompany({
@@ -514,7 +514,7 @@ async function submitForm() {
         website: form.website,
         status: form.status,
         remark: form.remark,
-      });
+      }, { skipErrorToast: true });
       ElMessage.success('创建成功');
     }
     editDialog.visible = false;
@@ -531,7 +531,7 @@ function openDetail(row: CompanyListVO) {
   if (id == null) return;
   detailDrawer.visible = true;
   detailDrawer.data = null;
-  getCompanyDetail(id)
+  getCompanyDetail(id, { skipErrorToast: true })
     .then((detail) => { detailDrawer.data = detail; })
     .catch(() => ElMessage.error('获取详情失败'));
 }
@@ -543,7 +543,7 @@ function handleDelete(row: CompanyListVO) {
   ElMessageBox.confirm(`确认删除企业「${name}」吗？此操作不可恢复。`, '提示', { type: 'warning' })
     .then(async () => {
       try {
-        await deleteCompany(id);
+        await deleteCompany(id, { skipErrorToast: true });
         ElMessage.success('删除成功');
         fetchList();
       } catch (e) {

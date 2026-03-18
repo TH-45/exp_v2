@@ -9,6 +9,10 @@ import {
   type PageResult,
 } from '@/api/common';
 
+interface ApiCallOptions {
+  skipErrorToast?: boolean;
+}
+
 // ============ 类型定义（与 openapi / 后端实体对应） ============
 
 /** 企业列表项（CompanyListRes） */
@@ -116,6 +120,7 @@ const BASE = '/exp/corp/company';
  */
 export function listCompany(
   input: PageQueryInput<QueryCompanyParam> & { sort?: string },
+  options?: ApiCallOptions,
 ) {
   const { sort, ...pageInput } = input;
   const body = {
@@ -128,6 +133,7 @@ export function listCompany(
   return request.post<PageResult<CompanyListVO>, PageResult<CompanyListVO>>(
     `${BASE}/list`,
     body,
+    options,
   );
 }
 
@@ -135,9 +141,10 @@ export function listCompany(
  * 根据 companyId 获取企业详情
  * @param companyId 企业主键
  */
-export function getCompanyDetail(companyId: number) {
+export function getCompanyDetail(companyId: number, options?: ApiCallOptions) {
   return request.get<CompanyDetailVO, CompanyDetailVO>(`${BASE}/detail`, {
     params: { companyId },
+    ...options,
   });
 }
 
@@ -157,24 +164,24 @@ export function batchGetCompanyDetail(companyIds: number[]) {
  * 创建企业
  * @param data 创建数据，需包含 companyName
  */
-export function createCompany(data: CreateCompanyReq) {
-  return request.post<CompanyDetailVO, CompanyDetailVO>(`${BASE}/create`, data);
+export function createCompany(data: CreateCompanyReq, options?: ApiCallOptions) {
+  return request.post<CompanyDetailVO, CompanyDetailVO>(`${BASE}/create`, data, options);
 }
 
 /**
  * 更新企业
  * @param data 更新数据，需包含 companyId
  */
-export function updateCompany(data: UpdateCompanyReq) {
-  return request.post<CompanyDetailVO, CompanyDetailVO>(`${BASE}/update`, data);
+export function updateCompany(data: UpdateCompanyReq, options?: ApiCallOptions) {
+  return request.post<CompanyDetailVO, CompanyDetailVO>(`${BASE}/update`, data, options);
 }
 
 /**
  * 删除单个企业
  * @param companyId 企业主键
  */
-export function deleteCompany(companyId: number) {
-  return request.post<void, void>(`${BASE}/delete`, { companyId });
+export function deleteCompany(companyId: number, options?: ApiCallOptions) {
+  return request.post<void, void>(`${BASE}/delete`, { companyId }, options);
 }
 
 /**
