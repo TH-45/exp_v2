@@ -21,7 +21,7 @@ import java.util.Set;
 public class CurrentUser implements Serializable {
 
     /**
-     * 用户唯一标识，一般为账号 ID 或人员 ID。
+     * 用户唯一标识，一般为账号 ID
      */
     private Long userId;
 

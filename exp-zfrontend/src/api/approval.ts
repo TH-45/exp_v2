@@ -38,6 +38,7 @@ export interface ApprovalDetail {
   taskId: number;
   instanceId: number;
   busType: string;
+  procCode?: string;
   busId: string;
   status: InstanceStatus;
   currentNode: string;
@@ -56,7 +57,11 @@ export interface ApprovalHistory {
   action: string;
   actionLabel?: string;
   handlerId: number;
+  handlerCode?: string;
   handlerName?: string;
+  candidateId?: string;
+  candidateCode?: string;
+  candidateName?: string;
   opinion?: string;
   isDone: number;
   createTime: string;

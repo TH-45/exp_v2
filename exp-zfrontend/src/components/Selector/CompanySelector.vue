@@ -53,7 +53,7 @@
         v-loading="loading"
         :data="tableData"
         border
-        height="400px"
+        height="300px"
         row-key="companyId"
         @row-click="handleRowClick"
         highlight-current-row

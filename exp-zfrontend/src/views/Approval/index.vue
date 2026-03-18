@@ -51,7 +51,6 @@
           <el-button link type="primary" @click="openDetail(row)">
             {{ query.tab === 'todo' ? '办理' : '查看' }}
           </el-button>
-          <el-button v-if="query.tab === 'todo'" link type="success" @click="quickApprove(row)">同意</el-button>
           <el-button v-if="query.tab === 'started' && row.status === 'RUNNING'" link type="warning" @click="openCloseDialog(row)">
             强制关闭
           </el-button>
@@ -215,16 +214,6 @@ async function openDetail(row: ApprovalTask) {
       busId: String(row.busId || ''),
     },
   });
-}
-
-async function quickApprove(row: ApprovalTask) {
-  if (!row.taskId) {
-    ElMessage.warning('当前记录暂无任务，无法审批');
-    return;
-  }
-  await approveTask({ taskId: row.taskId, comments: '同意' });
-  ElMessage.success('已同意');
-  await refreshAll();
 }
 
 async function handleApprove() {

@@ -254,7 +254,7 @@ const routes: RouteRecordRaw[] = [
         name: 'ApprovalInstanceDetail',
         component: () => import('@/views/Approval/InstanceDetail/index.vue'),
         meta: {
-          title: '流程详情',
+          title: '工单详细',
           perms: ['approval:task:view'],
         },
       },

@@ -12,6 +12,8 @@ public class ApprovalDetailRes {
     private Long instanceId;
     /** 业务类型 */
     private String busType;
+    /** 流程编号 */
+    private String procCode;
     /** 业务 ID */
     private Long busId;
     /** 状态 */

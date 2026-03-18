@@ -1,37 +1,34 @@
 import { defineAsyncComponent, type Component } from 'vue';
-import type { ApprovalDetail } from '@/api/approval';
 
-export interface BusinessPanelProps {
-  busId: number | string;
-  busType: string;
-  procCode?: string;
-  detail: ApprovalDetail | null;
-}
-
-interface BusinessPanelEntry {
+interface BaseInfoPanelEntry {
   busType?: string;
   procCode?: string;
   component: Component;
 }
 
-const BUSINESS_PANEL_REGISTRY: BusinessPanelEntry[] = [
+const DEFAULT_BASE_INFO_PANEL = defineAsyncComponent(() => import('./base-info/panels/DefaultWorkOrderBaseInfo.vue'));
+
+const BASE_INFO_PANEL_REGISTRY: BaseInfoPanelEntry[] = [
   {
     busType: 'CONTRACT',
     procCode: 'CONTRACT_FUND_OUT',
-    component: defineAsyncComponent(() => import('./panels/ContractPanel.vue')),
+    component: DEFAULT_BASE_INFO_PANEL,
   },
   {
     busType: 'CONTRACT',
     procCode: 'CONTRACT_FUND_IN',
-    component: defineAsyncComponent(() => import('./panels/ContractPanel.vue')),
+    component: DEFAULT_BASE_INFO_PANEL,
+  },
+  {
+    component: DEFAULT_BASE_INFO_PANEL,
   },
 ];
 
-export function resolveBusinessPanel(busType: string, procCode?: string) {
+export function resolveBaseInfoPanel(busType: string, procCode?: string) {
   const normalizedBusType = String(busType || '').trim().toUpperCase();
   const normalizedProcCode = String(procCode || '').trim().toUpperCase();
 
-  const exactMatched = BUSINESS_PANEL_REGISTRY.find(
+  const exactMatched = BASE_INFO_PANEL_REGISTRY.find(
     (entry) =>
       String(entry.busType || '').trim().toUpperCase() === normalizedBusType &&
       String(entry.procCode || '').trim().toUpperCase() === normalizedProcCode
@@ -40,8 +37,12 @@ export function resolveBusinessPanel(busType: string, procCode?: string) {
     return exactMatched.component;
   }
 
-  const busOnlyMatched = BUSINESS_PANEL_REGISTRY.find(
+  const busOnlyMatched = BASE_INFO_PANEL_REGISTRY.find(
     (entry) => entry.busType && !entry.procCode && String(entry.busType || '').trim().toUpperCase() === normalizedBusType
   );
-  return busOnlyMatched?.component || null;
+  if (busOnlyMatched) {
+    return busOnlyMatched.component;
+  }
+
+  return BASE_INFO_PANEL_REGISTRY.find((entry) => !entry.busType && !entry.procCode)?.component || DEFAULT_BASE_INFO_PANEL;
 }

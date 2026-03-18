@@ -187,6 +187,7 @@ public class ApprovalServiceImpl implements ApprovalService {
         res.setInstanceId(instance.getInstanceId());
         res.setBusId(instance.getBusId());
         res.setBusType(definition.getBusType());
+        res.setProcCode(definition.getProcCode());
         res.setStatus(instance.getStatus());
         res.setCurrentNode(node == null ? "-" : node.getNodeName());
         res.setStarterId(instance.getStarterId());
@@ -208,6 +209,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     
     private List<ApprovalHistoryRes> historyByInstanceId(Long instanceId) {
         if (instanceId == null) return List.of();
+        WfInstance instance = instanceMapper.selectById(instanceId);
 
         // 2. 一次性查出该流程实例下所有的任务记录（包含已办、驳回、待办）
         // 按时间升序，这样返回给前端的就是一个完整的审批链路
@@ -216,7 +218,7 @@ public class ApprovalServiceImpl implements ApprovalService {
                         .eq(WfTask::getInstanceId, instanceId)
                         .orderByAsc(WfTask::getCreateTime)
         );
-        if (allTasks.isEmpty()) return List.of();
+        if (allTasks.isEmpty() && instance == null) return List.of();
 
         // 3. 提取所有涉及到的节点 ID
         Set<Long> nodeIds = allTasks.stream()
@@ -244,22 +246,88 @@ public class ApprovalServiceImpl implements ApprovalService {
                 .map(WfTask::getHandlerId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
-        Map<Long, String> personNameMap = batchQueryPersonName(handlerIds);
+
+        Set<Long> candidateIds = allTasks.stream()
+                .map(WfTask::getCandidateId)
+                .filter(s -> s != null && !s.isBlank())
+                .flatMap(s -> parseCandidatePersonIds(s).stream())
+                .collect(Collectors.toSet());
+        handlerIds.addAll(candidateIds);
+        //获取待处理人
+
+        if (instance != null && instance.getStarterId() != null) {
+            handlerIds.add(instance.getStarterId());
+        }
+        Map<Long, PersonDetailRes> personDetailMap = batchQueryPersonDetail(handlerIds);
+        Map<Long, String> personNameMap = personDetailMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> {
+                            PersonDetailRes person = e.getValue();
+                            String name = person == null ? null : person.getPersonName();
+                            return (name == null || name.isBlank()) ? "-" : name;
+                        },
+                        (a, b) -> a
+                ));
+        Map<Long, String> personCodeMap = personDetailMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> {
+                            PersonDetailRes person = e.getValue();
+                            String code = person == null ? null : person.getPersonCode();
+                            if (code == null || code.isBlank()) {
+                                return null;
+                            }
+                            return code.trim();
+                        },
+                        (a, b) -> a
+                ));
         Map<Long, String> finalNodeMap = nodeMap;
-        return allTasks.stream().map(taskItem -> {
+        List<ApprovalHistoryRes> historyList = allTasks.stream().map(taskItem -> {
             ApprovalHistoryRes res = new ApprovalHistoryRes();
             BeanUtils.copyProperties(taskItem, res);
 
             // 核心：即便同一个节点 nodeId 出现了多次，
             // 这里依然能通过 Map 拿到它对应的节点名称
             res.setNodeName(finalNodeMap.getOrDefault(taskItem.getNodeId(), "-"));
-            res.setHandlerName(personNameMap.getOrDefault(taskItem.getHandlerId(), "-"));
+            // 成对返回：handlerId+handlerCode+handlerName
+            res.setHandlerName(personNameMap.get(taskItem.getHandlerId()));
+            res.setHandlerCode(personCodeMap.get(taskItem.getHandlerId()));
+            // 成对返回：candidateId+candidateCode+candidateName
+            res.setCandidateName(resolveCandidateName(taskItem.getCandidateId(), personNameMap));
+            res.setCandidateId(taskItem.getCandidateId());
+            res.setCandidateCode(resolveCandidateCode(taskItem.getCandidateId(), personCodeMap));
             res.setActionLabel(resolveActionLabel(taskItem.getAction(), taskItem.getIsDone()));
 
             // 注意：建议在 ApprovalHistoryRes 中保留 taskItem 的审批意见、处理结果等字段
             // 这样前端才能区分哪一条是“驳回”，哪一条是“通过”
             return res;
         }).toList();
+        // 历史展示补充“创建记录”：不落库，仅在返回时拼装，避免污染节点配置和任务数据。
+        if (instance != null) {
+            boolean containsCreateAction = historyList.stream()
+                    .anyMatch(item -> ProcessConstant.ACTION_CREATE.equalsIgnoreCase(item.getAction()));
+            if (!containsCreateAction) {
+                ApprovalHistoryRes createRes = new ApprovalHistoryRes();
+                createRes.setTaskId(0L);
+                createRes.setNodeId(0L);
+                createRes.setNodeName("发起");
+                createRes.setAction(ProcessConstant.ACTION_CREATE);
+                createRes.setActionLabel(resolveActionLabel(ProcessConstant.ACTION_CREATE, 1));
+                createRes.setHandlerId(instance.getStarterId());
+                createRes.setHandlerName(personNameMap.getOrDefault(instance.getStarterId(), "-"));
+                createRes.setHandlerCode(personCodeMap.get(instance.getStarterId()));
+                createRes.setOpinion("提交审批");
+                createRes.setIsDone(1);
+                createRes.setCreateTime(instance.getStartTime());
+                createRes.setFinishTime(instance.getStartTime());
+                List<ApprovalHistoryRes> mergedHistory = new ArrayList<>(historyList.size() + 1);
+                mergedHistory.add(createRes);
+                mergedHistory.addAll(historyList);
+                return mergedHistory;
+            }
+        }
+        return historyList;
     }
 
     @Override
@@ -403,7 +471,7 @@ public class ApprovalServiceImpl implements ApprovalService {
             return;
         } else if (ProcessConstant.ACTION_REJECT.equals(action)) {
             // 拒绝：直接关闭实例，不再流转
-            instance.setStatus(ProcessConstant.INSTANCE_REJECTED);
+            instance.setStatus(ProcessConstant.INSTANCE_CLOSED);
             instance.setEndTime(now);
             instance.setClosedBy(currentPersonId);
             instance.setCloseReason(comments);
@@ -763,7 +831,7 @@ public class ApprovalServiceImpl implements ApprovalService {
         return person.getPersonName();
     }
     
-    private Map<Long, String> batchQueryPersonName(Set<Long> personIds) {
+    private Map<Long, PersonDetailRes> batchQueryPersonDetail(Set<Long> personIds) {
         if (personIds == null || personIds.isEmpty()) {
             return Map.of();
         }
@@ -774,20 +842,67 @@ public class ApprovalServiceImpl implements ApprovalService {
             }
             return personMap.entrySet().stream()
                     .filter(e -> e.getKey() != null)
-                    .collect(Collectors.toMap(
-                            Map.Entry::getKey,
-                            e -> {
-                                PersonDetailRes p = e.getValue();
-                                String name = p == null ? null : p.getPersonName();
-                                return (name == null || name.isBlank()) ? "-" : name;
-                            },
-                            (a, b) -> a
-                    ));
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
         } catch (Exception ex) {
             return Map.of();
         }
     }
-    
+
+    /**
+     * 候选人 ID 字符串转人员 ID 集合（支持逗号分隔，自动忽略非法值）。
+     */
+    private Set<Long> parseCandidatePersonIds(String candidateId) {
+        if (candidateId == null || candidateId.isBlank()) {
+            return Set.of();
+        }
+        Set<Long> ids = new LinkedHashSet<>();
+        for (String raw : candidateId.split(",")) {
+            if (raw == null) {
+                continue;
+            }
+            String value = raw.trim();
+            if (value.isEmpty()) {
+                continue;
+            }
+            try {
+                ids.add(Long.parseLong(value));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return ids;
+    }
+
+    /**
+     * 解析候选人展示名：多候选人以中文逗号拼接；缺失时返回“-”。
+     */
+    private String resolveCandidateName(String candidateId, Map<Long, String> personNameMap) {
+        Set<Long> ids = parseCandidatePersonIds(candidateId);
+        if (ids.isEmpty()) {
+            return "-";
+        }
+        return ids.stream()
+                .map(id -> personNameMap.getOrDefault(id, "-"))
+                .filter(name -> name != null && !name.isBlank())
+                .distinct()
+                .collect(Collectors.joining("、"));
+    }
+
+    /**
+     * 解析待处理人编码：多候选人时按“、”拼接；无可用编码时返回 null。
+     */
+    private String resolveCandidateCode(String candidateId, Map<Long, String> personCodeMap) {
+        Set<Long> ids = parseCandidatePersonIds(candidateId);
+        if (ids.isEmpty()) {
+            return null;
+        }
+        String code = ids.stream()
+                .map(personCodeMap::get)
+                .filter(item -> item != null && !item.isBlank())
+                .distinct()
+                .collect(Collectors.joining("、"));
+        return code.isBlank() ? null : code;
+    }
+
     private String resolveActionLabel(String action, Integer isDone) {
         if (action == null || action.isBlank()) {
             return "-";

@@ -54,7 +54,7 @@ public interface ContractClient {
      * @return 操作结果
      */
     @PostExchange("/updateStatus")
-    ApiResponse<Void> updateStatus(UpdateContractStatusReq req);
+    ApiResponse<Void> updateStatus(@RequestBody UpdateContractStatusReq req);
 
     /**
      * 删除合同

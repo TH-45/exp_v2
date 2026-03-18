@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jh.exp.auth.clinet.api.bus.AccountService;
 import jh.exp.auth.clinet.api.bus.PersonService;
+import jh.exp.auth.core.entity.res.AccountDetailRes;
 import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.bid.contract.core.constant.BidContractConstant;
 import jh.exp.bid.contract.core.entity.Contract;
@@ -55,6 +57,7 @@ public class ContractServiceImpl implements ContractService {
 
     private final ContractMapper contractMapper;
     private final ContractOperationLogMapper contractOperationLogMapper;
+    private final AccountService accountService;
     private final PersonService personService;
 //    private final ProcessFlowSupportService processFlowSupportService;
     private final CompanyClientService companyClientService;
@@ -261,9 +264,8 @@ public class ContractServiceImpl implements ContractService {
             throw new RuntimeException("合同编号已存在");
         }
         CurrentUser user = CurrentUserHolder.get();
-        ApiResponse<PersonDetailRes> personResp = personService.getPersonById(user.getUserId());
-        PersonDetailRes person = (personResp != null && personResp.isSuccess()) ? personResp.getData() : null;
-        if (person == null) {
+        AccountDetailRes accountDetail = getAccountDetail(user.getUserId());
+        if (accountDetail == null) {
             throw new RuntimeException("无法获取当前用户信息");
         }
 
@@ -289,8 +291,8 @@ public class ContractServiceImpl implements ContractService {
         c.setStatus(BidContractConstant.CONTRACT_STATUS_DRAFT);
         c.setArchiveFlag(0);
         c.setCreatedBy(user.getUserId());
-        c.setCreatedDeptId(person.getOrgId());
-        c.setCreatedPostId(person.getPostId());
+        c.setCreatedDeptId(accountDetail.getOrgId());
+        c.setCreatedPostId(accountDetail.getPostId());
         c.setSalesmanPersonId(req.getSalesmanPersonId());
         c.setCreatedTime(LocalDateTime.now());
         c.setUpdatedTime(LocalDateTime.now());
@@ -453,9 +455,8 @@ public class ContractServiceImpl implements ContractService {
             throw new RuntimeException("仅拟签状态的合同可进行签订/不签订操作");
         }
         CurrentUser user = CurrentUserHolder.get();
-        ApiResponse<PersonDetailRes> personResp = personService.getPersonById(user.getUserId());
-        PersonDetailRes person = (personResp != null && personResp.isSuccess()) ? personResp.getData() : null;
-        if (person == null) {
+        AccountDetailRes accountDetail = getAccountDetail(user.getUserId());
+        if (accountDetail == null) {
             throw new RuntimeException("无法获取当前用户信息");
         }
 
@@ -473,7 +474,7 @@ public class ContractServiceImpl implements ContractService {
                     .set("updated_time", now));
             insertOperationLog(c.getContractId(), BidContractConstant.OP_TYPE_SIGN,
                     "签订，意见：" + (req.getOpinion() != null ? req.getOpinion() : ""),
-                    user.getUserId(), person.getOrgId());
+                    user.getUserId(), accountDetail.getOrgId());
         } else if (BidContractConstant.SIGN_ACTION_UNSIGN.equalsIgnoreCase(action)) {
             Boolean needChange = req.getNeedChange();
             if (needChange == null) {
@@ -488,7 +489,7 @@ public class ContractServiceImpl implements ContractService {
                         .set("updated_time", now));
                 insertOperationLog(c.getContractId(), BidContractConstant.OP_TYPE_UNSIGN_CHANGE,
                         "不签订，选择变更，意见：" + (req.getOpinion() != null ? req.getOpinion() : ""),
-                        user.getUserId(), person.getOrgId());
+                        user.getUserId(), accountDetail.getOrgId());
             } else {
                 // 不签订+不变更 → 异常合同归档
                 contractMapper.update(null, new UpdateWrapper<Contract>()
@@ -499,7 +500,7 @@ public class ContractServiceImpl implements ContractService {
                         .set("updated_time", now));
                 insertOperationLog(c.getContractId(), BidContractConstant.OP_TYPE_UNSIGN_ARCHIVE_ABNORMAL,
                         "不签订，异常归档，意见：" + (req.getOpinion() != null ? req.getOpinion() : ""),
-                        user.getUserId(), person.getOrgId());
+                        user.getUserId(), accountDetail.getOrgId());
             }
         } else {
             throw new RuntimeException("操作类型无效，应为 SIGN 或 UNSIGN");
@@ -535,4 +536,11 @@ public class ContractServiceImpl implements ContractService {
         throw new RuntimeException("不支持的合同流程编码: " + reqProcCode);
     }
 
+    /**
+     * 获取账号详细信息
+     */
+    private AccountDetailRes getAccountDetail(Long personId) {
+        ApiResponse<AccountDetailRes> accountDetail = accountService.getAccountById(personId);
+        return (accountDetail != null && accountDetail.isSuccess()) ? accountDetail.getData() : null;
+    }
 }
