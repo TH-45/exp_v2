@@ -336,7 +336,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import {
   getBiddingProjectDetail,
   updateBiddingProject,
@@ -359,7 +359,7 @@ import { regionData, codeToText } from 'element-china-area-data';
 const route = useRoute();
 const router = useRouter();
 
-const canManage = computed(() => hasPermission('bidding:project:manage'));
+const canManage = computed(() => getMenuLevel('bidding:project') >= 3);
 const {
   fetchTenderStatusOptions,
   getTenderStatusText,

@@ -2,6 +2,7 @@ package jh.exp.common.service.aspect;
 
 
 import jh.exp.common.core.annotation.RequiresLogin;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.annotation.RequiresPermissions;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
@@ -16,71 +17,79 @@ import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * 统一权限校验切面
+ * 统一权限校验切面。
+ * <p>
+ * 支持：@RequiresLogin、@RequiresPermissions（特殊权限）、@RequiresMenuLevel（菜单等级）。
  */
 @Aspect
 @Component
 public class AuthAspect {
 
-    /**
-     * 定义切点：所有带有 @RequiresLogin 或 //@RequiresPermissions 注解的方法
-     * 也可以更精确地定义 Controller 层的方法
-     */
     private static final String POINTCUT_METHOD =
-            "@annotation(jh.exp.common.annotation.RequiresLogin) || " +
-                    "@annotation(jh.exp.common.annotation.RequiresPermissions)";
+            "@annotation(jh.exp.common.core.annotation.RequiresLogin) || " +
+                    "@annotation(jh.exp.common.core.annotation.RequiresPermissions) || " +
+                    "@annotation(jh.exp.common.core.annotation.RequiresMenuLevel)";
 
     @Before(POINTCUT_METHOD)
     public void before(JoinPoint joinPoint) throws Throwable {
-        // 1. 获取目标方法和类上的注解
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
+        Class<?> targetClass = joinPoint.getTarget().getClass();
 
-        // 优先检查方法上的注解
         RequiresLogin requiresLogin = AnnotationUtils.findAnnotation(method, RequiresLogin.class);
         RequiresPermissions requiresPermissions = AnnotationUtils.findAnnotation(method, RequiresPermissions.class);
+        RequiresMenuLevel requiresMenuLevel = AnnotationUtils.findAnnotation(method, RequiresMenuLevel.class);
 
-        // 如果方法上没有注解，再检查类上的注解 (通常权限注解放在方法上，这里作为可选扩展)
-        if (requiresLogin == null && requiresPermissions == null) {
-            Class<?> targetClass = joinPoint.getTarget().getClass();
+        if (requiresLogin == null && requiresPermissions == null && requiresMenuLevel == null) {
             requiresLogin = AnnotationUtils.findAnnotation(targetClass, RequiresLogin.class);
             requiresPermissions = AnnotationUtils.findAnnotation(targetClass, RequiresPermissions.class);
+            requiresMenuLevel = AnnotationUtils.findAnnotation(targetClass, RequiresMenuLevel.class);
         }
 
-        // 2. 执行权限校验
-        if (requiresLogin != null || requiresPermissions != null) {
-            checkAuth(requiresLogin, requiresPermissions);
+        if (requiresLogin != null || requiresPermissions != null || requiresMenuLevel != null) {
+            checkAuth(requiresLogin, requiresPermissions, requiresMenuLevel);
         }
     }
 
-    /**
-     * 执行具体的权限校验逻辑
-     */
-    private void checkAuth(RequiresLogin requiresLogin, RequiresPermissions requiresPermissions) {
-        // 1. 校验登录
+    private void checkAuth(RequiresLogin requiresLogin, RequiresPermissions requiresPermissions,
+                          RequiresMenuLevel requiresMenuLevel) {
         CurrentUser currentUser = CurrentUserHolder.get();
         if (currentUser == null) {
-            // 无论是 RequiresLogin 还是 RequiresPermissions，未登录都应该抛出异常
-            throw new AuthException("未登录或登录已失效，请重新登录");
+            throw new AuthException("AUTH_FORBIDDEN", "未登录或登录已失效，请重新登录");
         }
 
-        // 2. 校验权限
+        // 特殊权限校验：优先使用 funcPermissionSet，兼容旧 permissions
         if (requiresPermissions != null) {
-            String[] requiredPermissions = requiresPermissions.value();
-            if (requiredPermissions.length > 0) {
-                Set<String> userPermissions = (Set<String>) currentUser.getPermissions();
-
-                // 检查用户是否拥有所需权限中的任意一个 (OR 关系)
-                boolean hasPermission = Arrays.stream(requiredPermissions)
-                        .anyMatch(permission -> userPermissions.contains(permission));
-
-                if (!hasPermission) {
-                    String requiredStr = StringUtils.arrayToDelimitedString(requiredPermissions, " OR ");
-                    throw new AuthException("权限不足，需要以下权限之一: [" + requiredStr + "]");
+            String[] required = requiresPermissions.value();
+            if (required.length > 0) {
+                Set<String> userPerms = currentUser.getFuncPermissionSet();
+                if (userPerms == null || userPerms.isEmpty()) {
+                    List<String> legacy = currentUser.getPermissions();
+                    userPerms = legacy == null ? Collections.emptySet() : new HashSet<>(legacy);
                 }
+                boolean hasPermission = Arrays.stream(required).anyMatch(userPerms::contains);
+                if (!hasPermission) {
+                    String requiredStr = StringUtils.arrayToDelimitedString(required, " OR ");
+                    throw new AuthException("AUTH_FORBIDDEN", "权限不足，需要以下权限之一: [" + requiredStr + "]");
+                }
+            }
+        }
+
+        // 菜单等级校验
+        if (requiresMenuLevel != null && StringUtils.hasText(requiresMenuLevel.code())) {
+            Map<String, Integer> menuLevelMap = currentUser.getMenuLevelMap();
+            int userLevel = (menuLevelMap != null && menuLevelMap.containsKey(requiresMenuLevel.code()))
+                    ? menuLevelMap.get(requiresMenuLevel.code()) : 0;
+            int requiredLevel = requiresMenuLevel.level();
+            if (userLevel < requiredLevel) {
+                throw new AuthException("AUTH_FORBIDDEN", "权限不足，需要 [" + requiresMenuLevel.code() + "] 等级 " + requiredLevel + "，当前等级 " + userLevel);
             }
         }
     }

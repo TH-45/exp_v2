@@ -574,7 +574,7 @@ import {
 } from '@/api/system/post';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { useUserStore } from '@/store/modules/user';
 import { listDictOptions, type DictOption } from '@/api/system/dict';
 import PersonSelector from '@/components/Selector/PersonSelector.vue';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
@@ -732,11 +732,13 @@ const parentOrgDialog = reactive({
   selected: null as OrgNode | null,
 });
 
-// 权限控制
-const canCreate = computed(() => hasPermission('system:post:create'));
-const canUpdate = computed(() => hasPermission('system:post:update'));
-const canDelete = computed(() => hasPermission('system:post:delete'));
-const canOrgStatus = computed(() => hasPermission('system:orgPost:status'));
+// 权限控制：岗位管理页包含组织+岗位，统一使用 system:organdpost
+const userStore = useUserStore();
+const MENU_ORG_AND_POST = 'system:organdpost';
+const canCreate = computed(() => userStore.getMenuLevel(MENU_ORG_AND_POST) >= 2);
+const canUpdate = computed(() => userStore.getMenuLevel(MENU_ORG_AND_POST) >= 2);
+const canDelete = computed(() => userStore.getMenuLevel(MENU_ORG_AND_POST) >= 3);
+const canOrgStatus = computed(() => userStore.getMenuLevel(MENU_ORG_AND_POST) >= 2);
 
 onMounted(() => {
   loadOrgTree();

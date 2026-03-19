@@ -11,8 +11,11 @@ import java.util.List;
 
 @Mapper
 public interface PermissionMapper extends BaseMapper<Permission> {
-    //根据角色id查询权限
+    /** 根据角色id查询权限 */
     List<PermissionExp> selectPermissionsByRoleId(Long roleId);
+
+    /** 根据角色ID列表批量查询权限（含 grant_type） */
+    List<PermissionExp> selectPermissionsByRoleIds(@Param("roleIds") List<Long> roleIds);
 
     //根据角色id删除权限
     void deletePermissionsByRoleId(
@@ -20,6 +23,11 @@ public interface PermissionMapper extends BaseMapper<Permission> {
             @Param("permCodes") List<String> permCodes
     );
 
-    //根据角色id新增权限，菜单编码临时储存在备注字段
     void insertPermissionsByRoleId(@Param("list")List<RolePermissionRel> rolePermissionRel);
+
+    /** 检查 menuCode 对应的权限是否被任意角色使用 */
+    long countRolePermissionByMenuCode(@Param("menuCode") String menuCode);
+
+    /** 根据 permCode 查询使用该权限的角色ID列表（用于权限变更时找出受影响角色） */
+    List<Long> selectRoleIdsByPermCode(@Param("permCode") String permCode);
 }

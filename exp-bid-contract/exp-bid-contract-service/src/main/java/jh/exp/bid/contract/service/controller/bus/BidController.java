@@ -4,7 +4,7 @@ import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.BidDetailRes;
 import jh.exp.bid.contract.core.entity.res.BidListRes;
 import jh.exp.bid.contract.service.service.bus.BidService;
-import jh.exp.common.core.annotation.RequiresPermissions;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -15,11 +15,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 投标管理控制器
+ * 投标管理控制器，对应菜单 bidding:bid
  */
 @RestController
 @RequestMapping("/bidding")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "bidding:bid", level = 1)
 public class BidController {
 
     private final BidService bidService;
@@ -28,7 +29,6 @@ public class BidController {
      * 分页查询投标列表
      */
     @PostMapping("/list")
-    //@RequiresPermissions("BID:VIEW")
     public ApiResponse<SimplePageRes<BidListRes>> list(@RequestBody SimplePageReq<QueryBidReq> req) {
         req.pageDefault();
         SimplePageRes<BidListRes> result = bidService.queryBidList(req);
@@ -39,7 +39,6 @@ public class BidController {
      * 根据ID查询投标详情
      */
     @GetMapping("/detail")
-    //@RequiresPermissions("BID:VIEW")
     public ApiResponse<BidDetailRes> detail(@RequestParam Long bidId) {
         BidDetailRes result = bidService.getBidById(bidId);
         return ApiResponse.success(result);
@@ -49,7 +48,7 @@ public class BidController {
      * 创建投标
      */
     @PostMapping("/create")
-    //@RequiresPermissions("BID:ADD")
+    @RequiresMenuLevel(code = "bidding:bid", level = 2)
     public ApiResponse<BidDetailRes> create(@RequestBody @Valid CreateBidReq req) {
         BidDetailRes result = bidService.createBid(req);
         return ApiResponse.success(result);
@@ -59,7 +58,7 @@ public class BidController {
      * 更新投标
      */
     @PostMapping("/update")
-    //@RequiresPermissions("BID:EDIT")
+    @RequiresMenuLevel(code = "bidding:bid", level = 2)
     public ApiResponse<BidDetailRes> update(@RequestBody @Valid UpdateBidReq req) {
         BidDetailRes result = bidService.updateBid(req);
         return ApiResponse.success(result);
@@ -69,7 +68,7 @@ public class BidController {
      * 删除投标
      */
     @PostMapping("/delete")
-    //@RequiresPermissions("BID:DELETE")
+    @RequiresMenuLevel(code = "bidding:bid", level = 3)
     public ApiResponse<Void> delete(@RequestBody DeleteBidReq req) {
         bidService.deleteBid(req.getBidId());
         return ApiResponse.success(null);
@@ -79,7 +78,7 @@ public class BidController {
      * 批量删除投标
      */
     @PostMapping("/batchDelete")
-    //@RequiresPermissions("BID:DELETE")
+    @RequiresMenuLevel(code = "bidding:bid", level = 3)
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteBidReq req) {
         bidService.batchDeleteBids(req);
         return ApiResponse.success(null);
@@ -89,7 +88,7 @@ public class BidController {
      * 更改投标状态
      */
     @PostMapping("/status")
-    //@RequiresPermissions("BID:EDIT")
+    @RequiresMenuLevel(code = "bidding:bid", level = 2)
     public ApiResponse<BidDetailRes> updateStatus(@RequestBody @Valid BidStatusReq req) {
         BidDetailRes result = bidService.updateBidStatus(req);
         return ApiResponse.success(result);
@@ -99,7 +98,7 @@ public class BidController {
      * 批量更改投标状态
      */
     @PostMapping("/batchStatus")
-    //@RequiresPermissions("BID:EDIT")
+    @RequiresMenuLevel(code = "bidding:bid", level = 2)
     public ApiResponse<Void> batchUpdateStatus(@RequestBody @Valid BatchBidStatusReq req) {
         bidService.batchUpdateBidStatus(req);
         return ApiResponse.success(null);
@@ -119,7 +118,6 @@ public class BidController {
      * 根据招标ID获取投标列表
      */
     @GetMapping("/tenderBids")
-    //@RequiresPermissions("BID:VIEW")
     public ApiResponse<List<BidListRes>> getTenderBids(@RequestParam Long tenderId) {
         List<BidListRes> result = bidService.getBidsByTenderId(tenderId);
         return ApiResponse.success(result);
@@ -140,6 +138,7 @@ public class BidController {
      * 绑定业务员
      */
     @PostMapping("/bindSalesman")
+    @RequiresMenuLevel(code = "bidding:bid", level = 2)
     public ApiResponse<Void> bindSalesman(@RequestBody @Valid BindBidSalesmanReq req) {
         bidService.bindSalesman(req);
         return ApiResponse.success(null);

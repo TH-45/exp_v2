@@ -569,7 +569,7 @@ import {
   type ImexTaskResult,
 
 } from '@/api/system/person';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
 import { queryOrgPosts, type OrgNode, type PostVO } from '@/api/system/post';
 import {parsePageResult, buildPageQuery, type PageQuery} from '@/api/common';
@@ -725,9 +725,9 @@ const rules: FormRules = {
 
 
 
-const canManage = computed(() => hasPermission('system:user:manage'));
-const canDelete = computed(() => hasPermission('system:user:delete'));
-const canView = computed(() => hasPermission('system:user:view'));
+const canManage = computed(() => getMenuLevel('system:user') >= 3);
+const canDelete = computed(() => getMenuLevel('system:user') >= 3);
+const canView = computed(() => getMenuLevel('system:user') >= 1);
 
 onMounted(() => {
   fetchList();

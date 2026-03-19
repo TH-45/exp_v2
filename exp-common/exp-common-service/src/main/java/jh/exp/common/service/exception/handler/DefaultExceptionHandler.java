@@ -8,8 +8,13 @@ import org.springframework.stereotype.Component;
  * 兜底异常处理器，捕获所有未明确处理的异常。
  */
 @Component
-@Order(0)
+@Order(100)
 public class DefaultExceptionHandler extends AbstractGatewayExceptionHandler {
+
+    @Override
+    public int getOrder() {
+        return 100;
+    }
 
     @Override
     public boolean supports(Throwable throwable) {

@@ -298,7 +298,7 @@
 import { onMounted, reactive, ref, computed, watch } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage,ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import { generateProjectCode } from '@/utils/codeGenerator';
 import type { ExpPersonVO } from '@/api/system/person';
 import PersonSelector from '@/components/Selector/PersonSelector.vue';
@@ -328,7 +328,7 @@ import { regionData, codeToText } from 'element-china-area-data';
 
 const route = useRoute();
 const router = useRouter();
-const canManage = computed(() => hasPermission('bidding:project:manage'));
+const canManage = computed(() => getMenuLevel('bidding:project') >= 3);
 const {
   tenderStatusOptions,
   fetchTenderStatusOptions,

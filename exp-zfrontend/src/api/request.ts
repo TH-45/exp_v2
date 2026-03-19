@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { messageError } from '@/utils/message';
 import { useUserStore } from '@/store/modules/user';
+import router from '@/router';
 
 declare module 'axios' {
   interface AxiosRequestConfig {
@@ -32,6 +33,8 @@ const PRESET_ERROR_MESSAGE_BY_CODE: Record<string, string> = {
   AUTH_UNAUTHORIZED: '用户名或密码错误，或登录状态已失效',
   AUTH_INVALID_TOKEN: '登录状态已失效，请重新登录',
   AUTH_LOGIN_FAILED: '登录失败，请稍后重试',
+  AUTH_FORBIDDEN: '403 无权限',
+  AUTH_PERMISSION_CHANGED: '权限已变更，请刷新后重试',
 };
 
 const FALLBACK_ERROR_MESSAGE = '请求失败，请稍后重试';
@@ -112,18 +115,43 @@ const request = axios.create({
 });
 
 
-// 请求拦截器：添加 token
+// 请求拦截器：添加 token 与权限版本号（供网关校验版本是否过期）
 request.interceptors.request.use(
   (config) => {
     const userStore = useUserStore();
     if (userStore.token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${userStore.token}`;
+      if (userStore.permissionVersion != null && userStore.permissionVersion > 0) {
+        config.headers['X-Permission-Version'] = String(userStore.permissionVersion);
+      }
     }
     return config;
   },
   (error) => Promise.reject(error),
 );
+
+let permissionRefreshInProgress = false;
+
+async function handleAuthPermissionChanged(): Promise<void> {
+  if (permissionRefreshInProgress) return;
+  permissionRefreshInProgress = true;
+  try {
+    const userStore = useUserStore();
+    await userStore.refreshPermissionProfile();
+    const currentPath = router.currentRoute.value?.path || '/';
+    if (currentPath !== '/' && currentPath !== '/login') {
+      const menuCode = router.currentRoute.value?.meta?.menuCode as string | undefined;
+      const requiredLevel = (router.currentRoute.value?.meta?.requiredLevel as number) ?? 1;
+      if (menuCode && userStore.getMenuLevel(menuCode) < requiredLevel) {
+        messageError('403 无权限');
+        await router.replace('/');
+      }
+    }
+  } finally {
+    permissionRefreshInProgress = false;
+  }
+}
 
 // 响应拦截器：处理 API 返回的数据结构
 request.interceptors.response.use(
@@ -138,8 +166,26 @@ request.interceptors.response.use(
       if (res.success) {
         return (res as ApiResponse<unknown>).data;
       }
+      const code = res.code as string | undefined;
+      if (code === 'AUTH_PERMISSION_CHANGED') {
+        handleAuthPermissionChanged().then(() => {
+          const msg = resolveErrorMessage({
+            code,
+            backendMessage: safeBackendMessage(res.message),
+          });
+          if (shouldShowErrorToast(response.config)) {
+            messageError(msg);
+          }
+        });
+        return Promise.reject(new Error(code));
+      }
+      if (code === 'AUTH_FORBIDDEN') {
+        messageError('403 无权限');
+        router.replace('/').catch(() => {});
+        return Promise.reject(new Error(code));
+      }
       const msg = resolveErrorMessage({
-        code: res.code,
+        code,
         backendMessage: safeBackendMessage(res.message),
       });
       if (shouldShowErrorToast(response.config)) {
@@ -147,7 +193,6 @@ request.interceptors.response.use(
       }
       return Promise.reject(new Error(msg));
     }
-    // 非统一响应结构，直接返回原始数据
     return response.data;
   },
   (error) => {
@@ -155,10 +200,25 @@ request.interceptors.response.use(
       return Promise.reject(error);
     }
     if (error.response) {
-      const status = error.response.status as number | undefined;
-      const parsed = parseBackendError(error.response.data);
+      const data = error.response.data;
+      const parsed = parseBackendError(data);
+      if (parsed.code === 'AUTH_PERMISSION_CHANGED') {
+        handleAuthPermissionChanged().then(() => {
+          const msg = resolveErrorMessage({
+            code: parsed.code,
+            backendMessage: parsed.message,
+          });
+          messageError(msg);
+        });
+        return Promise.reject(error);
+      }
+      if (parsed.code === 'AUTH_FORBIDDEN') {
+        messageError('403 无权限');
+        router.replace('/').catch(() => {});
+        return Promise.reject(error);
+      }
       const msg = resolveErrorMessage({
-        status,
+        status: error.response.status,
         code: parsed.code,
         backendMessage: parsed.message,
       });

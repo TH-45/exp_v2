@@ -44,6 +44,15 @@
         </if>
     </select>
 
+    <!-- 查询所有启用的菜单（用于权限画像构建菜单树） -->
+    <select id="selectAllEnabledMenus" resultType="jh.exp.auth.core.entity.Menu">
+        SELECT menu_id, parent_menu_id, menu_code, menu_name, menu_type,
+               route_path, component, icon, visible, status, sort_no, remark
+        FROM exp_menu
+        WHERE status = 'ENABLED' AND (visible IS NULL OR visible = 1)
+        ORDER BY parent_menu_id, sort_no
+    </select>
+
     <!-- 根据菜单ID列表批量查询菜单详情 -->
     <select id="selectMenuDetailByIds" resultType="jh.exp.auth.core.entity.res.MenuDetailRes">
         SELECT m.menu_id, m.parent_menu_id, m.menu_code, m.menu_name, m.menu_type,

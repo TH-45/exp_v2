@@ -40,5 +40,8 @@ public interface MenuMapper extends BaseMapper<Menu> {
      */
     List<MenuDetailRes> selectMenuDetailByIds(@Param("menuIds") List<Long> menuIds);
 
-
+    /**
+     * 查询所有启用的菜单（用于权限画像构建菜单树）
+     */
+    List<Menu> selectAllEnabledMenus();
 }

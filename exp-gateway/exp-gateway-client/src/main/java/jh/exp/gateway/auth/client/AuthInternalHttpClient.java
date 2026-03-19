@@ -2,6 +2,7 @@ package jh.exp.gateway.auth.client;
 
 import jh.exp.common.core.auth.dto.LoginRequest;
 import jh.exp.common.core.auth.dto.LoginUserInfo;
+import jh.exp.common.core.auth.dto.PermissionProfileResult;
 import jh.exp.common.core.auth.dto.ProfileDetailResult;
 import jh.exp.common.core.auth.dto.ProfileResult;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,6 +38,18 @@ public interface AuthInternalHttpClient {
      */
     @GetExchange("/profile/detail")
     Mono<ProfileDetailResult> profileDetail(@RequestParam("userId") String userId);
+
+    /**
+     * 根据 userId 获取权限画像（full snapshot：menuTree、menuLevelMap、funcPermissionSet 等），供前端使用。
+     */
+    @GetExchange("/permission/profile")
+    Mono<PermissionProfileResult> permissionProfile(@RequestParam("userId") String userId);
+
+    /**
+     * 根据 userId 获取轻量权限画像（lite snapshot：不含 menuTree），供网关请求鉴权透传头信息使用。
+     */
+    @GetExchange("/permission/profile/lite")
+    Mono<PermissionProfileResult> permissionProfileLite(@RequestParam("userId") String userId);
 }
 
 

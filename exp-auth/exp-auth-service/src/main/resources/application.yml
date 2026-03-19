@@ -48,6 +48,12 @@ management:
     health:
       show-details: never
 
+# 权限快照缓存配置
+auth:
+  permission:
+    snapshot:
+      ttl-minutes: 30
+
 logging:
   level:
     root: info

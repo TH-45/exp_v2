@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PermissionExp extends Permission {
-    //扩展信息
-    private Long roleId ;
+    /** 角色ID */
+    private Long roleId;
+    /** 授权类型：MENU 时为 1/2/3，FUNC 时可为空 */
+    private String grantType;
 }

@@ -242,7 +242,7 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import { parsePageResult } from '@/api/common';
 import {
   queryMenuTree,
@@ -330,10 +330,10 @@ const rules: FormRules = {
 };
 
 // 权限点（当前项目约定风格）
-const canCreate = computed(() => hasPermission('system:menu:create'));
-const canUpdate = computed(() => hasPermission('system:menu:update'));
-const canDelete = computed(() => hasPermission('system:menu:delete'));
-const canStatus = computed(() => hasPermission('system:menu:status'));
+const canCreate = computed(() => getMenuLevel('system:menu') >= 2);
+const canUpdate = computed(() => getMenuLevel('system:menu') >= 2);
+const canDelete = computed(() => getMenuLevel('system:menu') >= 3);
+const canStatus = computed(() => getMenuLevel('system:menu') >= 2);
 
 const parentName = computed(() => {
   if (!form.parentMenuId) return '根节点';

@@ -7,16 +7,21 @@ import jh.exp.auth.core.entity.res.PersonDetailRes;
 import jh.exp.auth.core.mapper.AccountMapper;
 import jh.exp.auth.core.mapper.OrgUnitMapper;
 import jh.exp.auth.core.mapper.PersonMapper;
+import jh.exp.common.core.auth.dto.PermissionProfileResult;
 import jh.exp.common.core.auth.dto.ProfileDetailResult;
 import jh.exp.common.core.auth.dto.ProfileResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 提供内部 profile 查询能力，供网关等内部服务调用。
+ * 权限设计方案：profile 的 roles、permissions、menus 来自权限画像服务。
  */
 @Service
 public class ProfileService {
@@ -27,6 +32,8 @@ public class ProfileService {
     private PersonMapper personMapper;
     @Autowired
     private OrgUnitMapper orgUnitMapper;
+    @Autowired
+    private UserPermissionProfileService userPermissionProfileService;
 
     public ProfileResult getProfile(String userId) {
         Account account = resolveAccount(userId);
@@ -112,15 +119,25 @@ public class ProfileService {
         return account;
     }
 
-    private static ProfileResult getResult(Account account) {
+    private ProfileResult getResult(Account account) {
         ProfileResult result = new ProfileResult();
         result.setUserId(String.valueOf(account.getAccountId()));
         result.setUsername(account.getAccountDisplay() != null ? account.getAccountDisplay() : account.getAccountName());
         result.setDeptId(account.getOrgId() == null ? null : String.valueOf(account.getOrgId()));
         result.setDeptName(null);
-        result.setRoles(List.of("ADMIN"));
-        result.setPermissions(List.of("system:user:view", "system:user:edit"));
-        result.setMenus(List.of("dashboard", "system:user", "bidding:project", "contracts:list"));
+
+        // 从权限画像服务获取真实 roles、permissions、menus
+        PermissionProfileResult permProfile = userPermissionProfileService.buildFullSnapshot(account.getAccountId());
+        if (permProfile != null) {
+            result.setRoles(permProfile.getRoles() != null ? permProfile.getRoles() : Collections.emptyList());
+            result.setPermissions(permProfile.getFuncPermissionSet() != null ? permProfile.getFuncPermissionSet() : Collections.emptyList());
+            Map<String, Integer> menuLevelMap = permProfile.getMenuLevelMap();
+            result.setMenus(menuLevelMap != null ? new ArrayList<>(menuLevelMap.keySet()) : Collections.emptyList());
+        } else {
+            result.setRoles(Collections.emptyList());
+            result.setPermissions(Collections.emptyList());
+            result.setMenus(Collections.emptyList());
+        }
         return result;
     }
 }

@@ -1,6 +1,7 @@
 package jh.exp.project.service.controller.bus;
 
 import jakarta.validation.Valid;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -18,6 +19,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/project")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "project:management", level = 1)
 public class ProjectController {
     private final ProjectInternalService service;
 
@@ -43,22 +45,26 @@ public class ProjectController {
     }
 
     @PostMapping("/create")
+    @RequiresMenuLevel(code = "project:management", level = 2)
     public ApiResponse<Project> create(@RequestBody @Valid Project req) {
         return ApiResponse.success(service.create(req));
     }
 
     @PostMapping("/update")
+    @RequiresMenuLevel(code = "project:management", level = 2)
     public ApiResponse<Project> update(@RequestBody @Valid Project req) {
         return ApiResponse.success(service.update(req));
     }
 
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "project:management", level = 3)
     public ApiResponse<Void> delete(@RequestBody @Valid DeleteByIdReq req) {
         service.delete(req);
         return ApiResponse.success(null);
     }
 
     @PostMapping("/batchDelete")
+    @RequiresMenuLevel(code = "project:management", level = 3)
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteByIdsReq req) {
         service.batchDelete(req);
         return ApiResponse.success(null);

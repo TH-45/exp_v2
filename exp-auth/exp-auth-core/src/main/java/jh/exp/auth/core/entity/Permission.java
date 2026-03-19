@@ -27,7 +27,7 @@ public class Permission {
 
     /**
      * 权限编码，唯一且不可为空，最大长度128
-     * 编码编写规则：MENU_XXX_XXX 表示菜单权限（MENU_）
+     * 菜单权限：module:code 如 system:account、bidding:project；特殊权限：如 approval:task:approve
      */
     @Column(name = "perm_code", nullable = false, unique = true, length = 128)
     private String permCode;
@@ -40,7 +40,7 @@ public class Permission {
 
     /**
      * 权限类型，最大长度32
-     * 可选值：FUNC-业务能力权限，DATA-数据范围权限
+     * 可选值：MENU-菜单权限，FUNC-业务能力权限，DATA-数据范围权限
      */
     @Column(name = "perm_type", length = 32)
     private String permType;

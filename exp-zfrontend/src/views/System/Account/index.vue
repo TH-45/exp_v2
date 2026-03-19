@@ -276,7 +276,7 @@
 import { onMounted, reactive, ref, computed, watch } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import { generateAccountName } from '@/utils/account';
 import PersonSelector from '@/components/Selector/PersonSelector.vue';
 import OrgSelector from '@/components/Selector/OrgSelector.vue';
@@ -323,17 +323,10 @@ function getAccountRowKey(row: AccountRow) {
   return row.__rowKey;
 }
 
-// 账号管理权限开关 - 可通过注释/uncomment 来切换权限检查逻辑
-// 方案1：使用严格的管理权限（推荐用于生产环境）
-// const canManage = computed(() => hasPermission('system:user:manage'));
-// const canDelete = computed(() => hasPermission('system:user:delete'));
-// const canReset = computed(() => hasPermission('system:user:reset'));
-
-// 方案2：使用宽松的查看权限（用于开发调试）
-const canManage = computed(() => hasPermission('system:user:view')); // 账号管理使用查看权限即可操作
-const canDelete = computed(() => hasPermission('system:user:view')); // 账号管理使用查看权限即可操作
-const canReset = computed(() => hasPermission('system:user:view')); // 账号管理使用查看权限即可操作
-const canLinkPerson = computed(() => hasPermission('system:user:view')); // 关联人员使用查看权限即可操作
+const canManage = computed(() => getMenuLevel('system:account') >= 2);
+const canDelete = computed(() => getMenuLevel('system:account') >= 3);
+const canReset = computed(() => getMenuLevel('system:account') >= 2);
+const canLinkPerson = computed(() => getMenuLevel('system:account') >= 2);
 
 function statusTagType(status?: string) {
   if (status === 'ENABLED') return 'success';
@@ -763,7 +756,6 @@ async function handleEdit(row: AccountVO) {
         defaultDataScope: '',
         isSystem: 0,
         sortNo: 0,
-        status: 'ENABLED' as const,
       };
     }
 

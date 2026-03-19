@@ -3,7 +3,7 @@ package jh.exp.bid.contract.service.controller.bus;
 import jh.exp.bid.contract.core.entity.BidEvaluationMember;
 import jh.exp.bid.contract.core.entity.req.CreateEvaluationMemberReq;
 import jh.exp.bid.contract.service.service.bus.EvaluationMemberService;
-import jh.exp.common.core.annotation.RequiresPermissions;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/evaluation-member")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "bidding:evaluation", level = 1)
 public class EvaluationMemberController {
 
     private final EvaluationMemberService memberService;
@@ -24,7 +25,6 @@ public class EvaluationMemberController {
      * 根据委员会ID查询评标成员列表
      */
     @GetMapping("/list")
-    //@RequiresPermissions("EVALUATION:VIEW")
     public ApiResponse<List<BidEvaluationMember>> list(@RequestParam Long committeeId) {
         List<BidEvaluationMember> result = memberService.getMembersByCommitteeId(committeeId);
         return ApiResponse.success(result);
@@ -34,7 +34,7 @@ public class EvaluationMemberController {
      * 添加评标成员
      */
     @PostMapping("/add")
-    //@RequiresPermissions("EVALUATION:EDIT")
+    @RequiresMenuLevel(code = "bidding:evaluation", level = 2)
     public ApiResponse<BidEvaluationMember> add(@RequestBody CreateEvaluationMemberReq req) {
         BidEvaluationMember result = memberService.addMember(req);
         return ApiResponse.success(result);
@@ -44,7 +44,7 @@ public class EvaluationMemberController {
      * 批量添加评标成员
      */
     @PostMapping("/batchAdd")
-    //@RequiresPermissions("EVALUATION:EDIT")
+    @RequiresMenuLevel(code = "bidding:evaluation", level = 2)
     public ApiResponse<Void> batchAdd(@RequestParam Long committeeId,
                                      @RequestBody List<CreateEvaluationMemberReq> members) {
         memberService.batchAddMembers(committeeId, members);
@@ -55,7 +55,7 @@ public class EvaluationMemberController {
      * 更新评标成员
      */
     @PostMapping("/update")
-    //@RequiresPermissions("EVALUATION:EDIT")
+    @RequiresMenuLevel(code = "bidding:evaluation", level = 2)
     public ApiResponse<BidEvaluationMember> update(@RequestParam Long memberId,
                                                      @RequestBody CreateEvaluationMemberReq req) {
         BidEvaluationMember result = memberService.updateMember(memberId, req);
@@ -66,7 +66,7 @@ public class EvaluationMemberController {
      * 删除评标成员
      */
     @PostMapping("/remove")
-    //@RequiresPermissions("EVALUATION:DELETE")
+    @RequiresMenuLevel(code = "bidding:evaluation", level = 3)
     public ApiResponse<Void> remove(@RequestParam Long memberId) {
         memberService.removeMember(memberId);
         return ApiResponse.success(null);
@@ -76,7 +76,7 @@ public class EvaluationMemberController {
      * 批量删除评标成员
      */
     @PostMapping("/batchRemove")
-    //@RequiresPermissions("EVALUATION:DELETE")
+    @RequiresMenuLevel(code = "bidding:evaluation", level = 3)
     public ApiResponse<Void> batchRemove(@RequestParam Long committeeId,
                                         @RequestBody List<Long> memberIds) {
         memberService.batchRemoveMembers(committeeId, memberIds);
@@ -87,7 +87,7 @@ public class EvaluationMemberController {
      * 更新成员到场状态
      */
     @PostMapping("/presence")
-    //@RequiresPermissions("EVALUATION:EDIT")
+    @RequiresMenuLevel(code = "bidding:evaluation", level = 2)
     public ApiResponse<BidEvaluationMember> updatePresence(@RequestParam Long memberId,
                                                              @RequestParam Integer isPresent) {
         BidEvaluationMember result = memberService.updateMemberPresence(memberId, isPresent);

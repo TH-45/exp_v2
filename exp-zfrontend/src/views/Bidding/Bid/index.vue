@@ -221,7 +221,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import type { ExpPersonVO } from '@/api/system/person';
 import type { OrgNode } from '@/api/system/post';
 import type { ProjectVO } from '@/api/corpProject/project';
@@ -245,7 +245,7 @@ import {
 
 const route = useRoute();
 const router = useRouter();
-const canManage = computed(() => hasPermission('bidding:bid:manage'));
+const canManage = computed(() => getMenuLevel('bidding:bid') >= 3);
 
 const statusOptions: Array<{ label: string; value: BidStatus }> = [
   { label: '准备', value: 'PREPARE' },

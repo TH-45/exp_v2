@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { computed,ref } from 'vue';
-import { loginApi, getProfileApi, type ProfileResult } from '@/api/auth';
+import { loginApi, getProfileApi, getPermissionProfileApi, type ProfileResult, type PermissionProfileResult } from '@/api/auth';
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string | null>(localStorage.getItem('TOKEN'));
@@ -8,10 +8,13 @@ export const useUserStore = defineStore('user', () => {
   const userId = ref<string | null>(localStorage.getItem('USER_ID'));
   const avatar = ref<string | null>(localStorage.getItem('AVATAR'));
   const roles = ref<string[]>([]);
-  const permissions = ref<string[]>([]);
-  const menus = ref<string[]>([]);
   const profileLoaded = ref(false);
   const isAdmin = computed(() => roles.value.some(role => role.toLowerCase() === 'admin'));
+
+  const permissionVersion = ref<number>(0);
+  const menuTree = ref<PermissionProfileResult['menuTree']>([]);
+  const menuLevelMap = ref<Record<string, number>>({});
+  const funcPermissionSet = ref<Set<string>>(new Set());
 
   const setToken = (val: string) => {
     token.value = val;
@@ -23,8 +26,6 @@ export const useUserStore = defineStore('user', () => {
     username.value = profile.username;
     avatar.value = (profile as any).avatar || null;
     roles.value = profile.roles || [];
-    permissions.value = profile.permissions || [];
-    menus.value = profile.menus || [];
 
     localStorage.setItem('USER_ID', profile.userId);
     localStorage.setItem('USERNAME', profile.username);
@@ -34,18 +35,40 @@ export const useUserStore = defineStore('user', () => {
     profileLoaded.value = true;
   };
 
+  const setPermissionProfile = (profile: PermissionProfileResult) => {
+    permissionVersion.value = profile.permissionVersion ?? 0;
+    menuTree.value = profile.menuTree ?? [];
+    menuLevelMap.value = profile.menuLevelMap ?? {};
+    funcPermissionSet.value = new Set(profile.funcPermissionSet ?? []);
+    roles.value = profile.roles ?? [];
+  };
+
+  const refreshPermissionProfile = async () => {
+    if (!token.value) return;
+    const profile = await getPermissionProfileApi();
+    setPermissionProfile(profile);
+  };
+
+  const getMenuLevel = (menuCode: string): number => menuLevelMap.value[menuCode] ?? 0;
+  const hasFuncPermission = (permCode: string): boolean => funcPermissionSet.value.has(permCode);
+
   const login = async (user: string, pass: string) => {
     const res = await loginApi({ username: user, password: pass });
     setToken(res.token);
-    // 登录成功后再拉取用户信息，包含权限与菜单
-    const profile = await getProfileApi();
-    setProfile(profile);
+    const permProfile = await getPermissionProfileApi();
+    setPermissionProfile(permProfile);
+    userId.value = String(permProfile.userId);
+    username.value = permProfile.username;
+    localStorage.setItem('USER_ID', String(permProfile.userId));
+    localStorage.setItem('USERNAME', permProfile.username);
+    profileLoaded.value = true;
   };
 
   const fetchProfile = async () => {
     if (!token.value) return;
     const profile = await getProfileApi();
     setProfile(profile);
+    await refreshPermissionProfile();
   };
 
   const logout = () => {
@@ -54,8 +77,10 @@ export const useUserStore = defineStore('user', () => {
     userId.value = null;
     avatar.value = null;
     roles.value = [];
-    permissions.value = [];
-    menus.value = [];
+    permissionVersion.value = 0;
+    menuTree.value = [];
+    menuLevelMap.value = {};
+    funcPermissionSet.value = new Set();
     profileLoaded.value = false;
 
     localStorage.removeItem('TOKEN');
@@ -71,9 +96,13 @@ export const useUserStore = defineStore('user', () => {
     avatar,
     roles,
     isAdmin,
-    permissions,
-    menus,
     profileLoaded,
+    permissionVersion,
+    menuTree,
+    getMenuLevel,
+    hasFuncPermission,
+    refreshPermissionProfile,
+    setPermissionProfile,
     login,
     fetchProfile,
     logout,

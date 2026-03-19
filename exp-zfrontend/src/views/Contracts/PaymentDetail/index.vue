@@ -81,7 +81,7 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 
 type PayType = 'PAY' | 'RECEIVE';
 type PayStatus = 'PENDING' | 'DONE';
@@ -89,7 +89,7 @@ type PayStatus = 'PENDING' | 'DONE';
 const route = useRoute();
 const router = useRouter();
 
-const canManage = computed(() => hasPermission('contracts:payment:manage'));
+const canManage = computed(() => getMenuLevel('contracts:payment') >= 3);
 const activeTab = ref('reconcile');
 
 const payment = reactive({

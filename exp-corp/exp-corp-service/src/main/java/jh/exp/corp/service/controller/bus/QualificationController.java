@@ -1,6 +1,7 @@
 package jh.exp.corp.service.controller.bus;
 
 import jakarta.validation.Valid;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/qualification")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "enterprise:qualifications", level = 1)
 public class QualificationController {
 
     private final QualificationInternalService qualificationInternalService;
@@ -31,22 +33,26 @@ public class QualificationController {
     }
 
     @PostMapping("/create")
+    @RequiresMenuLevel(code = "enterprise:qualifications", level = 2)
     public ApiResponse<QualificationDetailRes> create(@RequestBody @Valid CreateQualificationReq req) {
         return ApiResponse.success(qualificationInternalService.create(req));
     }
 
     @PostMapping("/update")
+    @RequiresMenuLevel(code = "enterprise:qualifications", level = 2)
     public ApiResponse<QualificationDetailRes> update(@RequestBody @Valid UpdateQualificationReq req) {
         return ApiResponse.success(qualificationInternalService.update(req));
     }
 
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "enterprise:qualifications", level = 3)
     public ApiResponse<Void> delete(@RequestBody @Valid DeleteQualificationReq req) {
         qualificationInternalService.delete(req);
         return ApiResponse.success(null);
     }
 
     @PostMapping("/batchDelete")
+    @RequiresMenuLevel(code = "enterprise:qualifications", level = 3)
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteQualificationReq req) {
         qualificationInternalService.batchDelete(req);
         return ApiResponse.success(null);

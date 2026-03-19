@@ -229,7 +229,7 @@ import { useRoute } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { Plus, Download, User, UserFilled } from '@element-plus/icons-vue';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import { queryPersonList, type ExpPersonVO } from '@/api/system/person';
 import {
   addProjectMember,
@@ -291,8 +291,8 @@ const memberRules: FormRules = {
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 };
 
-const canUpdate = computed(() => hasPermission('project:member:update'));
-const canDelete = computed(() => hasPermission('project:member:delete'));
+const canUpdate = computed(() => getMenuLevel('project:members') >= 2);
+const canDelete = computed(() => getMenuLevel('project:members') >= 3);
 
 async function loadAvailableUsers() {
   try {

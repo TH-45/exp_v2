@@ -136,12 +136,12 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
-const canManage = computed(() => hasPermission('contracts:payment:manage'));
+const canManage = computed(() => getMenuLevel('contracts:payment') >= 3);
 
 type PayType = 'PAY' | 'RECEIVE';
 type PayStatus = 'PENDING' | 'DONE';

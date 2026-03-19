@@ -264,7 +264,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { Plus, Download } from '@element-plus/icons-vue';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import { parsePageResult } from '@/api/common';
 import { listDictOptions, type DictOption } from '@/api/system/dict';
 import {
@@ -336,10 +336,10 @@ const detailDrawer = reactive<{
 });
 
 // 权限占位：后续接入权限体系时使用 corp:basic:view/create/update/delete，当前未接入故用 ?? true 放行
-const canView = computed(() => hasPermission('corp:basic:view') ?? true);
-const canCreate = computed(() => hasPermission('corp:basic:create') ?? true);
-const canUpdate = computed(() => hasPermission('corp:basic:update') ?? true);
-const canDelete = computed(() => hasPermission('corp:basic:delete') ?? true);
+const canView = computed(() => getMenuLevel('enterprise:basic') >= 1);
+const canCreate = computed(() => getMenuLevel('enterprise:basic') >= 2);
+const canUpdate = computed(() => getMenuLevel('enterprise:basic') >= 2);
+const canDelete = computed(() => getMenuLevel('enterprise:basic') >= 3);
 
 function getStatusLabel(status?: string) {
   const labels: Record<string, string> = {

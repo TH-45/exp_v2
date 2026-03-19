@@ -1,5 +1,8 @@
 package jh.exp.auth.core.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,6 +16,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "exp_role_assign")
+@TableName("exp_role_assign")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,6 +24,7 @@ public class RoleAssign {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     @Column(name = "id")
     private Long id;
 

@@ -10,8 +10,13 @@ import org.springframework.stereotype.Component;
  * 业务异常处理器：用于处理BizException和GatewayBizException业务异常。
  */
 @Component
-@Order(-5)
+@Order(-90)
 public class BizExceptionHandler extends AbstractGatewayExceptionHandler {
+
+    @Override
+    public int getOrder() {
+        return -90;
+    }
 
     @Override
     public boolean supports(Throwable throwable) {

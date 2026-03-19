@@ -1,6 +1,7 @@
 package jh.exp.project.service.controller.bus;
 
 import jakarta.validation.Valid;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.project.core.entity.req.ProjectMemberCreateReq;
 import jh.exp.project.core.entity.req.ProjectMemberDeleteReq;
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/projectMgmt/member")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "project:members", level = 1)
 public class ProjectMemberMgmtController {
     private final ProjectMemberMgmtInternalService service;
 
@@ -29,16 +31,19 @@ public class ProjectMemberMgmtController {
     }
 
     @PostMapping("/create")
+    @RequiresMenuLevel(code = "project:members", level = 2)
     public ApiResponse<ProjectMemberRes> create(@RequestBody @Valid ProjectMemberCreateReq req) {
         return ApiResponse.success(service.create(req));
     }
 
     @PostMapping("/update")
+    @RequiresMenuLevel(code = "project:members", level = 2)
     public ApiResponse<ProjectMemberRes> update(@RequestBody @Valid ProjectMemberUpdateReq req) {
         return ApiResponse.success(service.update(req));
     }
 
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "project:members", level = 3)
     public ApiResponse<Void> delete(@RequestBody @Valid ProjectMemberDeleteReq req) {
         service.delete(req);
         return ApiResponse.success(null);

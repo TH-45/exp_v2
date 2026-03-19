@@ -266,7 +266,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { Plus, Download } from '@element-plus/icons-vue';
-import { hasPermission } from '@/utils/permission.ts';
+import { getMenuLevel } from '@/utils/permission';
 import {
   listAnnouncements,
   getAnnouncementDetail,
@@ -324,10 +324,10 @@ const detailDrawer = reactive({
   data: null as AnnouncementVO | null,
 });
 
-const canView = computed(() => hasPermission('corp:announcement:view'));
-const canCreate = computed(() => hasPermission('corp:announcement:create'));
-const canUpdate = computed(() => hasPermission('corp:announcement:update'));
-const canDelete = computed(() => hasPermission('corp:announcement:delete'));
+const canView = computed(() => getMenuLevel('enterprise:announcements') >= 1);
+const canCreate = computed(() => getMenuLevel('enterprise:announcements') >= 2);
+const canUpdate = computed(() => getMenuLevel('enterprise:announcements') >= 2);
+const canDelete = computed(() => getMenuLevel('enterprise:announcements') >= 3);
 
 function getTypeLabel(type?: string) {
   const labels = { NOTICE: '公告', POLICY: '制度' };

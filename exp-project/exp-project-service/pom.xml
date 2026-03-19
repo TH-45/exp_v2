@@ -42,6 +42,13 @@
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
+        <!-- AuthAspect、GlobalExceptionAdvice、AuthExceptionHandler 等权限与异常处理 -->
+        <dependency>
+            <groupId>jh.exp.common</groupId>
+            <artifactId>exp-common-service</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>

@@ -9,6 +9,7 @@ import jh.exp.auth.core.entity.res.AccountDetailRes;
 import jh.exp.auth.core.entity.res.AccountListRes;
 import jh.exp.auth.core.entity.res.AccountRoleRes;
 import jh.exp.auth.service.service.bus.AccountService;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -23,6 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/account")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "system:account", level = 1)
 public class AccountController {
 
     private final AccountService accountService;
@@ -50,6 +52,7 @@ public class AccountController {
      * 创建账号
      */
     @PostMapping("/create")
+    @RequiresMenuLevel(code = "system:account", level = 2)
     public ApiResponse<AccountDetailRes> create(@RequestBody @Valid CreateAccountReq req) {
         AccountDetailRes result = accountService.createAccount(req);
         return ApiResponse.success(result);
@@ -59,6 +62,7 @@ public class AccountController {
      * 更新账号
      */
     @PostMapping("/update")
+    @RequiresMenuLevel(code = "system:account", level = 2)
     public ApiResponse<AccountDetailRes> update(@RequestBody @Valid UpdateAccountReq req) {
         AccountDetailRes result = accountService.updateAccount(req);
         return ApiResponse.success(result);
@@ -68,6 +72,7 @@ public class AccountController {
      * 删除账号
      */
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "system:account", level = 3)
     public ApiResponse<Void> delete(@RequestBody DeleteAccountReq req) {
         accountService.deleteAccount(req.getAccountId());
         return ApiResponse.success(null);
@@ -77,6 +82,7 @@ public class AccountController {
      * 批量删除账号
      */
     @PostMapping("/batchDelete")
+    @RequiresMenuLevel(code = "system:account", level = 3)
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteAccountReq req) {
         accountService.batchDeleteAccounts(req);
         return ApiResponse.success(null);
@@ -86,6 +92,7 @@ public class AccountController {
      * 更改账号状态
      */
     @PostMapping("/status")
+    @RequiresMenuLevel(code = "system:account", level = 2)
     public ApiResponse<AccountDetailRes> updateStatus(@RequestBody @Valid AccountStatusReq req) {
         AccountDetailRes result = accountService.updateAccountStatus(req);
         return ApiResponse.success(result);
@@ -95,6 +102,7 @@ public class AccountController {
      * 批量更改账号状态
      */
     @PostMapping("/batchStatus")
+    @RequiresMenuLevel(code = "system:account", level = 2)
     public ApiResponse<Void> batchUpdateStatus(@RequestBody @Valid BatchAccountStatusReq req) {
         accountService.batchUpdateAccountStatus(req);
         return ApiResponse.success(null);
@@ -104,6 +112,7 @@ public class AccountController {
      * 重置密码
      */
     @PostMapping("/resetPassword")
+    @RequiresMenuLevel(code = "system:account", level = 2)
     public ApiResponse<Void> resetPassword(@RequestBody @Valid ResetPasswordReq req) {
         accountService.resetPassword(req);
         return ApiResponse.success(null);
@@ -136,6 +145,7 @@ public class AccountController {
      * 关联账号与人员
      */
     @PostMapping("/linkPerson")
+    @RequiresMenuLevel(code = "system:account", level = 2)
     public ApiResponse<AccountDetailRes> linkPerson(@RequestBody @Valid LinkAccountPersonReq req) {
         AccountDetailRes result = accountService.linkAccountToPerson(req);
         return ApiResponse.success(result);

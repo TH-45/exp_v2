@@ -1,8 +1,11 @@
 package jh.exp.gateway.service.auth.filter;
 
 import jh.exp.common.core.api.ApiResponse;
+import jh.exp.common.core.auth.dto.PermissionProfileResult;
+import jh.exp.common.core.constant.ServiceContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jh.exp.gateway.auth.client.AuthInternalHttpClient;
 import jh.exp.gateway.service.auth.service.JwtTokenService;
 import jh.exp.gateway.service.auth.service.TokenBlacklistService;
 import jh.exp.gateway.service.auth.support.JwtPayload;
@@ -24,6 +27,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -59,6 +63,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
      * Token黑名单服务，用于检查Token是否已被加入黑名单（如用户登出后的Token）
      */
     private final TokenBlacklistService tokenBlacklistService;
+
+    /**
+     * 认证服务内部客户端，用于获取权限画像（lite snapshot）
+     */
+    private final AuthInternalHttpClient authInternalClient;
     
     /**
      * JSON序列化/反序列化工具，用于将响应对象转换为JSON格式
@@ -67,9 +76,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     public JwtAuthenticationFilter(JwtTokenService jwtTokenService,
                                    TokenBlacklistService tokenBlacklistService,
+                                   AuthInternalHttpClient authInternalClient,
                                    ObjectMapper objectMapper) {
         this.jwtTokenService = jwtTokenService;
         this.tokenBlacklistService = tokenBlacklistService;
+        this.authInternalClient = authInternalClient;
         this.objectMapper = objectMapper;
     }
 
@@ -104,18 +115,32 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                         log.warn("Token 已在黑名单中，被拒绝，tokenId={}，path={}", finalPayload.tokenId(), path);
                         return reject(exchange, "AUTH_INVALID_TOKEN", "Token 已失效");
                     }
-                    ServerHttpRequest mutated = request.mutate()
-                            .header("X-User-Id", finalPayload.userId())
-                            .header("X-User-Name", finalPayload.username())
-                            // 标准头：下游服务 CurrentUserFilter 默认读取 X-Roles / X-Permissions
-                            .header("X-Roles", String.join(",", finalPayload.roles()))
-                            .header("X-Permissions", String.join(",", finalPayload.permissions()))
-                            // 兼容旧命名（如历史服务读取 X-User-Roles / X-User-Permissions）
-                            .header("X-User-Roles", String.join(",", finalPayload.roles()))
-                            .header("X-User-Permissions", String.join(",", finalPayload.permissions()))
-                            .build();
-                    log.info("JWT 鉴权通过，userId={}，path={}", finalPayload.userId(), path);
-                    return chain.filter(exchange.mutate().request(mutated).build());
+                    return authInternalClient.permissionProfileLite(finalPayload.userId())
+                            .flatMap(profile -> {
+                                // 客户端版本与快照版本不一致时，视为权限已变更，要求前端刷新后重试
+                                String clientVersion = request.getHeaders().getFirst(ServiceContext.PERMISSION_VERSION_HEADER);
+                                if (clientVersion != null && !clientVersion.isBlank()) {
+                                    Long serverVersion = profile.getPermissionVersion();
+                                    if (serverVersion != null) {
+                                        try {
+                                            long cv = Long.parseLong(clientVersion.trim());
+                                            if (cv != serverVersion.longValue()) {
+                                                log.info("权限版本不一致，要求刷新，userId={}，client={}，server={}，path={}",
+                                                        finalPayload.userId(), cv, serverVersion, path);
+                                                return reject(exchange, "AUTH_PERMISSION_CHANGED", "权限已变更，请刷新后重试");
+                                            }
+                                        } catch (NumberFormatException ignored) {}
+                                    }
+                                }
+                                ServerHttpRequest mutated = buildHeadersWithSnapshot(request, finalPayload, profile);
+                                log.info("JWT 鉴权通过，userId={}，path={}", finalPayload.userId(), path);
+                                return chain.filter(exchange.mutate().request(mutated).build());
+                            })
+                            .onErrorResume(ex -> {
+                                log.warn("获取权限画像失败，拒绝请求（fail-closed），userId={}，path={}，error={}",
+                                        finalPayload.userId(), path, ex.getMessage());
+                                return reject(exchange, "AUTH_PERMISSION_CHANGED", "权限服务暂不可用，请稍后重试");
+                            });
                 });
     }
 
@@ -144,6 +169,47 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         DataBufferFactory bufferFactory = response.bufferFactory();
         DataBuffer dataBuffer = bufferFactory.wrap(bytes);
         return response.writeWith(Mono.just(dataBuffer));
+    }
+
+    private ServerHttpRequest buildHeadersWithSnapshot(ServerHttpRequest req, JwtPayload payload, PermissionProfileResult profile) {
+        var builder = req.mutate()
+                .header(ServiceContext.USER_ID_HEADER, payload.userId())
+                .header(ServiceContext.USER_NAME_HEADER, payload.username())
+                .header(ServiceContext.ROLES_HEADER, String.join(",", profile.getRoles() != null ? profile.getRoles() : List.of()))
+                .header(ServiceContext.USER_ROLES_HEADER, String.join(",", profile.getRoles() != null ? profile.getRoles() : List.of()));
+        List<String> funcPerms = profile.getFuncPermissionSet() != null ? profile.getFuncPermissionSet() : List.of();
+        builder.header(ServiceContext.PERMISSIONS_HEADER, String.join(",", funcPerms))
+                .header(ServiceContext.USER_PERMISSIONS_HEADER, String.join(",", funcPerms));
+        if (profile.getPermissionVersion() != null) {
+            builder.header(ServiceContext.PERMISSION_VERSION_HEADER, String.valueOf(profile.getPermissionVersion()));
+        }
+        if (profile.getMenuLevelMap() != null && !profile.getMenuLevelMap().isEmpty()) {
+            try {
+                builder.header(ServiceContext.MENU_LEVEL_MAP_HEADER, objectMapper.writeValueAsString(profile.getMenuLevelMap()));
+            } catch (JsonProcessingException ignored) {}
+        }
+        if (profile.getFuncPermissionSet() != null && !profile.getFuncPermissionSet().isEmpty()) {
+            try {
+                builder.header(ServiceContext.FUNC_PERMISSIONS_HEADER, objectMapper.writeValueAsString(profile.getFuncPermissionSet()));
+            } catch (JsonProcessingException ignored) {}
+        }
+        if (profile.getDataScopeSummary() != null) {
+            try {
+                builder.header(ServiceContext.DATA_SCOPE_HEADER, objectMapper.writeValueAsString(profile.getDataScopeSummary()));
+            } catch (JsonProcessingException ignored) {}
+        }
+        return builder.build();
+    }
+
+    private ServerHttpRequest buildHeadersWithoutSnapshot(ServerHttpRequest req, JwtPayload payload) {
+        return req.mutate()
+                .header(ServiceContext.USER_ID_HEADER, payload.userId())
+                .header(ServiceContext.USER_NAME_HEADER, payload.username())
+                .header(ServiceContext.ROLES_HEADER, String.join(",", payload.roles()))
+                .header(ServiceContext.PERMISSIONS_HEADER, String.join(",", payload.permissions()))
+                .header(ServiceContext.USER_ROLES_HEADER, String.join(",", payload.roles()))
+                .header(ServiceContext.USER_PERMISSIONS_HEADER, String.join(",", payload.permissions()))
+                .build();
     }
 
     @Override

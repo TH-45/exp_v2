@@ -2,6 +2,7 @@ package jh.exp.auth.service.controller.bus;
 
 import jh.exp.auth.core.entity.req.UpdateMenuTreePermissionReq;
 import jh.exp.auth.service.service.bus.PermissionService;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/permission")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "system:role", level = 2)
 public class PermissionController {
 
     private final PermissionService permissionService;

@@ -76,14 +76,14 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 
 type ChangeStatus = 'DRAFT' | 'EFFECTIVE';
 
 const route = useRoute();
 const router = useRouter();
 
-const canManage = computed(() => hasPermission('contracts:change:manage'));
+const canManage = computed(() => getMenuLevel('contracts:change') >= 3);
 const activeTab = ref('content');
 
 const change = reactive({

@@ -182,7 +182,7 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import { queryEvaluationEligibleBiddingProjectList, type TenderVO } from '@/api/bidding/project';
 import { getTenderBids } from '@/api/bidding/bid';
 import {
@@ -210,7 +210,7 @@ type EvalBidRow = {
   isWinner: boolean;
 };
 
-const canManage = computed(() => hasPermission('bidding:evaluation:manage'));
+const canManage = computed(() => getMenuLevel('bidding:evaluation') >= 3);
 
 const query = reactive({
   tenderId: undefined as string | undefined,

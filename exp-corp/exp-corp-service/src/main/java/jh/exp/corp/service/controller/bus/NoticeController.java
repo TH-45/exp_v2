@@ -1,6 +1,7 @@
 package jh.exp.corp.service.controller.bus;
 
 import jakarta.validation.Valid;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/notice")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "enterprise:announcements", level = 1)
 public class NoticeController {
 
     private final NoticeInternalService noticeInternalService;
@@ -39,27 +41,32 @@ public class NoticeController {
     }
 
     @PostMapping("/create")
+    @RequiresMenuLevel(code = "enterprise:announcements", level = 2)
     public ApiResponse<NoticeDetailRes> create(@RequestBody @Valid CreateNoticeReq req) {
         return ApiResponse.success(noticeInternalService.create(req));
     }
 
     @PostMapping("/update")
+    @RequiresMenuLevel(code = "enterprise:announcements", level = 2)
     public ApiResponse<NoticeDetailRes> update(@RequestBody @Valid UpdateNoticeReq req) {
         return ApiResponse.success(noticeInternalService.update(req));
     }
 
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "enterprise:announcements", level = 3)
     public ApiResponse<Void> delete(@RequestBody @Valid DeleteNoticeReq req) {
         noticeInternalService.delete(req);
         return ApiResponse.success(null);
     }
 
     @PostMapping("/publish")
+    @RequiresMenuLevel(code = "enterprise:announcements", level = 2)
     public ApiResponse<NoticeDetailRes> publish(@RequestBody @Valid NoticeActionReq req) {
         return ApiResponse.success(noticeInternalService.publish(req));
     }
 
     @PostMapping("/withdraw")
+    @RequiresMenuLevel(code = "enterprise:announcements", level = 2)
     public ApiResponse<NoticeDetailRes> withdraw(@RequestBody @Valid NoticeActionReq req) {
         return ApiResponse.success(noticeInternalService.withdraw(req));
     }

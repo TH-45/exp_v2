@@ -1,5 +1,6 @@
 package jh.exp.process.service.controller;
 
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.process.core.entity.req.ProcessDriveReq;
 import jh.exp.process.core.entity.res.ProcessDriveRes;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/drive")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "approval:center", level = 1)
 public class ProcessDriveController {
 
     private final ProcessCommandDriver processCommandDriver;

@@ -1,6 +1,7 @@
 package jh.exp.corp.service.controller.bus;
 
 import jakarta.validation.Valid;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/company-contact")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "enterprise:basic", level = 1)
 public class CompanyContactController {
 
     private final CompanyContactInternalService companyContactInternalService;
@@ -30,22 +32,26 @@ public class CompanyContactController {
     }
 
     @PostMapping("/create")
+    @RequiresMenuLevel(code = "enterprise:basic", level = 2)
     public ApiResponse<CompanyContactDetailRes> create(@RequestBody @Valid CreateCompanyContactReq req) {
         return ApiResponse.success(companyContactInternalService.create(req));
     }
 
     @PostMapping("/update")
+    @RequiresMenuLevel(code = "enterprise:basic", level = 2)
     public ApiResponse<CompanyContactDetailRes> update(@RequestBody @Valid UpdateCompanyContactReq req) {
         return ApiResponse.success(companyContactInternalService.update(req));
     }
 
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "enterprise:basic", level = 3)
     public ApiResponse<Void> delete(@RequestBody @Valid DeleteCompanyContactReq req) {
         companyContactInternalService.delete(req);
         return ApiResponse.success(null);
     }
 
     @PostMapping("/batchDelete")
+    @RequiresMenuLevel(code = "enterprise:basic", level = 3)
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteCompanyContactReq req) {
         companyContactInternalService.batchDelete(req);
         return ApiResponse.success(null);

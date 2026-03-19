@@ -11,9 +11,15 @@ import org.springframework.lang.NonNull;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import jh.exp.common.core.auth.dto.CurrentUser.DataScopeSummary;
+
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -91,6 +97,47 @@ public class CurrentUserFilter extends OncePerRequestFilter {
                 request.getHeader(ServiceContext.USER_PERMISSIONS_HEADER)
         );
         currentUser.setPermissions(splitToList(permsHeader));
+
+        // 解析权限设计方案新增头字段
+        String permVersion = request.getHeader(ServiceContext.PERMISSION_VERSION_HEADER);
+        if (StringUtils.hasText(permVersion)) {
+            try {
+                currentUser.setPermissionVersion(Long.parseLong(permVersion));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        String menuLevelMapJson = request.getHeader(ServiceContext.MENU_LEVEL_MAP_HEADER);
+        if (StringUtils.hasText(menuLevelMapJson)) {
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> raw = JSONUtil.toBean(menuLevelMapJson, Map.class);
+                if (raw != null && !raw.isEmpty()) {
+                    Map<String, Integer> converted = new java.util.HashMap<>();
+                    raw.forEach((k, v) -> converted.put(k, v instanceof Number ? ((Number) v).intValue() : 0));
+                    currentUser.setMenuLevelMap(converted);
+                }
+            } catch (Exception e) {
+                log.warn("解析 X-Menu-Level-Map 失败: {}", menuLevelMapJson, e);
+            }
+        }
+        String funcPermsJson = request.getHeader(ServiceContext.FUNC_PERMISSIONS_HEADER);
+        if (StringUtils.hasText(funcPermsJson)) {
+            try {
+                List<String> list = JSONUtil.toList(JSONUtil.parseArray(funcPermsJson), String.class);
+                currentUser.setFuncPermissionSet(list != null ? new HashSet<>(list) : Collections.emptySet());
+            } catch (Exception e) {
+                log.warn("解析 X-Func-Permissions 失败: {}", funcPermsJson, e);
+            }
+        }
+        String dataScopeJson = request.getHeader(ServiceContext.DATA_SCOPE_HEADER);
+        if (StringUtils.hasText(dataScopeJson)) {
+            try {
+                DataScopeSummary summary = JSONUtil.toBean(dataScopeJson, DataScopeSummary.class);
+                currentUser.setDataScopeSummary(summary);
+            } catch (Exception e) {
+                log.warn("解析 X-Data-Scope 失败: {}", dataScopeJson, e);
+            }
+        }
 
         if (log.isDebugEnabled()) {
             log.debug("Resolved CurrentUser from headers: userId={}, username={}", userId, userName);

@@ -11,6 +11,7 @@ import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.RoleDetailRes;
 import jh.exp.auth.core.entity.res.RoleListRes;
 import jh.exp.auth.core.mapper.RoleMapper;
+import jh.exp.auth.service.service.PermissionRebuildService;
 import jh.exp.auth.service.service.bus.RoleService;
 import jh.exp.common.core.auth.CurrentUserHolder;
 import jh.exp.common.core.auth.dto.CurrentUser;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 public class RoleServiceImpl implements RoleService {
 
     private final RoleMapper roleMapper;
+    private final PermissionRebuildService permissionRebuildService;
 
     /**
      * 分页查询角色列表
@@ -136,6 +138,8 @@ public class RoleServiceImpl implements RoleService {
 
         roleMapper.updateById(role);
 
+        // 角色信息变更后，使受影响用户快照失效
+        permissionRebuildService.onRoleChanged(req.getRoleId());
         return getRoleById(req.getRoleId());
     }
 
@@ -157,6 +161,8 @@ public class RoleServiceImpl implements RoleService {
 
         // 检查是否有用户正在使用该角色（这里可能需要关联用户角色表，暂时跳过）
 
+        // 删除前先使受影响用户快照失效
+        permissionRebuildService.onRoleChanged(roleId);
         roleMapper.deleteById(roleId);
     }
 
@@ -169,6 +175,10 @@ public class RoleServiceImpl implements RoleService {
     public void batchDeleteRoles(BatchDeleteRoleReq req) {
         for (Long roleId : req.getRoleIds()) {
             deleteRoleInternal(roleId);
+        }
+        // 批量删除后，使所有受影响角色关联的用户快照失效
+        for (Long roleId : req.getRoleIds()) {
+            permissionRebuildService.onRoleChanged(roleId);
         }
     }
 
@@ -192,6 +202,8 @@ public class RoleServiceImpl implements RoleService {
         role.setUpdatedTime(LocalDateTime.now());
         roleMapper.updateById(role);
 
+        // 角色状态变更后，使受影响用户快照失效
+        permissionRebuildService.onRoleChanged(req.getRoleId());
         return getRoleById(req.getRoleId());
     }
 
@@ -212,6 +224,11 @@ public class RoleServiceImpl implements RoleService {
                     .set("updated_time", LocalDateTime.now());
 
         roleMapper.update(null, updateWrapper);
+
+        // 批量状态变更后，使所有受影响角色关联的用户快照失效
+        for (Long roleId : req.getRoleIds()) {
+            permissionRebuildService.onRoleChanged(roleId);
+        }
     }
 
     /**

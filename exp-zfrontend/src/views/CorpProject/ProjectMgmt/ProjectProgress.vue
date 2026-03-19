@@ -348,7 +348,7 @@ import { useRoute } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { Plus, Download } from '@element-plus/icons-vue';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import {
   createProjectMilestone,
   deleteProjectMilestone,
@@ -429,8 +429,8 @@ const availableMilestones = computed(() =>
   progressData.milestones.filter((m) => m.id !== milestoneDialog.editId),
 );
 
-const canUpdate = computed(() => hasPermission('project:progress:update'));
-const canDelete = computed(() => hasPermission('project:progress:delete'));
+const canUpdate = computed(() => getMenuLevel('project:progress') >= 2);
+const canDelete = computed(() => getMenuLevel('project:progress') >= 3);
 
 function getMilestoneStatusLabel(status: string) {
   const labels = {

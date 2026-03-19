@@ -13,8 +13,13 @@ import java.util.stream.Collectors;
  * 参数校验/绑定异常处理器。
  */
 @Component
-@Order(-2)
+@Order(-80)
 public class ValidationExceptionHandler extends AbstractGatewayExceptionHandler {
+
+    @Override
+    public int getOrder() {
+        return -80;
+    }
 
     @Override
     public boolean supports(Throwable throwable) {

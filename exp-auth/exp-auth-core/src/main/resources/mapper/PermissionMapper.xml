@@ -12,14 +12,13 @@
                p.perm_name AS permName,
                p.perm_type AS permType,
                p.module_code AS moduleCode,
-               p.menu_group AS menuGroup,
-               p.action_code AS actionCode,
-               p.url_path AS urlPath,
+               p.group_code AS groupCode,
+               p.perm_value AS permValue,
                p.status AS status,
                p.sort_no AS sortNo,
                p.remark AS remark,
-               rp.role_id AS roleId
-
+               rp.role_id AS roleId,
+               rp.grant_type AS grantType
         from expdb.exp_permission p
         left join expdb.exp_role_permission_rel rp on p.perm_id = rp.perm_id
         where rp.role_id = #{roleId}
@@ -37,6 +36,30 @@
               </foreach>
           )
     </delete>
+    <!-- 根据角色ID列表批量查询权限（含 grant_type） -->
+    <select id="selectPermissionsByRoleIds" resultType="jh.exp.auth.core.entity.exp.PermissionExp">
+        SELECT p.perm_id AS permId,
+               p.perm_code AS permCode,
+               p.perm_name AS permName,
+               p.perm_type AS permType,
+               p.module_code AS moduleCode,
+               p.group_code AS groupCode,
+               p.perm_value AS permValue,
+               p.status AS status,
+               p.sort_no AS sortNo,
+               p.remark AS remark,
+               rp.role_id AS roleId,
+               rp.grant_type AS grantType
+        FROM expdb.exp_permission p
+        INNER JOIN expdb.exp_role_permission_rel rp ON p.perm_id = rp.perm_id
+        WHERE rp.role_id IN
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+          AND p.status = 'ENABLED'
+        ORDER BY p.sort_no
+    </select>
+
     <insert id="insertPermissionsByRoleId">
         INSERT INTO expdb.exp_role_permission_rel
         (role_id, perm_id, grant_type, created_by, created_time, remark)
@@ -53,6 +76,18 @@
         </foreach>
     </insert>
 
+    <select id="countRolePermissionByMenuCode" resultType="long">
+        SELECT COUNT(1)
+        FROM expdb.exp_role_permission_rel rp
+        INNER JOIN expdb.exp_permission p ON rp.perm_id = p.perm_id
+        WHERE p.perm_code = #{menuCode} AND p.perm_type = 'MENU'
+    </select>
 
+    <select id="selectRoleIdsByPermCode" resultType="java.lang.Long">
+        SELECT DISTINCT rp.role_id
+        FROM expdb.exp_role_permission_rel rp
+        INNER JOIN expdb.exp_permission p ON rp.perm_id = p.perm_id
+        WHERE p.perm_code = #{permCode}
+    </select>
 
 </mapper>

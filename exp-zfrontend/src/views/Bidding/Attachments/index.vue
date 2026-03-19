@@ -152,7 +152,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { UploadFilled, Delete } from '@element-plus/icons-vue';
 import type { UploadFile, UploadFiles } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import { listDictOptions, type DictOption } from '@/api/system/dict';
 import AttachmentBusinessSelector, {
   type AttachmentBusinessValue,
@@ -168,7 +168,7 @@ import {
   type CreateAttachmentBizReq,
 } from '@/api/bidding/attachments';
 
-const canManage = computed(() => hasPermission('bidding:attachments:manage'));
+const canManage = computed(() => getMenuLevel('bidding:attachments') >= 3);
 type UploadBusinessType = 'TENDER' | 'BID';
 
 const businessTypeOptions: Array<{ label: string; value: AttachmentBusinessType }> = [

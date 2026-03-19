@@ -15,15 +15,13 @@ import jh.exp.auth.core.entity.Menu;
 import jh.exp.auth.core.entity.Permission;
 import jh.exp.auth.core.entity.Role;
 import jh.exp.auth.core.entity.exp.PermissionExp;
-import jh.exp.auth.core.entity.middle.RoleMenuRel;
 import jh.exp.auth.core.entity.middle.RolePermissionRel;
 import jh.exp.auth.core.entity.node.MenuNode;
 import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.*;
 import jh.exp.auth.core.mapper.PermissionMapper;
-import jh.exp.auth.core.mapper.middle.RoleMenuRelMapper;
 import jh.exp.auth.core.util.MenuTreeUtil;
-import jh.exp.auth.core.util.PermParserUtil;
+import jh.exp.auth.service.service.PermissionRebuildService;
 import jh.exp.auth.service.service.bus.MenuService;
 
 
@@ -57,9 +55,9 @@ import java.util.stream.Collectors;
 public class MenuServiceImpl implements MenuService {
 
     private final MenuMapper menuMapper;
-    private final RoleMenuRelMapper roleMenuRelMapper;
     private final RoleMapper roleMapper;
     private final PermissionMapper permissionMapper;
+    private final PermissionRebuildService permissionRebuildService;
 
     /**
      * 分页查询菜单列表
@@ -108,17 +106,17 @@ public class MenuServiceImpl implements MenuService {
     }
 
     /**
-     * 查询菜单权限树：查权限并结构对应到树（返回 tree + selectedMenuIds；roleId 不为空时查 exp_role_menu_rel 填充已选菜单；perLevel 表示权限等级，可选）
+     * 查询菜单权限树：查权限并结构对应到树（返回 tree + selectedMenuIds；roleId 不为空时查 exp_role_permission_rel 填充已选菜单；perLevel 表示权限等级）
      */
     @Override
     public List<MenuPermissionTreeRes> queryMenuPermissionTree(Long roleId) {
         List<Menu> allMenus = menuMapper.selectList(new LambdaQueryWrapper<Menu>()
                 .eq(Menu::getStatus, "ENABLED"));
         if (roleId != null) {
-            // 查权限
             List<PermissionExp> permissionExps = permissionMapper.selectPermissionsByRoleId(roleId);
-            List<String> permCodeList = permissionExps.stream().map(PermissionExp::getPermCode).toList();
-            Map<String, String> permissionMap = PermParserUtil.parseBatch(permCodeList, AuthConstant.MENU);
+            Map<String, String> permissionMap = permissionExps.stream()
+                    .filter(p -> AuthConstant.MENU.equalsIgnoreCase(p.getPermType()))
+                    .collect(Collectors.toMap(PermissionExp::getPermCode, PermissionExp::getGrantType, (a, b) -> b));
 
             List<MenuPermissionTreeRes> menuPermissionTreeRes = MenuTreeUtil.buildMenuTree(
                     allMenus,
@@ -136,10 +134,10 @@ public class MenuServiceImpl implements MenuService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateMenuPermissionTree(UpdateMenuPermissionTreeReq req) {
-        // 1. 获取当前角色的权限
         List<PermissionExp> permissionExps = permissionMapper.selectPermissionsByRoleId(req.getRoleId());
-        List<String> permCodeList = permissionExps.stream().map(PermissionExp::getPermCode).toList();
-        Map<String, String> permissionMap = PermParserUtil.parseBatch(permCodeList, AuthConstant.MENU);
+        Map<String, String> permissionMap = permissionExps.stream()
+                .filter(p -> AuthConstant.MENU.equalsIgnoreCase(p.getPermType()))
+                .collect(Collectors.toMap(PermissionExp::getPermCode, PermissionExp::getGrantType, (a, b) -> b));
 
         // 2. 获取请求中的菜单节点
         List<UpdateMenuPermissionTreeReq.MenuNode> menuNodes = req.getMenuNodes();
@@ -180,28 +178,29 @@ public class MenuServiceImpl implements MenuService {
         if (!permissionsToAdd.isEmpty()) {
             permissionMapper.insertPermissionsByRoleId(permissionsToAdd);
         }
+
+        // 角色权限变更后，使受影响用户快照失效
+        permissionRebuildService.onRolePermissionChanged(req.getRoleId());
     }
 
     /**
      * 构建 PermissionExp 实体对象
      */
-    private RolePermissionRel buildPermission(Long roleId,String menuCode, String permLevel) {
-        RolePermissionRel  rolePermissionRel = new RolePermissionRel();
+    /** 根据 menuCode 构建角色权限关联（设计方案：perm_code = menuCode，grant_type = 1/2/3） */
+    private RolePermissionRel buildPermission(Long roleId, String menuCode, String permLevel) {
+        RolePermissionRel rolePermissionRel = new RolePermissionRel();
         rolePermissionRel.setRoleId(roleId);
         rolePermissionRel.setGrantType(permLevel);
         rolePermissionRel.setCreatedBy(CurrentUserHolder.get().getUserId());
         rolePermissionRel.setCreatedTime(LocalDateTime.now());
-        String permCode = PermParserUtil.build(AuthConstant.MENU,menuCode, permLevel);
-
         Permission permission = permissionMapper.selectOne(new LambdaQueryWrapper<Permission>()
-                .eq(Permission::getPermCode, permCode)
+                .eq(Permission::getPermCode, menuCode)
                 .eq(Permission::getStatus, AuthConstant.ENABLED)
                 .eq(Permission::getPermType, AuthConstant.MENU)
         );
         if (permission == null) {
-            throw new BizException("权限不存在");
+            throw new BizException("权限不存在，menuCode=" + menuCode);
         }
-
         rolePermissionRel.setPermId(permission.getPermId());
         return rolePermissionRel;
     }
@@ -321,9 +320,9 @@ public class MenuServiceImpl implements MenuService {
             throw new BizException("该菜单下有子菜单，不能删除");
         }
 
-        // 检查是否有角色关联此菜单
-        Long roleCount = roleMenuRelMapper.selectCount(new QueryWrapper<RoleMenuRel>()
-                .eq("menu_id", menuId));
+        // 检查是否有角色通过 exp_role_permission_rel 关联此菜单（perm_code = menu_code）
+        String menuCode = menu.getMenuCode();
+        long roleCount = permissionMapper.countRolePermissionByMenuCode(menuCode);
         if (roleCount > 0) {
             throw new BizException("该菜单已被角色使用，不能删除");
         }
@@ -404,12 +403,20 @@ public class MenuServiceImpl implements MenuService {
         roleQw.in("role_code", roles);
         List<Long> roleIds = roleMapper.selectList(roleQw).stream().map(Role::getRoleId).toList();
 
-        QueryWrapper<RoleMenuRel> middleQw = new QueryWrapper<>();
-        middleQw.in("role_id", roleIds);
-        List<Long> menuIds = roleMenuRelMapper.selectList(middleQw).stream().map(RoleMenuRel::getMenuId).toList();
+        // 从 exp_role_permission_rel 获取 MENU 类型权限的 menuCode（perm_code）
+        List<PermissionExp> perms = permissionMapper.selectPermissionsByRoleIds(roleIds);
+        List<String> menuCodes = perms.stream()
+                .filter(p -> AuthConstant.MENU.equalsIgnoreCase(p.getPermType()))
+                .map(PermissionExp::getPermCode)
+                .distinct()
+                .toList();
+
+        if (menuCodes.isEmpty()) {
+            return new MenusRes(roleIds, roles, null, List.of());
+        }
 
         QueryWrapper<Menu> menuQw = new QueryWrapper<>();
-        menuQw.in("menu_id", menuIds);
+        menuQw.in("menu_code", menuCodes);
         menuQw.orderByAsc("parent_menu_id", "sort_no");
         List<Menu> expMenus = menuMapper.selectList(menuQw);
 
@@ -456,9 +463,8 @@ public class MenuServiceImpl implements MenuService {
             throw new BizException("该菜单下有子菜单，不能删除");
         }
 
-        // 检查是否有角色关联此菜单
-        Long roleCount = roleMenuRelMapper.selectCount(new QueryWrapper<RoleMenuRel>()
-                .eq("menu_id", menuId));
+        String menuCode = menu.getMenuCode();
+        long roleCount = permissionMapper.countRolePermissionByMenuCode(menuCode);
         if (roleCount > 0) {
             throw new BizException("该菜单已被角色使用，不能删除");
         }

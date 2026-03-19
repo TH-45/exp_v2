@@ -33,14 +33,19 @@ router.beforeEach(async (to, _from, next) => {
     }
   }
 
-  // 简单路由级权限控制：根据 meta.perms 与用户 permissions 判断
+  // 权限控制：优先使用 menuCode + requiredLevel，兼容 meta.perms
+  const menuCode = to.meta.menuCode as string | undefined;
+  const requiredLevel = (to.meta.requiredLevel as number) ?? 1;
   const requiredPerms = to.meta.perms as string[] | undefined;
-  if (requiredPerms && requiredPerms.length > 0) {
-    // 管理员直接放行
+
+  if (menuCode) {
+    if (!userStore.isAdmin && userStore.getMenuLevel(menuCode) < requiredLevel) {
+      return next({ path: '/403' });
+    }
+  } else if (requiredPerms && requiredPerms.length > 0) {
     if (!userStore.isAdmin) {
-      const hasPerm = requiredPerms.some((p) => userStore.permissions.includes(p));
+      const hasPerm = requiredPerms.some((p) => userStore.hasFuncPermission(p));
       if (!hasPerm) {
-        console.log('无权限访问');
         return next({ path: '/403' });
       }
     }

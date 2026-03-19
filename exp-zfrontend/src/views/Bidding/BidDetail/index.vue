@@ -59,12 +59,12 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import { getBidDetail, type BidDetailVO } from '@/api/bidding/bid';
 
 const route = useRoute();
 const router = useRouter();
-const canManage = computed(() => hasPermission('bidding:bid:manage'));
+const canManage = computed(() => getMenuLevel('bidding:bid') >= 3);
 const loading = ref(false);
 const detail = reactive<Partial<BidDetailVO>>({});
 

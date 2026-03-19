@@ -116,7 +116,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage } from 'element-plus';
 import { UploadFilled, Delete } from '@element-plus/icons-vue';
 import type { UploadFile, UploadFiles } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import { listDictOptions, type DictOption } from '@/api/system/dict';
 import AttachmentBusinessSelector, {
   type AttachmentBusinessValue,
@@ -129,7 +129,7 @@ import {
   type CreateAttachmentBizReq,
 } from '@/api/bidding/attachments';
 
-const canManage = computed(() => hasPermission('contracts:attachments:manage'));
+const canManage = computed(() => getMenuLevel('contracts:attachments') >= 3);
 
 /** 文件类型选项（查询与上传共用，来自字典 Contract_File_Type） */
 const fileTypeOptions = ref<DictOption[]>([]);

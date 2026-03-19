@@ -350,7 +350,7 @@ import { useRouter } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { Plus, Download } from '@element-plus/icons-vue';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import {
   listProject,
   getProjectDetail,
@@ -439,10 +439,10 @@ const detailDrawer = reactive({
 const availableUsers = ref<ExpPersonVO[]>([]);
 
 // 权限点
-const canView = computed(() => hasPermission('project:project:view'));
-const canCreate = computed(() => hasPermission('project:project:create'));
-const canUpdate = computed(() => hasPermission('project:project:update'));
-const canDelete = computed(() => hasPermission('project:project:delete'));
+const canView = computed(() => getMenuLevel('project:management') >= 1);
+const canCreate = computed(() => getMenuLevel('project:management') >= 2);
+const canUpdate = computed(() => getMenuLevel('project:management') >= 2);
+const canDelete = computed(() => getMenuLevel('project:management') >= 3);
 
 function getStatusLabel(status?: string) {
   const labels = {

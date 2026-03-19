@@ -6,7 +6,7 @@
         <div class="logo">招投标协同管理系统</div>
       </div>
 
-      <!-- 可滚动菜单区域 -->
+      <!-- 可滚动菜单区域：优先使用 menuTree 动态渲染，否则回退到旧菜单 -->
       <div class="sidebar-content">
         <el-menu
         :default-active="activeMenu"
@@ -16,94 +16,22 @@
         text-color="#ffffff"
         active-text-color="#409EFF"
       >
-        <el-sub-menu index="/system">
-          <template #title>系统管理</template>
-          <el-menu-item index="/system/account">账号管理</el-menu-item>
-          <el-menu-item index="/system/user">人员管理</el-menu-item>
-          <el-menu-item index="/system/post">岗位管理</el-menu-item>
-          <el-menu-item v-if="canRoleView" index="/system/role">角色管理</el-menu-item>
-          <el-menu-item v-if="canMenuView" index="/system/menu">菜单管理</el-menu-item>
-          <el-menu-item v-if="canDictView" index="/system/dict">字典管理</el-menu-item>
-<!--          <el-menu-item v-if="canPermView" index="/system/permission">权限管理</el-menu-item>-->
-        </el-sub-menu>
-        <el-sub-menu
-          v-if="canBiddingProjectView || canBiddingBidView || canBiddingEvaluationView || canBiddingAttachmentsView"
-          index="/bidding"
-        >
-          <template #title>招投标管理</template>
-          <el-menu-item index="/bidding/project">招标项目</el-menu-item>
-          <el-menu-item v-if="canBiddingBidView" index="/bidding/bid">投标登记</el-menu-item>
-          <el-menu-item v-if="canBiddingEvaluationView" index="/bidding/evaluation">评标/定标</el-menu-item>
-          <el-menu-item v-if="canBiddingAttachmentsView" index="/bidding/attachments">招投标附件库</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu
-          v-if="canContractsContractView || canContractsChangeView || canContractsPaymentView || canContractsAttachmentsView"
-          index="/contracts"
-        >
-          <template #title>合同管理</template>
-          <el-menu-item v-if="canContractsContractView" index="/contracts/contract">合同台账</el-menu-item>
-          <el-menu-item v-if="canContractsChangeView" index="/contracts/change">合同变更</el-menu-item>
-          <el-menu-item v-if="canContractsPaymentView" index="/contracts/payment">收付款台账</el-menu-item>
-          <el-menu-item v-if="canContractsAttachmentsView" index="/contracts/attachments">合同附件库</el-menu-item>
-        </el-sub-menu>
-
-        <!-- 审批管理 -->
-        <el-sub-menu v-if="canApprovalView || canProcessDefView || canProcessStartView" index="/approval">
-          <template #title>
-            <span>审批管理</span>
-          </template>
-
-          <el-menu-item v-if="canProcessStartView" index="/approval/start-center">
-            流程发起中心
+        <!-- 基于 menuTree + menuRegistry 动态渲染，无静态回退 -->
+        <template v-for="item in dynamicMenuItems" :key="item.menuCode">
+          <el-sub-menu v-if="item.children?.length" :index="item.menuCode">
+            <template #title>{{ item.menuName }}</template>
+            <el-menu-item
+              v-for="child in item.children"
+              :key="child.menuCode"
+              :index="getMenuItemIndex(child)"
+            >
+              {{ child.menuName }}
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item v-else-if="getMenuItemIndex(item) !== '#'" :index="getMenuItemIndex(item)">
+            {{ item.menuName }}
           </el-menu-item>
-          <el-menu-item v-if="canApprovalView" index="/approval">
-            审批/待办中心
-          </el-menu-item>
-          <el-menu-item v-if="canProcessDefView" index="/approval/definition">
-            流程定义
-          </el-menu-item>
-        </el-sub-menu>
-
-        <!-- 企业信息管理 -->
-        <el-sub-menu v-if="canCorpView" index="/enterprise">
-          <template #title>企业信息管理</template>
-          <!-- 概览页面 -->
-<!--          <el-menu-item index="/corp-project">-->
-<!--            概览-->
-<!--          </el-menu-item>-->
-
-
-          <el-menu-item v-if="canBasicInfoView" index="/enterprise/basic-info">
-            基础信息
-          </el-menu-item>
-          <el-menu-item v-if="canQualificationView" index="/enterprise/qualifications">
-            证件资质
-          </el-menu-item>
-          <el-menu-item v-if="canAnnouncementView" index="/enterprise/announcements">
-            制度与公告
-          </el-menu-item>
-        </el-sub-menu>
-
-        <!-- 工程项目管理 -->
-        <el-sub-menu v-if="canProjectView" index="/corp-project/project-mgmt">
-          <template #title>工程项目管理</template>
-          <el-menu-item v-if="canProjectView" index="/corp-project/project-mgmt/projects">
-            项目管理
-          </el-menu-item>
-          <el-menu-item v-if="canProjectView" index="/corp-project/project-mgmt/members">
-            项目人员配置
-          </el-menu-item>
-          <el-menu-item v-if="canProjectView" index="/corp-project/project-mgmt/progress">
-            项目进度管理
-          </el-menu-item>
-          <el-menu-item v-if="canProjectView" index="/corp-project/project-mgmt/materials">
-            项目物料管理
-          </el-menu-item>
-        </el-sub-menu>
-
-
-
-        <!-- 后续可按模块扩展更多菜单 -->
+        </template>
         </el-menu>
       </div>
     </el-aside>
@@ -235,6 +163,7 @@
 import { computed, h, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
+import { getMenuRegistryItem } from '@/router/menu-registry';
 import { House, ArrowDown, Close, User, SwitchButton } from '@element-plus/icons-vue';
 import * as Icons from '@element-plus/icons-vue';
 import type { Component } from 'vue';
@@ -254,55 +183,28 @@ const userStore = useUserStore();
 const MAX_VISIBLE_TABS = 9;
 
 const activeMenu = computed(() => route.path || '/');
-const canRoleView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:role:view'));
-const canMenuView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:menu:view'));
-const canDictView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:dic:view'));
-// const canPermView = computed(() => userStore.isAdmin || userStore.permissions.includes('system:user:view'));
 
-const canBiddingProjectView = computed(
-  () => userStore.isAdmin || userStore.permissions.includes('bidding:project:view'),
-);
-const canBiddingBidView = computed(
-  () => userStore.isAdmin || userStore.permissions.includes('bidding:bid:view'),
-);
-const canBiddingEvaluationView = computed(
-  () => userStore.isAdmin || userStore.permissions.includes('bidding:evaluation:view'),
-);
-const canBiddingAttachmentsView = computed(
-  () => userStore.isAdmin || userStore.permissions.includes('bidding:attachments:view'),
-);
-const canContractsContractView = computed(
-  () => userStore.isAdmin || userStore.permissions.includes('contracts:contract:view'),
-);
-const canContractsChangeView = computed(
-  () => userStore.isAdmin || userStore.permissions.includes('contracts:change:view'),
-);
-const canContractsPaymentView = computed(
-  () => userStore.isAdmin || userStore.permissions.includes('contracts:payment:view'),
-);
-const canContractsAttachmentsView = computed(
-  () => userStore.isAdmin || userStore.permissions.includes('contracts:attachments:view'),
-);
-const canApprovalView = computed(
-  () => userStore.isAdmin || userStore.permissions.includes('approval:task:view'),
-);
-const canProcessDefView = computed(
-  () => userStore.isAdmin || userStore.permissions.includes('process:def:view'),
-);
-const canProcessStartView = computed(
-  () => userStore.isAdmin || userStore.permissions.includes('process:start:view'),
-);
-// 企业信息与工程项目权限
-const canCorpView = computed(() => userStore.isAdmin || userStore.permissions.some(p =>
-  p.startsWith('corp:') && p.endsWith(':view')
-));
-const canProjectView = computed(() => userStore.isAdmin || userStore.permissions.some(p =>
-  p.startsWith('project:') && p.endsWith(':view')
-));
-const canAccountView = computed(() => userStore.isAdmin || userStore.permissions.includes('corp:account:view'));
-const canAnnouncementView = computed(() => userStore.isAdmin || userStore.permissions.includes('corp:announcement:view'));
-const canQualificationView = computed(() => userStore.isAdmin || userStore.permissions.includes('corp:qualification:view'));
-const canBasicInfoView = computed(() => userStore.isAdmin || userStore.permissions.includes('corp:basic:view'));
+// 动态菜单：从 menuTree 过滤出已注册的节点，未注册的不展示
+const dynamicMenuItems = computed(() => {
+  const tree = userStore.menuTree;
+  if (!tree || tree.length === 0) return [];
+  return tree
+    .map((node) => {
+      if (node.nodeType === 'CATALOG') {
+        const children = (node.children || [])
+          .filter((c) => getMenuRegistryItem(c.menuCode))
+          .map((c) => ({ ...c }));
+        return children.length > 0 ? { ...node, children } : null;
+      }
+      return getMenuRegistryItem(node.menuCode) ? { ...node } : null;
+    })
+    .filter(Boolean) as typeof tree;
+});
+
+function getMenuItemIndex(node: { menuCode: string }): string {
+  const reg = getMenuRegistryItem(node.menuCode);
+  return reg?.routePath || '#';
+}
 
 // 标签页显示逻辑
 const visibleTabs = computed(() => {
@@ -405,18 +307,6 @@ const removeTab = (name: string) => {
   if (!targetTab) return;   // 👈 关键一行
 
   router.push(targetTab.path);
-};
-
-const renderLabel = (tab: TabItem) => {
-  const isHome = tab.path === '/';
-  return h(
-    'span',
-    { class: ['tab-label', isHome ? 'tab-home' : ''] },
-    [
-      tab.icon ? h(tab.icon, { class: 'tab-icon' }) : null,
-      isHome ? null : h('span', { class: 'tab-text' }, tab.title),
-    ].filter(Boolean),
-  );
 };
 
 const goHome = () => {

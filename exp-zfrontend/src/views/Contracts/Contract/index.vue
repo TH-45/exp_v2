@@ -254,7 +254,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { useRouter, useRoute } from 'vue-router';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import {
   queryContractList,
   getContractDetail,
@@ -276,7 +276,7 @@ import ProjectSelector from '@/components/Selector/ProjectSelector.vue';
 
 const router = useRouter();
 const route = useRoute();
-const canManage = computed(() => hasPermission('contracts:contract:manage'));
+const canManage = computed(() => getMenuLevel('contracts:contract') >= 3);
 
 /** 合作方类型字典（Partner_Type：1-甲方，2-供应商） */
 const partnerTypeOptions = ref<DictOption[]>([]);

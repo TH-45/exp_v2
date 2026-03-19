@@ -415,7 +415,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import {
   createDictItem,
   createDictType,
@@ -540,15 +540,15 @@ const itemRules: FormRules = {
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 };
 
-const canTypeCreate = computed(() => hasPermission('system:dict:type:create'));
-const canTypeUpdate = computed(() => hasPermission('system:dict:type:update'));
-const canTypeDelete = computed(() => hasPermission('system:dict:type:delete'));
-const canTypeStatus = computed(() => hasPermission('system:dict:type:status'));
-const canItemView = computed(() => hasPermission('system:dict:view'));
-const canItemCreate = computed(() => hasPermission('system:dict:item:create'));
-const canItemUpdate = computed(() => hasPermission('system:dict:item:update'));
-const canItemDelete = computed(() => hasPermission('system:dict:item:delete'));
-const canItemStatus = computed(() => hasPermission('system:dict:item:status'));
+const canTypeCreate = computed(() => getMenuLevel('system:dict') >= 2);
+const canTypeUpdate = computed(() => getMenuLevel('system:dict') >= 2);
+const canTypeDelete = computed(() => getMenuLevel('system:dict') >= 3);
+const canTypeStatus = computed(() => getMenuLevel('system:dict') >= 2);
+const canItemView = computed(() => getMenuLevel('system:dict') >= 1);
+const canItemCreate = computed(() => getMenuLevel('system:dict') >= 2);
+const canItemUpdate = computed(() => getMenuLevel('system:dict') >= 2);
+const canItemDelete = computed(() => getMenuLevel('system:dict') >= 3);
+const canItemStatus = computed(() => getMenuLevel('system:dict') >= 2);
 
 const selectedTypeLabel = computed(() => {
   if (!itemForm.dictCode) return '';

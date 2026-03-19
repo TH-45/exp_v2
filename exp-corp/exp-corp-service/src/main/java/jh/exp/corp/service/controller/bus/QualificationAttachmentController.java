@@ -1,6 +1,7 @@
 package jh.exp.corp.service.controller.bus;
 
 import jakarta.validation.Valid;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -23,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 @RestController
 @RequestMapping("qualification-attachment")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "enterprise:qualifications", level = 1)
 public class QualificationAttachmentController {
 
     private final QualificationAttachmentInternalService qualificationAttachmentInternalService;
@@ -40,28 +42,33 @@ public class QualificationAttachmentController {
     }
 
     @PostMapping("/create")
+    @RequiresMenuLevel(code = "enterprise:qualifications", level = 2)
     public ApiResponse<QualificationAttachmentDetailRes> create(@RequestBody @Valid CreateQualificationAttachmentReq req) {
         return ApiResponse.success(qualificationAttachmentInternalService.create(req));
     }
 
     @PostMapping("/update")
+    @RequiresMenuLevel(code = "enterprise:qualifications", level = 2)
     public ApiResponse<QualificationAttachmentDetailRes> update(@RequestBody @Valid UpdateQualificationAttachmentReq req) {
         return ApiResponse.success(qualificationAttachmentInternalService.update(req));
     }
 
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "enterprise:qualifications", level = 3)
     public ApiResponse<Void> delete(@RequestBody @Valid DeleteQualificationAttachmentReq req) {
         qualificationAttachmentInternalService.delete(req);
         return ApiResponse.success(null);
     }
 
     @PostMapping("/batchDelete")
+    @RequiresMenuLevel(code = "enterprise:qualifications", level = 3)
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeleteQualificationAttachmentReq req) {
         qualificationAttachmentInternalService.batchDelete(req);
         return ApiResponse.success(null);
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequiresMenuLevel(code = "enterprise:qualifications", level = 2)
     public ApiResponse<QualificationAttachmentDetailRes> upload(@RequestPart("file") MultipartFile file,
                                                                 @RequestParam("qualificationId") Long qualificationId) {
         return ApiResponse.success(qualificationAttachmentInternalService.upload(qualificationId, file));

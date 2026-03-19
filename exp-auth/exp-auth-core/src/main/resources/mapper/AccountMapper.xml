@@ -82,18 +82,111 @@
         </if>
     </select>
 
-    <!-- 根据账号id列表查角色信息（多表联查） -->
+    <!-- 根据账号id列表查角色信息（仅 ACCOUNT 主体） -->
     <select id="selectRolesByAccountIds" resultType="jh.exp.auth.core.entity.res.AccountRoleRes">
-        SELECT ra.principal_id as accountId, r.role_id as roleId, r.role_name as roleName
+        SELECT ra.principal_id as accountId, r.role_id as roleId, r.role_name as roleName, r.role_code as roleCode
         FROM exp_role_assign ra
         INNER JOIN exp_role r ON ra.role_id = r.role_id
         WHERE ra.principal_type = 'ACCOUNT'
           AND ra.status = 'ENABLED'
+          AND r.status = 'ENABLED'
+          AND (ra.start_time IS NULL OR ra.start_time &lt;= NOW())
+          AND (ra.end_time IS NULL OR ra.end_time &gt;= NOW())
           AND ra.principal_id IN
           <foreach item="accountId" collection="accountIds" open="(" separator="," close=")">
             #{accountId}
           </foreach>
         ORDER BY ra.principal_id, r.sort_no
+    </select>
+
+    <!-- 根据账号ID查询该账号拥有的所有角色（含 ACCOUNT/PERSON/POST/ORG 四类主体） -->
+    <select id="selectRolesForAccount" resultType="jh.exp.auth.core.entity.res.AccountRoleRes">
+        SELECT #{accountId} as accountId, r.role_id as roleId, r.role_name as roleName, r.role_code as roleCode
+        FROM exp_role r
+        INNER JOIN exp_role_assign ra ON r.role_id = ra.role_id
+        INNER JOIN exp_account a ON (
+            (ra.principal_type = 'ACCOUNT' AND ra.principal_id = a.account_id)
+            OR (ra.principal_type = 'PERSON' AND ra.principal_id = a.person_id AND a.person_id IS NOT NULL)
+            OR (ra.principal_type = 'POST' AND ra.principal_id = a.post_id AND a.post_id IS NOT NULL)
+            OR (ra.principal_type = 'ORG' AND ra.principal_id = a.org_id AND a.org_id IS NOT NULL)
+        )
+        WHERE a.account_id = #{accountId}
+          AND ra.status = 'ENABLED'
+          AND r.status = 'ENABLED'
+          AND (ra.start_time IS NULL OR ra.start_time &lt;= NOW())
+          AND (ra.end_time IS NULL OR ra.end_time &gt;= NOW())
+        GROUP BY r.role_id, r.role_name, r.role_code, r.sort_no
+        ORDER BY r.sort_no
+    </select>
+
+    <!-- 根据角色ID找出所有受影响的账号ID（ACCOUNT/PERSON/POST/ORG 四类主体换算） -->
+    <select id="selectAccountIdsByRoleId" resultType="java.lang.Long">
+        SELECT DISTINCT account_id FROM (
+            SELECT ra.principal_id AS account_id
+            FROM exp_role_assign ra
+            WHERE ra.role_id = #{roleId}
+              AND ra.principal_type = 'ACCOUNT'
+              AND ra.status = 'ENABLED'
+              AND (ra.start_time IS NULL OR ra.start_time &lt;= NOW())
+              AND (ra.end_time IS NULL OR ra.end_time &gt;= NOW())
+            UNION
+            SELECT a.account_id
+            FROM exp_account a
+            INNER JOIN exp_role_assign ra ON ra.principal_id = a.person_id AND ra.principal_type = 'PERSON'
+            WHERE ra.role_id = #{roleId}
+              AND a.person_id IS NOT NULL
+              AND ra.status = 'ENABLED'
+              AND (ra.start_time IS NULL OR ra.start_time &lt;= NOW())
+              AND (ra.end_time IS NULL OR ra.end_time &gt;= NOW())
+            UNION
+            SELECT a.account_id
+            FROM exp_account a
+            INNER JOIN exp_role_assign ra ON ra.principal_id = a.post_id AND ra.principal_type = 'POST'
+            WHERE ra.role_id = #{roleId}
+              AND a.post_id IS NOT NULL
+              AND ra.status = 'ENABLED'
+              AND (ra.start_time IS NULL OR ra.start_time &lt;= NOW())
+              AND (ra.end_time IS NULL OR ra.end_time &gt;= NOW())
+            UNION
+            SELECT a.account_id
+            FROM exp_account a
+            INNER JOIN exp_role_assign ra ON ra.principal_id = a.org_id AND ra.principal_type = 'ORG'
+            WHERE ra.role_id = #{roleId}
+              AND a.org_id IS NOT NULL
+              AND ra.status = 'ENABLED'
+              AND (ra.start_time IS NULL OR ra.start_time &lt;= NOW())
+              AND (ra.end_time IS NULL OR ra.end_time &gt;= NOW())
+        ) t
+    </select>
+
+    <!-- 根据主体类型和主体ID列表，换算为账号ID列表（ACCOUNT 类型由调用方直接使用 principalIds） -->
+    <select id="selectAccountIdsByPrincipals" resultType="java.lang.Long">
+        <choose>
+            <when test="principalType == 'PERSON'">
+                SELECT account_id FROM exp_account
+                WHERE person_id IN
+                <foreach item="pid" collection="principalIds" open="(" separator="," close=")">
+                    #{pid}
+                </foreach>
+            </when>
+            <when test="principalType == 'POST'">
+                SELECT account_id FROM exp_account
+                WHERE post_id IN
+                <foreach item="pid" collection="principalIds" open="(" separator="," close=")">
+                    #{pid}
+                </foreach>
+            </when>
+            <when test="principalType == 'ORG'">
+                SELECT account_id FROM exp_account
+                WHERE org_id IN
+                <foreach item="pid" collection="principalIds" open="(" separator="," close=")">
+                    #{pid}
+                </foreach>
+            </when>
+            <otherwise>
+                SELECT 0 WHERE 1=0
+            </otherwise>
+        </choose>
     </select>
 
 </mapper>

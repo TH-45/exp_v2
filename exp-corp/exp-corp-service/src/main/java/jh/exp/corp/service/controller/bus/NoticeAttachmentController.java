@@ -1,6 +1,7 @@
 package jh.exp.corp.service.controller.bus;
 
 import jakarta.validation.Valid;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.corp.core.entity.req.DeleteNoticeAttachmentReq;
 import jh.exp.corp.core.entity.req.QueryNoticeAttachmentReq;
@@ -28,6 +29,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/notice-attachment")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "enterprise:announcements", level = 1)
 public class NoticeAttachmentController {
 
     private final NoticeAttachmentInternalService noticeAttachmentInternalService;
@@ -38,12 +40,14 @@ public class NoticeAttachmentController {
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequiresMenuLevel(code = "enterprise:announcements", level = 2)
     public ApiResponse<NoticeAttachmentRes> upload(@RequestPart("file") MultipartFile file,
                                                    @RequestParam("noticeId") Long noticeId) {
         return ApiResponse.success(noticeAttachmentInternalService.upload(noticeId, file));
     }
 
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "enterprise:announcements", level = 3)
     public ApiResponse<Void> delete(@RequestBody @Valid DeleteNoticeAttachmentReq req) {
         noticeAttachmentInternalService.delete(req);
         return ApiResponse.success(null);

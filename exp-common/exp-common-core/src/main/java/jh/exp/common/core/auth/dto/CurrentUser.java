@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -55,6 +56,38 @@ public class CurrentUser implements Serializable {
      * 也可以扩展为更复杂的结构，这里先用字符串保存。
      */
     private String dataScope;
+
+    // ========== 权限设计方案新增字段 ==========
+
+    /** 权限版本号，用于标识权限快照是否过期。 */
+    private Long permissionVersion;
+
+    /** 菜单权限等级映射：menuCode -> level (1=查看, 2=编辑, 3=管理)。 */
+    private Map<String, Integer> menuLevelMap;
+
+    /** 特殊权限编码集合，用于 @RequiresPermissions 校验。 */
+    private Set<String> funcPermissionSet;
+
+    /** 数据权限摘要。 */
+    private DataScopeSummary dataScopeSummary;
+
+    /** 人员ID（可选）。 */
+    private Long personId;
+
+    /** 主组织ID（可选）。 */
+    private Long orgId;
+
+    /** 主岗位ID（可选）。 */
+    private Long postId;
+
+    /** 数据权限摘要，用于运行态透传。 */
+    @Data
+    @NoArgsConstructor
+    public static class DataScopeSummary implements Serializable {
+        private String scopeType;
+        private java.util.List<Long> orgIds;
+        private java.util.List<Long> projectIds;
+    }
 
     public CurrentUser(Long userId, Set<String> permissions) {
         this.userId = userId;

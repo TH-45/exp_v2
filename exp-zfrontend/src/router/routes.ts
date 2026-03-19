@@ -40,7 +40,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '人员管理',
           icon: 'UserFilled',
-          perms: ['system:user:view'],
+          menuCode: 'system:user',
+          requiredLevel: 1,
         },
       },
       {
@@ -50,7 +51,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '账号管理',
           icon: 'User',
-          perms: ['system:user:view'],
+          menuCode: 'system:account',
+          requiredLevel: 1,
         },
       },
       {
@@ -60,7 +62,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '岗位管理',
           icon: 'Suitcase',
-          perms: ['system:post:view'],
+          menuCode: 'system:organdpost',
+          requiredLevel: 1,
         },
       },
       {
@@ -70,7 +73,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '角色管理',
           icon: 'Key',
-          perms: ['system:role:view'],
+          menuCode: 'system:role',
+          requiredLevel: 1,
         },
       },
       {
@@ -80,7 +84,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '菜单管理',
           icon: 'Menu',
-          perms: ['system:menu:view'],
+          menuCode: 'system:menu',
+          requiredLevel: 1,
         },
       },
       {
@@ -90,7 +95,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '字典管理',
           icon: 'Collection',
-          perms: ['system:dict:view'],
+          menuCode: 'system:dict',
+          requiredLevel: 1,
         },
       },
 
@@ -102,7 +108,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '招标项目',
           icon: 'Document',
-          perms: ['bidding:project:view'],
+          menuCode: 'bidding:project',
+          requiredLevel: 1,
         },
       },
       {
@@ -112,7 +119,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '项目详情',
           icon: 'Document',
-          perms: ['bidding:project:view'],
+          menuCode: 'bidding:project',
+          requiredLevel: 1,
         },
       },
       {
@@ -122,7 +130,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '投标登记',
           icon: 'Tickets',
-          perms: ['bidding:bid:view'],
+          menuCode: 'bidding:bid',
+          requiredLevel: 1,
         },
       },
       {
@@ -132,7 +141,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '投标详情',
           icon: 'Tickets',
-          perms: ['bidding:bid:view'],
+          menuCode: 'bidding:bid',
+          requiredLevel: 1,
         },
       },
       {
@@ -142,7 +152,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '评标/定标',
           icon: 'Document',
-          perms: ['bidding:evaluation:view'],
+          menuCode: 'bidding:evaluation',
+          requiredLevel: 1,
         },
       },
       {
@@ -152,7 +163,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '招投标附件库',
           icon: 'FolderOpened',
-          perms: ['bidding:attachments:view'],
+          menuCode: 'bidding:attachments',
+          requiredLevel: 1,
         },
       },
 
@@ -164,7 +176,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '合同台账',
           icon: 'Document',
-          perms: ['contracts:contract:view'],
+          menuCode: 'contracts:contract',
+          requiredLevel: 1,
         },
       },
       {
@@ -174,7 +187,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '新增合同',
           icon: 'Document',
-          perms: ['contracts:contract:manage'],
+          menuCode: 'contracts:contract',
+          requiredLevel: 2,
         },
       },
       {
@@ -184,7 +198,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '合同起草/审批/拟签',
           icon: 'Document',
-          perms: ['contracts:contract:view'],
+          menuCode: 'contracts:contract',
+          requiredLevel: 1,
         },
       },
       {
@@ -194,7 +209,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '合同变更',
           icon: 'Refresh',
-          perms: ['contracts:change:view'],
+          menuCode: 'contracts:change',
+          requiredLevel: 1,
         },
       },
       {
@@ -204,7 +220,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '变更详情',
           icon: 'Refresh',
-          perms: ['contracts:change:view'],
+          menuCode: 'contracts:change',
+          requiredLevel: 1,
         },
       },
       {
@@ -214,7 +231,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '收付款台账',
           icon: 'Coin',
-          perms: ['contracts:payment:view'],
+          menuCode: 'contracts:payment',
+          requiredLevel: 1,
         },
       },
       {
@@ -224,7 +242,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '收付款详情',
           icon: 'Coin',
-          perms: ['contracts:payment:view'],
+          menuCode: 'contracts:payment',
+          requiredLevel: 1,
         },
       },
       {
@@ -234,7 +253,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '合同附件库',
           icon: 'FolderOpened',
-          perms: ['contracts:attachments:view'],
+          menuCode: 'contracts:attachments',
+          requiredLevel: 1,
         },
       },
 
@@ -246,7 +266,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '审批/待办中心',
           icon: 'DocumentChecked',
-          perms: ['approval:task:view'],
+          menuCode: 'approval:center',
+          requiredLevel: 1,
         },
       },
       {
@@ -255,7 +276,8 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/Approval/InstanceDetail/index.vue'),
         meta: {
           title: '工单详细',
-          perms: ['approval:task:view'],
+          menuCode: 'approval:center',
+          requiredLevel: 1,
         },
       },
       {
@@ -265,7 +287,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '流程发起中心',
           icon: 'Grid',
-          perms: ['process:start:view'],
+          menuCode: 'process:start',
+          requiredLevel: 1,
         },
       },
       {
@@ -274,7 +297,8 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/Approval/StartDispatch.vue'),
         meta: {
           title: '流程路由分发',
-          perms: ['process:start:view'],
+          menuCode: 'process:start',
+          requiredLevel: 1,
         },
       },
       {
@@ -284,7 +308,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '流程定义',
           icon: 'Connection',
-          perms: ['process:def:view'],
+          menuCode: 'process:definition',
+          requiredLevel: 1,
         },
       },
 
@@ -296,7 +321,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '企业信息与工程项目',
           icon: 'OfficeBuilding',
-          perms: ['corp:info:view'],
+          menuCode: 'enterprise:basic',
+          requiredLevel: 1,
         },
       },
       {
@@ -306,7 +332,30 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '基础信息管理',
           icon: 'InfoFilled',
-          perms: ['corp:basic:view'],
+          menuCode: 'enterprise:basic',
+          requiredLevel: 1,
+        },
+      },
+      {
+        path: 'enterprise/qualifications',
+        name: 'EnterpriseQualifications',
+        component: () => import('@/views/Enterprise/QualificationManagement.vue'),
+        meta: {
+          title: '证件资质',
+          icon: 'Medal',
+          menuCode: 'enterprise:qualifications',
+          requiredLevel: 1,
+        },
+      },
+      {
+        path: 'enterprise/announcements',
+        name: 'EnterpriseAnnouncements',
+        component: () => import('@/views/Enterprise/AnnouncementManagement.vue'),
+        meta: {
+          title: '制度与公告',
+          icon: 'Bell',
+          menuCode: 'enterprise:announcements',
+          requiredLevel: 1,
         },
       },
       // 工程项目管理
@@ -317,7 +366,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '项目管理',
           icon: 'Management',
-          perms: ['project:project:view'],
+          menuCode: 'project:management',
+          requiredLevel: 1,
         },
       },
       {
@@ -327,7 +377,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '项目人员配置',
           icon: 'UserFilled',
-          perms: ['project:member:view'],
+          menuCode: 'project:members',
+          requiredLevel: 1,
         },
       },
       {
@@ -337,7 +388,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '项目进度管理',
           icon: 'TrendCharts',
-          perms: ['project:progress:view'],
+          menuCode: 'project:progress',
+          requiredLevel: 1,
         },
       },
       {
@@ -347,7 +399,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '项目物料管理',
           icon: 'Box',
-          perms: ['project:material:view'],
+          menuCode: 'project:materials',
+          requiredLevel: 1,
         },
       },
     ],
@@ -359,7 +412,8 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: '节点配置',
-      perms: ['process:def:view'],
+      menuCode: 'process:definition',
+      requiredLevel: 1,
     },
   },
   {

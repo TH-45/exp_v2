@@ -24,6 +24,12 @@
             <artifactId>exp-auth-client</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <!-- AuthAspect、GlobalExceptionAdvice、AuthExceptionHandler 等权限与异常处理 -->
+        <dependency>
+            <groupId>jh.exp.common</groupId>
+            <artifactId>exp-common-service</artifactId>
+            <version>1.0.0</version>
+        </dependency>
 
         <!-- EasyExcel（合并策略需用到 write.handler.context） -->
         <dependency>

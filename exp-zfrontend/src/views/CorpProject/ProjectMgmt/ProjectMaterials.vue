@@ -379,7 +379,7 @@ import { useRoute } from 'vue-router';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { Plus, Download, Box, Check, Warning, Close } from '@element-plus/icons-vue';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import {
   createProjectMaterial,
   deleteProjectMaterial,
@@ -488,8 +488,8 @@ const usageForm = reactive({
   remarks: '',
 });
 
-const canUpdate = computed(() => hasPermission('project:material:update'));
-const canDelete = computed(() => hasPermission('project:material:delete'));
+const canUpdate = computed(() => getMenuLevel('project:materials') >= 2);
+const canDelete = computed(() => getMenuLevel('project:materials') >= 3);
 
 function getStatusLabel(status?: string) {
   const labels = {

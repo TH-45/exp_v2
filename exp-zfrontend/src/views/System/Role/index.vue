@@ -288,7 +288,7 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
-import { hasPermission } from '@/utils/permission';
+import { getMenuLevel } from '@/utils/permission';
 import {
   listRoles,
   getRoleDetail,
@@ -410,10 +410,10 @@ function toPermLevelNumber(value: unknown): number {
 
 
 // 权限点（与路由 meta.perms 保持一致）
-const canView = computed(() => hasPermission('system:role:view'));
-const canCreate = computed(() => hasPermission('system:role:create'));
-const canUpdate = computed(() => hasPermission('system:role:update'));
-const canDelete = computed(() => hasPermission('system:role:delete'));
+const canView = computed(() => getMenuLevel('system:role') >= 1);
+const canCreate = computed(() => getMenuLevel('system:role') >= 2);
+const canUpdate = computed(() => getMenuLevel('system:role') >= 2);
+const canDelete = computed(() => getMenuLevel('system:role') >= 3);
 
 // 权限等级相关方法
 function setPermissionLevel(menuId: string, level: number) {

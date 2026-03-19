@@ -8,6 +8,7 @@ import jh.exp.auth.core.entity.req.*;
 import jh.exp.auth.core.entity.res.PositionDetailRes;
 import jh.exp.auth.core.entity.res.PositionListRes;
 import jh.exp.auth.service.service.bus.PositionService;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.constant.CommonConstant;
 import jh.exp.common.core.req.SimplePageReq;
@@ -18,9 +19,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 岗位管理接口。
+ * 与组织管理同属「岗位管理」页面（右侧岗位配置），权限编码统一为 system:organdpost。
+ */
 @RestController
 @RequestMapping("/position")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "system:organdpost", level = 1)
 public class PositionController {
 
     private final PositionService positionService;
@@ -57,6 +63,7 @@ public class PositionController {
      * 创建岗位
      */
     @PostMapping("/create")
+    @RequiresMenuLevel(code = "system:organdpost", level = 2)
     public ApiResponse<PositionDetailRes> create(@RequestBody @Valid CreatePositionReq req) {
         PositionDetailRes result = null;
         try {
@@ -71,6 +78,7 @@ public class PositionController {
      * 更新岗位
      */
     @PostMapping("/update")
+    @RequiresMenuLevel(code = "system:organdpost", level = 2)
     public ApiResponse<PositionDetailRes> update(@RequestBody @Valid UpdatePositionReq req) {
         PositionDetailRes result = positionService.updatePosition(req);
         return ApiResponse.success(result);
@@ -80,6 +88,7 @@ public class PositionController {
      * 删除岗位
      */
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "system:organdpost", level = 3)
     public ApiResponse<Void> delete(@RequestBody @Valid DeletePositionReq req) {
         positionService.deletePosition(req.getPostId());
         return ApiResponse.success(null);
@@ -89,6 +98,7 @@ public class PositionController {
      * 批量删除岗位
      */
     @PostMapping("/batchDelete")
+    @RequiresMenuLevel(code = "system:organdpost", level = 3)
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeletePositionReq req) {
         positionService.batchDeletePositions(req);
         return ApiResponse.success(null);
@@ -98,6 +108,7 @@ public class PositionController {
      * 更新岗位状态
      */
     @PostMapping("/status")
+    @RequiresMenuLevel(code = "system:organdpost", level = 2)
     public ApiResponse<PositionDetailRes> updateStatus(@RequestBody @Valid PositionStatusReq req) {
         PositionDetailRes result = positionService.updatePositionStatus(req);
         return ApiResponse.success(result);
@@ -107,6 +118,7 @@ public class PositionController {
      * 批量更新岗位状态
      */
     @PostMapping("/batchStatus")
+    @RequiresMenuLevel(code = "system:organdpost", level = 2)
     public ApiResponse<Void> batchUpdateStatus(@RequestBody @Valid BatchPositionStatusReq req) {
         positionService.batchUpdatePositionStatus(req);
         return ApiResponse.success(null);
@@ -156,6 +168,7 @@ public class PositionController {
      * 外派岗位
      */
     @PostMapping("/outsource")
+    @RequiresMenuLevel(code = "system:organdpost", level = 2)
     public ApiResponse<String> outsource(@RequestBody @Valid OutsourcePositionReq req) {
         try {
             String message = positionService.outsourcePosition(req);

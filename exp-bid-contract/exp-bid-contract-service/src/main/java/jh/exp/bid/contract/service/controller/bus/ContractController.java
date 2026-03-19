@@ -4,6 +4,7 @@ import jh.exp.bid.contract.core.entity.req.*;
 import jh.exp.bid.contract.core.entity.res.ContractDetailRes;
 import jh.exp.bid.contract.core.entity.res.ContractListRes;
 import jh.exp.bid.contract.service.service.bus.ContractService;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -12,11 +13,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 合同管理控制器
+ * 合同管理控制器，对应菜单 contracts:contract
  */
 @RestController
 @RequestMapping("/contract")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "contracts:contract", level = 1)
 public class ContractController {
 
     private final ContractService contractService;
@@ -61,6 +63,7 @@ public class ContractController {
      * 更新合同
      */
     @PostMapping("/update")
+    @RequiresMenuLevel(code = "contracts:contract", level = 2)
     public ApiResponse<ContractDetailRes> update(@RequestBody @Valid UpdateContractReq req) {
         return ApiResponse.success(contractService.updateContract(req));
     }
@@ -69,6 +72,7 @@ public class ContractController {
      * 删除合同
      */
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "contracts:contract", level = 3)
     public ApiResponse<Void> delete(@RequestParam Long contractId) {
         contractService.deleteContract(contractId);
         return ApiResponse.success(null);
@@ -80,6 +84,7 @@ public class ContractController {
      * 创建合同业务
      */
     @PostMapping("/createContractBusiness")
+    @RequiresMenuLevel(code = "contracts:contract", level = 2)
     public ApiResponse<Long> createContractBusiness(@RequestBody @Valid CreateContractReq req) {
         Long instanceId =contractService.createContractBusiness(req);
 
@@ -111,6 +116,7 @@ public class ContractController {
      * 拟签阶段：签订→正常归档；不签订+变更→返回起草；不签订+不变更→异常归档
      */
     @PostMapping("/sign")
+    @RequiresMenuLevel(code = "contracts:contract", level = 2)
     public ApiResponse<Void> sign(@RequestBody @Valid SignContractReq req) {
         contractService.signContract(req);
         return ApiResponse.success(null);

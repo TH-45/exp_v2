@@ -66,11 +66,12 @@ public class LoginAuthService {
         account.setLastLoginTime(LocalDateTime.now());
         accountMapper.updateById(account);
 
+        // 权限设计方案：登录接口仅返回轻量数据，完整权限由权限画像接口提供
         LoginUserInfo info = new LoginUserInfo();
         info.setUserId(String.valueOf(account.getAccountId()));
         info.setUsername(account.getAccountDisplay() != null ? account.getAccountDisplay() : account.getAccountName());
-        info.setRoles(Collections.singletonList("ADMIN"));
-        info.setPermissions(Collections.singletonList("system:user:view"));
+        info.setRoles(Collections.emptyList());
+        info.setPermissions(Collections.emptyList());
 
         log.info("用户登录成功，username={}，accountId={}", username, account.getAccountId());
 

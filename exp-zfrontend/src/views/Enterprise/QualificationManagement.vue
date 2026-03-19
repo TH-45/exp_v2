@@ -328,7 +328,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { Plus, Download, Check, Warning, Close } from '@element-plus/icons-vue';
-import { hasPermission } from '@/utils/permission.ts';
+import { getMenuLevel } from '@/utils/permission';
 import {
   listQualifications,
   getQualificationDetail,
@@ -395,10 +395,10 @@ const detailDrawer = reactive({
 });
 
 // 权限点
-const canView = computed(() => hasPermission('corp:qualification:view'));
-const canCreate = computed(() => hasPermission('corp:qualification:create'));
-const canUpdate = computed(() => hasPermission('corp:qualification:update'));
-const canDelete = computed(() => hasPermission('corp:qualification:delete'));
+const canView = computed(() => getMenuLevel('enterprise:qualifications') >= 1);
+const canCreate = computed(() => getMenuLevel('enterprise:qualifications') >= 2);
+const canUpdate = computed(() => getMenuLevel('enterprise:qualifications') >= 2);
+const canDelete = computed(() => getMenuLevel('enterprise:qualifications') >= 3);
 
 function getStatusLabel(status?: string) {
   const labels = {

@@ -48,10 +48,27 @@ public interface AccountMapper extends BaseMapper<Account> {
     AccountDetailRes selectAccountDetailById(@Param("accountId") Long accountId);
 
     /**
-     * 根据账号id列表查角色信息（多表联查）
+     * 根据账号id列表查角色信息（仅 ACCOUNT 主体）
      */
     List<AccountRoleRes> selectRolesByAccountIds(@Param("accountIds") List<Long> accountIds);
 
+    /**
+     * 根据账号ID查询该账号拥有的所有角色（含 ACCOUNT/PERSON/POST/ORG 四类主体）
+     */
+    List<AccountRoleRes> selectRolesForAccount(@Param("accountId") Long accountId);
+
+    /**
+     * 根据角色ID找出所有受影响的账号ID（含 ACCOUNT/PERSON/POST/ORG 四类主体换算）
+     */
+    List<Long> selectAccountIdsByRoleId(@Param("roleId") Long roleId);
+
+    /**
+     * 根据主体类型和主体ID列表，换算为账号ID列表
+     * @param principalType ACCOUNT/PERSON/POST/ORG
+     * @param principalIds 主体ID列表
+     */
+    List<Long> selectAccountIdsByPrincipals(@Param("principalType") String principalType,
+                                           @Param("principalIds") List<Long> principalIds);
 }
 
 

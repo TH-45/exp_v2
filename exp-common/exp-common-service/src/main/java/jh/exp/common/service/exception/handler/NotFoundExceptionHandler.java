@@ -10,8 +10,13 @@ import org.springframework.web.server.ResponseStatusException;
  * 404 路由不存在处理器。
  */
 @Component
-@Order(-3)
+@Order(-70)
 public class NotFoundExceptionHandler extends AbstractGatewayExceptionHandler {
+
+    @Override
+    public int getOrder() {
+        return -70;
+    }
 
     @Override
     public boolean supports(Throwable throwable) {

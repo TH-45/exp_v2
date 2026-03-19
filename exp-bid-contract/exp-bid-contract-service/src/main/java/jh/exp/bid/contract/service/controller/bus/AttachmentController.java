@@ -6,6 +6,7 @@ import jh.exp.bid.contract.core.entity.req.QueryAttachmentReq;
 import jh.exp.bid.contract.core.entity.res.AttachmentDetailRes;
 import jh.exp.bid.contract.core.entity.res.AttachmentListRes;
 import jh.exp.bid.contract.service.service.bus.AttachmentService;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -26,11 +27,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * 附件管理控制器
+ * 附件管理控制器。招标与合同共用同一接口，按 businessType 区分业务。
+ * 权限：用户需具备 bidding:attachments 或 contracts:attachments 之一（此处用 bidding:attachments 作为通用入口）。
  */
 @RestController
 @RequestMapping("/attachment")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "bidding:attachments", level = 1)
 public class AttachmentController {
 
     private final AttachmentService attachmentService;
@@ -40,7 +43,6 @@ public class AttachmentController {
      * 分页查询附件列表
      */
     @PostMapping("/list")
-    //@RequiresPermissions("ATTACHMENT:VIEW")
     public ApiResponse<SimplePageRes<AttachmentListRes>> list(@RequestBody SimplePageReq<QueryAttachmentReq> req) {
         req.pageDefault();
         SimplePageRes<AttachmentListRes> result = attachmentService.queryAttachmentList(req);
@@ -51,7 +53,6 @@ public class AttachmentController {
      * 根据ID查询附件详情
      */
     @GetMapping("/detail")
-    //@RequiresPermissions("ATTACHMENT:VIEW")
     public ApiResponse<AttachmentDetailRes> detail(@RequestParam Long attachmentId) {
         AttachmentDetailRes result = attachmentService.getAttachmentById(attachmentId);
         return ApiResponse.success(result);
@@ -61,7 +62,7 @@ public class AttachmentController {
      * 上传附件
      */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    //@RequiresPermissions("ATTACHMENT:UPLOAD")
+    @RequiresMenuLevel(code = "bidding:attachments", level = 2)
     public ApiResponse<AttachmentDetailRes> upload(@RequestPart("file") MultipartFile file,
                                                    @RequestPart("biz") @Valid CreateAttachmentBizReq biz) {
         AttachmentDetailRes result = attachmentService.uploadAttachment(file, biz);
@@ -72,7 +73,7 @@ public class AttachmentController {
      * 批量上传附件（仅元数据，无文件流）
      */
     @PostMapping("/batchUpload")
-    //@RequiresPermissions("ATTACHMENT:UPLOAD")
+    @RequiresMenuLevel(code = "bidding:attachments", level = 2)
     public ApiResponse<List<AttachmentDetailRes>> batchUpload(@RequestBody List<@Valid CreateAttachmentReq> attachments) {
         List<AttachmentDetailRes> result = attachmentService.batchUploadAttachments(attachments);
         return ApiResponse.success(result);
@@ -83,7 +84,7 @@ public class AttachmentController {
      * 请求：multipart/form-data，parts 为 files（多个）、bizList（JSON 数组）。
      */
     @PostMapping(value = "/uploadBatch", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    //@RequiresPermissions("ATTACHMENT:UPLOAD")
+    @RequiresMenuLevel(code = "bidding:attachments", level = 2)
     public ApiResponse<List<AttachmentDetailRes>> uploadBatch(
             @RequestPart("files") List<MultipartFile> files,
             @RequestPart("bizList") List<@Valid CreateAttachmentBizReq> bizList) {
@@ -95,7 +96,7 @@ public class AttachmentController {
      * 更新附件信息
      */
     @PostMapping("/update")
-    //@RequiresPermissions("ATTACHMENT:EDIT")
+    @RequiresMenuLevel(code = "bidding:attachments", level = 2)
     public ApiResponse<AttachmentDetailRes> update(@RequestParam Long attachmentId,
                                                   @RequestBody @Valid CreateAttachmentReq req) {
         AttachmentDetailRes result = attachmentService.updateAttachment(attachmentId, req);
@@ -106,7 +107,7 @@ public class AttachmentController {
      * 删除附件
      */
     @PostMapping("/delete")
-    //@RequiresPermissions("ATTACHMENT:DELETE")
+    @RequiresMenuLevel(code = "bidding:attachments", level = 3)
     public ApiResponse<Void> delete(@RequestParam Long attachmentId) {
         attachmentService.deleteAttachment(attachmentId);
         return ApiResponse.success(null);
@@ -116,7 +117,7 @@ public class AttachmentController {
      * 批量删除附件
      */
     @PostMapping("/batchDelete")
-    //@RequiresPermissions("ATTACHMENT:DELETE")
+    @RequiresMenuLevel(code = "bidding:attachments", level = 3)
     public ApiResponse<Void> batchDelete(@RequestBody List<Long> attachmentIds) {
         attachmentService.batchDeleteAttachments(attachmentIds);
         return ApiResponse.success(null);
@@ -126,7 +127,6 @@ public class AttachmentController {
      * 下载附件
      */
     @GetMapping("/download")
-    //@RequiresPermissions("ATTACHMENT:VIEW")
     public ApiResponse<AttachmentDetailRes> download(@RequestParam Long attachmentId) {
         AttachmentDetailRes result = attachmentService.downloadAttachment(attachmentId);
         return ApiResponse.success(result);
@@ -164,7 +164,6 @@ public class AttachmentController {
      * 根据业务查询附件列表
      */
     @GetMapping("/byBusiness")
-    //@RequiresPermissions("ATTACHMENT:VIEW")
     public ApiResponse<List<AttachmentListRes>> getByBusiness(@RequestParam String businessType,
                                                              @RequestParam Long businessId) {
         List<AttachmentListRes> result = attachmentService.getAttachmentsByBusiness(businessType, businessId);
@@ -187,7 +186,6 @@ public class AttachmentController {
      * 获取业务附件统计信息
      */
     @GetMapping("/statistics")
-    //@RequiresPermissions("ATTACHMENT:VIEW")
     public ApiResponse<AttachmentService.AttachmentStatistics> getStatistics(@RequestParam String businessType,
                                                                             @RequestParam Long businessId) {
         AttachmentService.AttachmentStatistics result = attachmentService.getBusinessAttachmentStatistics(businessType, businessId);
@@ -198,7 +196,7 @@ public class AttachmentController {
      * 更新文件状态
      */
     @PostMapping("/status")
-    //@RequiresPermissions("ATTACHMENT:EDIT")
+    @RequiresMenuLevel(code = "bidding:attachments", level = 2)
     public ApiResponse<AttachmentDetailRes> updateStatus(@RequestParam Long attachmentId,
                                                         @RequestParam String fileStatus) {
         AttachmentDetailRes result = attachmentService.updateFileStatus(attachmentId, fileStatus);
@@ -209,7 +207,7 @@ public class AttachmentController {
      * 批量更新文件状态
      */
     @PostMapping("/batchStatus")
-    //@RequiresPermissions("ATTACHMENT:EDIT")
+    @RequiresMenuLevel(code = "bidding:attachments", level = 2)
     public ApiResponse<Void> batchUpdateStatus(@RequestBody List<Long> attachmentIds,
                                               @RequestParam String fileStatus) {
         attachmentService.batchUpdateFileStatus(attachmentIds, fileStatus);
@@ -220,7 +218,7 @@ public class AttachmentController {
      * 清理无效附件
      */
     @PostMapping("/cleanup")
-    //@RequiresPermissions("ATTACHMENT:ADMIN")
+    @RequiresMenuLevel(code = "bidding:attachments", level = 3)
     public ApiResponse<Void> cleanup() {
         attachmentService.cleanupInvalidAttachments();
         return ApiResponse.success(null);

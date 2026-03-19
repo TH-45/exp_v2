@@ -10,6 +10,7 @@ import jh.exp.auth.core.entity.res.PersonInfoRes;
 import jh.exp.auth.service.entity.imex.PersonExportTaskReq;
 import jh.exp.auth.service.service.bus.PersonImexService;
 import jh.exp.auth.service.service.bus.PersonService;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.imex.ImexTaskResult;
 import jh.exp.common.core.imex.ImexTaskSubmitRes;
@@ -32,6 +33,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/person")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "system:user", level = 1)
 public class PersonController {
 
     private final PersonService personService;
@@ -95,6 +97,7 @@ public class PersonController {
      * 创建人员
      */
     @PostMapping("/create")
+    @RequiresMenuLevel(code = "system:user", level = 2)
     public ApiResponse<PersonDetailRes> create(@RequestBody @Valid CreatePersonReq req) {
         PersonDetailRes result = personService.createPerson(req);
         return ApiResponse.success(result);
@@ -104,6 +107,7 @@ public class PersonController {
      * 更新人员
      */
     @PostMapping("/update")
+    @RequiresMenuLevel(code = "system:user", level = 2)
     public ApiResponse<PersonDetailRes> update(@RequestBody @Valid UpdatePersonReq req) {
         PersonDetailRes result = personService.updatePerson(req);
         return ApiResponse.success(result);
@@ -113,6 +117,7 @@ public class PersonController {
      * 删除人员
      */
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "system:user", level = 3)
     public ApiResponse<Void> delete(@RequestBody DeletePersonReq req) {
         personService.deletePerson(req.getPersonId());
         return ApiResponse.success(null);
@@ -122,6 +127,7 @@ public class PersonController {
      * 批量删除人员
      */
     @PostMapping("/batchDelete")
+    @RequiresMenuLevel(code = "system:user", level = 3)
     public ApiResponse<Void> batchDelete(@RequestBody @Valid BatchDeletePersonReq req) {
         personService.batchDeletePersons(req);
         return ApiResponse.success(null);
@@ -131,6 +137,7 @@ public class PersonController {
      * 更改人员状态
      */
     @PostMapping("/status")
+    @RequiresMenuLevel(code = "system:user", level = 2)
     public ApiResponse<PersonDetailRes> updateStatus(@RequestBody @Valid PersonStatusReq req) {
         PersonDetailRes result = personService.updatePersonStatus(req);
         return ApiResponse.success(result);
@@ -140,6 +147,7 @@ public class PersonController {
      * 批量更改人员状态
      */
     @PostMapping("/batchStatus")
+    @RequiresMenuLevel(code = "system:user", level = 2)
     public ApiResponse<Void> batchUpdateStatus(@RequestBody @Valid BatchPersonStatusReq req) {
         personService.batchUpdatePersonStatus(req);
         return ApiResponse.success(null);
@@ -167,11 +175,13 @@ public class PersonController {
     }
 
     @PostMapping("/imex/import")
+    @RequiresMenuLevel(code = "system:user", level = 2)
     public ApiResponse<ImexTaskSubmitRes> submitImport(@RequestParam("file") MultipartFile file) {
         return ApiResponse.success(personImexService.submitImportTask(file));
     }
 
     @PostMapping("/imex/export")
+    @RequiresMenuLevel(code = "system:user", level = 2)
     public ApiResponse<ImexTaskSubmitRes> submitExport(@RequestBody(required = false) PersonExportTaskReq req) {
         return ApiResponse.success(personImexService.submitExportTask(req));
     }

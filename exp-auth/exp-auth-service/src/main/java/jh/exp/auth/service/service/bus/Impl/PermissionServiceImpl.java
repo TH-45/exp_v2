@@ -8,6 +8,7 @@ import jh.exp.auth.core.entity.req.UpdateMenuTreePermissionReq;
 import jh.exp.auth.core.mapper.MenuMapper;
 import jh.exp.auth.core.mapper.PermissionMapper;
 import jh.exp.auth.core.mapper.RolePermissionRelMapper;
+import jh.exp.auth.service.service.PermissionRebuildService;
 import jh.exp.auth.service.service.bus.PermissionService;
 import jh.exp.common.core.exception.BizException;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +24,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PermissionServiceImpl implements PermissionService {
 
-    private static final String MODULE_AUTH = "auth";
     private static final String PERM_TYPE_MENU = "MENU";
-    private static final String MENU_PREFIX = "MENU_";
+    /** 权限设计方案：perm_code 直接使用 menuCode（模块:资源），无前缀 */
 
     private final MenuMapper menuMapper;
     private final PermissionMapper permissionMapper;
     private final RolePermissionRelMapper rolePermissionRelMapper;
+    private final PermissionRebuildService permissionRebuildService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -39,10 +40,9 @@ public class PermissionServiceImpl implements PermissionService {
             throw new BizException("角色ID不能为空");
         }
 
-        // 1. 查 auth 模块下 MENU 类型的所有权限 ID
+        // 1. 查 MENU 类型的所有权限 ID
         List<Permission> menuPerms = permissionMapper.selectList(
                 new LambdaQueryWrapper<Permission>()
-                        .eq(Permission::getModuleCode, MODULE_AUTH)
                         .eq(Permission::getPermType, PERM_TYPE_MENU)
         );
         List<Long> menuPermIds = menuPerms.stream().map(Permission::getPermId).collect(Collectors.toList());
@@ -70,14 +70,12 @@ public class PermissionServiceImpl implements PermissionService {
         }
         List<String> menuCodes = menus.stream().map(Menu::getMenuCode).collect(Collectors.toList());
 
-        // 5. 根据 perm_code = MENU_ + menuCode 查权限 ID，并插入角色-权限关联
+        // 5. 根据 perm_code = menuCode 查权限 ID，并插入角色-权限关联（设计方案：无前缀）
         List<RolePermissionRel> toInsert = new ArrayList<>();
         for (String menuCode : menuCodes) {
-            String permCode = MENU_PREFIX + menuCode;
             Permission perm = permissionMapper.selectOne(
                     new LambdaQueryWrapper<Permission>()
-                            .eq(Permission::getPermCode, permCode)
-                            .eq(Permission::getModuleCode, MODULE_AUTH)
+                            .eq(Permission::getPermCode, menuCode)
                             .eq(Permission::getPermType, PERM_TYPE_MENU)
             );
             if (perm != null) {
@@ -93,5 +91,8 @@ public class PermissionServiceImpl implements PermissionService {
         for (RolePermissionRel rel : toInsert) {
             rolePermissionRelMapper.insert(rel);
         }
+
+        // 角色权限变更后，使受影响用户快照失效（懒重建）
+        permissionRebuildService.onRolePermissionChanged(roleId);
     }
 }

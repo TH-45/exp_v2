@@ -1,5 +1,6 @@
 package jh.exp.sys.service.dic.service.controller;
 
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -47,6 +48,7 @@ import java.util.Map;
 @RequestMapping("/dict")
 @RequiredArgsConstructor
 @Validated
+@RequiresMenuLevel(code = "system:dict", level = 1)
 public class SysDictController {
 
     private final SysDictApiService sysDictApiService;
@@ -82,6 +84,7 @@ public class SysDictController {
      * @return 操作结果响应对象
      */
     @PostMapping("/type/create")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ApiResponse<Map<String, Object>> createDictType(@Valid @RequestBody DictTypeCreateReq req) {
         return sysDictApiService.createDictType(req);
     }
@@ -93,6 +96,7 @@ public class SysDictController {
      * @return 操作结果响应对象
      */
     @PostMapping("/type/update")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ApiResponse<Map<String, Object>> updateDictType(@Valid @RequestBody DictTypeUpdateReq req) {
         return sysDictApiService.updateDictType(req);
     }
@@ -104,6 +108,7 @@ public class SysDictController {
      * @return 操作结果响应对象
      */
     @PostMapping("/type/delete")
+    @RequiresMenuLevel(code = "system:dict", level = 3)
     public ApiResponse<Map<String, Object>> deleteDictType(@Valid @RequestBody IdsReq req) {
         return sysDictApiService.deleteDictType(req);
     }
@@ -115,6 +120,7 @@ public class SysDictController {
      * @return 操作结果响应对象
      */
     @PostMapping("/type/status")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ApiResponse<Map<String, Object>> updateDictTypeStatus(@Valid @RequestBody StatusReq req) {
         return sysDictApiService.updateDictTypeStatus(req);
     }
@@ -126,6 +132,7 @@ public class SysDictController {
      * @return 操作结果响应对象
      */
     @PostMapping("/type/status/batch")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ApiResponse<Map<String, Object>> updateDictTypeStatusBatch(@Valid @RequestBody BatchStatusReq req) {
         return sysDictApiService.updateDictTypeStatusBatch(req);
     }
@@ -164,6 +171,7 @@ public class SysDictController {
      * @return 操作结果响应对象
      */
     @PostMapping("/item/create")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ApiResponse<Map<String, Object>> createDictItem(@Valid @RequestBody DictItemCreateReq req) {
         return sysDictApiService.createDictItem(req);
     }
@@ -175,6 +183,7 @@ public class SysDictController {
      * @return 操作结果响应对象
      */
     @PostMapping("/item/update")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ApiResponse<Map<String, Object>> updateDictItem(@Valid @RequestBody DictItemUpdateReq req) {
         return sysDictApiService.updateDictItem(req);
     }
@@ -186,6 +195,7 @@ public class SysDictController {
      * @return 操作结果响应对象
      */
     @PostMapping("/item/delete")
+    @RequiresMenuLevel(code = "system:dict", level = 3)
     public ApiResponse<Map<String, Object>> deleteDictItem(@Valid @RequestBody IdsReq req) {
         return sysDictApiService.deleteDictItem(req);
     }
@@ -197,6 +207,7 @@ public class SysDictController {
      * @return 操作结果响应对象
      */
     @PostMapping("/item/status")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ApiResponse<Map<String, Object>> updateDictItemStatus(@Valid @RequestBody StatusReq req) {
         return sysDictApiService.updateDictItemStatus(req);
     }
@@ -208,6 +219,7 @@ public class SysDictController {
      * @return 操作结果响应对象
      */
     @PostMapping("/item/status/batch")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ApiResponse<Map<String, Object>> updateDictItemStatusBatch(@Valid @RequestBody BatchStatusReq req) {
         return sysDictApiService.updateDictItemStatusBatch(req);
     }
@@ -238,6 +250,7 @@ public class SysDictController {
      * 获取全部字典项（用于 JSON 导出）
      */
     @GetMapping("/item/export/all")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ApiResponse<List<SysDictItem>> listAllDictItemsForExport() {
         return sysDictApiService.listAllDictItemsForExport();
     }
@@ -246,11 +259,13 @@ public class SysDictController {
      * 导出字典项为 Excel 文件（GET 导出全部，POST 传入选中项导出指定项）
      */
     @GetMapping("/item/export/excel")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ResponseEntity<byte[]> exportDictItemsExcelGet() {
         return buildExcelResponse(sysDictApiService.exportDictItemsToExcel(null));
     }
 
     @PostMapping("/item/export/excel")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ResponseEntity<byte[]> exportDictItemsExcelPost(@RequestBody(required = false) List<SysDictItem> items) {
         return buildExcelResponse(sysDictApiService.exportDictItemsToExcel(items));
     }
@@ -259,6 +274,7 @@ public class SysDictController {
      * 导出字典父子结构为 Excel（类型合并行 + 字段说明 sheet）
      */
     @PostMapping("/item/export/excel/hierarchy")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ResponseEntity<byte[]> exportDictHierarchyExcel(@RequestBody List<DictExportHierarchyReq> hierarchy) {
         byte[] bytes = sysDictApiService.exportDictHierarchyToExcel(hierarchy);
         String fileName = "字典项_" + System.currentTimeMillis() + ".xlsx";
@@ -285,6 +301,7 @@ public class SysDictController {
      * 2. 父子结构：[{ dictType: { dictCode, dictName, ... }, items: [{ dictCode, itemCode, itemValue, itemLabel, ... }, ...] }, ...]
      */
     @PostMapping("/item/import/json")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ApiResponse<DictItemImportRes> importDictItemsJson(@RequestBody JsonNode body) {
         if (body == null || !body.isArray() || body.size() == 0) {
             return sysDictApiService.importDictItems(List.of());
@@ -304,6 +321,7 @@ public class SysDictController {
      * 批量导入字典项（Excel）
      */
     @PostMapping("/item/import/excel")
+    @RequiresMenuLevel(code = "system:dict", level = 2)
     public ApiResponse<DictItemImportRes> importDictItemsExcel(@RequestParam("file") MultipartFile file) {
         return sysDictApiService.importDictItemsFromExcel(file);
     }

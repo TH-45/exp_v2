@@ -1,6 +1,7 @@
 package jh.exp.process.service.controller;
 
 import jakarta.validation.Valid;
+import jh.exp.common.core.annotation.RequiresMenuLevel;
 import jh.exp.common.core.api.ApiResponse;
 import jh.exp.common.core.req.SimplePageReq;
 import jh.exp.common.core.res.SimplePageRes;
@@ -26,11 +27,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/definition")
 @RequiredArgsConstructor
+@RequiresMenuLevel(code = "process:definition", level = 1)
 public class ProcessDefinitionController {
 
     private final ProcessDefinitionService processDefinitionService;
 
     @PostMapping("/save")
+    @RequiresMenuLevel(code = "process:definition", level = 2)
     public ApiResponse<ProcessDefinitionDetailRes> save(@RequestBody @Valid ProcessDefinitionSaveReq req) {
         return ApiResponse.success(processDefinitionService.saveDefinition(req));
     }
@@ -52,6 +55,7 @@ public class ProcessDefinitionController {
     }
 
     @PostMapping("/activate")
+    @RequiresMenuLevel(code = "process:definition", level = 2)
     public ApiResponse<Void> activate(@RequestParam Long procDefId, @RequestParam Integer isActive) {
         processDefinitionService.setActive(procDefId, isActive);
         return ApiResponse.success(null);
@@ -59,28 +63,33 @@ public class ProcessDefinitionController {
 
     /** 删除流程定义（无实例时方可删除） */
     @PostMapping("/delete")
+    @RequiresMenuLevel(code = "process:definition", level = 3)
     public ApiResponse<Void> delete(@RequestParam Long procDefId) {
         processDefinitionService.deleteDefinition(procDefId);
         return ApiResponse.success(null);
     }
 
     @PostMapping("/copy")
+    @RequiresMenuLevel(code = "process:definition", level = 2)
     public ApiResponse<ProcessDefinitionDetailRes> copy(@RequestBody @Valid ProcessDefinitionCopyReq req) {
         return ApiResponse.success(processDefinitionService.copy(req));
     }
 
     @PostMapping("/node/save")
+    @RequiresMenuLevel(code = "process:definition", level = 2)
     public ApiResponse<NodeRes> saveNode(@RequestBody @Valid NodeSaveReq req) {
         return ApiResponse.success(processDefinitionService.saveNode(req));
     }
 
     @PostMapping("/node/delete")
+    @RequiresMenuLevel(code = "process:definition", level = 2)
     public ApiResponse<Void> deleteNode(@RequestParam Long nodeId) {
         processDefinitionService.deleteNode(nodeId);
         return ApiResponse.success(null);
     }
 
     @PostMapping("/node/sort")
+    @RequiresMenuLevel(code = "process:definition", level = 2)
     public ApiResponse<List<NodeRes>> sortNode(@RequestBody @Valid NodeSortReq req) {
         return ApiResponse.success(processDefinitionService.sortNode(req));
     }
